@@ -13,12 +13,15 @@ CREATE TABLE UserAccount (
   mfa_secret TEXT,
   mfa_enabled BOOLEAN NOT NULL DEFAULT false,
   mfa_enabled_at TIMESTAMP,
+  archived_at TIMESTAMP,
   created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
   updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
   CONSTRAINT ck_UserAccount_mfa CHECK (
     mfa_enabled = false OR mfa_secret IS NOT NULL
   )
 );
+
+CREATE INDEX idx_UserAccount_archived_at ON UserAccount(archived_at) WHERE archived_at IS NOT NULL;
 
 CREATE TABLE UserAccount_MFARecoveryCode (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
@@ -46,17 +49,19 @@ CREATE UNIQUE INDEX uq_UserEmail_primary ON UserEmail(user_account_id) WHERE is_
 CREATE TABLE UserGroup (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
   name TEXT NOT NULL UNIQUE,
-  created_by UUID NOT NULL REFERENCES UserAccount(id) ON DELETE CASCADE,
+  created_by UUID NOT NULL REFERENCES UserAccount(id) ON DELETE RESTRICT,
+  archived_at TIMESTAMP,
   created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
 );
 
 CREATE INDEX idx_UserGroup_created_by ON UserGroup(created_by);
+CREATE INDEX idx_UserGroup_archived_at ON UserGroup(archived_at) WHERE archived_at IS NOT NULL;
 
 CREATE TYPE UserGroupRole AS ENUM ('admin', 'member');
 
 CREATE TABLE UserGroup_Member (
-  user_account_id UUID NOT NULL REFERENCES UserAccount(id) ON DELETE CASCADE,
-  user_group_id UUID NOT NULL REFERENCES UserGroup(id) ON DELETE CASCADE,
+  user_account_id UUID NOT NULL REFERENCES UserAccount(id) ON DELETE RESTRICT,
+  user_group_id UUID NOT NULL REFERENCES UserGroup(id) ON DELETE RESTRICT,
   role UserGroupRole NOT NULL DEFAULT 'member',
   created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
   PRIMARY KEY (user_account_id, user_group_id)
@@ -95,9 +100,9 @@ CREATE TABLE Datei (
   latest_version_id UUID,
   content_md TEXT,
   content_search TSVECTOR GENERATED ALWAYS AS (to_tsvector('simple', coalesce(content_md, ''))) STORED,
-  created_by UUID REFERENCES UserAccount(id) ON DELETE SET NULL,
+  created_by UUID REFERENCES UserAccount(id) ON DELETE RESTRICT,
   trashed_at TIMESTAMP,
-  trashed_by UUID REFERENCES UserAccount(id) ON DELETE SET NULL,
+  trashed_by UUID REFERENCES UserAccount(id) ON DELETE RESTRICT,
   created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
   updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp
 );
@@ -122,7 +127,7 @@ CREATE TABLE DateiVersion (
   checksum TEXT NOT NULL,
   mime_type TEXT NOT NULL,
   content_md TEXT,
-  created_by UUID REFERENCES UserAccount(id) ON DELETE SET NULL,
+  created_by UUID REFERENCES UserAccount(id) ON DELETE RESTRICT,
   created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
   UNIQUE (datei_id, version_number)
 );
@@ -171,8 +176,8 @@ CREATE INDEX idx_DateiAnnotation_datei_id ON DateiAnnotation(datei_id);
 CREATE TABLE DateiPermission (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
   datei_id UUID NOT NULL REFERENCES Datei(id) ON DELETE CASCADE,
-  user_account_id UUID REFERENCES UserAccount(id) ON DELETE CASCADE,
-  user_group_id UUID REFERENCES UserGroup(id) ON DELETE CASCADE,
+  user_account_id UUID REFERENCES UserAccount(id) ON DELETE RESTRICT,
+  user_group_id UUID REFERENCES UserGroup(id) ON DELETE RESTRICT,
   permission_type TEXT NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
   CONSTRAINT ck_DateiPermission_grantee CHECK (
@@ -198,7 +203,7 @@ CREATE UNIQUE INDEX uq_DateiPermission_group ON DateiPermission(datei_id, user_g
 CREATE TABLE PublicLink (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
   token TEXT NOT NULL UNIQUE,
-  created_by UUID NOT NULL REFERENCES UserAccount(id) ON DELETE CASCADE,
+  created_by UUID NOT NULL REFERENCES UserAccount(id) ON DELETE RESTRICT,
   permission_type TEXT NOT NULL DEFAULT 'read_only',
   expires_at TIMESTAMP,
   created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
@@ -227,7 +232,7 @@ CREATE INDEX idx_PublicLink_Datei_datei_id ON PublicLink_Datei(datei_id);
 -- ============================================================================
 
 CREATE TABLE Datei_Star (
-  user_account_id UUID NOT NULL REFERENCES UserAccount(id) ON DELETE CASCADE,
+  user_account_id UUID NOT NULL REFERENCES UserAccount(id) ON DELETE RESTRICT,
   datei_id UUID NOT NULL REFERENCES Datei(id) ON DELETE CASCADE,
   created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
   PRIMARY KEY (user_account_id, datei_id)
@@ -242,7 +247,7 @@ CREATE INDEX idx_Datei_Star_datei_id ON Datei_Star(datei_id);
 CREATE TABLE DateiComment (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
   datei_id UUID NOT NULL REFERENCES Datei(id) ON DELETE CASCADE,
-  user_account_id UUID NOT NULL REFERENCES UserAccount(id) ON DELETE CASCADE,
+  user_account_id UUID NOT NULL REFERENCES UserAccount(id) ON DELETE RESTRICT,
   content TEXT NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
   updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp
@@ -257,7 +262,7 @@ CREATE INDEX idx_DateiComment_user_account_id ON DateiComment(user_account_id);
 
 CREATE TABLE AuditLog (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
-  actor_id UUID REFERENCES UserAccount(id) ON DELETE SET NULL,
+  actor_id UUID REFERENCES UserAccount(id) ON DELETE RESTRICT,
   action TEXT NOT NULL,
   target_type TEXT NOT NULL,
   target_id UUID NOT NULL,

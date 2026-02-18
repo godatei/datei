@@ -12,6 +12,7 @@ erDiagram
         TEXT mfa_secret
         BOOLEAN mfa_enabled
         TIMESTAMP mfa_enabled_at
+        TIMESTAMP archived_at
         TIMESTAMP created_at
         TIMESTAMP updated_at
     }
@@ -38,6 +39,7 @@ erDiagram
         UUID id PK
         TEXT name UK
         UUID created_by FK
+        TIMESTAMP archived_at
         TIMESTAMP created_at
     }
 
@@ -202,10 +204,11 @@ erDiagram
 │ id             UUID           PK         │       │ id             UUID           PK     │
 │ name           TEXT           NOT NULL   │       │ name           TEXT           UNIQUE  │
 │ password_hash  TEXT           NOT NULL   │       │ created_by     UUID           FK     │
-│ password_salt  TEXT           NOT NULL   │       │ created_at     TIMESTAMP             │
-│ mfa_secret     TEXT                      │       └──────────┬───────────────────────────┘
-│ mfa_enabled    BOOLEAN  DEFAULT false    │                  │
+│ password_salt  TEXT           NOT NULL   │       │ archived_at    TIMESTAMP             │
+│ mfa_secret     TEXT                      │       │ created_at     TIMESTAMP             │
+│ mfa_enabled    BOOLEAN  DEFAULT false    │       └──────────┬───────────────────────────┘
 │ mfa_enabled_at TIMESTAMP                 │                  │
+│ archived_at    TIMESTAMP                 │                  │
 │ created_at     TIMESTAMP                 │                  │
 │ updated_at     TIMESTAMP                 │                  │
 │ CHECK: mfa_enabled => mfa_secret set     │                  │
@@ -422,12 +425,28 @@ Key constraints:
 - **No duplicates**: Unique indexes prevent granting the same user or group multiple permissions on the same Datei
 - **Grantee required**: A CHECK constraint ensures exactly one of user/group is set
 
-### Soft Delete (Trash)
+### Deletion Policy
 
-The `trashed_at` timestamp on `Datei` supports a trash/recycle bin. The `trashed_by` column
+All foreign keys referencing `UserAccount` and `UserGroup` use `ON DELETE RESTRICT`, with two
+exceptions: `UserEmail` and `UserAccount_MFARecoveryCode` use `ON DELETE CASCADE` since they
+are intrinsic to the user account and meaningless without it. This means a user or group cannot
+be hard-deleted while any references exist (permissions, comments, stars, public links, audit
+logs, etc.). The application must explicitly clean up or reassign these references before a
+hard delete is permitted. In practice, soft deletion via `archived_at` should be the default —
+hard deletion is reserved for rare administrative operations.
+
+### Soft Delete
+
+**Datei**: The `trashed_at` timestamp supports a trash/recycle bin. The `trashed_by` column
 records who put the item in the trash. Items with `trashed_at IS NULL` are active; items with
 a timestamp are in trash. A partial index on `trashed_at` optimizes listing trashed items.
 Application queries should filter on `WHERE trashed_at IS NULL` by default.
+
+**UserAccount and UserGroup**: The `archived_at` timestamp supports soft deletion (archiving).
+Archived accounts/groups are hidden from normal queries but their data remains intact, preserving
+referential integrity for files, permissions, comments, and audit history. Application queries
+should filter on `WHERE archived_at IS NULL` by default. Partial indexes on `archived_at`
+optimize querying archived entities.
 
 ### Labels and Annotations
 
