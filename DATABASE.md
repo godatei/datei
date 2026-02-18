@@ -9,6 +9,19 @@ erDiagram
         TEXT name
         TEXT password_hash
         TEXT password_salt
+        TEXT mfa_secret
+        BOOLEAN mfa_enabled
+        TIMESTAMP mfa_enabled_at
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+
+    UserAccount_MFARecoveryCode {
+        UUID id PK
+        UUID user_account_id FK
+        TEXT code_hash
+        TEXT code_salt
+        TIMESTAMP used_at
         TIMESTAMP created_at
     }
 
@@ -24,12 +37,14 @@ erDiagram
     UserGroup {
         UUID id PK
         TEXT name UK
+        UUID created_by FK
         TIMESTAMP created_at
     }
 
     UserGroup_Member {
         UUID user_account_id PK,FK
         UUID user_group_id PK,FK
+        UserGroupRole role "ENUM"
         TIMESTAMP created_at
     }
 
@@ -45,6 +60,7 @@ erDiagram
         UUID id PK
         UUID parent_id FK
         TEXT name
+        TEXT original_filename
         BOOLEAN is_directory
         TEXT mime_type
         BIGINT file_size
@@ -53,7 +69,11 @@ erDiagram
         TEXT checksum
         UUID linked_datei_id FK
         UUID latest_version_id FK
+        TEXT content_md
+        TSVECTOR content_search "generated"
+        UUID created_by FK
         TIMESTAMP trashed_at
+        UUID trashed_by FK
         TIMESTAMP created_at
         TIMESTAMP updated_at
     }
@@ -67,6 +87,7 @@ erDiagram
         BIGINT file_size
         TEXT checksum
         TEXT mime_type
+        TEXT content_md
         UUID created_by FK
         TIMESTAMP created_at
     }
@@ -82,6 +103,7 @@ erDiagram
         TEXT key
         TEXT value
         TIMESTAMP created_at
+        TIMESTAMP updated_at
     }
 
     DateiPermission {
@@ -97,6 +119,7 @@ erDiagram
         UUID id PK
         TEXT token UK
         UUID created_by FK
+        TEXT permission_type
         TIMESTAMP expires_at
         TIMESTAMP created_at
     }
@@ -106,13 +129,44 @@ erDiagram
         UUID datei_id PK,FK
     }
 
+    Datei_Star {
+        UUID user_account_id PK,FK
+        UUID datei_id PK,FK
+        TIMESTAMP created_at
+    }
+
+    DateiComment {
+        UUID id PK
+        UUID datei_id FK
+        UUID user_account_id FK
+        TEXT content
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+
+    AuditLog {
+        UUID id PK
+        UUID actor_id FK
+        TEXT action
+        TEXT target_type
+        UUID target_id
+        JSONB metadata
+        TEXT ip_address
+        TIMESTAMP created_at
+    }
+
     schema_migrations {
         BIGINT version PK
         BOOLEAN dirty
     }
 
+    UserAccount ||--o{ UserAccount_MFARecoveryCode : "has recovery codes"
     UserAccount ||--o{ UserEmail : "has emails"
     UserAccount ||--o{ UserGroup_Member : "belongs to"
+    UserAccount ||--o{ UserGroup : "created"
+    UserAccount ||--o{ Datei_Star : "starred"
+    UserAccount ||--o{ DateiComment : "commented"
+    UserAccount ||--o{ AuditLog : "performed"
     UserGroup ||--o{ UserGroup_Member : "has members"
 
     Datei ||--o{ Datei : "parent_id (folder hierarchy)"
@@ -123,6 +177,8 @@ erDiagram
     Datei ||--o{ DateiAnnotation : "has annotations"
     Datei ||--o{ DateiPermission : "has permissions"
     Datei ||--o{ PublicLink_Datei : "shared via"
+    Datei ||--o{ Datei_Star : "starred by"
+    Datei ||--o{ DateiComment : "has comments"
 
     Label ||--o{ Datei_Label : "applied to"
 
@@ -130,6 +186,8 @@ erDiagram
     DateiPermission }o--o| UserGroup : "granted to group"
 
     DateiVersion }o--o| UserAccount : "created_by"
+    Datei }o--o| UserAccount : "created_by"
+    Datei }o--o| UserAccount : "trashed_by"
 
     PublicLink ||--o{ PublicLink_Datei : "contains"
     PublicLink }o--|| UserAccount : "created_by"
@@ -138,41 +196,59 @@ erDiagram
 ## ASCII Schema
 
 ```
-┌──────────────────────────────────────┐       ┌──────────────────────────────────────┐
-│ UserAccount                          │       │ UserGroup                            │
-├──────────────────────────────────────┤       ├──────────────────────────────────────┤
-│ id             UUID           PK     │       │ id             UUID           PK     │
-│ name           TEXT           NOT NULL│       │ name           TEXT           UNIQUE  │
-│ password_hash  TEXT           NOT NULL│       │ created_at     TIMESTAMP             │
-│ password_salt  TEXT           NOT NULL│       └──────────┬───────────────────────────┘
-│ created_at     TIMESTAMP             │                  │
-└──┬──────────┬────────────────────────┘                  │
-   │          │                                           │
-   │          │  ┌────────────────────────────────────────┐│
-   │          │  │ UserGroup_Member                       ││
-   │          │  ├────────────────────────────────────────┤│
-   │          │  │ user_account_id  UUID  PK,FK ──────────┘│
-   │          │  │ user_group_id    UUID  PK,FK ───────────┘
-   │          │  │ created_at       TIMESTAMP              │
-   │          │  └─────────────────────────────────────────┘
-   │          │
-   │          │  ┌────────────────────────────────────────┐
-   │          └─>│ UserEmail                              │
-   │             ├────────────────────────────────────────┤
-   │             │ id               UUID       PK         │
-   │             │ user_account_id  UUID       FK         │
-   │             │ email            TEXT       UNIQUE     │
-   │             │ verified_at      TIMESTAMP             │
-   │             │ is_primary       BOOLEAN               │
-   │             │ created_at       TIMESTAMP             │
-   │             └────────────────────────────────────────┘
+┌──────────────────────────────────────────┐       ┌──────────────────────────────────────┐
+│ UserAccount                              │       │ UserGroup                            │
+├──────────────────────────────────────────┤       ├──────────────────────────────────────┤
+│ id             UUID           PK         │       │ id             UUID           PK     │
+│ name           TEXT           NOT NULL   │       │ name           TEXT           UNIQUE  │
+│ password_hash  TEXT           NOT NULL   │       │ created_by     UUID           FK     │
+│ password_salt  TEXT           NOT NULL   │       │ created_at     TIMESTAMP             │
+│ mfa_secret     TEXT                      │       └──────────┬───────────────────────────┘
+│ mfa_enabled    BOOLEAN  DEFAULT false    │                  │
+│ mfa_enabled_at TIMESTAMP                 │                  │
+│ created_at     TIMESTAMP                 │                  │
+│ updated_at     TIMESTAMP                 │                  │
+│ CHECK: mfa_enabled => mfa_secret set     │                  │
+└──┬──────┬───────┬────────────────────────┘                  │
+   │      │       │                                           │
+   │      │       │  ┌─────────────────────────────────────────────┐
+   │      │       │  │ UserAccount_MFARecoveryCode                 │
+   │      │       │  ├─────────────────────────────────────────────┤
+   │      │       └─>│ id               UUID       PK              │
+   │      │          │ user_account_id  UUID       FK              │
+   │      │          │ code_hash        TEXT       NOT NULL        │
+   │      │          │ code_salt        TEXT       NOT NULL        │
+   │      │          │ used_at          TIMESTAMP                  │
+   │      │          │ created_at       TIMESTAMP                  │
+   │      │          └─────────────────────────────────────────────┘
+   │      │                                                   │
+   │      │  ┌────────────────────────────────────────────────┐│
+   │      │  │ UserGroup_Member                               ││
+   │      │  ├────────────────────────────────────────────────┤│
+   │      │  │ user_account_id  UUID  PK,FK ──────────────────┘│
+   │      │  │ user_group_id    UUID  PK,FK ───────────────────┘
+   │      │  │ role             UserGroupRole  DEFAULT 'member'│
+   │      │  │ created_at       TIMESTAMP                      │
+   │      │  └─────────────────────────────────────────────────┘
+   │      │
+   │      │  ┌────────────────────────────────────────┐
+   │      └─>│ UserEmail                              │
+   │         ├────────────────────────────────────────┤
+   │         │ id               UUID       PK         │
+   │         │ user_account_id  UUID       FK         │
+   │         │ email            TEXT       UNIQUE     │
+   │         │ verified_at      TIMESTAMP             │
+   │         │ is_primary       BOOLEAN               │
+   │         │ created_at       TIMESTAMP             │
+   │         └────────────────────────────────────────┘
    │
    │  ┌───────────────────────────────────────────────────────────────────┐
    │  │ Datei                                                            │
    │  ├───────────────────────────────────────────────────────────────────┤
    │  │ id                 UUID       PK                                 │
-   │  │ parent_id          UUID       FK -> Datei(id)  [folder tree]     │
+   │  │ parent_id          UUID       FK -> Datei(id)  ON DELETE RESTRICT│
    │  │ name               TEXT       NOT NULL                           │
+   │  │ original_filename  TEXT                                          │
    │  │ is_directory       BOOLEAN    NOT NULL DEFAULT false             │
    │  │ mime_type          TEXT                                          │
    │  │ file_size          BIGINT                                        │
@@ -181,7 +257,11 @@ erDiagram
    │  │ checksum           TEXT                                          │
    │  │ linked_datei_id    UUID       FK -> Datei(id)  [link]            │
    │  │ latest_version_id  UUID       FK -> DateiVersion(id)             │
+   │  │ content_md         TEXT       [markdown for full-text search]    │
+   │  │ content_search     TSVECTOR   GENERATED (GIN indexed, 'simple') │
+   │  │ created_by         UUID       FK -> UserAccount(id)              │
    │  │ trashed_at         TIMESTAMP  [soft delete / trash]              │
+   │  │ trashed_by         UUID       FK -> UserAccount(id)              │
    │  │ created_at         TIMESTAMP                                     │
    │  │ updated_at         TIMESTAMP                                     │
    │  └──┬──────────┬──────────┬──────────┬──────────────────────────────┘
@@ -197,6 +277,7 @@ erDiagram
    │     │          │          │             │ file_size       BIGINT     NOT NULL  │
    │     │          │          │             │ checksum        TEXT       NOT NULL  │
    │     │          │          │             │ mime_type       TEXT       NOT NULL  │
+   │     │          │          │             │ content_md      TEXT                 │
    │     │          │          │             │ created_by      UUID       FK -> UserAccount │
    │     │          │          │             │ created_at      TIMESTAMP           │
    │     │          │          │             │ UNIQUE(datei_id, version_number)    │
@@ -210,6 +291,7 @@ erDiagram
    │     │          │             │ key         TEXT       NOT NULL     │
    │     │          │             │ value       TEXT       NOT NULL     │
    │     │          │             │ created_at  TIMESTAMP              │
+   │     │          │             │ updated_at  TIMESTAMP              │
    │     │          │             │ UNIQUE(datei_id, key)              │
    │     │          │             └─────────────────────────────────────┘
    │     │          │
@@ -236,15 +318,50 @@ erDiagram
    │                                                   │ created_at        TIMESTAMP   │
    │                                                   └──────────────────────────────┘
    │
-   │  ┌──────────────────────────────────┐     ┌────────────────────────────────────┐
-   └─>│ PublicLink                       │     │ PublicLink_Datei                   │
-      ├──────────────────────────────────┤     ├────────────────────────────────────┤
-      │ id          UUID       PK        │<────│ public_link_id  UUID  PK,FK        │
-      │ token       TEXT       UNIQUE    │     │ datei_id        UUID  PK,FK -> Datei │
-      │ created_by  UUID       FK        │     └────────────────────────────────────┘
-      │ expires_at  TIMESTAMP            │
-      │ created_at  TIMESTAMP            │
-      └──────────────────────────────────┘
+   │  ┌──────────────────────────────────────┐     ┌────────────────────────────────────┐
+   └─>│ PublicLink                           │     │ PublicLink_Datei                   │
+      ├──────────────────────────────────────┤     ├────────────────────────────────────┤
+      │ id              UUID       PK        │<────│ public_link_id  UUID  PK,FK        │
+      │ token           TEXT       UNIQUE    │     │ datei_id        UUID  PK,FK -> Datei│
+      │ created_by      UUID       FK        │     └────────────────────────────────────┘
+      │ permission_type TEXT       DEFAULT   │
+      │                 'read_only'          │
+      │ expires_at      TIMESTAMP            │
+      │ created_at      TIMESTAMP            │
+      │ CHECK: read_only|read_write          │
+      └──────────────────────────────────────┘
+
+┌──────────────────────────────────────────┐
+│ Datei_Star                               │
+├──────────────────────────────────────────┤
+│ user_account_id  UUID  PK,FK -> UserAccount │
+│ datei_id         UUID  PK,FK -> Datei    │
+│ created_at       TIMESTAMP               │
+└──────────────────────────────────────────┘
+
+┌──────────────────────────────────────────┐
+│ DateiComment                             │
+├──────────────────────────────────────────┤
+│ id               UUID       PK           │
+│ datei_id         UUID       FK -> Datei  │
+│ user_account_id  UUID       FK -> UserAccount │
+│ content          TEXT       NOT NULL     │
+│ created_at       TIMESTAMP              │
+│ updated_at       TIMESTAMP              │
+└──────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────┐
+│ AuditLog                                             │
+├──────────────────────────────────────────────────────┤
+│ id           UUID       PK                           │
+│ actor_id     UUID       FK -> UserAccount (nullable) │
+│ action       TEXT       NOT NULL                     │
+│ target_type  TEXT       NOT NULL                     │
+│ target_id    UUID       NOT NULL                     │
+│ metadata     JSONB                                   │
+│ ip_address   TEXT                                    │
+│ created_at   TIMESTAMP                               │
+└──────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────┐
 │ schema_migrations            │
@@ -277,7 +394,8 @@ compared to random UUIDv4 while still avoiding enumerable IDs.
 
 Uses the **adjacency list** pattern (`parent_id` self-referencing FK). This is the simplest
 model and performs well with PostgreSQL `WITH RECURSIVE` CTEs for breadcrumb and subtree queries.
-`ON DELETE CASCADE` means deleting a folder recursively removes all contents.
+`ON DELETE RESTRICT` prevents accidental recursive deletion of folder trees -- the application
+must explicitly trash or move children before deleting a parent folder.
 
 ### Links
 
@@ -306,27 +424,83 @@ Key constraints:
 
 ### Soft Delete (Trash)
 
-The `trashed_at` timestamp on `Datei` supports a trash/recycle bin. Items with `trashed_at IS NULL`
-are active; items with a timestamp are in trash. A partial index on `trashed_at` optimizes
-listing trashed items. Application queries should filter on `WHERE trashed_at IS NULL` by default.
+The `trashed_at` timestamp on `Datei` supports a trash/recycle bin. The `trashed_by` column
+records who put the item in the trash. Items with `trashed_at IS NULL` are active; items with
+a timestamp are in trash. A partial index on `trashed_at` optimizes listing trashed items.
+Application queries should filter on `WHERE trashed_at IS NULL` by default.
 
 ### Labels and Annotations
 
 - **Labels** have globally unique names and customizable foreground/background colors.
   The many-to-many `Datei_Label` relation table allows any Datei to have multiple labels.
 - **Annotations** are key-value pairs per Datei. The `UNIQUE(datei_id, key)` constraint
-  ensures each key appears at most once per Datei.
+  ensures each key appears at most once per Datei. The `updated_at` column tracks when
+  a value was last changed.
+
+### Full-Text Search
+
+Each Datei and DateiVersion stores a `content_md` column containing the file's content
+converted to markdown. On the Datei table, a generated `content_search` TSVECTOR column is
+automatically derived from `content_md` using `to_tsvector('simple', ...)` and indexed
+with a GIN index for fast full-text search queries. The `simple` text search configuration
+is language-agnostic, making it suitable for a self-hosted solution used internationally.
+The DateiVersion table stores `content_md` for historical reference but does not have a
+search index (search operates on current content only).
+
+Example query:
+```sql
+SELECT id, name FROM Datei
+WHERE content_search @@ to_tsquery('simple', 'quarterly & report')
+  AND trashed_at IS NULL;
+```
 
 ### Public Links
 
 Token-based sharing via `PublicLink`. Each link has a unique token, optional expiration,
-and references multiple Dateis through the `PublicLink_Datei` relation table.
+a `permission_type` (`read_only` or `read_write`), and references multiple Dateis through
+the `PublicLink_Datei` relation table.
 
 ### User Emails
 
 Users can have multiple email addresses (`UserEmail` table). The `is_primary` flag marks the
 main email, enforced to at most one per user via a partial unique index. Each email can be
 independently verified via `verified_at`.
+
+### MFA (Multi-Factor Authentication)
+
+The `UserAccount` table includes `mfa_secret`, `mfa_enabled`, and `mfa_enabled_at` columns.
+A CHECK constraint (`ck_UserAccount_mfa`) ensures that `mfa_secret` must be set when
+`mfa_enabled` is true. The `UserAccount_MFARecoveryCode` relation table stores hashed
+one-time recovery codes. The `used_at` column tracks whether a code has been consumed.
+The index on `(user_account_id, used_at)` supports efficient lookup of unused codes.
+
+### User Groups
+
+Each `UserGroup` tracks its `created_by` user. The `UserGroup_Member` relation table includes
+a `role` column using the `UserGroupRole` enum (`admin` or `member`). Group admins can manage
+membership; regular members inherit group permissions only.
+
+### Datei Stars (Favorites)
+
+The `Datei_Star` relation table allows users to star/favorite Dateis for quick access.
+Scoped per user with a composite PK `(user_account_id, datei_id)`.
+
+### Datei Comments
+
+The `DateiComment` table supports collaboration with threaded discussions on files.
+Each comment is tied to a Datei and a UserAccount, with `updated_at` tracking edits.
+
+### Audit Log
+
+The `AuditLog` table records all significant actions in the system. Each entry captures:
+- `actor_id` -- the user who performed the action (nullable for system actions)
+- `action` -- the action type (e.g. `datei.create`, `datei.trash`, `permission.grant`, `user.login`)
+- `target_type` and `target_id` -- the entity affected (polymorphic reference)
+- `metadata` -- additional context as JSONB (e.g. old/new values, file names)
+- `ip_address` -- client IP for security auditing
+
+Indexed on `(target_type, target_id)` for entity history lookups and on `created_at`
+for chronological querying.
 
 ### schema_migrations
 

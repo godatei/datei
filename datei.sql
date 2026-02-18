@@ -10,8 +10,26 @@ CREATE TABLE UserAccount (
   name TEXT NOT NULL,
   password_hash TEXT NOT NULL,
   password_salt TEXT NOT NULL,
+  mfa_secret TEXT,
+  mfa_enabled BOOLEAN NOT NULL DEFAULT false,
+  mfa_enabled_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
+  updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
+  CONSTRAINT ck_UserAccount_mfa CHECK (
+    mfa_enabled = false OR mfa_secret IS NOT NULL
+  )
+);
+
+CREATE TABLE UserAccount_MFARecoveryCode (
+  id UUID PRIMARY KEY DEFAULT uuidv7(),
+  user_account_id UUID NOT NULL REFERENCES UserAccount(id) ON DELETE CASCADE,
+  code_hash TEXT NOT NULL,
+  code_salt TEXT NOT NULL,
+  used_at TIMESTAMP,
   created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
 );
+
+CREATE INDEX idx_UserAccount_MFARecoveryCode_user_account_id ON UserAccount_MFARecoveryCode(user_account_id, used_at);
 
 CREATE TABLE UserEmail (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
@@ -28,12 +46,18 @@ CREATE UNIQUE INDEX uq_UserEmail_primary ON UserEmail(user_account_id) WHERE is_
 CREATE TABLE UserGroup (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
   name TEXT NOT NULL UNIQUE,
+  created_by UUID NOT NULL REFERENCES UserAccount(id) ON DELETE CASCADE,
   created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
 );
+
+CREATE INDEX idx_UserGroup_created_by ON UserGroup(created_by);
+
+CREATE TYPE UserGroupRole AS ENUM ('admin', 'member');
 
 CREATE TABLE UserGroup_Member (
   user_account_id UUID NOT NULL REFERENCES UserAccount(id) ON DELETE CASCADE,
   user_group_id UUID NOT NULL REFERENCES UserGroup(id) ON DELETE CASCADE,
+  role UserGroupRole NOT NULL DEFAULT 'member',
   created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
   PRIMARY KEY (user_account_id, user_group_id)
 );
@@ -58,8 +82,9 @@ CREATE TABLE Label (
 
 CREATE TABLE Datei (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
-  parent_id UUID REFERENCES Datei(id) ON DELETE CASCADE,
+  parent_id UUID REFERENCES Datei(id) ON DELETE RESTRICT,
   name TEXT NOT NULL,
+  original_filename TEXT,
   is_directory BOOLEAN NOT NULL DEFAULT false,
   mime_type TEXT,
   file_size BIGINT,
@@ -68,7 +93,11 @@ CREATE TABLE Datei (
   checksum TEXT,
   linked_datei_id UUID REFERENCES Datei(id) ON DELETE SET NULL,
   latest_version_id UUID,
+  content_md TEXT,
+  content_search TSVECTOR GENERATED ALWAYS AS (to_tsvector('simple', coalesce(content_md, ''))) STORED,
+  created_by UUID REFERENCES UserAccount(id) ON DELETE SET NULL,
   trashed_at TIMESTAMP,
+  trashed_by UUID REFERENCES UserAccount(id) ON DELETE SET NULL,
   created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
   updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp
 );
@@ -76,6 +105,8 @@ CREATE TABLE Datei (
 CREATE INDEX idx_Datei_parent_id ON Datei(parent_id);
 CREATE INDEX idx_Datei_linked_datei_id ON Datei(linked_datei_id) WHERE linked_datei_id IS NOT NULL;
 CREATE INDEX idx_Datei_trashed_at ON Datei(trashed_at) WHERE trashed_at IS NOT NULL;
+CREATE INDEX idx_Datei_content_search ON Datei USING GIN(content_search);
+CREATE INDEX idx_Datei_created_by ON Datei(created_by) WHERE created_by IS NOT NULL;
 
 -- ============================================================================
 -- Datei Version
@@ -90,6 +121,7 @@ CREATE TABLE DateiVersion (
   file_size BIGINT NOT NULL,
   checksum TEXT NOT NULL,
   mime_type TEXT NOT NULL,
+  content_md TEXT,
   created_by UUID REFERENCES UserAccount(id) ON DELETE SET NULL,
   created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
   UNIQUE (datei_id, version_number)
@@ -126,6 +158,7 @@ CREATE TABLE DateiAnnotation (
   key TEXT NOT NULL,
   value TEXT NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
+  updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
   UNIQUE (datei_id, key)
 );
 
@@ -166,8 +199,12 @@ CREATE TABLE PublicLink (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
   token TEXT NOT NULL UNIQUE,
   created_by UUID NOT NULL REFERENCES UserAccount(id) ON DELETE CASCADE,
+  permission_type TEXT NOT NULL DEFAULT 'read_only',
   expires_at TIMESTAMP,
-  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
+  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
+  CONSTRAINT ck_PublicLink_permission_type CHECK (
+    permission_type IN ('read_only', 'read_write')
+  )
 );
 
 CREATE INDEX idx_PublicLink_created_by ON PublicLink(created_by);
@@ -184,3 +221,52 @@ CREATE TABLE PublicLink_Datei (
 );
 
 CREATE INDEX idx_PublicLink_Datei_datei_id ON PublicLink_Datei(datei_id);
+
+-- ============================================================================
+-- Datei Star (User-scoped favorites, Relation Table)
+-- ============================================================================
+
+CREATE TABLE Datei_Star (
+  user_account_id UUID NOT NULL REFERENCES UserAccount(id) ON DELETE CASCADE,
+  datei_id UUID NOT NULL REFERENCES Datei(id) ON DELETE CASCADE,
+  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
+  PRIMARY KEY (user_account_id, datei_id)
+);
+
+CREATE INDEX idx_Datei_Star_datei_id ON Datei_Star(datei_id);
+
+-- ============================================================================
+-- Datei Comment
+-- ============================================================================
+
+CREATE TABLE DateiComment (
+  id UUID PRIMARY KEY DEFAULT uuidv7(),
+  datei_id UUID NOT NULL REFERENCES Datei(id) ON DELETE CASCADE,
+  user_account_id UUID NOT NULL REFERENCES UserAccount(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
+  updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp
+);
+
+CREATE INDEX idx_DateiComment_datei_id ON DateiComment(datei_id);
+CREATE INDEX idx_DateiComment_user_account_id ON DateiComment(user_account_id);
+
+-- ============================================================================
+-- Audit Log
+-- ============================================================================
+
+CREATE TABLE AuditLog (
+  id UUID PRIMARY KEY DEFAULT uuidv7(),
+  actor_id UUID REFERENCES UserAccount(id) ON DELETE SET NULL,
+  action TEXT NOT NULL,
+  target_type TEXT NOT NULL,
+  target_id UUID NOT NULL,
+  metadata JSONB,
+  ip_address TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
+);
+
+CREATE INDEX idx_AuditLog_actor_id ON AuditLog(actor_id) WHERE actor_id IS NOT NULL;
+CREATE INDEX idx_AuditLog_target ON AuditLog(target_type, target_id);
+CREATE INDEX idx_AuditLog_action ON AuditLog(action);
+CREATE INDEX idx_AuditLog_created_at ON AuditLog(created_at);
