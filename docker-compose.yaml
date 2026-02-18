@@ -1,0 +1,22 @@
+name: datei-dev
+
+services:
+  postgres:
+    image: "postgres:18.2-alpine3.23"
+    environment:
+      POSTGRES_USER: local
+      POSTGRES_PASSWORD: local
+      POSTGRES_DB: datei
+    volumes:
+      - "postgres:/var/lib/postgresql/data/"
+    ports:
+      - "5432:5432"
+
+  mailpit:
+    image: "axllent/mailpit:v1.29.1"
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+volumes:
+  postgres:
