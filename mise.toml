@@ -12,8 +12,12 @@ CGO_ENABLED = "0"
 [vars]
 ldflags = "-s -w -X github.com/distr-sh/distr/internal/buildconfig.version=$VERSION -X github.com/distr-sh/distr/internal/buildconfig.commit=$COMMIT"
 
+[tasks.go-generate]
+run = 'go generate ./...'
+
 [tasks.go-tidy]
 run = 'go mod tidy'
+depends = ["go-generate"]
 
 [tasks."build:datei"]
 run = 'go build -ldflags="{{vars.ldflags}}" -o dist/datei .'
