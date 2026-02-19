@@ -1,0 +1,54 @@
+[tools]
+go = "1.26.0"
+golangci-lint = "2.10.1"
+node = "24"
+pnpm = "10.30.0"
+
+[env]
+_.source = ['hack/current-commit.sh']
+VERSION = 'snapshot'
+CGO_ENABLED = "0"
+
+[vars]
+ldflags = "-s -w -X github.com/distr-sh/distr/internal/buildconfig.version=$VERSION -X github.com/distr-sh/distr/internal/buildconfig.commit=$COMMIT"
+
+[tasks.go-tidy]
+run = 'go mod tidy'
+
+[tasks."build:datei"]
+run = 'go build -ldflags="{{vars.ldflags}}" -o dist/datei .'
+depends = ["go-tidy"]
+
+[tasks."lint:go"]
+depends = ["go-tidy"]
+run = 'golangci-lint run'
+
+[tasks.lint]
+run = { tasks = ["lint:go"] }
+
+[tasks."test:go"]
+run = 'go test ./...'
+depends = ["go-tidy"]
+description = 'Run all Go tests'
+
+[tasks.test]
+run = { tasks = ["test:go"] }
+
+[tasks."format:go"]
+run = 'golangci-lint run --fix'
+
+[tasks."format:frontend"]
+run = 'pnpm format'
+
+[tasks.format]
+run = { tasks = ["format:go"] }
+
+[tasks."run:datei:serve"]
+alias = "serve"
+run = 'go run -ldflags="{{vars.ldflags}}" . serve'
+depends = ["go-tidy"]
+sources = ["api/**/*.go", "cmd/**/*.go", "internal/**/*.go"]
+
+[tasks."run:datei:migrate"]
+run = 'go run -ldflags="{{vars.ldflags}}" . migrate'
+description = 'Migrate the database to the latest schema version. Protip: `mise run:datei:migrate -- --to xx` to migrate to a specific version'
