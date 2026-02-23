@@ -131,7 +131,7 @@ CREATE INDEX idx_DateiVersion_content_search ON DateiVersion USING GIN(content_s
 -- Deferred FK: Datei.latest_version_id -> DateiVersion.id
 ALTER TABLE Datei
   ADD CONSTRAINT fk_Datei_latest_version
-  FOREIGN KEY (latest_version_id) REFERENCES DateiVersion(id) ON DELETE SET NULL;
+  FOREIGN KEY (latest_version_id) REFERENCES DateiVersion(id) ON DELETE RESTRICT;
 
 CREATE INDEX idx_Datei_latest_version_id ON Datei(latest_version_id) WHERE latest_version_id IS NOT NULL;
 
