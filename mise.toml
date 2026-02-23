@@ -20,9 +20,22 @@ run = 'go generate ./...'
 run = 'go mod tidy'
 depends = ["go-generate"]
 
+[tasks.frontend-deps]
+run = 'pnpm install'
+sources = ["package.json", "pnpm-lock.yaml"]
+
+[tasks."build:frontend:dev"]
+run = 'pnpm build:dev'
+depends = ["frontend-deps"]
+sources = ["node_modules/**/*", "frontend/ui/**/*"]
+
+[tasks."build:frontend"]
+run = 'pnpm build:community'
+depends = ["frontend-deps"]
+
 [tasks."build:datei"]
 run = 'go build -ldflags="{{vars.ldflags}}" -o dist/datei .'
-depends = ["go-tidy"]
+depends = ["go-tidy", "build:frontend"]
 
 [tasks."lint:go"]
 depends = ["go-tidy"]
@@ -51,7 +64,7 @@ run = { tasks = ["format:go"] }
 [tasks."run:datei:serve"]
 alias = "serve"
 run = 'go run -ldflags="{{vars.ldflags}}" . serve'
-depends = ["go-tidy"]
+depends = ["go-tidy", "build:frontend:dev"]
 sources = ["api/**/*.go", "cmd/**/*.go", "internal/**/*.go"]
 
 [tasks."run:datei:migrate"]

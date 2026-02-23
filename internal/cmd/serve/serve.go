@@ -15,6 +15,7 @@ import (
 	"github.com/godatei/datei/internal/config"
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/db/migrations"
+	"github.com/godatei/datei/internal/frontend"
 	"github.com/godatei/datei/internal/server"
 	middleware "github.com/oapi-codegen/nethttp-middleware"
 	"github.com/spf13/cobra"
@@ -56,9 +57,6 @@ func run(ctx context.Context, options Options) error {
 		return err
 	}
 
-	r := chi.NewRouter()
-	r.Use(middleware.OapiRequestValidator(swagger))
-
 	db, err := db.NewPool(ctx, config.DatabaseURI())
 	if err != nil {
 		slog.Error("database init error", "error", err)
@@ -73,8 +71,16 @@ func run(ctx context.Context, options Options) error {
 		}
 	}
 
+	apiMux := chi.NewRouter()
+	apiMux.Use(middleware.OapiRequestValidator(swagger))
 	strictHandler := server.NewStrictHandler(server.NewServer(db), nil)
-	httpServer := &http.Server{Handler: server.HandlerFromMux(strictHandler, r), Addr: config.ServerAddr()}
+	server.HandlerFromMux(strictHandler, apiMux)
+
+	rootMux := chi.NewRouter()
+	rootMux.Handle("/*", frontend.NewHandler())
+	rootMux.Handle("/api/*", apiMux)
+
+	httpServer := &http.Server{Handler: rootMux, Addr: config.ServerAddr()}
 
 	shutdownComplete := make(chan struct{})
 	sigCtx, _ := signal.NotifyContext(ctx, syscall.SIGTERM, syscall.SIGINT)
