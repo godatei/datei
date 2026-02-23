@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
@@ -9,8 +10,8 @@ import (
 
 type server struct{}
 
-func NewServer() *server {
-	return &server{}
+func NewServer() *server1 {
+	return &server1{}
 }
 
 func (s *server) PostApiV1Ping(w http.ResponseWriter, r *http.Request) {
@@ -33,3 +34,23 @@ func (s *server) GetApiV1Ping(w http.ResponseWriter, r *http.Request) {
 }
 
 var _ ServerInterface = (*server)(nil)
+
+type server1 struct{}
+
+// GetApiV1Ping implements [StrictServerInterface].
+func (s *server1) GetApiV1Ping(
+	ctx context.Context,
+	request GetApiV1PingRequestObject,
+) (GetApiV1PingResponseObject, error) {
+	return GetApiV1Ping200JSONResponse{Ping: "pong"}, nil
+}
+
+// PostApiV1Ping implements [StrictServerInterface].
+func (s *server1) PostApiV1Ping(
+	ctx context.Context,
+	request PostApiV1PingRequestObject,
+) (PostApiV1PingResponseObject, error) {
+	return PostApiV1Ping200JSONResponse{Ping: request.Body.Ping}, nil
+}
+
+var _ StrictServerInterface = (*server1)(nil)

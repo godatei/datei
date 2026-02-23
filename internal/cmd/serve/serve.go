@@ -48,12 +48,11 @@ func run(ctx context.Context, options Options) error {
 		return err
 	}
 
-	api := server.NewServer()
-
 	r := chi.NewRouter()
 	r.Use(middleware.OapiRequestValidator(swagger))
 
-	httpServer := &http.Server{Handler: server.HandlerFromMux(api, r), Addr: options.Addr}
+	strictHandler := server.NewStrictHandler(server.NewServer(), nil)
+	httpServer := &http.Server{Handler: server.HandlerFromMux(strictHandler, r), Addr: options.Addr}
 
 	shutdownComplete := make(chan struct{})
 	sigCtx, _ := signal.NotifyContext(ctx, syscall.SIGTERM, syscall.SIGINT)

@@ -3,4 +3,8 @@ package: server
 output: zz_generated.server.go
 generate:
   chi-server: true
+  strict-server: true
   embedded-spec: true
+additional-imports:
+  - package: github.com/godatei/datei/pkg/api
+    alias: .
