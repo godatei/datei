@@ -1,6 +1,7 @@
 [tools]
 go = "1.26.0"
 golangci-lint = "2.10.1"
+ko = "0.18.1"
 node = "24"
 pnpm = "10.30.0"
 
@@ -30,7 +31,7 @@ depends = ["frontend-deps"]
 sources = ["node_modules/**/*", "frontend/ui/**/*"]
 
 [tasks."build:frontend"]
-run = 'pnpm build:community'
+run = 'pnpm build'
 depends = ["frontend-deps"]
 
 [tasks."build:datei"]
@@ -70,3 +71,8 @@ sources = ["api/**/*.go", "cmd/**/*.go", "internal/**/*.go"]
 [tasks."run:datei:migrate"]
 run = 'go run -ldflags="{{vars.ldflags}}" . migrate'
 description = 'Migrate the database to the latest schema version. Protip: `mise run:datei:migrate -- --to xx` to migrate to a specific version'
+
+[tasks."build:container"]
+depends = "build:frontend"
+run = "ko build --push=false --local --base-import-paths"
+env = { KO_DOCKER_REPO = "ghcr.io/godatei" }
