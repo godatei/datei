@@ -25,7 +25,10 @@
                 "input": "frontend/ui/public"
               }
             ],
-            "styles": ["frontend/ui/src/styles.css"]
+            "styles": [
+              "frontend/ui/src/material-theme.scss",
+              "frontend/ui/src/styles.css"
+            ]
           },
           "configurations": {
             "production": {
