@@ -12,17 +12,20 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/godatei/datei/internal/buildconfig"
+	"github.com/godatei/datei/internal/config"
+	"github.com/godatei/datei/internal/db"
+	"github.com/godatei/datei/internal/db/migrations"
 	"github.com/godatei/datei/internal/server"
 	middleware "github.com/oapi-codegen/nethttp-middleware"
 	"github.com/spf13/cobra"
 )
 
 type Options struct {
-	Addr string
+	Config string
 }
 
 func (opts *Options) Bind(cmd *cobra.Command) {
-	cmd.Flags().StringVarP(&opts.Addr, "addr", "a", "0.0.0.0:8080", "listen address")
+	cmd.Flags().StringVar(&opts.Config, "config", "", "config file")
 }
 
 func NewCommand() *cobra.Command {
@@ -42,6 +45,11 @@ func NewCommand() *cobra.Command {
 }
 
 func run(ctx context.Context, options Options) error {
+	err := config.NewConfig(options.Config)
+	if err != nil {
+		slog.Warn("config error", "error", err)
+	}
+
 	swagger, err := server.GetSwagger()
 	if err != nil {
 		slog.Error("swagger error", "error", err)
@@ -51,8 +59,22 @@ func run(ctx context.Context, options Options) error {
 	r := chi.NewRouter()
 	r.Use(middleware.OapiRequestValidator(swagger))
 
-	strictHandler := server.NewStrictHandler(server.NewServer(), nil)
-	httpServer := &http.Server{Handler: server.HandlerFromMux(strictHandler, r), Addr: options.Addr}
+	db, err := db.NewPool(ctx, config.DatabaseURI())
+	if err != nil {
+		slog.Error("database init error", "error", err)
+		return err
+	}
+	defer db.Close()
+
+	if config.DatabaseMigrations() {
+		if err := migrations.Up(db); err != nil {
+			slog.Error("migrations failed", "error", err)
+			return err
+		}
+	}
+
+	strictHandler := server.NewStrictHandler(server.NewServer(db), nil)
+	httpServer := &http.Server{Handler: server.HandlerFromMux(strictHandler, r), Addr: config.ServerAddr()}
 
 	shutdownComplete := make(chan struct{})
 	sigCtx, _ := signal.NotifyContext(ctx, syscall.SIGTERM, syscall.SIGINT)
@@ -67,7 +89,7 @@ func run(ctx context.Context, options Options) error {
 	})
 
 	go func() {
-		slog.Info("server is listening", "addr", options.Addr, "version", buildconfig.Version())
+		slog.Info("server is listening", "addr", config.ServerAddr(), "version", buildconfig.Version())
 		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			slog.Error("listen and serve failed", "error", err)
 		}

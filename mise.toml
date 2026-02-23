@@ -6,6 +6,7 @@ pnpm = "10.30.0"
 
 [env]
 _.source = ['hack/current-commit.sh']
+_.file = ".env.local"
 VERSION = 'snapshot'
 CGO_ENABLED = "0"
 

@@ -1,0 +1,16 @@
+name: distr-dev
+
+services:
+  postgres:
+    image: 'postgres:18-alpine'
+    environment:
+      POSTGRES_USER: local
+      POSTGRES_PASSWORD: local
+      POSTGRES_DB: datei
+    volumes:
+      - 'postgres:/var/lib/postgresql/'
+    ports:
+      - '5432:5432'
+
+volumes:
+  postgres:
