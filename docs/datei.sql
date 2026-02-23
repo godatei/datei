@@ -12,10 +12,10 @@ CREATE TABLE UserAccount (
   password_salt TEXT NOT NULL,
   mfa_secret TEXT,
   mfa_enabled BOOLEAN NOT NULL DEFAULT false,
-  mfa_enabled_at TIMESTAMP,
-  archived_at TIMESTAMP,
-  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
-  updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
+  mfa_enabled_at TIMESTAMPTZ,
+  archived_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
   CONSTRAINT ck_UserAccount_mfa CHECK (
     mfa_enabled = false OR mfa_secret IS NOT NULL
   )
@@ -28,8 +28,8 @@ CREATE TABLE UserAccount_MFARecoveryCode (
   user_account_id UUID NOT NULL REFERENCES UserAccount(id) ON DELETE CASCADE,
   code_hash TEXT NOT NULL,
   code_salt TEXT NOT NULL,
-  used_at TIMESTAMP,
-  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
+  used_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp
 );
 
 CREATE INDEX idx_UserAccount_MFARecoveryCode_user_account_id ON UserAccount_MFARecoveryCode(user_account_id, used_at);
@@ -38,9 +38,9 @@ CREATE TABLE UserEmail (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
   user_account_id UUID NOT NULL REFERENCES UserAccount(id) ON DELETE CASCADE,
   email TEXT NOT NULL UNIQUE,
-  verified_at TIMESTAMP,
+  verified_at TIMESTAMPTZ,
   is_primary BOOLEAN NOT NULL DEFAULT false,
-  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
+  created_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp
 );
 
 CREATE INDEX idx_UserEmail_user_account_id ON UserEmail(user_account_id);
@@ -50,8 +50,8 @@ CREATE TABLE UserGroup (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
   name TEXT NOT NULL UNIQUE,
   created_by UUID NOT NULL REFERENCES UserAccount(id) ON DELETE RESTRICT,
-  archived_at TIMESTAMP,
-  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
+  archived_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp
 );
 
 CREATE INDEX idx_UserGroup_created_by ON UserGroup(created_by);
@@ -63,7 +63,7 @@ CREATE TABLE UserGroup_Member (
   user_account_id UUID NOT NULL REFERENCES UserAccount(id) ON DELETE RESTRICT,
   user_group_id UUID NOT NULL REFERENCES UserGroup(id) ON DELETE RESTRICT,
   role UserGroupRole NOT NULL DEFAULT 'member',
-  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
   PRIMARY KEY (user_account_id, user_group_id)
 );
 
@@ -78,7 +78,7 @@ CREATE TABLE Label (
   name TEXT NOT NULL UNIQUE,
   foreground_color TEXT NOT NULL DEFAULT '#FFFFFF',
   background_color TEXT NOT NULL DEFAULT '#000000',
-  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
+  created_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp
 );
 
 -- ============================================================================
@@ -93,10 +93,10 @@ CREATE TABLE Datei (
   linked_datei_id UUID REFERENCES Datei(id) ON DELETE SET NULL,
   latest_version_id UUID,
   created_by UUID REFERENCES UserAccount(id) ON DELETE RESTRICT,
-  trashed_at TIMESTAMP,
+  trashed_at TIMESTAMPTZ,
   trashed_by UUID REFERENCES UserAccount(id) ON DELETE RESTRICT,
-  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
-  updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp
+  created_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp
 );
 
 CREATE INDEX idx_Datei_parent_id ON Datei(parent_id);
@@ -121,7 +121,7 @@ CREATE TABLE DateiVersion (
   content_md TEXT,
   content_search TSVECTOR GENERATED ALWAYS AS (to_tsvector('simple', coalesce(content_md, ''))) STORED,
   created_by UUID REFERENCES UserAccount(id) ON DELETE RESTRICT,
-  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
   UNIQUE (datei_id, version_number)
 );
 
@@ -156,8 +156,8 @@ CREATE TABLE DateiAnnotation (
   datei_id UUID NOT NULL REFERENCES Datei(id) ON DELETE CASCADE,
   key TEXT NOT NULL,
   value TEXT NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
-  updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
   UNIQUE (datei_id, key)
 );
 
@@ -175,7 +175,8 @@ CREATE TABLE DateiPermission (
   user_account_id UUID REFERENCES UserAccount(id) ON DELETE RESTRICT,
   user_group_id UUID REFERENCES UserGroup(id) ON DELETE RESTRICT,
   permission_type DateiPermissionType NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
+  is_favorite BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
   CONSTRAINT ck_DateiPermission_grantee CHECK (
     (user_account_id IS NOT NULL AND user_group_id IS NULL) OR
     (user_account_id IS NULL AND user_group_id IS NOT NULL)
@@ -200,8 +201,8 @@ CREATE TABLE PublicLink (
   token TEXT NOT NULL UNIQUE,
   created_by UUID NOT NULL REFERENCES UserAccount(id) ON DELETE RESTRICT,
   permission_type PublicLinkPermissionType NOT NULL DEFAULT 'read_only',
-  expires_at TIMESTAMP,
-  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
+  expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp
 );
 
 CREATE INDEX idx_PublicLink_created_by ON PublicLink(created_by);
@@ -220,20 +221,6 @@ CREATE TABLE PublicLink_Datei (
 CREATE INDEX idx_PublicLink_Datei_datei_id ON PublicLink_Datei(datei_id);
 
 -- ============================================================================
--- Favorite (User-scoped favorites, Relation Table)
--- ============================================================================
-
-CREATE TABLE Favorite (
-  user_account_id UUID NOT NULL REFERENCES UserAccount(id) ON DELETE RESTRICT,
-  datei_id UUID NOT NULL REFERENCES Datei(id) ON DELETE CASCADE,
-  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
-  PRIMARY KEY (user_account_id, datei_id)
-);
-
-CREATE INDEX idx_Favorite_datei_id ON Favorite(datei_id);
-CREATE INDEX idx_Favorite_user_account_id ON Favorite(user_account_id);
-
--- ============================================================================
 -- Datei Comment
 -- ============================================================================
 
@@ -242,8 +229,8 @@ CREATE TABLE DateiComment (
   datei_id UUID NOT NULL REFERENCES Datei(id) ON DELETE CASCADE,
   user_account_id UUID NOT NULL REFERENCES UserAccount(id) ON DELETE RESTRICT,
   content TEXT NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
-  updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp
+  created_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp
 );
 
 CREATE INDEX idx_DateiComment_datei_id ON DateiComment(datei_id);
@@ -261,7 +248,7 @@ CREATE TABLE AuditLog (
   target_id UUID NOT NULL,
   metadata JSONB,
   ip_address TEXT,
-  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
+  created_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp
 );
 
 CREATE INDEX idx_AuditLog_actor_id ON AuditLog(actor_id) WHERE actor_id IS NOT NULL;
