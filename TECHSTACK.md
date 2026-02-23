@@ -18,30 +18,24 @@
 - Hand-written business logic and mapping layer
 
 ### Angular Frontend
-- **Angular 21** with **Material Design**
+- **Angular** with `@angular/material`
 - **Signal-based** state everywhere (except `httpResource`)
 - **Signal Forms**
-- Served embedded in the Go backend binary
+- Served by the Go backend binary using `http.FileServer` and `embed.FS`
 
 ### PostgreSQL
 - **PG 18+** for native UUIDv7 support
 - Strong data consistency enforced at database level
 
-### RustFS Object Storage
-- S3-compatible API (MinIO replacement after license change)
+### Object Storage
+- **S3-compatible API** for document/file storage
 
-### Ollama LLM Service
-- OpenAI-compatible API
-- Configurable model
+### LLM Service
+- **OpenAI-compatible API** for AI features
 
-### Tesseract OCR Service
-- Custom Go web server using gosseract
-- OpenOCR-compatible API
+### OCR Service
+- **Tesseract** via REST API
 
 ## Service Communication
 - Synchronous REST between all services
-- Jobs exposed via REST endpoints, triggered by cron container ([docker-compose cron pattern](https://distr.sh/blog/docker-compose-cron-jobs/))
-
-## Open Decision: Event Sourcing
-- **Option A**: Full CQRS with [watermill](https://github.com/ThreeDotsLabs/watermill)
-- **Option B**: Simple audit log table (already designed in schema)
+- Jobs exposed as CLI commands, scheduled via cron
