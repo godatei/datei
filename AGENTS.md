@@ -1,3 +1,10 @@
+# Persistent Agent Context
+
+## General
+
+- When fetching information from GitHub, always use the GitHub CLI (`gh`) command-line tool
+
+# Frontend
 
 You are an expert in TypeScript, Angular, and scalable web application development. You write functional, maintainable, performant, and accessible code following Angular and TypeScript best practices.
 

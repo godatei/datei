@@ -4,6 +4,7 @@ golangci-lint = "2.10.1"
 ko = "0.18.1"
 node = "24"
 pnpm = "10.30.0"
+github-cli = "2.86.0"
 
 [env]
 _.source = ['hack/current-commit.sh']
