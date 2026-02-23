@@ -88,9 +88,9 @@ CREATE TABLE Label (
 CREATE TABLE Datei (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
   parent_id UUID REFERENCES Datei(id) ON DELETE RESTRICT,
-  name TEXT NOT NULL,
   is_directory BOOLEAN NOT NULL DEFAULT false,
   linked_datei_id UUID REFERENCES Datei(id) ON DELETE SET NULL,
+  latest_name_id UUID,
   latest_version_id UUID,
   created_by UUID REFERENCES UserAccount(id) ON DELETE RESTRICT,
   trashed_at TIMESTAMPTZ,
@@ -105,6 +105,27 @@ CREATE INDEX idx_Datei_trashed_at ON Datei(trashed_at) WHERE trashed_at IS NOT N
 CREATE INDEX idx_Datei_created_by ON Datei(created_by) WHERE created_by IS NOT NULL;
 
 -- ============================================================================
+-- Datei Name (Name History)
+-- ============================================================================
+
+CREATE TABLE DateiName (
+  id UUID PRIMARY KEY DEFAULT uuidv7(),
+  datei_id UUID NOT NULL REFERENCES Datei(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  created_by UUID REFERENCES UserAccount(id) ON DELETE RESTRICT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp
+);
+
+CREATE INDEX idx_DateiName_datei_id ON DateiName(datei_id);
+
+-- Deferred FK: Datei.latest_name_id -> DateiName.id
+ALTER TABLE Datei
+  ADD CONSTRAINT fk_Datei_latest_name
+  FOREIGN KEY (latest_name_id) REFERENCES DateiName(id) ON DELETE RESTRICT;
+
+CREATE INDEX idx_Datei_latest_name_id ON Datei(latest_name_id) WHERE latest_name_id IS NOT NULL;
+
+-- ============================================================================
 -- Datei Version
 -- ============================================================================
 
@@ -112,7 +133,6 @@ CREATE TABLE DateiVersion (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
   datei_id UUID NOT NULL REFERENCES Datei(id) ON DELETE CASCADE,
   version_number INTEGER NOT NULL,
-  original_filename TEXT,
   s3_bucket TEXT NOT NULL,
   s3_key TEXT NOT NULL,
   file_size BIGINT NOT NULL,

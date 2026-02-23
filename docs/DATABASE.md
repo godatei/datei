@@ -63,9 +63,9 @@ erDiagram
     Datei {
         UUID id PK
         UUID parent_id FK
-        TEXT name
         BOOLEAN is_directory
         UUID linked_datei_id FK
+        UUID latest_name_id FK
         UUID latest_version_id FK
         UUID created_by FK
         TIMESTAMPTZ trashed_at
@@ -74,11 +74,18 @@ erDiagram
         TIMESTAMPTZ updated_at
     }
 
+    DateiName {
+        UUID id PK
+        UUID datei_id FK
+        TEXT name
+        UUID created_by FK
+        TIMESTAMPTZ created_at
+    }
+
     DateiVersion {
         UUID id PK
         UUID datei_id FK
         INTEGER version_number
-        TEXT original_filename
         TEXT s3_bucket
         TEXT s3_key
         BIGINT file_size
@@ -163,6 +170,8 @@ erDiagram
 
     Datei ||--o{ Datei : "parent_id (folder hierarchy)"
     Datei ||--o| Datei : "linked_datei_id (link)"
+    Datei ||--o{ DateiName : "has names"
+    Datei ||--o| DateiName : "latest_name_id"
     Datei ||--o{ DateiVersion : "has versions"
     Datei ||--o| DateiVersion : "latest_version_id"
     Datei ||--o{ Datei_Label : "has labels"
@@ -239,24 +248,33 @@ erDiagram
    │  ├───────────────────────────────────────────────────────────────────┤
    │  │ id                 UUID       PK                                 │
    │  │ parent_id          UUID       FK -> Datei(id)  ON DELETE RESTRICT│
-   │  │ name               TEXT       NOT NULL                           │
    │  │ is_directory       BOOLEAN    NOT NULL DEFAULT false             │
    │  │ linked_datei_id    UUID       FK -> Datei(id)  [link]            │
+   │  │ latest_name_id     UUID       FK -> DateiName(id)               │
    │  │ latest_version_id  UUID       FK -> DateiVersion(id)             │
    │  │ created_by         UUID       FK -> UserAccount(id)              │
    │  │ trashed_at         TIMESTAMPTZ  [soft delete / trash]              │
    │  │ trashed_by         UUID       FK -> UserAccount(id)              │
    │  │ created_at         TIMESTAMPTZ                                     │
    │  │ updated_at         TIMESTAMPTZ                                     │
-   │  └──┬──────────┬──────────┬──────────┬──────────────────────────────┘
+   │  └──┬──────────┬──────────┬──────────┬──────────┬───────────────────┘
+   │     │          │          │          │          │
+   │     │          │          │          │          │  ┌─────────────────────────────────────┐
+   │     │          │          │          │          └─>│ DateiName                           │
+   │     │          │          │          │             ├─────────────────────────────────────┤
+   │     │          │          │          │             │ id          UUID       PK           │
+   │     │          │          │          │             │ datei_id    UUID       FK           │
+   │     │          │          │          │             │ name        TEXT       NOT NULL     │
+   │     │          │          │          │             │ created_by  UUID       FK -> UserAccount │
+   │     │          │          │          │             │ created_at  TIMESTAMPTZ             │
+   │     │          │          │          │             └─────────────────────────────────────┘
    │     │          │          │          │
-   │     │          │          │          │  ┌─────────────────────────────────────┐
+   │     │          │          │          │  ┌───────────────────────────────────────────────┐
    │     │          │          │          └─>│ DateiVersion                                  │
    │     │          │          │             ├───────────────────────────────────────────────┤
    │     │          │          │             │ id                UUID       PK               │
    │     │          │          │             │ datei_id          UUID       FK               │
    │     │          │          │             │ version_number    INTEGER                     │
-   │     │          │          │             │ original_filename TEXT                         │
    │     │          │          │             │ s3_bucket         TEXT       NOT NULL          │
    │     │          │          │             │ s3_key            TEXT       NOT NULL          │
    │     │          │          │             │ file_size         BIGINT     NOT NULL          │
@@ -383,13 +401,15 @@ permissions and metadata but reference the target's file content. If the target 
 
 ### Versioning
 
-`DateiVersion` is the single source of truth for all file-content metadata: `original_filename`,
-`s3_bucket`, `s3_key`, `file_size`, `checksum`, `mime_type`, `content_md`, and `content_search`.
-The `Datei` table holds only structural and lifecycle columns (`name`, `is_directory`,
-`linked_datei_id`, `trashed_at`, etc.). The `latest_version_id` FK on Datei points to the
-current version, allowing fast access to current file metadata via a single join.
-The circular FK dependency is resolved by creating the Datei table first, then adding the
-FK constraint via `ALTER TABLE` after `DateiVersion` exists.
+`DateiName` tracks the full history of a Datei's display name. The `latest_name_id` FK on
+Datei points to the current name, following the same deferred-FK pattern as `latest_version_id`.
+
+`DateiVersion` is the single source of truth for all file-content metadata: `s3_bucket`,
+`s3_key`, `file_size`, `checksum`, `mime_type`, `content_md`, and `content_search`.
+The `Datei` table holds only structural and lifecycle columns (`is_directory`,
+`linked_datei_id`, `trashed_at`, etc.) plus FK pointers to the current name and version.
+The circular FK dependencies are resolved by creating the Datei table first, then adding the
+FK constraints via `ALTER TABLE` after `DateiName` and `DateiVersion` exist.
 
 ### Permissions
 
@@ -445,9 +465,10 @@ markdown. A generated `content_search` TSVECTOR column is automatically derived 
 full-text search queries. The `simple` text search configuration is language-agnostic,
 making it suitable for a self-hosted solution used internationally.
 
-To search current file content, join through `latest_version_id`:
+To search current file content, join through `latest_version_id` and `latest_name_id`:
 ```sql
-SELECT d.id, d.name FROM Datei d
+SELECT d.id, dn.name FROM Datei d
+JOIN DateiName dn ON d.latest_name_id = dn.id
 JOIN DateiVersion dv ON d.latest_version_id = dv.id
 WHERE dv.content_search @@ to_tsquery('simple', 'quarterly & report')
   AND d.trashed_at IS NULL;
