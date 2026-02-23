@@ -89,17 +89,9 @@ CREATE TABLE Datei (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
   parent_id UUID REFERENCES Datei(id) ON DELETE RESTRICT,
   name TEXT NOT NULL,
-  original_filename TEXT,
   is_directory BOOLEAN NOT NULL DEFAULT false,
-  mime_type TEXT,
-  file_size BIGINT,
-  s3_bucket TEXT,
-  s3_key TEXT,
-  checksum TEXT,
   linked_datei_id UUID REFERENCES Datei(id) ON DELETE SET NULL,
   latest_version_id UUID,
-  content_md TEXT,
-  content_search TSVECTOR GENERATED ALWAYS AS (to_tsvector('simple', coalesce(content_md, ''))) STORED,
   created_by UUID REFERENCES UserAccount(id) ON DELETE RESTRICT,
   trashed_at TIMESTAMP,
   trashed_by UUID REFERENCES UserAccount(id) ON DELETE RESTRICT,
@@ -110,7 +102,6 @@ CREATE TABLE Datei (
 CREATE INDEX idx_Datei_parent_id ON Datei(parent_id);
 CREATE INDEX idx_Datei_linked_datei_id ON Datei(linked_datei_id) WHERE linked_datei_id IS NOT NULL;
 CREATE INDEX idx_Datei_trashed_at ON Datei(trashed_at) WHERE trashed_at IS NOT NULL;
-CREATE INDEX idx_Datei_content_search ON Datei USING GIN(content_search);
 CREATE INDEX idx_Datei_created_by ON Datei(created_by) WHERE created_by IS NOT NULL;
 
 -- ============================================================================
@@ -121,18 +112,21 @@ CREATE TABLE DateiVersion (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
   datei_id UUID NOT NULL REFERENCES Datei(id) ON DELETE CASCADE,
   version_number INTEGER NOT NULL,
+  original_filename TEXT,
   s3_bucket TEXT NOT NULL,
   s3_key TEXT NOT NULL,
   file_size BIGINT NOT NULL,
   checksum TEXT NOT NULL,
   mime_type TEXT NOT NULL,
   content_md TEXT,
+  content_search TSVECTOR GENERATED ALWAYS AS (to_tsvector('simple', coalesce(content_md, ''))) STORED,
   created_by UUID REFERENCES UserAccount(id) ON DELETE RESTRICT,
   created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
   UNIQUE (datei_id, version_number)
 );
 
 CREATE INDEX idx_DateiVersion_datei_id ON DateiVersion(datei_id);
+CREATE INDEX idx_DateiVersion_content_search ON DateiVersion USING GIN(content_search);
 
 -- Deferred FK: Datei.latest_version_id -> DateiVersion.id
 ALTER TABLE Datei
@@ -173,19 +167,18 @@ CREATE INDEX idx_DateiAnnotation_datei_id ON DateiAnnotation(datei_id);
 -- Datei Permission
 -- ============================================================================
 
+CREATE TYPE DateiPermissionType AS ENUM ('owner', 'read_write', 'read_only');
+
 CREATE TABLE DateiPermission (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
   datei_id UUID NOT NULL REFERENCES Datei(id) ON DELETE CASCADE,
   user_account_id UUID REFERENCES UserAccount(id) ON DELETE RESTRICT,
   user_group_id UUID REFERENCES UserGroup(id) ON DELETE RESTRICT,
-  permission_type TEXT NOT NULL,
+  permission_type DateiPermissionType NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
   CONSTRAINT ck_DateiPermission_grantee CHECK (
     (user_account_id IS NOT NULL AND user_group_id IS NULL) OR
     (user_account_id IS NULL AND user_group_id IS NOT NULL)
-  ),
-  CONSTRAINT ck_DateiPermission_type CHECK (
-    permission_type IN ('owner', 'read_write', 'read_only')
   )
 );
 
@@ -200,16 +193,15 @@ CREATE UNIQUE INDEX uq_DateiPermission_group ON DateiPermission(datei_id, user_g
 -- Public Link
 -- ============================================================================
 
+CREATE TYPE PublicLinkPermissionType AS ENUM ('read_only', 'read_write');
+
 CREATE TABLE PublicLink (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
   token TEXT NOT NULL UNIQUE,
   created_by UUID NOT NULL REFERENCES UserAccount(id) ON DELETE RESTRICT,
-  permission_type TEXT NOT NULL DEFAULT 'read_only',
+  permission_type PublicLinkPermissionType NOT NULL DEFAULT 'read_only',
   expires_at TIMESTAMP,
-  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
-  CONSTRAINT ck_PublicLink_permission_type CHECK (
-    permission_type IN ('read_only', 'read_write')
-  )
+  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
 );
 
 CREATE INDEX idx_PublicLink_created_by ON PublicLink(created_by);
@@ -228,17 +220,18 @@ CREATE TABLE PublicLink_Datei (
 CREATE INDEX idx_PublicLink_Datei_datei_id ON PublicLink_Datei(datei_id);
 
 -- ============================================================================
--- Datei Star (User-scoped favorites, Relation Table)
+-- Favorite (User-scoped favorites, Relation Table)
 -- ============================================================================
 
-CREATE TABLE Datei_Star (
+CREATE TABLE Favorite (
   user_account_id UUID NOT NULL REFERENCES UserAccount(id) ON DELETE RESTRICT,
   datei_id UUID NOT NULL REFERENCES Datei(id) ON DELETE CASCADE,
   created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
   PRIMARY KEY (user_account_id, datei_id)
 );
 
-CREATE INDEX idx_Datei_Star_datei_id ON Datei_Star(datei_id);
+CREATE INDEX idx_Favorite_datei_id ON Favorite(datei_id);
+CREATE INDEX idx_Favorite_user_account_id ON Favorite(user_account_id);
 
 -- ============================================================================
 -- Datei Comment

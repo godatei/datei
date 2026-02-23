@@ -1,5 +1,7 @@
 # Datei Database Schema
 
+> **Requires PostgreSQL 18+** for native `uuidv7()` support.
+
 ## ER Diagram
 
 ```mermaid
@@ -62,17 +64,9 @@ erDiagram
         UUID id PK
         UUID parent_id FK
         TEXT name
-        TEXT original_filename
         BOOLEAN is_directory
-        TEXT mime_type
-        BIGINT file_size
-        TEXT s3_bucket
-        TEXT s3_key
-        TEXT checksum
         UUID linked_datei_id FK
         UUID latest_version_id FK
-        TEXT content_md
-        TSVECTOR content_search "generated"
         UUID created_by FK
         TIMESTAMP trashed_at
         UUID trashed_by FK
@@ -84,12 +78,14 @@ erDiagram
         UUID id PK
         UUID datei_id FK
         INTEGER version_number
+        TEXT original_filename
         TEXT s3_bucket
         TEXT s3_key
         BIGINT file_size
         TEXT checksum
         TEXT mime_type
         TEXT content_md
+        TSVECTOR content_search "generated"
         UUID created_by FK
         TIMESTAMP created_at
     }
@@ -113,7 +109,7 @@ erDiagram
         UUID datei_id FK
         UUID user_account_id FK
         UUID user_group_id FK
-        TEXT permission_type
+        DateiPermissionType permission_type "ENUM"
         TIMESTAMP created_at
     }
 
@@ -121,7 +117,7 @@ erDiagram
         UUID id PK
         TEXT token UK
         UUID created_by FK
-        TEXT permission_type
+        PublicLinkPermissionType permission_type "ENUM"
         TIMESTAMP expires_at
         TIMESTAMP created_at
     }
@@ -131,7 +127,7 @@ erDiagram
         UUID datei_id PK,FK
     }
 
-    Datei_Star {
+    Favorite {
         UUID user_account_id PK,FK
         UUID datei_id PK,FK
         TIMESTAMP created_at
@@ -166,7 +162,7 @@ erDiagram
     UserAccount ||--o{ UserEmail : "has emails"
     UserAccount ||--o{ UserGroup_Member : "belongs to"
     UserAccount ||--o{ UserGroup : "created"
-    UserAccount ||--o{ Datei_Star : "starred"
+    UserAccount ||--o{ Favorite : "favorited"
     UserAccount ||--o{ DateiComment : "commented"
     UserAccount ||--o{ AuditLog : "performed"
     UserGroup ||--o{ UserGroup_Member : "has members"
@@ -179,7 +175,7 @@ erDiagram
     Datei ||--o{ DateiAnnotation : "has annotations"
     Datei ||--o{ DateiPermission : "has permissions"
     Datei ||--o{ PublicLink_Datei : "shared via"
-    Datei ||--o{ Datei_Star : "starred by"
+    Datei ||--o{ Favorite : "favorited by"
     Datei ||--o{ DateiComment : "has comments"
 
     Label ||--o{ Datei_Label : "applied to"
@@ -251,17 +247,9 @@ erDiagram
    │  │ id                 UUID       PK                                 │
    │  │ parent_id          UUID       FK -> Datei(id)  ON DELETE RESTRICT│
    │  │ name               TEXT       NOT NULL                           │
-   │  │ original_filename  TEXT                                          │
    │  │ is_directory       BOOLEAN    NOT NULL DEFAULT false             │
-   │  │ mime_type          TEXT                                          │
-   │  │ file_size          BIGINT                                        │
-   │  │ s3_bucket          TEXT                                          │
-   │  │ s3_key             TEXT                                          │
-   │  │ checksum           TEXT                                          │
    │  │ linked_datei_id    UUID       FK -> Datei(id)  [link]            │
    │  │ latest_version_id  UUID       FK -> DateiVersion(id)             │
-   │  │ content_md         TEXT       [markdown for full-text search]    │
-   │  │ content_search     TSVECTOR   GENERATED (GIN indexed, 'simple') │
    │  │ created_by         UUID       FK -> UserAccount(id)              │
    │  │ trashed_at         TIMESTAMP  [soft delete / trash]              │
    │  │ trashed_by         UUID       FK -> UserAccount(id)              │
@@ -270,21 +258,23 @@ erDiagram
    │  └──┬──────────┬──────────┬──────────┬──────────────────────────────┘
    │     │          │          │          │
    │     │          │          │          │  ┌─────────────────────────────────────┐
-   │     │          │          │          └─>│ DateiVersion                        │
-   │     │          │          │             ├─────────────────────────────────────┤
-   │     │          │          │             │ id              UUID       PK       │
-   │     │          │          │             │ datei_id        UUID       FK       │
-   │     │          │          │             │ version_number  INTEGER             │
-   │     │          │          │             │ s3_bucket       TEXT       NOT NULL  │
-   │     │          │          │             │ s3_key          TEXT       NOT NULL  │
-   │     │          │          │             │ file_size       BIGINT     NOT NULL  │
-   │     │          │          │             │ checksum        TEXT       NOT NULL  │
-   │     │          │          │             │ mime_type       TEXT       NOT NULL  │
-   │     │          │          │             │ content_md      TEXT                 │
-   │     │          │          │             │ created_by      UUID       FK -> UserAccount │
-   │     │          │          │             │ created_at      TIMESTAMP           │
-   │     │          │          │             │ UNIQUE(datei_id, version_number)    │
-   │     │          │          │             └─────────────────────────────────────┘
+   │     │          │          │          └─>│ DateiVersion                                  │
+   │     │          │          │             ├───────────────────────────────────────────────┤
+   │     │          │          │             │ id                UUID       PK               │
+   │     │          │          │             │ datei_id          UUID       FK               │
+   │     │          │          │             │ version_number    INTEGER                     │
+   │     │          │          │             │ original_filename TEXT                         │
+   │     │          │          │             │ s3_bucket         TEXT       NOT NULL          │
+   │     │          │          │             │ s3_key            TEXT       NOT NULL          │
+   │     │          │          │             │ file_size         BIGINT     NOT NULL          │
+   │     │          │          │             │ checksum          TEXT       NOT NULL          │
+   │     │          │          │             │ mime_type         TEXT       NOT NULL          │
+   │     │          │          │             │ content_md        TEXT                         │
+   │     │          │          │             │ content_search    TSVECTOR   GENERATED (GIN)  │
+   │     │          │          │             │ created_by        UUID       FK -> UserAccount │
+   │     │          │          │             │ created_at        TIMESTAMP                   │
+   │     │          │          │             │ UNIQUE(datei_id, version_number)              │
+   │     │          │          │             └───────────────────────────────────────────────┘
    │     │          │          │
    │     │          │          │  ┌─────────────────────────────────────┐
    │     │          │          └─>│ DateiAnnotation                    │
@@ -305,7 +295,7 @@ erDiagram
    │     │             │ datei_id         UUID    FK                         │
    │     │             │ user_account_id  UUID    FK -> UserAccount(id)      │
    │     │             │ user_group_id    UUID    FK -> UserGroup(id)        │
-   │     │             │ permission_type  TEXT    owner|read_write|read_only │
+   │     │             │ permission_type  DateiPermissionType  ENUM          │
    │     │             │ created_at       TIMESTAMP                          │
    │     │             │ CHECK: exactly one of user/group is NOT NULL        │
    │     │             │ UNIQUE owner per datei (partial index)              │
@@ -327,15 +317,14 @@ erDiagram
       │ id              UUID       PK        │<────│ public_link_id  UUID  PK,FK        │
       │ token           TEXT       UNIQUE    │     │ datei_id        UUID  PK,FK -> Datei│
       │ created_by      UUID       FK        │     └────────────────────────────────────┘
-      │ permission_type TEXT       DEFAULT   │
-      │                 'read_only'          │
+      │ permission_type PublicLinkPermissionType │
+      │                 ENUM DEFAULT 'read_only' │
       │ expires_at      TIMESTAMP            │
       │ created_at      TIMESTAMP            │
-      │ CHECK: read_only|read_write          │
       └──────────────────────────────────────┘
 
 ┌──────────────────────────────────────────┐
-│ Datei_Star                               │
+│ Favorite                           │
 ├──────────────────────────────────────────┤
 │ user_account_id  UUID  PK,FK -> UserAccount │
 │ datei_id         UUID  PK,FK -> Datei    │
@@ -379,7 +368,7 @@ erDiagram
 
 ### Naming Convention
 
-- **Entity tables**: `CamelCase` (e.g. `UserAccount`, `Datei`, `Label`)
+- **Entity tables**: `CamelCase` (e.g. `UserAccount`, `Datei`, `Label`, `Favorite`)
 - **Relation/join tables**: `CamelCase_CamelCase` with underscore separator (e.g. `Datei_Label`, `PublicLink_Datei`, `UserGroup_Member`)
 - **Indexes**: `idx_TableName_column` / `uq_TableName_name`
 - **Constraints**: `ck_TableName_name` / `fk_TableName_name`
@@ -408,8 +397,11 @@ permissions and metadata but reference the target's file content. If the target 
 
 ### Versioning
 
-Each Datei can have multiple `DateiVersion` rows. The `latest_version_id` on the Datei table
-points to the current version for fast lookups without querying the version table.
+`DateiVersion` is the single source of truth for all file-content metadata: `original_filename`,
+`s3_bucket`, `s3_key`, `file_size`, `checksum`, `mime_type`, `content_md`, and `content_search`.
+The `Datei` table holds only structural and lifecycle columns (`name`, `is_directory`,
+`linked_datei_id`, `trashed_at`, etc.). The `latest_version_id` FK on Datei points to the
+current version, allowing fast access to current file metadata via a single join.
 The circular FK dependency is resolved by creating the Datei table first, then adding the
 FK constraint via `ALTER TABLE` after `DateiVersion` exists.
 
@@ -417,8 +409,8 @@ FK constraint via `ALTER TABLE` after `DateiVersion` exists.
 
 The `DateiPermission` table uses a **polymorphic grantee** pattern: each row references either
 a `user_account_id` OR a `user_group_id` (enforced by a CHECK constraint). Permission types
-use `TEXT` with a `CHECK` constraint rather than a PostgreSQL `ENUM`, since enums are difficult
-to modify after creation.
+use the `DateiPermissionType` enum (`owner`, `read_write`, `read_only`). Similarly,
+`PublicLink.permission_type` uses the `PublicLinkPermissionType` enum (`read_only`, `read_write`).
 
 Key constraints:
 - **Single owner**: A partial unique index ensures at most one `owner` permission per Datei
@@ -430,7 +422,7 @@ Key constraints:
 All foreign keys referencing `UserAccount` and `UserGroup` use `ON DELETE RESTRICT`, with two
 exceptions: `UserEmail` and `UserAccount_MFARecoveryCode` use `ON DELETE CASCADE` since they
 are intrinsic to the user account and meaningless without it. This means a user or group cannot
-be hard-deleted while any references exist (permissions, comments, stars, public links, audit
+be hard-deleted while any references exist (permissions, comments, favorites, public links, audit
 logs, etc.). The application must explicitly clean up or reassign these references before a
 hard delete is permitted. In practice, soft deletion via `archived_at` should be the default —
 hard deletion is reserved for rare administrative operations.
@@ -458,19 +450,18 @@ optimize querying archived entities.
 
 ### Full-Text Search
 
-Each Datei and DateiVersion stores a `content_md` column containing the file's content
-converted to markdown. On the Datei table, a generated `content_search` TSVECTOR column is
-automatically derived from `content_md` using `to_tsvector('simple', ...)` and indexed
-with a GIN index for fast full-text search queries. The `simple` text search configuration
-is language-agnostic, making it suitable for a self-hosted solution used internationally.
-The DateiVersion table stores `content_md` for historical reference but does not have a
-search index (search operates on current content only).
+Each `DateiVersion` stores a `content_md` column containing the file's content converted to
+markdown. A generated `content_search` TSVECTOR column is automatically derived from
+`content_md` using `to_tsvector('simple', ...)` and indexed with a GIN index for fast
+full-text search queries. The `simple` text search configuration is language-agnostic,
+making it suitable for a self-hosted solution used internationally.
 
-Example query:
+To search current file content, join through `latest_version_id`:
 ```sql
-SELECT id, name FROM Datei
-WHERE content_search @@ to_tsquery('simple', 'quarterly & report')
-  AND trashed_at IS NULL;
+SELECT d.id, d.name FROM Datei d
+JOIN DateiVersion dv ON d.latest_version_id = dv.id
+WHERE dv.content_search @@ to_tsquery('simple', 'quarterly & report')
+  AND d.trashed_at IS NULL;
 ```
 
 ### Public Links
@@ -499,9 +490,9 @@ Each `UserGroup` tracks its `created_by` user. The `UserGroup_Member` relation t
 a `role` column using the `UserGroupRole` enum (`admin` or `member`). Group admins can manage
 membership; regular members inherit group permissions only.
 
-### Datei Stars (Favorites)
+### Favorites
 
-The `Datei_Star` relation table allows users to star/favorite Dateis for quick access.
+The `Favorite` relation table allows users to favorite Dateis for quick access.
 Scoped per user with a composite PK `(user_account_id, datei_id)`.
 
 ### Datei Comments
