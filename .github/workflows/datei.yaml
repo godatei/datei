@@ -140,7 +140,8 @@ jobs:
 
       - name: Start and verify migrations
         shell: bash
-        run: dist/datei serve &
+        run: |
+          dist/datei serve &
           sleep 5 &&
           psql $DATEI_DATABASE_URI -c "select version >= 0, dirty from schema_migrations" --csv -t | grep "t,f" &&
           pkill -SIGTERM datei &&
