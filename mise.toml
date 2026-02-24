@@ -80,3 +80,6 @@ description = 'Migrate the database to the latest schema version. Protip: `mise 
 depends = "build:frontend"
 run = "ko build --push=false --local --base-import-paths"
 env = { KO_DOCKER_REPO = "ghcr.io/godatei" }
+
+[tasks."import-db-schema"]
+run = 'podman compose exec --no-tty postgres pg_dump datei --user=local --section=pre-data --no-owner --no-privileges --exclude-table=schema_migrations | grep --invert-match "^\\\\" > internal/db/schema.sql'
