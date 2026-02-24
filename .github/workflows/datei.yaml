@@ -1,0 +1,202 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: Datei
+
+on:
+  push:
+    branches:
+      - 'main'
+    tags:
+      - '*'
+  pull_request:
+
+jobs:
+  validate-migrations:
+    name: Validate migrations
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - run: hack/validate-migrations.sh
+
+  lint-and-test-go:
+    name: Lint and test (Go)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Setup Go
+        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        with:
+          go-version-file: 'go.mod'
+          check-latest: true
+          cache-dependency-path: |
+            go.sum
+      - name: Run go tests
+        run: go test ./...
+      - name: Lint with golangci-lint
+        uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
+        with:
+          version: 'v2.10.1' # renovate: datasource=github-releases depName=golangci/golangci-lint
+
+  lint-and-test-node:
+    name: Lint and test (Node)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Install pnpm
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+      - name: Setup node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: '24'
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm run lint
+      - name: Test
+        run: pnpm run test
+
+  build:
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: test-user
+          POSTGRES_PASSWORD: test-password
+          POSTGRES_DB: datei
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    name: Build
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Go
+        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        with:
+          go-version-file: 'go.mod'
+          check-latest: true
+          cache-dependency-path: |
+            go.sum
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+
+      - name: Setup node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: '24'
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Generate commit hash
+        id: hash
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Install frontend dependencies with pnpm
+        run: pnpm install --frozen-lockfile
+
+      - name: Build frontend
+        run: pnpm run build
+
+      - name: Build application
+        run: go build -ldflags="$LDFLAGS" -o dist/datei .
+        env:
+          CGO_ENABLED: '0'
+          LDFLAGS: >-
+            -s -w
+            -X github.com/godatei/datei/internal/buildconfig.version=${{ github.ref_name }}
+            -X github.com/godatei/datei/internal/buildconfig.commit=${{ steps.hash.outputs.sha_short }}
+
+      - name: Start and verify migrations
+        shell: bash
+        run: |
+          dist/datei serve &
+          sleep 5 &&
+          psql $DATEI_DATABASE_URI -c "select version >= 0, dirty from schema_migrations" --csv -t | grep "t,f" &&
+          pkill -SIGTERM datei &&
+          dist/datei migrate --down
+        env:
+          DATEI_DATABASE_URI: postgres://test-user:test-password@localhost:5432/datei
+          DATEI_SERVER_ADDR: 0.0.0.0:8080
+
+      - name: Generate SBOM for frontend project
+        uses: anchore/sbom-action@28d71544de8eaf1b958d335707167c5f783590ad # v0.22.2
+        with:
+          file: pnpm-lock.yaml
+          output-file: dist/frontend.spdx.json
+          artifact-name: frontend.spdx.json
+          format: spdx-json
+          upload-release-assets: false
+
+      - name: Login to GitHub Container Registry (tag only)
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+
+      - name: Generate Docker Metadata
+        id: meta
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+        with:
+          images: ghcr.io/godatei/datei
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+          flavor: |
+            latest=false
+          labels: |
+            org.opencontainers.image.description=Datei
+            org.opencontainers.image.vendor=Glasskube
+
+      - name: Docker build (push on tag only)
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        id: build-push
+        with:
+          platforms: ${{ startsWith(github.ref, 'refs/tags/') && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
+          context: .
+          push: ${{ startsWith(github.ref, 'refs/tags/') }}
+          sbom: true
+          provenance: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+
+      - name: Sign the images with GitHub OIDC Token
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        env:
+          DIGEST: ${{ steps.build-push.outputs.digest }}
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          images=""
+          for tag in ${TAGS}; do
+            images+="${tag}@${DIGEST} "
+          done
+          cosign sign --yes ${images}

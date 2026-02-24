@@ -39,6 +39,10 @@ depends = ["frontend-deps"]
 run = 'go build -ldflags="{{vars.ldflags}}" -o dist/datei .'
 depends = ["go-tidy", "build:frontend"]
 
+[tasks."build:container"]
+depends = "build:datei"
+run = "docker build -t ghcr.io/godatei/datei:snapshot ."
+
 [tasks."lint:go"]
 depends = ["go-tidy"]
 run = 'golangci-lint run'
@@ -75,8 +79,3 @@ sources = ["api/**/*.go", "cmd/**/*.go", "internal/**/*.go"]
 [tasks."run:datei:migrate"]
 run = 'go run -ldflags="{{vars.ldflags}}" . migrate'
 description = 'Migrate the database to the latest schema version. Protip: `mise run:datei:migrate -- --to xx` to migrate to a specific version'
-
-[tasks."build:container"]
-depends = "build:frontend"
-run = "ko build --push=false --local --base-import-paths"
-env = { KO_DOCKER_REPO = "ghcr.io/godatei" }

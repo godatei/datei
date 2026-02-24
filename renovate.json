@@ -1,6 +1,20 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended"
+  "extends": ["config:recommended"],
+  "packageRules": [
+    {
+      "matchSourceUrls": ["https://github.com/golangci/golangci-lint"],
+      "groupName": "golangci-lint"
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [".github/workflows/datei.yaml"],
+      "matchStrings": [
+        "\"(?<currentValue>[^\"]+)\",\\s+// renovate: datasource=(?<datasource>[^\\s]+) depName=(?<depName>[^\\s]+)",
+        "'(?<currentValue>[^']+)'\\s+# renovate: datasource=(?<datasource>[^\\s]+) depName=(?<depName>[^\\s]+)"
+      ]
+    }
   ]
 }
