@@ -115,19 +115,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build frontend
-        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-        run: pnpm run build --source-map=true
-
-      - name: Build frontend and upload source maps (tag only)
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        run: |
-          pnpm run build --source-map=true || exit 1
-          pnpm run sentry-upload || exit 1
-          rm internal/frontend/dist/ui/browser/*.map || exit 1
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          VERSION: ${{ github.ref_name }}
-          SENTRY_VERSION: ${{ github.ref_name }}
+        run: pnpm run build
 
       - name: Build application
         run: go build -ldflags="$LDFLAGS" -o dist/datei .
