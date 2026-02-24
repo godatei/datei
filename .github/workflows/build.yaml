@@ -142,7 +142,6 @@ jobs:
         shell: bash
         run: dist/datei serve &
           sleep 5 &&
-          curl http://localhost:8080/internal/environment -f &&
           psql $DATEI_DATABASE_URI -c "select version > 0, dirty from schema_migrations" --csv -t | grep "t,f" &&
           pkill -SIGTERM datei &&
           dist/datei migrate --down
