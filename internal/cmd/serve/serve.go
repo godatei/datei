@@ -83,7 +83,8 @@ func run(ctx context.Context, options Options) error {
 	httpServer := &http.Server{Handler: rootMux, Addr: config.ServerAddr()}
 
 	shutdownComplete := make(chan struct{})
-	sigCtx, _ := signal.NotifyContext(ctx, syscall.SIGTERM, syscall.SIGINT)
+	sigCtx, sigCancel := signal.NotifyContext(ctx, syscall.SIGTERM, syscall.SIGINT)
+	defer sigCancel()
 	context.AfterFunc(sigCtx, func() {
 		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		defer cancel()

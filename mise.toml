@@ -13,7 +13,7 @@ VERSION = 'snapshot'
 CGO_ENABLED = "0"
 
 [vars]
-ldflags = "-s -w -X github.com/distr-sh/distr/internal/buildconfig.version=$VERSION -X github.com/distr-sh/distr/internal/buildconfig.commit=$COMMIT"
+ldflags = "-s -w -X github.com/godatei/datei/internal/buildconfig.version=$VERSION -X github.com/godatei/datei/internal/buildconfig.commit=$COMMIT"
 
 [tasks.go-generate]
 run = 'go generate ./...'
@@ -57,8 +57,8 @@ run = { tasks = ["test:go"] }
 [tasks."format:go"]
 run = 'golangci-lint run --fix'
 
-[tasks."format:frontend"]
-run = 'pnpm format'
+#[tasks."format:frontend"]
+#run = 'pnpm format'
 
 [tasks.format]
 run = { tasks = ["format:go"] }
