@@ -16,14 +16,19 @@ UPDATE datei SET latest_version_id = $2, updated_at = now() WHERE id = $1 RETURN
 -- name: SetDateiTrashedAt :one
 UPDATE datei SET trashed_at = now(), updated_at = now() WHERE id = $1 RETURNING *;
 
--- name: ListDatei :many
-SELECT * FROM datei ORDER BY created_at DESC;
-
 -- name: GetDateiByID :one
 SELECT * FROM datei WHERE id = $1;
 
--- name: GetDateiNameByID :one
-SELECT * FROM datei_name WHERE id = $1;
+-- name: GetDateiByIDWithDetails :one
+SELECT sqlc.embed(d), sqlc.embed(ln), sqlc.embed(lv)
+FROM datei d
+LEFT JOIN datei_name ln ON d.latest_name_id = ln.id
+LEFT JOIN datei_version lv ON d.latest_version_id = lv.id
+WHERE d.id = $1;
 
--- name: GetDateiVersionByID :one
-SELECT * FROM datei_version WHERE id = $1;
+-- name: ListDateiWithDetails :many
+SELECT sqlc.embed(d), sqlc.embed(ln), sqlc.embed(lv)
+FROM datei d
+LEFT JOIN datei_name ln ON d.latest_name_id = ln.id
+LEFT JOIN datei_version lv ON d.latest_version_id = lv.id
+ORDER BY d.created_at DESC;

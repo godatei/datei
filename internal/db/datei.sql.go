@@ -115,70 +115,104 @@ func (q *Queries) GetDateiByID(ctx context.Context, id uuid.UUID) (Datei, error)
 	return i, err
 }
 
-const getDateiNameByID = `-- name: GetDateiNameByID :one
-SELECT id, datei_id, name, created_by, created_at FROM datei_name WHERE id = $1
+const getDateiByIDWithDetails = `-- name: GetDateiByIDWithDetails :one
+SELECT d.id, d.parent_id, d.is_directory, d.linked_datei_id, d.latest_name_id, d.latest_version_id, d.created_by, d.trashed_at, d.trashed_by, d.created_at, d.updated_at, ln.id, ln.datei_id, ln.name, ln.created_by, ln.created_at, lv.id, lv.datei_id, lv.s3_key, lv.file_size, lv.checksum, lv.mime_type, lv.content_md, lv.content_search, lv.created_by, lv.created_at
+FROM datei d
+LEFT JOIN datei_name ln ON d.latest_name_id = ln.id
+LEFT JOIN datei_version lv ON d.latest_version_id = lv.id
+WHERE d.id = $1
 `
 
-func (q *Queries) GetDateiNameByID(ctx context.Context, id uuid.UUID) (DateiName, error) {
-	row := q.db.QueryRow(ctx, getDateiNameByID, id)
-	var i DateiName
+type GetDateiByIDWithDetailsRow struct {
+	Datei        Datei        `db:"datei"`
+	DateiName    DateiName    `db:"datei_name"`
+	DateiVersion DateiVersion `db:"datei_version"`
+}
+
+func (q *Queries) GetDateiByIDWithDetails(ctx context.Context, id uuid.UUID) (GetDateiByIDWithDetailsRow, error) {
+	row := q.db.QueryRow(ctx, getDateiByIDWithDetails, id)
+	var i GetDateiByIDWithDetailsRow
 	err := row.Scan(
-		&i.ID,
-		&i.DateiID,
-		&i.Name,
-		&i.CreatedBy,
-		&i.CreatedAt,
+		&i.Datei.ID,
+		&i.Datei.ParentID,
+		&i.Datei.IsDirectory,
+		&i.Datei.LinkedDateiID,
+		&i.Datei.LatestNameID,
+		&i.Datei.LatestVersionID,
+		&i.Datei.CreatedBy,
+		&i.Datei.TrashedAt,
+		&i.Datei.TrashedBy,
+		&i.Datei.CreatedAt,
+		&i.Datei.UpdatedAt,
+		&i.DateiName.ID,
+		&i.DateiName.DateiID,
+		&i.DateiName.Name,
+		&i.DateiName.CreatedBy,
+		&i.DateiName.CreatedAt,
+		&i.DateiVersion.ID,
+		&i.DateiVersion.DateiID,
+		&i.DateiVersion.S3Key,
+		&i.DateiVersion.FileSize,
+		&i.DateiVersion.Checksum,
+		&i.DateiVersion.MimeType,
+		&i.DateiVersion.ContentMd,
+		&i.DateiVersion.ContentSearch,
+		&i.DateiVersion.CreatedBy,
+		&i.DateiVersion.CreatedAt,
 	)
 	return i, err
 }
 
-const getDateiVersionByID = `-- name: GetDateiVersionByID :one
-SELECT id, datei_id, s3_key, file_size, checksum, mime_type, content_md, content_search, created_by, created_at FROM datei_version WHERE id = $1
+const listDateiWithDetails = `-- name: ListDateiWithDetails :many
+SELECT d.id, d.parent_id, d.is_directory, d.linked_datei_id, d.latest_name_id, d.latest_version_id, d.created_by, d.trashed_at, d.trashed_by, d.created_at, d.updated_at, ln.id, ln.datei_id, ln.name, ln.created_by, ln.created_at, lv.id, lv.datei_id, lv.s3_key, lv.file_size, lv.checksum, lv.mime_type, lv.content_md, lv.content_search, lv.created_by, lv.created_at
+FROM datei d
+LEFT JOIN datei_name ln ON d.latest_name_id = ln.id
+LEFT JOIN datei_version lv ON d.latest_version_id = lv.id
+ORDER BY d.created_at DESC
 `
 
-func (q *Queries) GetDateiVersionByID(ctx context.Context, id uuid.UUID) (DateiVersion, error) {
-	row := q.db.QueryRow(ctx, getDateiVersionByID, id)
-	var i DateiVersion
-	err := row.Scan(
-		&i.ID,
-		&i.DateiID,
-		&i.S3Key,
-		&i.FileSize,
-		&i.Checksum,
-		&i.MimeType,
-		&i.ContentMd,
-		&i.ContentSearch,
-		&i.CreatedBy,
-		&i.CreatedAt,
-	)
-	return i, err
+type ListDateiWithDetailsRow struct {
+	Datei        Datei        `db:"datei"`
+	DateiName    DateiName    `db:"datei_name"`
+	DateiVersion DateiVersion `db:"datei_version"`
 }
 
-const listDatei = `-- name: ListDatei :many
-SELECT id, parent_id, is_directory, linked_datei_id, latest_name_id, latest_version_id, created_by, trashed_at, trashed_by, created_at, updated_at FROM datei ORDER BY created_at DESC
-`
-
-func (q *Queries) ListDatei(ctx context.Context) ([]Datei, error) {
-	rows, err := q.db.Query(ctx, listDatei)
+func (q *Queries) ListDateiWithDetails(ctx context.Context) ([]ListDateiWithDetailsRow, error) {
+	rows, err := q.db.Query(ctx, listDateiWithDetails)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Datei
+	var items []ListDateiWithDetailsRow
 	for rows.Next() {
-		var i Datei
+		var i ListDateiWithDetailsRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.ParentID,
-			&i.IsDirectory,
-			&i.LinkedDateiID,
-			&i.LatestNameID,
-			&i.LatestVersionID,
-			&i.CreatedBy,
-			&i.TrashedAt,
-			&i.TrashedBy,
-			&i.CreatedAt,
-			&i.UpdatedAt,
+			&i.Datei.ID,
+			&i.Datei.ParentID,
+			&i.Datei.IsDirectory,
+			&i.Datei.LinkedDateiID,
+			&i.Datei.LatestNameID,
+			&i.Datei.LatestVersionID,
+			&i.Datei.CreatedBy,
+			&i.Datei.TrashedAt,
+			&i.Datei.TrashedBy,
+			&i.Datei.CreatedAt,
+			&i.Datei.UpdatedAt,
+			&i.DateiName.ID,
+			&i.DateiName.DateiID,
+			&i.DateiName.Name,
+			&i.DateiName.CreatedBy,
+			&i.DateiName.CreatedAt,
+			&i.DateiVersion.ID,
+			&i.DateiVersion.DateiID,
+			&i.DateiVersion.S3Key,
+			&i.DateiVersion.FileSize,
+			&i.DateiVersion.Checksum,
+			&i.DateiVersion.MimeType,
+			&i.DateiVersion.ContentMd,
+			&i.DateiVersion.ContentSearch,
+			&i.DateiVersion.CreatedBy,
+			&i.DateiVersion.CreatedAt,
 		); err != nil {
 			return nil, err
 		}

@@ -3,13 +3,12 @@ package server
 import (
 	"context"
 	"crypto/sha256"
-	"fmt"
+	"encoding/hex"
 	"io"
 
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/mapping"
 	"github.com/godatei/datei/pkg/api"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -29,7 +28,7 @@ func mockS3UploadFromReader(
 		return "", 0, "", "", err
 	}
 
-	checksum = fmt.Sprintf("%x", hasher.Sum(nil))
+	checksum = hex.EncodeToString(hasher.Sum(nil))
 	s3Key = checksum
 
 	// Simple MIME type detection from file extension
@@ -82,8 +81,8 @@ func (s *server) GetApiV1Datei(
 ) (GetApiV1DateiResponseObject, error) {
 	queries := db.New(s.db)
 
-	// Get all Datei records
-	allDatei, err := queries.ListDatei(ctx)
+	// Get all Datei records with details in a single query
+	allDateiWithDetails, err := queries.ListDateiWithDetails(ctx)
 	if err != nil {
 		return GetApiV1Datei400Response{}, err
 	}
@@ -98,35 +97,16 @@ func (s *server) GetApiV1Datei(
 		offset = *request.Params.Offset
 	}
 
-	total := len(allDatei)
+	total := len(allDateiWithDetails)
 
 	// Apply pagination
-	start := min(offset, len(allDatei))
-	end := min(offset+limit, len(allDatei))
+	start := min(offset, len(allDateiWithDetails))
+	end := min(offset+limit, len(allDateiWithDetails))
 
-	paginatedDatei := allDatei[start:end]
-
-	// Fetch latest versions and names for each Datei
-	versions := make(map[uuid.UUID]*db.DateiVersion)
-	names := make(map[uuid.UUID]*string)
-
-	for _, d := range paginatedDatei {
-		if d.LatestVersionID != nil {
-			v, err := queries.GetDateiVersionByID(ctx, *d.LatestVersionID)
-			if err == nil {
-				versions[*d.LatestVersionID] = &v
-			}
-		}
-		if d.LatestNameID != nil {
-			n, err := queries.GetDateiNameByID(ctx, *d.LatestNameID)
-			if err == nil {
-				names[*d.LatestNameID] = &n.Name
-			}
-		}
-	}
+	paginatedDatei := allDateiWithDetails[start:end]
 
 	// Map to API response
-	items := mapping.MapDBDateiSliceToAPI(paginatedDatei, versions, names)
+	items := mapping.MapDBDateiDetailsSliceToAPI(paginatedDatei)
 
 	response := api.ListDateiResponse{
 		Items: items,
@@ -198,8 +178,6 @@ func (s *server) PatchApiV1DateiId(
 		}
 	}
 
-	// Update file if provided
-	var latestVersion *db.DateiVersion
 	if fileData != nil && fileName != "" {
 		s3Key, fileSize, checksum, mimeType, err := mockS3UploadFromReader(fileName, fileData)
 		if err != nil {
@@ -224,29 +202,15 @@ func (s *server) PatchApiV1DateiId(
 		if err != nil {
 			return PatchApiV1DateiId400Response{}, nil
 		}
-
-		latestVersion = &versionRecord
 	}
 
-	// Get latest version if not just updated
-	if latestVersion == nil && datei.LatestVersionID != nil {
-		v, err := queries.GetDateiVersionByID(ctx, *datei.LatestVersionID)
-		if err == nil {
-			latestVersion = &v
-		}
-	}
-
-	// Get name if not just updated
-	var currentName *string
-	if datei.LatestNameID != nil {
-		n, err := queries.GetDateiNameByID(ctx, *datei.LatestNameID)
-		if err == nil {
-			currentName = &n.Name
-		}
+	details, err := queries.GetDateiByIDWithDetails(ctx, datei.ID)
+	if err != nil {
+		return PatchApiV1DateiId400Response{}, nil
 	}
 
 	// Map to API response
-	response := mapping.MapDBDateiToAPI(&datei, latestVersion, currentName)
+	response := mapping.MapDBDateiToAPI(&details.Datei, &details.DateiVersion, &details.DateiName.Name)
 	return PatchApiV1DateiId200JSONResponse(*response), nil
 }
 

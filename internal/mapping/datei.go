@@ -3,7 +3,6 @@ package mapping
 import (
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/pkg/api"
-	"github.com/google/uuid"
 )
 
 // MapDBVersionToAPI converts a database DateiVersion to an API DateiVersion
@@ -78,35 +77,14 @@ func MapDBDateiToAPI(dbDatei *db.Datei, latestVersion *db.DateiVersion, name *st
 	return response
 }
 
-// MapDBDateiSliceToAPI converts a slice of database Datei to API DateiResponse slice
-func MapDBDateiSliceToAPI(
-	dbDateiList []db.Datei,
-	versions map[uuid.UUID]*db.DateiVersion,
-	names map[uuid.UUID]*string,
-) []api.DateiResponse {
-	result := make([]api.DateiResponse, 0, len(dbDateiList))
-
-	for _, dbDatei := range dbDateiList {
-		var latestVersion *db.DateiVersion
-		var name *string
-
-		// Get version if available
-		if dbDatei.LatestVersionID != nil {
-			latestVersion = versions[*dbDatei.LatestVersionID]
-		}
-
-		// Get name if available
-		if dbDatei.LatestNameID != nil {
-			name = names[*dbDatei.LatestNameID]
-		}
-
-		// Create a copy for safety
-		dateiCopy := dbDatei
-		mapped := MapDBDateiToAPI(&dateiCopy, latestVersion, name)
+// MapDBDateiDetailsSliceToAPI converts a slice of ListDateiWithDetailsRow to API DateiResponse slice
+func MapDBDateiDetailsSliceToAPI(details []db.ListDateiWithDetailsRow) []api.DateiResponse {
+	result := make([]api.DateiResponse, 0, len(details))
+	for _, row := range details {
+		mapped := MapDBDateiToAPI(&row.Datei, &row.DateiVersion, &row.DateiName.Name)
 		if mapped != nil {
 			result = append(result, *mapped)
 		}
 	}
-
 	return result
 }
