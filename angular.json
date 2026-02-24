@@ -20,7 +20,7 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
-            "outputPath": "internal/frontend/dist",
+            "outputPath": "internal/frontend/dist/ui",
             "browser": "frontend/src/main.ts",
             "tsConfig": "frontend/tsconfig.app.json",
             "assets": [
