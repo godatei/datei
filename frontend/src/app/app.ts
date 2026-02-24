@@ -1,5 +1,5 @@
 import { Component, signal } from '@angular/core';
-import { NavComponent } from './nav/nav.component';
+import { NavComponent } from '~/frontend/nav/nav.component';
 
 @Component({
   selector: 'app-root',
@@ -8,5 +8,5 @@ import { NavComponent } from './nav/nav.component';
   styleUrl: './app.css',
 })
 export class App {
-  protected readonly title = signal('ui');
+  protected readonly title = signal('Datei');
 }
