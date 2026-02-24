@@ -43,8 +43,11 @@ depends = ["go-tidy", "build:frontend"]
 depends = ["go-tidy"]
 run = 'golangci-lint run'
 
+[tasks."lint:frontend"]
+run = 'pnpm lint'
+
 [tasks.lint]
-run = { tasks = ["lint:go"] }
+run = { tasks = ["lint:frontend", "lint:go"] }
 
 [tasks."test:go"]
 run = 'go test ./...'
@@ -57,11 +60,11 @@ run = { tasks = ["test:go"] }
 [tasks."format:go"]
 run = 'golangci-lint run --fix'
 
-#[tasks."format:frontend"]
-#run = 'pnpm format'
+[tasks."format:frontend"]
+run = 'pnpm format'
 
 [tasks.format]
-run = { tasks = ["format:go"] }
+run = { tasks = ["format:frontend", "format:go"] }
 
 [tasks."run:datei:serve"]
 alias = "serve"

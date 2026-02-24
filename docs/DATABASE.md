@@ -422,6 +422,7 @@ The `is_favorite` boolean column allows users to mark a Datei as a favorite dire
 permission row, avoiding a separate table. Defaults to `false`.
 
 Key constraints:
+
 - **Single owner**: A partial unique index ensures at most one `owner` permission per Datei
 - **No duplicates**: Unique indexes prevent granting the same user or group multiple permissions on the same Datei
 - **Grantee required**: A CHECK constraint ensures exactly one of user/group is set
@@ -466,6 +467,7 @@ full-text search queries. The `simple` text search configuration is language-agn
 making it suitable for a self-hosted solution used internationally.
 
 To search current file content, join through `latest_version_id` and `latest_name_id`:
+
 ```sql
 SELECT d.id, dn.name FROM Datei d
 JOIN DateiName dn ON d.latest_name_id = dn.id
@@ -508,6 +510,7 @@ Each comment is tied to a Datei and a UserAccount, with `updated_at` tracking ed
 ### Audit Log
 
 The `AuditLog` table records all significant actions in the system. Each entry captures:
+
 - `actor_id` -- the user who performed the action (nullable for system actions)
 - `action` -- the action type (e.g. `datei.create`, `datei.trash`, `permission.grant`, `user.login`)
 - `target_type` and `target_id` -- the entity affected (polymorphic reference)

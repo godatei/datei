@@ -1,0 +1,4 @@
+*.json
+**/pnpm-lock.yaml
+**/dist/*
+CHANGELOG.md
