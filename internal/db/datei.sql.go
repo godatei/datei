@@ -115,6 +115,45 @@ func (q *Queries) GetDateiByID(ctx context.Context, id uuid.UUID) (Datei, error)
 	return i, err
 }
 
+const getDateiNameByID = `-- name: GetDateiNameByID :one
+SELECT id, datei_id, name, created_by, created_at FROM datei_name WHERE id = $1
+`
+
+func (q *Queries) GetDateiNameByID(ctx context.Context, id uuid.UUID) (DateiName, error) {
+	row := q.db.QueryRow(ctx, getDateiNameByID, id)
+	var i DateiName
+	err := row.Scan(
+		&i.ID,
+		&i.DateiID,
+		&i.Name,
+		&i.CreatedBy,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getDateiVersionByID = `-- name: GetDateiVersionByID :one
+SELECT id, datei_id, s3_key, file_size, checksum, mime_type, content_md, content_search, created_by, created_at FROM datei_version WHERE id = $1
+`
+
+func (q *Queries) GetDateiVersionByID(ctx context.Context, id uuid.UUID) (DateiVersion, error) {
+	row := q.db.QueryRow(ctx, getDateiVersionByID, id)
+	var i DateiVersion
+	err := row.Scan(
+		&i.ID,
+		&i.DateiID,
+		&i.S3Key,
+		&i.FileSize,
+		&i.Checksum,
+		&i.MimeType,
+		&i.ContentMd,
+		&i.ContentSearch,
+		&i.CreatedBy,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const listDatei = `-- name: ListDatei :many
 SELECT id, parent_id, is_directory, linked_datei_id, latest_name_id, latest_version_id, created_by, trashed_at, trashed_by, created_at, updated_at FROM datei ORDER BY created_at DESC
 `

@@ -21,3 +21,9 @@ SELECT * FROM datei ORDER BY created_at DESC;
 
 -- name: GetDateiByID :one
 SELECT * FROM datei WHERE id = $1;
+
+-- name: GetDateiNameByID :one
+SELECT * FROM datei_name WHERE id = $1;
+
+-- name: GetDateiVersionByID :one
+SELECT * FROM datei_version WHERE id = $1;
