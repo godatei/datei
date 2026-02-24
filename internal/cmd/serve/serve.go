@@ -51,6 +51,10 @@ func run(ctx context.Context, options Options) error {
 		slog.Warn("config error", "error", err)
 	}
 
+	if config.LoggingLevel() == "debug" {
+		slog.SetLogLoggerLevel(slog.LevelDebug)
+	}
+
 	swagger, err := server.GetSwagger()
 	if err != nil {
 		slog.Error("swagger error", "error", err)
@@ -65,6 +69,7 @@ func run(ctx context.Context, options Options) error {
 	defer db.Close()
 
 	if config.DatabaseMigrations() {
+		slog.Info("running migrations")
 		if err := migrations.Up(db); err != nil {
 			slog.Error("migrations failed", "error", err)
 			return err

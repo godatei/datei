@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/godatei/datei/internal/buildconfig"
 	"github.com/spf13/viper"
 )
 
@@ -24,6 +25,11 @@ func NewConfig(path string) error {
 
 	v.SetDefault("database.migrations", true)
 	v.SetDefault("server.addr", "0.0.0.0:8080")
+	if buildconfig.IsDevelopment() {
+		v.SetDefault("logging.level", "debug")
+	} else {
+		v.SetDefault("logging.level", "info")
+	}
 
 	if path != "" {
 		v.SetConfigFile(path)
@@ -46,4 +52,8 @@ func DatabaseMigrations() bool {
 
 func ServerAddr() string {
 	return v.GetString("server.addr")
+}
+
+func LoggingLevel() string {
+	return v.GetString("logging.level")
 }
