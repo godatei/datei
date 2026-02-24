@@ -10,7 +10,7 @@
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": [".github/workflows/build-hub.yaml"],
+      "managerFilePatterns": [".github/workflows/datei.yaml"],
       "matchStrings": [
         "\"(?<currentValue>[^\"]+)\",\\s+// renovate: datasource=(?<datasource>[^\\s]+) depName=(?<depName>[^\\s]+)",
         "'(?<currentValue>[^']+)'\\s+# renovate: datasource=(?<datasource>[^\\s]+) depName=(?<depName>[^\\s]+)"
