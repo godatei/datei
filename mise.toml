@@ -1,2 +1,79 @@
 [tools]
-github-cli="2.86.0"
+go = "1.26.0"
+golangci-lint = "2.10.1"
+ko = "0.18.1"
+node = "24"
+pnpm = "10.30.0"
+github-cli = "2.86.0"
+
+[env]
+_.source = ['hack/current-commit.sh']
+_.file = ".env.local"
+VERSION = 'snapshot'
+CGO_ENABLED = "0"
+
+[vars]
+ldflags = "-s -w -X github.com/godatei/datei/internal/buildconfig.version=$VERSION -X github.com/godatei/datei/internal/buildconfig.commit=$COMMIT"
+
+[tasks.go-generate]
+run = 'go generate ./...'
+
+[tasks.go-tidy]
+run = 'go mod tidy'
+depends = ["go-generate"]
+
+[tasks.frontend-deps]
+run = 'pnpm install'
+sources = ["package.json", "pnpm-lock.yaml"]
+
+[tasks."build:frontend:dev"]
+run = 'pnpm build:dev'
+depends = ["frontend-deps"]
+sources = ["node_modules/**/*", "frontend/ui/**/*"]
+
+[tasks."build:frontend"]
+run = 'pnpm build'
+depends = ["frontend-deps"]
+
+[tasks."build:datei"]
+run = 'go build -ldflags="{{vars.ldflags}}" -o dist/datei .'
+depends = ["go-tidy", "build:frontend"]
+
+[tasks."lint:go"]
+depends = ["go-tidy"]
+run = 'golangci-lint run'
+
+[tasks.lint]
+run = { tasks = ["lint:go"] }
+
+[tasks."test:go"]
+run = 'go test ./...'
+depends = ["go-tidy"]
+description = 'Run all Go tests'
+
+[tasks.test]
+run = { tasks = ["test:go"] }
+
+[tasks."format:go"]
+run = 'golangci-lint run --fix'
+
+#[tasks."format:frontend"]
+#run = 'pnpm format'
+
+[tasks.format]
+run = { tasks = ["format:go"] }
+
+[tasks."run:datei:serve"]
+alias = "serve"
+run = 'go run -ldflags="{{vars.ldflags}}" . serve'
+depends = ["go-tidy", "build:frontend:dev"]
+sources = ["api/**/*.go", "cmd/**/*.go", "internal/**/*.go"]
+
+[tasks."run:datei:migrate"]
+run = 'go run -ldflags="{{vars.ldflags}}" . migrate'
+description = 'Migrate the database to the latest schema version. Protip: `mise run:datei:migrate -- --to xx` to migrate to a specific version'
+
+[tasks."build:container"]
+depends = "build:frontend"
+run = "ko build --push=false --local --base-import-paths"
+env = { KO_DOCKER_REPO = "ghcr.io/godatei" }

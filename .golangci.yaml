@@ -1,0 +1,71 @@
+version: "2"
+run:
+  allow-parallel-runners: true
+issues:
+  max-issues-per-linter: 100
+  max-same-issues: 100
+linters:
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - contextcheck
+    - copyloopvar
+    - decorder
+    - dogsled
+    - dupl
+    - dupword
+    - errcheck
+    - errchkjson
+    - errname
+    - ginkgolinter
+    - gocheckcompilerdirectives
+    - goconst
+    - gocyclo
+    - goprintffuncname
+    - govet
+    - importas
+    - ineffassign
+    - lll
+    - loggercheck
+    - makezero
+    - mirror
+    - misspell
+    - nakedret
+    - prealloc
+    - staticcheck
+    - unconvert
+    - unparam
+    - unused
+    - whitespace
+    - gocritic
+    - misspell
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+  settings:
+    gocritic:
+      disabled-checks:
+        - ifElseChain
+        - singleCaseSwitch
+
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
