@@ -18,5 +18,17 @@ services:
       - '127.0.0.1:1025:1025'
       - '127.0.0.1:8025:8025'
 
+  storage:
+    image: 'rustfs/rustfs:1.0.0-alpha.83'
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - "rustfs:/data/"
+    environment:
+      RUSTFS_ACCESS_KEY: local
+      RUSTFS_SECRET_KEY: local
+
 volumes:
   postgres:
+  rustfs:

@@ -1,53 +1,20 @@
 package server
 
 import (
+	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"io"
 
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/mapping"
+	"github.com/godatei/datei/internal/storage"
 	"github.com/godatei/datei/pkg/api"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type server struct {
-	db *pgxpool.Pool
-}
-
-// mockS3UploadFromReader simulates uploading a file to S3 by generating metadata
-func mockS3UploadFromReader(
-	fileName string,
-	fileData io.Reader,
-) (s3Key string, fileSize int64, checksum string, mimeType string, err error) {
-	// Read file to calculate checksum and size
-	hasher := sha256.New()
-	fileSize, err = io.Copy(hasher, fileData)
-	if err != nil {
-		return "", 0, "", "", err
-	}
-
-	checksum = hex.EncodeToString(hasher.Sum(nil))
-	s3Key = checksum
-
-	// Simple MIME type detection from file extension
-	mimeType = "application/octet-stream"
-	if len(fileName) > 4 {
-		ext := fileName[len(fileName)-4:]
-		switch ext {
-		case ".txt":
-			mimeType = "text/plain"
-		case ".pdf":
-			mimeType = "application/pdf"
-		case ".jpg":
-			mimeType = "image/jpeg"
-		case ".png":
-			mimeType = "image/png"
-		}
-	}
-
-	return s3Key, fileSize, checksum, mimeType, nil
+	db    *pgxpool.Pool
+	store storage.Store
 }
 
 // DeleteApiV1DateiId implements [StrictServerInterface].
@@ -135,6 +102,7 @@ func (s *server) PatchApiV1DateiId(
 	var name *string
 	var fileData io.Reader
 	var fileName string
+	contentType := "application/octet-stream"
 
 	for {
 		part, err := reader.NextPart()
@@ -155,7 +123,12 @@ func (s *server) PatchApiV1DateiId(
 			}
 		case "file":
 			fileName = part.FileName()
-			fileData = part
+			if fileDataBytes, err := io.ReadAll(part); err != nil {
+				return PatchApiV1DateiId400Response{}, nil
+			} else {
+				fileData = bytes.NewReader(fileDataBytes)
+			}
+			contentType = part.Header.Get("Content-Type")
 		}
 	}
 
@@ -179,17 +152,17 @@ func (s *server) PatchApiV1DateiId(
 	}
 
 	if fileData != nil && fileName != "" {
-		s3Key, fileSize, checksum, mimeType, err := mockS3UploadFromReader(fileName, fileData)
+		hash, fileSize, err := s.store.PutObject(ctx, fileData, contentType)
 		if err != nil {
 			return PatchApiV1DateiId400Response{}, nil
 		}
 
 		versionRecord, err := queries.CreateDateiVersion(ctx, db.CreateDateiVersionParams{
 			DateiID:  datei.ID,
-			S3Key:    s3Key,
+			S3Key:    hash,
 			FileSize: fileSize,
-			Checksum: checksum,
-			MimeType: mimeType,
+			Checksum: hash,
+			MimeType: contentType,
 		})
 		if err != nil {
 			return PatchApiV1DateiId400Response{}, nil
@@ -224,6 +197,7 @@ func (s *server) PostApiV1Datei(
 	var name string
 	var fileData io.Reader
 	var fileName string
+	var contentType string
 
 	for {
 		part, err := reader.NextPart()
@@ -241,7 +215,15 @@ func (s *server) PostApiV1Datei(
 			name = string(buf[:n])
 		case "file":
 			fileName = part.FileName()
-			fileData = part
+			if fileDataBytes, err := io.ReadAll(part); err != nil {
+				return PostApiV1Datei400Response{}, nil
+			} else {
+				fileData = bytes.NewReader(fileDataBytes)
+			}
+			contentType = part.Header.Get("Content-Type")
+			if contentType == "" {
+				contentType = "application/octet-stream"
+			}
 		}
 	}
 
@@ -279,17 +261,17 @@ func (s *server) PostApiV1Datei(
 	// Handle file upload if provided
 	var latestVersion *db.DateiVersion
 	if fileData != nil && fileName != "" {
-		s3Key, fileSize, checksum, mimeType, err := mockS3UploadFromReader(fileName, fileData)
+		hash, fileSize, err := s.store.PutObject(ctx, fileData, contentType)
 		if err != nil {
 			return PostApiV1Datei400Response{}, nil
 		}
 
 		versionRecord, err := queries.CreateDateiVersion(ctx, db.CreateDateiVersionParams{
 			DateiID:  datei.ID,
-			S3Key:    s3Key,
+			S3Key:    hash,
 			FileSize: fileSize,
-			Checksum: checksum,
-			MimeType: mimeType,
+			Checksum: hash,
+			MimeType: contentType,
 		})
 		if err != nil {
 			return PostApiV1Datei400Response{}, nil
@@ -312,8 +294,8 @@ func (s *server) PostApiV1Datei(
 	return PostApiV1Datei201JSONResponse(*response), nil
 }
 
-func NewServer(db *pgxpool.Pool) *server {
-	return &server{db: db}
+func NewServer(db *pgxpool.Pool, store storage.Store) *server {
+	return &server{db: db, store: store}
 }
 
 var _ StrictServerInterface = (*server)(nil)
