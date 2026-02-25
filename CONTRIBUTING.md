@@ -36,5 +36,5 @@ For example, if a commit should be added to version 0.2.1, it must be pushed to 
 
 Creating pre-releases can be useful if you need to test the current state of the main branch in a demo environment or test artifact building.
 To do this, create a `v*.*.*-rc.x` branch (for example, `v0.2.0-rc.x`).
-For release-please to create a new release branch in the correct format, change `"prerelease": true` and `"versioning": "prerelease"` in the `release-please-config.json`.
-This will also automatically mark your GitHub release as pre-release.
+For release-please to create a new release branch in the correct format for this pre-release branch, ensure that `"prerelease": true` and `"versioning": "prerelease"` are set for that branch in `release-please-config.json` (they should remain disabled for normal releases from `main`).
+This configuration will also automatically mark your GitHub release as a pre-release.
