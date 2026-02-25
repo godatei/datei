@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 
 	"github.com/godatei/datei/internal/db"
@@ -11,6 +12,8 @@ import (
 	"github.com/godatei/datei/pkg/api"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+const fileFormField = "file"
 
 type server struct {
 	db    *pgxpool.Pool
@@ -121,7 +124,7 @@ func (s *server) PatchApiV1DateiId(
 				nameStr := string(buf[:n])
 				name = &nameStr
 			}
-		case "file":
+		case fileFormField:
 			fileName = part.FileName()
 			if fileDataBytes, err := io.ReadAll(part); err != nil {
 				return PatchApiV1DateiId400Response{}, nil
@@ -213,7 +216,7 @@ func (s *server) PostApiV1Datei(
 			buf := make([]byte, 256)
 			n, _ := part.Read(buf)
 			name = string(buf[:n])
-		case "file":
+		case fileFormField:
 			fileName = part.FileName()
 			if fileDataBytes, err := io.ReadAll(part); err != nil {
 				return PostApiV1Datei400Response{}, nil
@@ -292,6 +295,45 @@ func (s *server) PostApiV1Datei(
 	// Map to API response
 	response := mapping.MapDBDateiToAPI(&datei, latestVersion, &name)
 	return PostApiV1Datei201JSONResponse(*response), nil
+}
+
+// GetApiV1DateiIdDownload implements [StrictServerInterface].
+func (s *server) GetApiV1DateiIdDownload(
+	ctx context.Context,
+	request GetApiV1DateiIdDownloadRequestObject,
+) (GetApiV1DateiIdDownloadResponseObject, error) {
+	queries := db.New(s.db)
+	dateiID := request.Id
+
+	// Get Datei with details to check if it exists and has a version
+	details, err := queries.GetDateiByIDWithDetails(ctx, dateiID)
+	if err != nil {
+		return GetApiV1DateiIdDownload404Response{}, nil
+	}
+
+	// Check if it's a directory
+	if details.Datei.IsDirectory {
+		return GetApiV1DateiIdDownload409Response{}, nil
+	}
+
+	// Get the file from storage
+	reader, err := s.store.GetObject(ctx, details.DateiVersion.S3Key)
+	if err != nil {
+		return GetApiV1DateiIdDownload404Response{}, nil
+	}
+
+	// Determine the filename
+	filename := details.DateiName.Name
+
+	// Return the file with appropriate headers
+	return GetApiV1DateiIdDownload200ApplicationoctetStreamResponse{
+		Body: reader,
+		Headers: GetApiV1DateiIdDownload200ResponseHeaders{
+			ContentDisposition: fmt.Sprintf(`attachment; filename="%v"`, filename),
+			ContentType:        details.DateiVersion.MimeType,
+		},
+		ContentLength: details.DateiVersion.FileSize,
+	}, nil
 }
 
 func NewServer(db *pgxpool.Pool, store storage.Store) *server {

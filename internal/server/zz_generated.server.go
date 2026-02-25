@@ -10,6 +10,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -38,6 +39,9 @@ type ServerInterface interface {
 	// Update a Datei
 	// (PATCH /api/v1/datei/{id})
 	PatchApiV1DateiId(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// Download a Datei
+	// (GET /api/v1/datei/{id}/download)
+	GetApiV1DateiIdDownload(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -65,6 +69,12 @@ func (_ Unimplemented) DeleteApiV1DateiId(w http.ResponseWriter, r *http.Request
 // Update a Datei
 // (PATCH /api/v1/datei/{id})
 func (_ Unimplemented) PatchApiV1DateiId(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Download a Datei
+// (GET /api/v1/datei/{id}/download)
+func (_ Unimplemented) GetApiV1DateiIdDownload(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -167,6 +177,31 @@ func (siw *ServerInterfaceWrapper) PatchApiV1DateiId(w http.ResponseWriter, r *h
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PatchApiV1DateiId(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetApiV1DateiIdDownload operation middleware
+func (siw *ServerInterfaceWrapper) GetApiV1DateiIdDownload(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetApiV1DateiIdDownload(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -301,6 +336,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	r.Group(func(r chi.Router) {
 		r.Patch(options.BaseURL+"/api/v1/datei/{id}", wrapper.PatchApiV1DateiId)
 	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/datei/{id}/download", wrapper.GetApiV1DateiIdDownload)
+	})
 
 	return r
 }
@@ -429,6 +467,57 @@ func (response PatchApiV1DateiId404Response) VisitPatchApiV1DateiIdResponse(w ht
 	return nil
 }
 
+type GetApiV1DateiIdDownloadRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type GetApiV1DateiIdDownloadResponseObject interface {
+	VisitGetApiV1DateiIdDownloadResponse(w http.ResponseWriter) error
+}
+
+type GetApiV1DateiIdDownload200ResponseHeaders struct {
+	ContentDisposition string
+	ContentType        string
+}
+
+type GetApiV1DateiIdDownload200ApplicationoctetStreamResponse struct {
+	Body          io.Reader
+	Headers       GetApiV1DateiIdDownload200ResponseHeaders
+	ContentLength int64
+}
+
+func (response GetApiV1DateiIdDownload200ApplicationoctetStreamResponse) VisitGetApiV1DateiIdDownloadResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/octet-stream")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.Header().Set("Content-Disposition", fmt.Sprint(response.Headers.ContentDisposition))
+	w.Header().Set("Content-Type", fmt.Sprint(response.Headers.ContentType))
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type GetApiV1DateiIdDownload404Response struct {
+}
+
+func (response GetApiV1DateiIdDownload404Response) VisitGetApiV1DateiIdDownloadResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type GetApiV1DateiIdDownload409Response struct {
+}
+
+func (response GetApiV1DateiIdDownload409Response) VisitGetApiV1DateiIdDownloadResponse(w http.ResponseWriter) error {
+	w.WriteHeader(409)
+	return nil
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// List all Datei
@@ -443,6 +532,9 @@ type StrictServerInterface interface {
 	// Update a Datei
 	// (PATCH /api/v1/datei/{id})
 	PatchApiV1DateiId(ctx context.Context, request PatchApiV1DateiIdRequestObject) (PatchApiV1DateiIdResponseObject, error)
+	// Download a Datei
+	// (GET /api/v1/datei/{id}/download)
+	GetApiV1DateiIdDownload(ctx context.Context, request GetApiV1DateiIdDownloadRequestObject) (GetApiV1DateiIdDownloadResponseObject, error)
 }
 
 type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
@@ -590,29 +682,56 @@ func (sh *strictHandler) PatchApiV1DateiId(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// GetApiV1DateiIdDownload operation middleware
+func (sh *strictHandler) GetApiV1DateiIdDownload(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request GetApiV1DateiIdDownloadRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetApiV1DateiIdDownload(ctx, request.(GetApiV1DateiIdDownloadRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetApiV1DateiIdDownload")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetApiV1DateiIdDownloadResponseObject); ok {
+		if err := validResponse.VisitGetApiV1DateiIdDownloadResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/8xXS2/bRhD+K4ttDzagWHJjFKhuTtwWQuPAaJP0EOSwIofWxNyHd4dWFUP/vZhdPShy",
-	"ZalOU/RkeTmcx/d9M7N8lIXVzhowFOT4UYZiBlrFn689KIIrRYC/w30DgfjUeevAE0K0qbAG/ltCKDw6",
-	"QmvkWP6CNYhSkRInNp6peiCsRhKV9aJEDwVZjxBO5UBW1mtFciynaJRfyIGkhQM5loE8mlu5HEijdCbK",
-	"W6UhOqQZCANzEVPtv78cSA/3DXoo5fhjcvZpY2Wnn6EgjrKqNDhrAvRLLSIc5SX1M4lIoTWCUEMgpV27",
-	"rlIRvOAnudJWXl8t+l7fB/BiciVsJaKV9W2vTYOlHEjT1LWaMgnkG8gEwDLj2eB9AwJLMIQVQs5x31G4",
-	"WhGXyfXPGdAMmAoMAoNQG5ZbhE6trUEZdlYrgkAfwIf4/qP83kMlx/K74VaOw5UWh5GYtS2/jOYOyng6",
-	"yVSXIEtGSRPihGUSFpoPd0V3LIx5Cb5uvAdDgp9yUFbiWoUHXTrF7+YquIlPthCKydVzciavwiyv2Hf8",
-	"6LBcjw3xlHznMytWZgLpOXU0rtzXeW9UIJGe/+Pm68yFmEtb5INWy7eT2Ds7WnLujI4ZFHeh0Xsm5eZx",
-	"bj5YQ2DoOqOSa+XvSjs3YmUjnIcHhPkxkD4xzFZVpJnzLYda42qrSnjWVOO98wd+2bd7An4BgUZMFwSh",
-	"7R8N/XixTRkNwS34fXNyDUW2/Xo5adTwLh72mJpc/yyi/VEiDC9/A5bfpsiBbElkE6bNYk6TbzDQgZ2G",
-	"BDr08730Xi2YojQ9k0vGcWN/cFxvYi43mSn2Gv+3pOrMTOJjYRo9Bc/BYzBxMoXKehBO3aKJgjzN8NeF",
-	"Mea5jpQD531s5+dcbt7CXFT9C87XXWVgnnbI+jqzWltt533hdIriIzSVZfeExLmnuSQubyZyIB/W40me",
-	"n43ORpyNdWCUQzmWL+MRLyWaxeKHyuHw4XxYxnU2fpS3ECFigCINvLjkr0CXDj+cr5eeU15pIPBBjj/2",
-	"B9ZfqBvdothDaOqkLDa4byCilkCSNeq4MJKwEmqVamqS4/PRKCeCHq7dSIKsCHfo9kS0VRVgT8hcwE8s",
-	"uyT0CNoPo1Gc92kg80/lXI1FBGz4OaTlsHX+VBv12zcy3Nl/GGjTqMzoRcqgcyMyD6rGUsRqRYsjdhga",
-	"rVmsK2eqrrfenA0Z0m9s2GXdpw56ZctFp3zd1IROeRpyb7zgljkegcwHyHK303k7LHscnP9rHBzEP/XX",
-	"ag6L0BQFhFA1db04SIZfl8R2P2XultZUNRYkTuDs9mwgXPdSaCx/TzWmPO3wmHATqvVRxAY7HT18xHKZ",
-	"gtZA0Cf5Kp5vaZ6Uh9o7YRF3ZewtHiXb1oqbbZe5dpsd2K6ZTrvoQ5YySBXl2Nj7ygbK/Wwow0bJ95qS",
-	"XS5AO1p0uUgwCtXqKUXFLNNUfPz/gvubNHVm8R7V1KP/uqlXF/6vaOpj5LYjloTNVizL5fLvAAAA//8N",
-	"8MLZoBEAAA==",
+	"H4sIAAAAAAAC/8xYX2/bNhD/KgS3hxRwYmctBsxvab0Nxtqi2NruoegDLZ3iaySSIU/x3MDffThSsmWJ",
+	"jr20HfrUlDrev9/v/tD3MjOVNRo0eTm9lz5bQqXCny8cKIKZIsA/4bYGT3xqnbHgCCHIFFgC/5uDzxxa",
+	"QqPlVP6GJYhckRJnJpypciRMhSQK40SODjIyDsE/kSNZGFcpklO5QK3cWo4krS3IqfTkUF/LzUhqVSWs",
+	"vFYVBIW0BKFhJYKrw/ubkXRwW6ODXE4/RGUft1Jm8QkyYitNpN4a7WEYahbSkV/R0JOQKTRaEFbgSVW2",
+	"G1euCM75Syq0Ruvz9VDrOw9OzGfCFCJIGdfVWteYy5HUdVmqBYNAroaEAcwTmjXe1iAwB01YIKQUDxX5",
+	"WQNcwte/l0BLYCjQC/RCbVHuALowpgSlWVmpCDy9B+fD/Xv5o4NCTuUP4x0dxw0XxwGYVpYvo76BPJzO",
+	"E9HFlEWhyAlxxjTx64oP90l3ahrTFHxROweaBH9lo8zEloVHVVrFd1MRvAlfdikU89ljfCan/DLN2Lf8",
+	"6ThdTzXxEH1XSyMaMYH0mDhqmx+qvJfKk4jf/3Px9fpC8KVL8lGn5LtOHOwdHTr3WscSshtfVwc65fZz",
+	"qj8YTaDpVYIlr5S7yc1Ki0ZGWAd3CKtTUvpAM2uiiD3nWza12pZG5fCorsZz5y/8fGj2ePwMArVYrAl8",
+	"Vz9q+vnZzmXUBNfgDvXJNhXJ8hv4VGEFb8PhAKn5q19FkD+JhP7pH8D02wY5kh2KbM10UUxx8iV6OjLT",
+	"kKDyQ3+vnFNrhih2z6iS87iVP9qutzY3W88Uaw3/N6TKRE/iY6HragGOjQdj4mwBhXEgrLpGHQj5JIFf",
+	"P43Bz9ZSKjnvQjk/Zrl5DStRDBecL1tlYBVnSLvONGOrq3xInF5QfIS6MKyekNj32JfE1Zu5HMm7tj3J",
+	"y4vJxYS9MRa0siin8mk44qFEyxD8WFkc312O8zDOpvfyGkKKOEEBBh5c8negK4vvL9uhZ5VTFRA4L6cf",
+	"hg3rH6zqqgOxA1+XkVkscFtDyFpMkiyxCgMjEitmrVB1SXJ6OZmkSDDIa9+SICP8DdoDFk1ReDhgMmXw",
+	"I9MuEj0k7afJJPT72JD5T2VtiVlI2PiTj8Nhp/yhMhqWb0C4N//Q07ZQGdFn0YPeRqTvVIm5CNGKDkas",
+	"0NdVxWRtlKmy3GmzxidAf2P8PuouVtBzk6974Vd1SWiVozHXxjmXzOkZSDxANvuVztNhM8Dg8qthcDT/",
+	"sb6aPix8nWXgfVGX5fooGK4NieV+SeyWRhclZiTO4OL6YiRsfynUht9Ttc6f9HCMeROq8yhigb2KHt9j",
+	"volGSyAYgjwL5zuY5/mx8o65CLMy1Ba3kl1phcm2j1y3zI5M10SlPRumLHoQI0qhcfDKNpWH0VCahaLu",
+	"FpJ9LKCytO5jEdMoVKemFGXLRFHx8feV7m9S1InBe1JRT/7vom4W/i8o6lPotkeWmJsdWZJFO+adnzfn",
+	"04byPJ+18t9X/T4EqMkI6NyTA8WPpiFE8d3UXB7JJfBDIv5qFQ/PZ+it8UjNg6y34BKpbFlxP41XxQpp",
+	"Gda6EG43suHe1Zo4suy3PwiENfIhjZuv1ZwaoNv2tP87zKAztdI7um02/wYAAP//AAKSWw8UAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

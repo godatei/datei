@@ -23,6 +23,18 @@ type s3Store struct {
 	client *s3.Client
 }
 
+// GetObject implements [Store].
+func (s *s3Store) GetObject(ctx context.Context, reference string) (io.ReadCloser, error) {
+	o, err := s.client.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: &s.config.Bucket,
+		Key:    &reference,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("s3 get object: %w", err)
+	}
+	return o.Body, nil
+}
+
 // Initialize implements [Store].
 func (s *s3Store) Initialize(ctx context.Context) error {
 	if s.config.CreateBucket {
