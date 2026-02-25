@@ -13,7 +13,11 @@
     "experimentalDecorators": true,
     "importHelpers": true,
     "target": "ES2022",
-    "module": "preserve"
+    "module": "preserve",
+    "baseUrl": ".",
+    "paths": {
+      "~/frontend/*": ["frontend/src/app/*"]
+    }
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
@@ -24,10 +28,10 @@
   "files": [],
   "references": [
     {
-      "path": "./frontend/ui/tsconfig.app.json"
+      "path": "./frontend/tsconfig.app.json"
     },
     {
-      "path": "./frontend/ui/tsconfig.spec.json"
+      "path": "./frontend/tsconfig.spec.json"
     }
   ]
 }

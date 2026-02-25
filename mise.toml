@@ -29,7 +29,7 @@ sources = ["package.json", "pnpm-lock.yaml"]
 [tasks."build:frontend:dev"]
 run = 'pnpm build:dev'
 depends = ["frontend-deps"]
-sources = ["node_modules/**/*", "frontend/ui/**/*"]
+sources = ["node_modules/**/*", "frontend/**/*"]
 
 [tasks."build:frontend"]
 run = 'pnpm build'
@@ -38,6 +38,10 @@ depends = ["frontend-deps"]
 [tasks."build:datei"]
 run = 'go build -ldflags="{{vars.ldflags}}" -o dist/datei .'
 depends = ["go-tidy", "build:frontend"]
+
+[tasks."build:container"]
+depends = "build:datei"
+run = "docker build -t ghcr.io/godatei/datei:snapshot ."
 
 [tasks."lint:go"]
 depends = ["go-tidy"]
@@ -75,11 +79,6 @@ sources = ["api/**/*.go", "cmd/**/*.go", "internal/**/*.go"]
 [tasks."run:datei:migrate"]
 run = 'go run -ldflags="{{vars.ldflags}}" . migrate'
 description = 'Migrate the database to the latest schema version. Protip: `mise run:datei:migrate -- --to xx` to migrate to a specific version'
-
-[tasks."build:container"]
-depends = "build:frontend"
-run = "ko build --push=false --local --base-import-paths"
-env = { KO_DOCKER_REPO = "ghcr.io/godatei" }
 
 [tasks."import-db-schema"]
 run = 'podman compose exec --no-tty postgres pg_dump datei --user=local --section=pre-data --no-owner --no-privileges --exclude-table=schema_migrations | grep --invert-match "^\\\\" > internal/db/schema.sql'

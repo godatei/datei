@@ -3,6 +3,7 @@
 ## General
 
 - When fetching information from GitHub, always use the GitHub CLI (`gh`) command-line tool
+- Always run `mise build:datei` and `mise format` as part of your development workflow
 
 # Frontend
 
