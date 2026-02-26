@@ -9,10 +9,6 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
-const (
-	BearerHttpAuthenticationScopes = "bearerHttpAuthentication.Scopes"
-)
-
 // CreateDateiRequest defines model for CreateDateiRequest.
 type CreateDateiRequest struct {
 	// File File data (optional, omit for directories)

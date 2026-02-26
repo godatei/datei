@@ -28,7 +28,7 @@ properties:
     description: Current name of the Datei
   latestVersion:
     allOf:
-      - $ref: "./DateiVersion.yaml"
+      - $ref: './DateiVersion.yaml'
     nullable: true
     type: object
     description: Latest version/upload of the file

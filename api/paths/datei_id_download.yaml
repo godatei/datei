@@ -10,20 +10,20 @@ get:
         type: string
         format: uuid
   responses:
-    "200":
+    '200':
       description: File content
       headers:
         Content-Disposition:
           schema:
             type: string
-          description: "Attachment header with filename"
+          description: 'Attachment header with filename'
         Content-Type:
           schema:
             type: string
           description: MIME type of the file
       content:
         application/octet-stream: {}
-    "404":
+    '404':
       description: Datei not found
-    "409":
+    '409':
       description: Cannot download (e.g., is a directory)

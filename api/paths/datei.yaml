@@ -6,17 +6,17 @@ post:
     content:
       multipart/form-data:
         schema:
-          $ref: "../components/requestBodies/CreateDateiRequest.yaml"
+          $ref: '../components/requestBodies/CreateDateiRequest.yaml'
   responses:
-    "201":
+    '201':
       description: Datei created successfully
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/Datei.yaml"
-    "400":
+            $ref: '../components/schemas/Datei.yaml'
+    '400':
       description: Invalid request
-    "409":
+    '409':
       description: Conflict (e.g., parent directory not found)
 
 get:
@@ -36,11 +36,11 @@ get:
         type: integer
         default: 0
   responses:
-    "200":
+    '200':
       description: List of Datei
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/ListDateiResponse.yaml"
-    "400":
+            $ref: '../components/schemas/ListDateiResponse.yaml'
+    '400':
       description: Invalid query parameters

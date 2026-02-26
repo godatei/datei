@@ -94,7 +94,7 @@ run = { tasks = ["format:frontend", "format:backend"] }
 [tasks."run:datei:serve"]
 alias = "serve"
 run = 'go run -ldflags="{{vars.ldflags}}" . serve'
-depends = ["go-tidy", "build:frontend:dev"]
+depends = ["generate:backend", "build:frontend:dev"]
 sources = ["api/**/*.go", "cmd/**/*.go", "internal/**/*.go"]
 
 [tasks."run:datei:migrate"]

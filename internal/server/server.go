@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/godatei/datei/internal/datei"
 	"github.com/godatei/datei/internal/storage"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -8,12 +9,13 @@ import (
 const fileFormField = "file"
 
 type server struct {
-	db    *pgxpool.Pool
-	store storage.Store
+	dateiService *datei.DateiService
 }
 
 func NewServer(db *pgxpool.Pool, store storage.Store) *server {
-	return &server{db: db, store: store}
+	return &server{
+		dateiService: datei.NewDateiService(db, store),
+	}
 }
 
 var _ StrictServerInterface = (*server)(nil)

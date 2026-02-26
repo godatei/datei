@@ -17,5 +17,5 @@ components:
       type: http
       scheme: Bearer
       bearerFormat: JWT
-security:
-  - bearerHttpAuthentication: []
+#security:
+#  - bearerHttpAuthentication: []
