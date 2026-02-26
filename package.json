@@ -8,7 +8,8 @@
     "test": "ng test",
     "lint": "prettier --check . && ng lint",
     "format": "prettier --write . && ng lint --fix",
-    "generate-api-client": "rm -rf frontend/src/api && ng-openapi-gen --input api.yaml --output frontend/src/api"
+    "generate-openapi-bundle": "redocly bundle api/openapi.yaml -o dist/openapi.yaml",
+    "generate-openapi-client": "rm -rf frontend/src/api && ng-openapi-gen --input dist/openapi.yaml --output frontend/src/api"
   },
   "prettier": {
     "printWidth": 100,
@@ -45,6 +46,7 @@
     "@angular/compiler-cli": "^21.1.0",
     "@angular/material": "21.1.5",
     "@eslint/js": "^9.39.2",
+    "@redocly/cli": "^2.19.2",
     "angular-eslint": "21.2.0",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",

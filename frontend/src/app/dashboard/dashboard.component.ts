@@ -10,7 +10,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { Api } from 'frontend/src/api/api';
 import { createDatei, listDatei } from 'frontend/src/api/functions';
-import { DateiResponse } from 'frontend/src/api/models';
+import { Datei } from 'frontend/src/api/models';
 
 @Component({
   selector: 'app-dashboard',
@@ -37,7 +37,7 @@ export class DashboardComponent {
     params: () => ({ refresh: this.refresh() }),
     loader: () => this.api.invoke(listDatei),
   });
-  protected readonly dataSource = new MatTableDataSource<DateiResponse>([]);
+  protected readonly dataSource = new MatTableDataSource<Datei>([]);
   protected readonly displayedColumns = ['name', 'createdAt', 'updatedAt', 'mimeType'];
   protected readonly uploading = signal(false);
 

@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=https://spec.openapis.org/oas/3.0/schema/2024-10-18
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Datei API
+paths:
+  /api/v1/datei:
+    $ref: ./paths/datei.yaml
+  /api/v1/datei/{id}:
+    $ref: ./paths/datei_id.yaml
+  /api/v1/datei/{id}/download:
+    $ref: "./paths/datei_id_download.yaml"
+components:
+  securitySchemes:
+    bearerHttpAuthentication:
+      description: Bearer token using a JWT
+      type: http
+      scheme: Bearer
+      bearerFormat: JWT
+security:
+  - bearerHttpAuthentication: []

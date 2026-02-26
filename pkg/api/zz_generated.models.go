@@ -9,6 +9,10 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+const (
+	BearerHttpAuthenticationScopes = "bearerHttpAuthentication.Scopes"
+)
+
 // CreateDateiRequest defines model for CreateDateiRequest.
 type CreateDateiRequest struct {
 	// File File data (optional, omit for directories)
@@ -18,8 +22,8 @@ type CreateDateiRequest struct {
 	Name string `json:"name"`
 }
 
-// DateiResponse defines model for DateiResponse.
-type DateiResponse struct {
+// Datei defines model for Datei.
+type Datei struct {
 	// CreatedAt Creation timestamp
 	CreatedAt time.Time `json:"createdAt"`
 
@@ -30,8 +34,10 @@ type DateiResponse struct {
 	Id openapi_types.UUID `json:"id"`
 
 	// IsDirectory Whether this is a directory
-	IsDirectory   bool          `json:"isDirectory"`
-	LatestVersion *DateiVersion `json:"latestVersion,omitempty"`
+	IsDirectory bool `json:"isDirectory"`
+
+	// LatestVersion Latest version/upload of the file
+	LatestVersion *DateiVersion `json:"latestVersion"`
 
 	// LinkedDateiId ID of linked Datei (for symlinks)
 	LinkedDateiId *openapi_types.UUID `json:"linkedDateiId"`
@@ -79,7 +85,7 @@ type DateiVersion struct {
 // ListDateiResponse defines model for ListDateiResponse.
 type ListDateiResponse struct {
 	// Items Array of Datei objects
-	Items []DateiResponse `json:"items"`
+	Items []Datei `json:"items"`
 
 	// Total Total number of items (before pagination)
 	Total int `json:"total"`

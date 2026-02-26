@@ -1,0 +1,29 @@
+get:
+  operationId: DownloadDatei
+  summary: Download a Datei
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Datei ID
+      schema:
+        type: string
+        format: uuid
+  responses:
+    "200":
+      description: File content
+      headers:
+        Content-Disposition:
+          schema:
+            type: string
+          description: "Attachment header with filename"
+        Content-Type:
+          schema:
+            type: string
+          description: MIME type of the file
+      content:
+        application/octet-stream: {}
+    "404":
+      description: Datei not found
+    "409":
+      description: Cannot download (e.g., is a directory)

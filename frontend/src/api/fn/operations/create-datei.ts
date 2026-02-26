@@ -8,13 +8,13 @@ import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
 import { CreateDateiRequest } from '../../models/create-datei-request';
-import { DateiResponse } from '../../models/datei-response';
+import { Datei } from '../../models/datei';
 
 export interface CreateDatei$Params {
       body: CreateDateiRequest
 }
 
-export function createDatei(http: HttpClient, rootUrl: string, params: CreateDatei$Params, context?: HttpContext): Observable<StrictHttpResponse<DateiResponse>> {
+export function createDatei(http: HttpClient, rootUrl: string, params: CreateDatei$Params, context?: HttpContext): Observable<StrictHttpResponse<Datei>> {
   const rb = new RequestBuilder(rootUrl, createDatei.PATH, 'post');
   if (params) {
     rb.body(params.body, 'multipart/form-data');
@@ -25,7 +25,7 @@ export function createDatei(http: HttpClient, rootUrl: string, params: CreateDat
   ).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
-      return r as StrictHttpResponse<DateiResponse>;
+      return r as StrictHttpResponse<Datei>;
     })
   );
 }

@@ -1,5 +1,4 @@
-# yaml-language-server: $schema=https://spec.openapis.org/oas/3.0/schema/2024-10-18
-openapi: "3.0.0"
+openapi: 3.0.0
 info:
   version: 1.0.0
   title: Datei API
@@ -13,17 +12,17 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/CreateDateiRequest"
+              $ref: '#/components/schemas/CreateDateiRequest'
       responses:
-        "201":
+        '201':
           description: Datei created successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DateiResponse"
-        "400":
+                $ref: '#/components/schemas/Datei'
+        '400':
           description: Invalid request
-        "409":
+        '409':
           description: Conflict (e.g., parent directory not found)
     get:
       operationId: ListDatei
@@ -42,13 +41,13 @@ paths:
             type: integer
             default: 0
       responses:
-        "200":
+        '200':
           description: List of Datei
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListDateiResponse"
-        "400":
+                $ref: '#/components/schemas/ListDateiResponse'
+        '400':
           description: Invalid query parameters
   /api/v1/datei/{id}:
     patch:
@@ -67,17 +66,17 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/UpdateDateiRequest"
+              $ref: '#/components/schemas/UpdateDateiRequest'
       responses:
-        "200":
+        '200':
           description: Datei updated successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DateiResponse"
-        "400":
+                $ref: '#/components/schemas/Datei'
+        '400':
           description: Invalid request
-        "404":
+        '404':
           description: Datei not found
     delete:
       operationId: DeleteDatei
@@ -91,11 +90,11 @@ paths:
             type: string
             format: uuid
       responses:
-        "204":
+        '204':
           description: Datei deleted successfully
-        "404":
+        '404':
           description: Datei not found
-        "409":
+        '409':
           description: Cannot delete (e.g., directory not empty)
   /api/v1/datei/{id}/download:
     get:
@@ -110,26 +109,25 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
+        '200':
           description: File content
           headers:
             Content-Disposition:
               schema:
                 type: string
-              description: "Attachment header with filename"
+              description: Attachment header with filename
             Content-Type:
               schema:
                 type: string
               description: MIME type of the file
           content:
             application/octet-stream: {}
-        "404":
+        '404':
           description: Datei not found
-        "409":
+        '409':
           description: Cannot download (e.g., is a directory)
 components:
   schemas:
-    # Datei schemas
     DateiVersion:
       type: object
       required:
@@ -167,29 +165,7 @@ components:
           type: string
           format: date-time
           description: Version creation timestamp
-    CreateDateiRequest:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
-          description: Name for the new Datei
-        file:
-          type: string
-          format: binary
-          description: File data (optional, omit for directories)
-    UpdateDateiRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          description: New name for the Datei (optional)
-        file:
-          type: string
-          format: binary
-          description: New file data (optional)
-    DateiResponse:
+    Datei:
       type: object
       required:
         - id
@@ -219,8 +195,10 @@ components:
           nullable: true
           description: Current name of the Datei
         latestVersion:
-          $ref: "#/components/schemas/DateiVersion"
+          allOf:
+            - $ref: '#/components/schemas/DateiVersion'
           nullable: true
+          type: object
           description: Latest version/upload of the file
         createdBy:
           type: string
@@ -254,8 +232,30 @@ components:
         items:
           type: array
           items:
-            $ref: "#/components/schemas/DateiResponse"
+            $ref: '#/components/schemas/Datei'
           description: Array of Datei objects
         total:
           type: integer
           description: Total number of items (before pagination)
+    CreateDateiRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Name for the new Datei
+        file:
+          type: string
+          format: binary
+          description: File data (optional, omit for directories)
+    UpdateDateiRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: New name for the Datei (optional)
+        file:
+          type: string
+          format: binary
+          description: New file data (optional)

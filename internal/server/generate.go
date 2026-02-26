@@ -1,3 +1,3 @@
 package server
 
-//go:generate go tool oapi-codegen -config oapi-config.yaml ../../api.yaml
+//go:generate go tool oapi-codegen -config oapi-config.yaml ../../dist/openapi.yaml

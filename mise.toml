@@ -23,14 +23,21 @@ run = 'pnpm install'
 sources = ["package.json", "pnpm-lock.yaml"]
 outputs = ["node_modules/**/*"]
 
+[tasks."generate:openapi"]
+run = 'pnpm run generate-openapi-bundle'
+depends = "deps:frontend"
+sources = ["api/**/*.yaml"]
+outputs = ["dist/openapi.yaml"]
+
 [tasks."generate:backend"]
 run = 'go generate ./...'
-depends = "deps:backend"
+depends = ["deps:backend", "generate:openapi"]
+
 
 [tasks."generate:frontend"]
-run = 'pnpm run generate-api-client'
-depends = "deps:frontend"
-sources = ["api.yaml"]
+run = 'pnpm run generate-openapi-client'
+depends = ["deps:frontend", "generate:openapi"]
+sources = ["dist/openapi.yaml"]
 outputs = ["frontend/src/api/**/*"]
 
 [tasks.generate]

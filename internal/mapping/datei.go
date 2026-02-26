@@ -32,12 +32,12 @@ func MapDBVersionToAPI(dbVersion *db.DateiVersion) *api.DateiVersion {
 }
 
 // MapDBDateiToAPI converts a database Datei to an API DateiResponse
-func MapDBDateiToAPI(dbDatei *db.Datei, latestVersion *db.DateiVersion, name *string) *api.DateiResponse {
+func MapDBDateiToAPI(dbDatei *db.Datei, latestVersion *db.DateiVersion, name *string) *api.Datei {
 	if dbDatei == nil {
 		return nil
 	}
 
-	response := &api.DateiResponse{
+	response := &api.Datei{
 		CreatedAt:   dbDatei.CreatedAt,
 		Id:          dbDatei.ID,
 		IsDirectory: dbDatei.IsDirectory,
@@ -78,8 +78,8 @@ func MapDBDateiToAPI(dbDatei *db.Datei, latestVersion *db.DateiVersion, name *st
 }
 
 // MapDBDateiDetailsSliceToAPI converts a slice of ListDateiWithDetailsRow to API DateiResponse slice
-func MapDBDateiDetailsSliceToAPI(details []db.ListDateiWithDetailsRow) []api.DateiResponse {
-	result := make([]api.DateiResponse, 0, len(details))
+func MapDBDateiDetailsSliceToAPI(details []db.ListDateiWithDetailsRow) []api.Datei {
+	result := make([]api.Datei, 0, len(details))
 	for _, row := range details {
 		mapped := MapDBDateiToAPI(&row.Datei, &row.DateiVersion, &row.DateiName.Name)
 		if mapped != nil {

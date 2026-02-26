@@ -7,7 +7,7 @@ import { filter, map } from 'rxjs/operators';
 import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
-import { DateiResponse } from '../../models/datei-response';
+import { Datei } from '../../models/datei';
 import { UpdateDateiRequest } from '../../models/update-datei-request';
 
 export interface UpdateDatei$Params {
@@ -19,7 +19,7 @@ export interface UpdateDatei$Params {
       body: UpdateDateiRequest
 }
 
-export function updateDatei(http: HttpClient, rootUrl: string, params: UpdateDatei$Params, context?: HttpContext): Observable<StrictHttpResponse<DateiResponse>> {
+export function updateDatei(http: HttpClient, rootUrl: string, params: UpdateDatei$Params, context?: HttpContext): Observable<StrictHttpResponse<Datei>> {
   const rb = new RequestBuilder(rootUrl, updateDatei.PATH, 'patch');
   if (params) {
     rb.path('id', params.id, {});
@@ -31,7 +31,7 @@ export function updateDatei(http: HttpClient, rootUrl: string, params: UpdateDat
   ).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
-      return r as StrictHttpResponse<DateiResponse>;
+      return r as StrictHttpResponse<Datei>;
     })
   );
 }

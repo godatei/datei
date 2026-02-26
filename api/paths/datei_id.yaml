@@ -1,0 +1,47 @@
+patch:
+  operationId: UpdateDatei
+  summary: Update a Datei
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Datei ID
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          $ref: "../components/requestBodies/UpdateDateiRequest.yaml"
+  responses:
+    "200":
+      description: Datei updated successfully
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/Datei.yaml"
+    "400":
+      description: Invalid request
+    "404":
+      description: Datei not found
+
+delete:
+  operationId: DeleteDatei
+  summary: Delete a Datei
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Datei ID
+      schema:
+        type: string
+        format: uuid
+  responses:
+    "204":
+      description: Datei deleted successfully
+    "404":
+      description: Datei not found
+    "409":
+      description: Cannot delete (e.g., directory not empty)
