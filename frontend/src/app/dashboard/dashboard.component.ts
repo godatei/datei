@@ -33,7 +33,7 @@ export class DashboardComponent {
 
   private readonly refresh = signal(0);
 
-  protected readonly sres = resource({
+  protected readonly listDateiResource = resource({
     params: () => ({ refresh: this.refresh() }),
     loader: () => this.api.invoke(listDatei),
   });
@@ -42,7 +42,7 @@ export class DashboardComponent {
   protected readonly uploading = signal(false);
 
   constructor() {
-    effect(() => (this.dataSource.data = this.sres.value()?.items ?? []));
+    effect(() => (this.dataSource.data = this.listDateiResource.value()?.items ?? []));
   }
 
   /** Based on the screen size, switch from standard to one column per row */
@@ -58,7 +58,7 @@ export class DashboardComponent {
       return;
     }
 
-    const snack = this.snackBar.open('Upload in progres…');
+    const snack = this.snackBar.open('Upload in progress…');
     this.uploading.set(true);
     try {
       const file = el.files[0];
