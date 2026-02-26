@@ -5,9 +5,9 @@ name: Datei
 on:
   push:
     branches:
-      - 'main'
+      - "main"
     tags:
-      - '*'
+      - "*"
   pull_request:
 
 jobs:
@@ -30,7 +30,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
         with:
-          go-version-file: 'go.mod'
+          go-version-file: "go.mod"
           check-latest: true
           cache-dependency-path: |
             go.sum
@@ -39,7 +39,7 @@ jobs:
       - name: Lint with golangci-lint
         uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
         with:
-          version: 'v2.10.1' # renovate: datasource=github-releases depName=golangci/golangci-lint
+          version: "v2.10.1" # renovate: datasource=github-releases depName=golangci/golangci-lint
 
   lint-and-test-node:
     name: Lint and test (Node)
@@ -53,9 +53,9 @@ jobs:
       - name: Setup node.js
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
-          node-version: '24'
+          node-version: "24"
           cache: pnpm
-          registry-url: 'https://registry.npmjs.org'
+          registry-url: "https://registry.npmjs.org"
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Lint
@@ -99,7 +99,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
         with:
-          go-version-file: 'go.mod'
+          go-version-file: "go.mod"
           check-latest: true
           cache-dependency-path: |
             go.sum
@@ -110,9 +110,9 @@ jobs:
       - name: Setup node.js
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
-          node-version: '24'
+          node-version: "24"
           cache: pnpm
-          registry-url: 'https://registry.npmjs.org'
+          registry-url: "https://registry.npmjs.org"
 
       - name: Generate commit hash
         id: hash
@@ -127,7 +127,7 @@ jobs:
       - name: Build application
         run: go build -ldflags="$LDFLAGS" -o dist/datei .
         env:
-          CGO_ENABLED: '0'
+          CGO_ENABLED: "0"
           LDFLAGS: >-
             -s -w
             -X github.com/godatei/datei/internal/buildconfig.version=${{ github.ref_name }}
@@ -148,8 +148,8 @@ jobs:
           DATEI_STORAGE_S3_ENDPOINT: http://localhost:9000
           DATEI_STORAGE_S3_REGION: local
           DATEI_STORAGE_S3_USE_PATH_STYLE: true
-          DATEI_STORAGE_S3_ACCESS_KEY_ID: github-actions
-          DATEI_STORAGE_S3_SECRET_ACCESS_KEY: github-actions
+          DATEI_STORAGE_S3_ACCESS_KEY_ID: local
+          DATEI_STORAGE_S3_SECRET_ACCESS_KEY: local
 
       - name: Generate SBOM for frontend project
         uses: anchore/sbom-action@17ae1740179002c89186b61233e0f892c3118b11 # v0.23.0
