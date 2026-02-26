@@ -1,30 +1,32 @@
 # yaml-language-server: $schema=https://spec.openapis.org/oas/3.0/schema/2024-10-18
-openapi: '3.0.0'
+openapi: "3.0.0"
 info:
   version: 1.0.0
   title: Datei API
 paths:
   /api/v1/datei:
     post:
+      operationId: CreateDatei
       summary: Create a new Datei
       requestBody:
         required: true
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/CreateDateiRequest'
+              $ref: "#/components/schemas/CreateDateiRequest"
       responses:
-        '201':
+        "201":
           description: Datei created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DateiResponse'
-        '400':
+                $ref: "#/components/schemas/DateiResponse"
+        "400":
           description: Invalid request
-        '409':
+        "409":
           description: Conflict (e.g., parent directory not found)
     get:
+      operationId: ListDatei
       summary: List all Datei
       parameters:
         - name: limit
@@ -40,16 +42,17 @@ paths:
             type: integer
             default: 0
       responses:
-        '200':
+        "200":
           description: List of Datei
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListDateiResponse'
-        '400':
+                $ref: "#/components/schemas/ListDateiResponse"
+        "400":
           description: Invalid query parameters
   /api/v1/datei/{id}:
     patch:
+      operationId: UpdateDatei
       summary: Update a Datei
       parameters:
         - name: id
@@ -64,19 +67,20 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/UpdateDateiRequest'
+              $ref: "#/components/schemas/UpdateDateiRequest"
       responses:
-        '200':
+        "200":
           description: Datei updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DateiResponse'
-        '400':
+                $ref: "#/components/schemas/DateiResponse"
+        "400":
           description: Invalid request
-        '404':
+        "404":
           description: Datei not found
     delete:
+      operationId: DeleteDatei
       summary: Delete a Datei
       parameters:
         - name: id
@@ -87,14 +91,15 @@ paths:
             type: string
             format: uuid
       responses:
-        '204':
+        "204":
           description: Datei deleted successfully
-        '404':
+        "404":
           description: Datei not found
-        '409':
+        "409":
           description: Cannot delete (e.g., directory not empty)
   /api/v1/datei/{id}/download:
     get:
+      operationId: DownloadDatei
       summary: Download a Datei
       parameters:
         - name: id
@@ -105,22 +110,22 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: File content
           headers:
             Content-Disposition:
               schema:
                 type: string
-              description: 'Attachment header with filename'
+              description: "Attachment header with filename"
             Content-Type:
               schema:
                 type: string
               description: MIME type of the file
           content:
             application/octet-stream: {}
-        '404':
+        "404":
           description: Datei not found
-        '409':
+        "409":
           description: Cannot download (e.g., is a directory)
 components:
   schemas:
@@ -214,7 +219,7 @@ components:
           nullable: true
           description: Current name of the Datei
         latestVersion:
-          $ref: '#/components/schemas/DateiVersion'
+          $ref: "#/components/schemas/DateiVersion"
           nullable: true
           description: Latest version/upload of the file
         createdBy:
@@ -249,7 +254,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/DateiResponse'
+            $ref: "#/components/schemas/DateiResponse"
           description: Array of Datei objects
         total:
           type: integer

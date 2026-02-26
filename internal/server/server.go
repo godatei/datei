@@ -20,41 +20,41 @@ type server struct {
 	store storage.Store
 }
 
-// DeleteApiV1DateiId implements [StrictServerInterface].
-func (s *server) DeleteApiV1DateiId(
+// DeleteDatei implements [StrictServerInterface].
+func (s *server) DeleteDatei(
 	ctx context.Context,
-	request DeleteApiV1DateiIdRequestObject,
-) (DeleteApiV1DateiIdResponseObject, error) {
+	request DeleteDateiRequestObject,
+) (DeleteDateiResponseObject, error) {
 	queries := db.New(s.db)
 	dateiID := request.Id
 
 	// Get Datei to verify it exists
 	_, err := queries.GetDateiByID(ctx, dateiID)
 	if err != nil {
-		return DeleteApiV1DateiId404Response{}, nil
+		return DeleteDatei404Response{}, nil
 	}
 
 	// Soft delete by setting trashed_at
 	_, err = queries.SetDateiTrashedAt(ctx, dateiID)
 	if err != nil {
-		return DeleteApiV1DateiId409Response{}, nil
+		return DeleteDatei409Response{}, nil
 	}
 
 	// Return 204 No Content
-	return DeleteApiV1DateiId204Response{}, nil
+	return DeleteDatei204Response{}, nil
 }
 
-// GetApiV1Datei implements [StrictServerInterface].
-func (s *server) GetApiV1Datei(
+// ListDatei implements [StrictServerInterface].
+func (s *server) ListDatei(
 	ctx context.Context,
-	request GetApiV1DateiRequestObject,
-) (GetApiV1DateiResponseObject, error) {
+	request ListDateiRequestObject,
+) (ListDateiResponseObject, error) {
 	queries := db.New(s.db)
 
 	// Get all Datei records with details in a single query
 	allDateiWithDetails, err := queries.ListDateiWithDetails(ctx)
 	if err != nil {
-		return GetApiV1Datei400Response{}, err
+		return ListDatei400Response{}, err
 	}
 
 	// Get pagination parameters
@@ -83,21 +83,21 @@ func (s *server) GetApiV1Datei(
 		Total: total,
 	}
 
-	return GetApiV1Datei200JSONResponse(response), nil
+	return ListDatei200JSONResponse(response), nil
 }
 
-// PatchApiV1DateiId implements [StrictServerInterface].
-func (s *server) PatchApiV1DateiId(
+// UpdateDatei implements [StrictServerInterface].
+func (s *server) UpdateDatei(
 	ctx context.Context,
-	request PatchApiV1DateiIdRequestObject,
-) (PatchApiV1DateiIdResponseObject, error) {
+	request UpdateDateiRequestObject,
+) (UpdateDateiResponseObject, error) {
 	queries := db.New(s.db)
 	dateiID := request.Id
 
 	// Get existing Datei
 	datei, err := queries.GetDateiByID(ctx, dateiID)
 	if err != nil {
-		return PatchApiV1DateiId404Response{}, nil
+		return UpdateDatei404Response{}, nil
 	}
 
 	// The request.Body is already a multipart reader
@@ -113,7 +113,7 @@ func (s *server) PatchApiV1DateiId(
 			break
 		}
 		if err != nil {
-			return PatchApiV1DateiId400Response{}, nil
+			return UpdateDatei400Response{}, nil
 		}
 
 		switch part.FormName() {
@@ -127,7 +127,7 @@ func (s *server) PatchApiV1DateiId(
 		case fileFormField:
 			fileName = part.FileName()
 			if fileDataBytes, err := io.ReadAll(part); err != nil {
-				return PatchApiV1DateiId400Response{}, nil
+				return UpdateDatei400Response{}, nil
 			} else {
 				fileData = bytes.NewReader(fileDataBytes)
 			}
@@ -142,7 +142,7 @@ func (s *server) PatchApiV1DateiId(
 			Name:    *name,
 		})
 		if err != nil {
-			return PatchApiV1DateiId400Response{}, nil
+			return UpdateDatei400Response{}, nil
 		}
 
 		datei, err = queries.UpdateDateiLatestNameID(ctx, db.UpdateDateiLatestNameIDParams{
@@ -150,14 +150,14 @@ func (s *server) PatchApiV1DateiId(
 			LatestNameID: &nameRecord.ID,
 		})
 		if err != nil {
-			return PatchApiV1DateiId400Response{}, nil
+			return UpdateDatei400Response{}, nil
 		}
 	}
 
 	if fileData != nil && fileName != "" {
 		hash, fileSize, err := s.store.PutObject(ctx, fileData, contentType)
 		if err != nil {
-			return PatchApiV1DateiId400Response{}, nil
+			return UpdateDatei400Response{}, nil
 		}
 
 		versionRecord, err := queries.CreateDateiVersion(ctx, db.CreateDateiVersionParams{
@@ -168,7 +168,7 @@ func (s *server) PatchApiV1DateiId(
 			MimeType: contentType,
 		})
 		if err != nil {
-			return PatchApiV1DateiId400Response{}, nil
+			return UpdateDatei400Response{}, nil
 		}
 
 		datei, err = queries.UpdateDateiLatestVersionID(ctx, db.UpdateDateiLatestVersionIDParams{
@@ -176,25 +176,25 @@ func (s *server) PatchApiV1DateiId(
 			LatestVersionID: &versionRecord.ID,
 		})
 		if err != nil {
-			return PatchApiV1DateiId400Response{}, nil
+			return UpdateDatei400Response{}, nil
 		}
 	}
 
 	details, err := queries.GetDateiByIDWithDetails(ctx, datei.ID)
 	if err != nil {
-		return PatchApiV1DateiId400Response{}, nil
+		return UpdateDatei400Response{}, nil
 	}
 
 	// Map to API response
 	response := mapping.MapDBDateiToAPI(&details.Datei, &details.DateiVersion, &details.DateiName.Name)
-	return PatchApiV1DateiId200JSONResponse(*response), nil
+	return UpdateDatei200JSONResponse(*response), nil
 }
 
-// PostApiV1Datei implements [StrictServerInterface].
-func (s *server) PostApiV1Datei(
+// CreateDatei implements [StrictServerInterface].
+func (s *server) CreateDatei(
 	ctx context.Context,
-	request PostApiV1DateiRequestObject,
-) (PostApiV1DateiResponseObject, error) {
+	request CreateDateiRequestObject,
+) (CreateDateiResponseObject, error) {
 	// The request.Body is already a multipart reader
 	reader := request.Body
 	var name string
@@ -208,7 +208,7 @@ func (s *server) PostApiV1Datei(
 			break
 		}
 		if err != nil {
-			return PostApiV1Datei400Response{}, nil
+			return CreateDatei400Response{}, nil
 		}
 
 		switch part.FormName() {
@@ -219,7 +219,7 @@ func (s *server) PostApiV1Datei(
 		case fileFormField:
 			fileName = part.FileName()
 			if fileDataBytes, err := io.ReadAll(part); err != nil {
-				return PostApiV1Datei400Response{}, nil
+				return CreateDatei400Response{}, nil
 			} else {
 				fileData = bytes.NewReader(fileDataBytes)
 			}
@@ -231,7 +231,7 @@ func (s *server) PostApiV1Datei(
 	}
 
 	if name == "" {
-		return PostApiV1Datei400Response{}, nil
+		return CreateDatei400Response{}, nil
 	}
 
 	queries := db.New(s.db)
@@ -240,7 +240,7 @@ func (s *server) PostApiV1Datei(
 	isDirectory := fileData == nil
 	datei, err := queries.CreateDatei(ctx, isDirectory)
 	if err != nil {
-		return PostApiV1Datei400Response{}, nil
+		return CreateDatei400Response{}, nil
 	}
 
 	// Create DateiName
@@ -249,7 +249,7 @@ func (s *server) PostApiV1Datei(
 		Name:    name,
 	})
 	if err != nil {
-		return PostApiV1Datei400Response{}, nil
+		return CreateDatei400Response{}, nil
 	}
 
 	// Update Datei with latest name ID
@@ -258,7 +258,7 @@ func (s *server) PostApiV1Datei(
 		LatestNameID: &nameRecord.ID,
 	})
 	if err != nil {
-		return PostApiV1Datei400Response{}, nil
+		return CreateDatei400Response{}, nil
 	}
 
 	// Handle file upload if provided
@@ -266,7 +266,7 @@ func (s *server) PostApiV1Datei(
 	if fileData != nil && fileName != "" {
 		hash, fileSize, err := s.store.PutObject(ctx, fileData, contentType)
 		if err != nil {
-			return PostApiV1Datei400Response{}, nil
+			return CreateDatei400Response{}, nil
 		}
 
 		versionRecord, err := queries.CreateDateiVersion(ctx, db.CreateDateiVersionParams{
@@ -277,7 +277,7 @@ func (s *server) PostApiV1Datei(
 			MimeType: contentType,
 		})
 		if err != nil {
-			return PostApiV1Datei400Response{}, nil
+			return CreateDatei400Response{}, nil
 		}
 
 		// Update Datei with latest version ID
@@ -286,7 +286,7 @@ func (s *server) PostApiV1Datei(
 			LatestVersionID: &versionRecord.ID,
 		})
 		if err != nil {
-			return PostApiV1Datei400Response{}, nil
+			return CreateDatei400Response{}, nil
 		}
 
 		latestVersion = &versionRecord
@@ -294,41 +294,41 @@ func (s *server) PostApiV1Datei(
 
 	// Map to API response
 	response := mapping.MapDBDateiToAPI(&datei, latestVersion, &name)
-	return PostApiV1Datei201JSONResponse(*response), nil
+	return CreateDatei201JSONResponse(*response), nil
 }
 
-// GetApiV1DateiIdDownload implements [StrictServerInterface].
-func (s *server) GetApiV1DateiIdDownload(
+// DownloadDatei implements [StrictServerInterface].
+func (s *server) DownloadDatei(
 	ctx context.Context,
-	request GetApiV1DateiIdDownloadRequestObject,
-) (GetApiV1DateiIdDownloadResponseObject, error) {
+	request DownloadDateiRequestObject,
+) (DownloadDateiResponseObject, error) {
 	queries := db.New(s.db)
 	dateiID := request.Id
 
 	// Get Datei with details to check if it exists and has a version
 	details, err := queries.GetDateiByIDWithDetails(ctx, dateiID)
 	if err != nil {
-		return GetApiV1DateiIdDownload404Response{}, nil
+		return DownloadDatei404Response{}, nil
 	}
 
 	// Check if it's a directory
 	if details.Datei.IsDirectory {
-		return GetApiV1DateiIdDownload409Response{}, nil
+		return DownloadDatei409Response{}, nil
 	}
 
 	// Get the file from storage
 	reader, err := s.store.GetObject(ctx, details.DateiVersion.S3Key)
 	if err != nil {
-		return GetApiV1DateiIdDownload404Response{}, nil
+		return DownloadDatei404Response{}, nil
 	}
 
 	// Determine the filename
 	filename := details.DateiName.Name
 
 	// Return the file with appropriate headers
-	return GetApiV1DateiIdDownload200ApplicationoctetStreamResponse{
+	return DownloadDatei200ApplicationoctetStreamResponse{
 		Body: reader,
-		Headers: GetApiV1DateiIdDownload200ResponseHeaders{
+		Headers: DownloadDatei200ResponseHeaders{
 			ContentDisposition: fmt.Sprintf(`attachment; filename="%v"`, filename),
 			ContentType:        details.DateiVersion.MimeType,
 		},

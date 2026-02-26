@@ -94,8 +94,8 @@ type UpdateDateiRequest struct {
 	Name *string `json:"name,omitempty"`
 }
 
-// GetApiV1DateiParams defines parameters for GetApiV1Datei.
-type GetApiV1DateiParams struct {
+// ListDateiParams defines parameters for ListDatei.
+type ListDateiParams struct {
 	// Limit Maximum number of results
 	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 
@@ -103,8 +103,8 @@ type GetApiV1DateiParams struct {
 	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
-// PostApiV1DateiMultipartRequestBody defines body for PostApiV1Datei for multipart/form-data ContentType.
-type PostApiV1DateiMultipartRequestBody = CreateDateiRequest
+// CreateDateiMultipartRequestBody defines body for CreateDatei for multipart/form-data ContentType.
+type CreateDateiMultipartRequestBody = CreateDateiRequest
 
-// PatchApiV1DateiIdMultipartRequestBody defines body for PatchApiV1DateiId for multipart/form-data ContentType.
-type PatchApiV1DateiIdMultipartRequestBody = UpdateDateiRequest
+// UpdateDateiMultipartRequestBody defines body for UpdateDatei for multipart/form-data ContentType.
+type UpdateDateiMultipartRequestBody = UpdateDateiRequest

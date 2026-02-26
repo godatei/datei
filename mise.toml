@@ -15,60 +15,74 @@ CGO_ENABLED = "0"
 [vars]
 ldflags = "-s -w -X github.com/godatei/datei/internal/buildconfig.version=$VERSION -X github.com/godatei/datei/internal/buildconfig.commit=$COMMIT"
 
-[tasks.go-generate]
-run = 'go generate ./...'
-
-[tasks.go-tidy]
+[tasks."deps:backend"]
 run = 'go mod tidy'
-depends = ["go-generate"]
 
-[tasks.frontend-deps]
+[tasks."deps:frontend"]
 run = 'pnpm install'
 sources = ["package.json", "pnpm-lock.yaml"]
+outputs = ["node_modules/**/*"]
+
+[tasks."generate:backend"]
+run = 'go generate ./...'
+depends = "deps:backend"
+
+[tasks."generate:frontend"]
+run = 'pnpm run generate-api-client'
+depends = "deps:frontend"
+sources = ["api.yaml"]
+outputs = ["frontend/src/api/**/*"]
+
+[tasks.generate]
+run = { tasks = ["generate:backend", "generate:frontend"] }
 
 [tasks."build:frontend:dev"]
 run = 'pnpm build:dev'
-depends = ["frontend-deps"]
+depends = "generate:frontend"
 sources = ["node_modules/**/*", "frontend/**/*"]
 
 [tasks."build:frontend"]
 run = 'pnpm build'
-depends = ["frontend-deps"]
+depends = "generate:frontend"
 
 [tasks."build:datei"]
 run = 'go build -ldflags="{{vars.ldflags}}" -o dist/datei .'
-depends = ["go-tidy", "build:frontend"]
+depends = ["generate:backend", "build:frontend"]
 
 [tasks."build:container"]
 depends = "build:datei"
 run = "docker build -t ghcr.io/godatei/datei:snapshot ."
 
-[tasks."lint:go"]
-depends = ["go-tidy"]
+[tasks."lint:backend"]
+depends = ["generate:backend"]
 run = 'golangci-lint run'
 
 [tasks."lint:frontend"]
 run = 'pnpm lint'
 
 [tasks.lint]
-run = { tasks = ["lint:frontend", "lint:go"] }
+run = { tasks = ["lint:frontend", "lint:backend"] }
 
-[tasks."test:go"]
+[tasks."test:backend"]
 run = 'go test ./...'
-depends = ["go-tidy"]
+depends = ["generate:backend"]
 description = 'Run all Go tests'
 
-[tasks.test]
-run = { tasks = ["test:go"] }
+[tasks."test:frontend"]
+run = 'pnpm run test'
+depends = "generate:frontend"
 
-[tasks."format:go"]
+[tasks.test]
+run = { tasks = ["test:backend", "test:frontend"] }
+
+[tasks."format:backend"]
 run = 'golangci-lint run --fix'
 
 [tasks."format:frontend"]
 run = 'pnpm format'
 
 [tasks.format]
-run = { tasks = ["format:frontend", "format:go"] }
+run = { tasks = ["format:frontend", "format:backend"] }
 
 [tasks."run:datei:serve"]
 alias = "serve"

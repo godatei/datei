@@ -7,7 +7,8 @@
     "build:dev": "ng build --configuration=development",
     "test": "ng test",
     "lint": "prettier --check . && ng lint",
-    "format": "prettier --write . && ng lint --fix"
+    "format": "prettier --write . && ng lint --fix",
+    "generate-api-client": "rm -rf frontend/src/api && ng-openapi-gen --input api.yaml --output frontend/src/api"
   },
   "prettier": {
     "printWidth": 100,
@@ -49,6 +50,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "jsdom": "^27.1.0",
+    "ng-openapi-gen": "^1.0.5",
     "prettier": "^3.8.1",
     "typescript": "~5.9.2",
     "typescript-eslint": "8.56.1",
