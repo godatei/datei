@@ -11,13 +11,16 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/godatei/datei/internal/buildconfig"
 	"github.com/godatei/datei/internal/config"
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/db/migrations"
 	"github.com/godatei/datei/internal/frontend"
 	"github.com/godatei/datei/internal/server"
-	middleware "github.com/oapi-codegen/nethttp-middleware"
+	"github.com/godatei/datei/internal/storage"
+	oapimiddleware "github.com/oapi-codegen/nethttp-middleware"
+	slogchi "github.com/samber/slog-chi"
 	"github.com/spf13/cobra"
 )
 
@@ -55,12 +58,6 @@ func run(ctx context.Context, options Options) error {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
 	}
 
-	swagger, err := server.GetSwagger()
-	if err != nil {
-		slog.Error("swagger error", "error", err)
-		return err
-	}
-
 	db, err := db.NewPool(ctx, config.DatabaseURI())
 	if err != nil {
 		slog.Error("database init error", "error", err)
@@ -76,12 +73,36 @@ func run(ctx context.Context, options Options) error {
 		}
 	}
 
+	sc, err := config.StorageS3()
+	if err != nil {
+		slog.Error("invalid storage config", "error", err)
+		return err
+	}
+	store := storage.NewS3Store(ctx, sc)
+
+	if err := store.Initialize(ctx); err != nil {
+		slog.Error("failed to initialize storage", "error", err)
+		return err
+	}
+
+	swagger, err := server.GetSwagger()
+	if err != nil {
+		slog.Error("swagger error", "error", err)
+		return err
+	}
+
 	apiMux := chi.NewRouter()
-	apiMux.Use(middleware.OapiRequestValidator(swagger))
-	strictHandler := server.NewStrictHandler(server.NewServer(db), nil)
+	apiMux.Use(
+		chimiddleware.RequestID,
+		chimiddleware.RealIP,
+		slogchi.New(slog.Default()),
+		oapimiddleware.OapiRequestValidator(swagger),
+	)
+	strictHandler := server.NewStrictHandler(server.NewServer(db, store), nil)
 	server.HandlerFromMux(strictHandler, apiMux)
 
 	rootMux := chi.NewRouter()
+	rootMux.Use(chimiddleware.Recoverer)
 	rootMux.Handle("/*", frontend.NewHandler())
 	rootMux.Handle("/api/*", apiMux)
 

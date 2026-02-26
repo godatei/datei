@@ -1,7 +1,7 @@
 <div class="grid-container">
   <h1 class="mat-h1">Dashboard</h1>
-  <mat-grid-list cols="2" rowHeight="350px">
-    @for (card of cards | async; track card) {
+  <mat-grid-list cols="4" rowHeight="12rem">
+    @for (card of cards; track card) {
       <mat-grid-tile [colspan]="card.cols" [rowspan]="card.rows">
         <mat-card class="dashboard-card">
           <mat-card-header>
@@ -21,11 +21,40 @@
               </mat-menu>
             </mat-card-title>
           </mat-card-header>
-          <mat-card-content class="dashboard-card-content">
-            <div>Card Content Here</div>
-          </mat-card-content>
+          <mat-card-content class="dashboard-card-content"></mat-card-content>
         </mat-card>
       </mat-grid-tile>
     }
   </mat-grid-list>
+  <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef>Name</th>
+      <td mat-cell *matCellDef="let element">{{ element.name }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="createdAt">
+      <th mat-header-cell *matHeaderCellDef>Created At</th>
+      <td mat-cell *matCellDef="let element">{{ element.createdAt | date }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="updatedAt">
+      <th mat-header-cell *matHeaderCellDef>Updated At</th>
+      <td mat-cell *matCellDef="let element">{{ element.updatedAt | date }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="mimeType">
+      <th mat-header-cell *matHeaderCellDef>Content Type</th>
+      <td mat-cell *matCellDef="let element">{{ element.latestVersion.mimeType }}</td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+  </table>
 </div>
+
+<input type="file" style="display: none" #uploadInput (change)="startUpload($event.target)" />
+
+<button matFab extended class="main-fab" (click)="uploadInput.click()" [disabled]="uploading()">
+  <mat-icon>upload</mat-icon>
+  Upload
+</button>

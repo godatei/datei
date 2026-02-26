@@ -1,0 +1,57 @@
+type: object
+required:
+  - id
+  - isDirectory
+  - createdAt
+  - updatedAt
+properties:
+  id:
+    type: string
+    format: uuid
+    description: Unique identifier
+  parentId:
+    type: string
+    format: uuid
+    nullable: true
+    description: Parent directory ID
+  isDirectory:
+    type: boolean
+    description: Whether this is a directory
+  linkedDateiId:
+    type: string
+    format: uuid
+    nullable: true
+    description: ID of linked Datei (for symlinks)
+  name:
+    type: string
+    nullable: true
+    description: Current name of the Datei
+  latestVersion:
+    allOf:
+      - $ref: './DateiVersion.yaml'
+    nullable: true
+    type: object
+    description: Latest version/upload of the file
+  createdBy:
+    type: string
+    format: uuid
+    nullable: true
+    description: User ID of creator
+  trashedAt:
+    type: string
+    format: date-time
+    nullable: true
+    description: Trash timestamp
+  trashedBy:
+    type: string
+    format: uuid
+    nullable: true
+    description: User ID who trashed it
+  createdAt:
+    type: string
+    format: date-time
+    description: Creation timestamp
+  updatedAt:
+    type: string
+    format: date-time
+    description: Last update timestamp

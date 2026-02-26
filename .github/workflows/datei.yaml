@@ -66,7 +66,7 @@ jobs:
   build:
     services:
       postgres:
-        image: postgres
+        image: postgres:18.2-alpine3.23
         env:
           POSTGRES_USER: test-user
           POSTGRES_PASSWORD: test-password
@@ -78,6 +78,13 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
+      storage:
+        image: rustfs/rustfs:1.0.0-alpha.83
+        env:
+          RUSTFS_ACCESS_KEY: local
+          RUSTFS_SECRET_KEY: local
+        ports:
+          - 9000:9000
     name: Build
     timeout-minutes: 10
     runs-on: ubuntu-latest
@@ -137,6 +144,12 @@ jobs:
         env:
           DATEI_DATABASE_URI: postgres://test-user:test-password@localhost:5432/datei
           DATEI_SERVER_ADDR: 0.0.0.0:8080
+          DATEI_STORAGE_S3_BUCKET: datei
+          DATEI_STORAGE_S3_ENDPOINT: http://localhost:9000
+          DATEI_STORAGE_S3_REGION: local
+          DATEI_STORAGE_S3_USE_PATH_STYLE: true
+          DATEI_STORAGE_S3_ACCESS_KEY_ID: local
+          DATEI_STORAGE_S3_SECRET_ACCESS_KEY: local
 
       - name: Generate SBOM for frontend project
         uses: anchore/sbom-action@17ae1740179002c89186b61233e0f892c3118b11 # v0.23.0

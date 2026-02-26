@@ -1,0 +1,13 @@
+type: object
+required:
+  - items
+  - total
+properties:
+  items:
+    type: array
+    items:
+      $ref: './Datei.yaml'
+    description: Array of Datei objects
+  total:
+    type: integer
+    description: Total number of items (before pagination)

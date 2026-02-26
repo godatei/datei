@@ -1,0 +1,46 @@
+post:
+  operationId: CreateDatei
+  summary: Create a new Datei
+  requestBody:
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          $ref: '../components/requestBodies/CreateDateiRequest.yaml'
+  responses:
+    '201':
+      description: Datei created successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/Datei.yaml'
+    '400':
+      description: Invalid request
+    '409':
+      description: Conflict (e.g., parent directory not found)
+
+get:
+  operationId: ListDatei
+  summary: List all Datei
+  parameters:
+    - name: limit
+      in: query
+      description: Maximum number of results
+      schema:
+        type: integer
+        default: 100
+    - name: offset
+      in: query
+      description: Number of results to skip
+      schema:
+        type: integer
+        default: 0
+  responses:
+    '200':
+      description: List of Datei
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ListDateiResponse.yaml'
+    '400':
+      description: Invalid query parameters
