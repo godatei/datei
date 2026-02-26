@@ -2,3 +2,4 @@
 **/pnpm-lock.yaml
 **/dist/*
 CHANGELOG.md
+frontend/src/api/**/*

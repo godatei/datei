@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=https://spec.openapis.org/oas/3.0/schema/2024-10-18
-openapi: "3.0.0"
+openapi: '3.0.0'
 info:
   version: 1.0.0
   title: Datei API
@@ -9,7 +9,7 @@ paths:
   /api/v1/datei/{id}:
     $ref: ./paths/datei_id.yaml
   /api/v1/datei/{id}/download:
-    $ref: "./paths/datei_id_download.yaml"
+    $ref: './paths/datei_id_download.yaml'
 components:
   securitySchemes:
     bearerHttpAuthentication:
