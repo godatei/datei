@@ -10,6 +10,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"path"
@@ -18,30 +20,61 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
 	. "github.com/godatei/datei/pkg/api"
+	"github.com/oapi-codegen/runtime"
 	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-
-	// (GET /api/v1/ping)
-	GetApiV1Ping(w http.ResponseWriter, r *http.Request)
-
-	// (POST /api/v1/ping)
-	PostApiV1Ping(w http.ResponseWriter, r *http.Request)
+	// List all Datei
+	// (GET /api/v1/datei)
+	ListDatei(w http.ResponseWriter, r *http.Request, params ListDateiParams)
+	// Create a new Datei
+	// (POST /api/v1/datei)
+	CreateDatei(w http.ResponseWriter, r *http.Request)
+	// Delete a Datei
+	// (DELETE /api/v1/datei/{id})
+	DeleteDatei(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// Update a Datei
+	// (PATCH /api/v1/datei/{id})
+	UpdateDatei(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// Download a Datei
+	// (GET /api/v1/datei/{id}/download)
+	DownloadDatei(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
 
 type Unimplemented struct{}
 
-// (GET /api/v1/ping)
-func (_ Unimplemented) GetApiV1Ping(w http.ResponseWriter, r *http.Request) {
+// List all Datei
+// (GET /api/v1/datei)
+func (_ Unimplemented) ListDatei(w http.ResponseWriter, r *http.Request, params ListDateiParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// (POST /api/v1/ping)
-func (_ Unimplemented) PostApiV1Ping(w http.ResponseWriter, r *http.Request) {
+// Create a new Datei
+// (POST /api/v1/datei)
+func (_ Unimplemented) CreateDatei(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete a Datei
+// (DELETE /api/v1/datei/{id})
+func (_ Unimplemented) DeleteDatei(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update a Datei
+// (PATCH /api/v1/datei/{id})
+func (_ Unimplemented) UpdateDatei(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Download a Datei
+// (GET /api/v1/datei/{id}/download)
+func (_ Unimplemented) DownloadDatei(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -54,11 +87,32 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
-// GetApiV1Ping operation middleware
-func (siw *ServerInterfaceWrapper) GetApiV1Ping(w http.ResponseWriter, r *http.Request) {
+// ListDatei operation middleware
+func (siw *ServerInterfaceWrapper) ListDatei(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListDateiParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetApiV1Ping(w, r)
+		siw.Handler.ListDatei(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -68,11 +122,86 @@ func (siw *ServerInterfaceWrapper) GetApiV1Ping(w http.ResponseWriter, r *http.R
 	handler.ServeHTTP(w, r)
 }
 
-// PostApiV1Ping operation middleware
-func (siw *ServerInterfaceWrapper) PostApiV1Ping(w http.ResponseWriter, r *http.Request) {
+// CreateDatei operation middleware
+func (siw *ServerInterfaceWrapper) CreateDatei(w http.ResponseWriter, r *http.Request) {
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PostApiV1Ping(w, r)
+		siw.Handler.CreateDatei(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteDatei operation middleware
+func (siw *ServerInterfaceWrapper) DeleteDatei(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteDatei(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateDatei operation middleware
+func (siw *ServerInterfaceWrapper) UpdateDatei(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateDatei(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DownloadDatei operation middleware
+func (siw *ServerInterfaceWrapper) DownloadDatei(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DownloadDatei(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -196,56 +325,216 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/api/v1/ping", wrapper.GetApiV1Ping)
+		r.Get(options.BaseURL+"/api/v1/datei", wrapper.ListDatei)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/api/v1/ping", wrapper.PostApiV1Ping)
+		r.Post(options.BaseURL+"/api/v1/datei", wrapper.CreateDatei)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v1/datei/{id}", wrapper.DeleteDatei)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v1/datei/{id}", wrapper.UpdateDatei)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/datei/{id}/download", wrapper.DownloadDatei)
 	})
 
 	return r
 }
 
-type GetApiV1PingRequestObject struct {
+type ListDateiRequestObject struct {
+	Params ListDateiParams
 }
 
-type GetApiV1PingResponseObject interface {
-	VisitGetApiV1PingResponse(w http.ResponseWriter) error
+type ListDateiResponseObject interface {
+	VisitListDateiResponse(w http.ResponseWriter) error
 }
 
-type GetApiV1Ping200JSONResponse Pong
+type ListDatei200JSONResponse ListDateiResponse
 
-func (response GetApiV1Ping200JSONResponse) VisitGetApiV1PingResponse(w http.ResponseWriter) error {
+func (response ListDatei200JSONResponse) VisitListDateiResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type PostApiV1PingRequestObject struct {
-	Body *PostApiV1PingJSONRequestBody
+type ListDatei400Response struct {
 }
 
-type PostApiV1PingResponseObject interface {
-	VisitPostApiV1PingResponse(w http.ResponseWriter) error
+func (response ListDatei400Response) VisitListDateiResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
 }
 
-type PostApiV1Ping200JSONResponse Pong
+type CreateDateiRequestObject struct {
+	Body *multipart.Reader
+}
 
-func (response PostApiV1Ping200JSONResponse) VisitPostApiV1PingResponse(w http.ResponseWriter) error {
+type CreateDateiResponseObject interface {
+	VisitCreateDateiResponse(w http.ResponseWriter) error
+}
+
+type CreateDatei201JSONResponse Datei
+
+func (response CreateDatei201JSONResponse) VisitCreateDateiResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateDatei400Response struct {
+}
+
+func (response CreateDatei400Response) VisitCreateDateiResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type CreateDatei409Response struct {
+}
+
+func (response CreateDatei409Response) VisitCreateDateiResponse(w http.ResponseWriter) error {
+	w.WriteHeader(409)
+	return nil
+}
+
+type DeleteDateiRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type DeleteDateiResponseObject interface {
+	VisitDeleteDateiResponse(w http.ResponseWriter) error
+}
+
+type DeleteDatei204Response struct {
+}
+
+func (response DeleteDatei204Response) VisitDeleteDateiResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteDatei404Response struct {
+}
+
+func (response DeleteDatei404Response) VisitDeleteDateiResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type DeleteDatei409Response struct {
+}
+
+func (response DeleteDatei409Response) VisitDeleteDateiResponse(w http.ResponseWriter) error {
+	w.WriteHeader(409)
+	return nil
+}
+
+type UpdateDateiRequestObject struct {
+	Id   openapi_types.UUID `json:"id"`
+	Body *multipart.Reader
+}
+
+type UpdateDateiResponseObject interface {
+	VisitUpdateDateiResponse(w http.ResponseWriter) error
+}
+
+type UpdateDatei200JSONResponse Datei
+
+func (response UpdateDatei200JSONResponse) VisitUpdateDateiResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
 	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateDatei400Response struct {
+}
+
+func (response UpdateDatei400Response) VisitUpdateDateiResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type UpdateDatei404Response struct {
+}
+
+func (response UpdateDatei404Response) VisitUpdateDateiResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type DownloadDateiRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type DownloadDateiResponseObject interface {
+	VisitDownloadDateiResponse(w http.ResponseWriter) error
+}
+
+type DownloadDatei200ResponseHeaders struct {
+	ContentDisposition string
+	ContentType        string
+}
+
+type DownloadDatei200ApplicationoctetStreamResponse struct {
+	Body          io.Reader
+	Headers       DownloadDatei200ResponseHeaders
+	ContentLength int64
+}
+
+func (response DownloadDatei200ApplicationoctetStreamResponse) VisitDownloadDateiResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/octet-stream")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.Header().Set("Content-Disposition", fmt.Sprint(response.Headers.ContentDisposition))
+	w.Header().Set("Content-Type", fmt.Sprint(response.Headers.ContentType))
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type DownloadDatei404Response struct {
+}
+
+func (response DownloadDatei404Response) VisitDownloadDateiResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type DownloadDatei409Response struct {
+}
+
+func (response DownloadDatei409Response) VisitDownloadDateiResponse(w http.ResponseWriter) error {
+	w.WriteHeader(409)
+	return nil
 }
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
-
-	// (GET /api/v1/ping)
-	GetApiV1Ping(ctx context.Context, request GetApiV1PingRequestObject) (GetApiV1PingResponseObject, error)
-
-	// (POST /api/v1/ping)
-	PostApiV1Ping(ctx context.Context, request PostApiV1PingRequestObject) (PostApiV1PingResponseObject, error)
+	// List all Datei
+	// (GET /api/v1/datei)
+	ListDatei(ctx context.Context, request ListDateiRequestObject) (ListDateiResponseObject, error)
+	// Create a new Datei
+	// (POST /api/v1/datei)
+	CreateDatei(ctx context.Context, request CreateDateiRequestObject) (CreateDateiResponseObject, error)
+	// Delete a Datei
+	// (DELETE /api/v1/datei/{id})
+	DeleteDatei(ctx context.Context, request DeleteDateiRequestObject) (DeleteDateiResponseObject, error)
+	// Update a Datei
+	// (PATCH /api/v1/datei/{id})
+	UpdateDatei(ctx context.Context, request UpdateDateiRequestObject) (UpdateDateiResponseObject, error)
+	// Download a Datei
+	// (GET /api/v1/datei/{id}/download)
+	DownloadDatei(ctx context.Context, request DownloadDateiRequestObject) (DownloadDateiResponseObject, error)
 }
 
 type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
@@ -277,23 +566,25 @@ type strictHandler struct {
 	options     StrictHTTPServerOptions
 }
 
-// GetApiV1Ping operation middleware
-func (sh *strictHandler) GetApiV1Ping(w http.ResponseWriter, r *http.Request) {
-	var request GetApiV1PingRequestObject
+// ListDatei operation middleware
+func (sh *strictHandler) ListDatei(w http.ResponseWriter, r *http.Request, params ListDateiParams) {
+	var request ListDateiRequestObject
+
+	request.Params = params
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.GetApiV1Ping(ctx, request.(GetApiV1PingRequestObject))
+		return sh.ssi.ListDatei(ctx, request.(ListDateiRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "GetApiV1Ping")
+		handler = middleware(handler, "ListDatei")
 	}
 
 	response, err := handler(r.Context(), w, r, request)
 
 	if err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(GetApiV1PingResponseObject); ok {
-		if err := validResponse.VisitGetApiV1PingResponse(w); err != nil {
+	} else if validResponse, ok := response.(ListDateiResponseObject); ok {
+		if err := validResponse.VisitListDateiResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -301,30 +592,115 @@ func (sh *strictHandler) GetApiV1Ping(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// PostApiV1Ping operation middleware
-func (sh *strictHandler) PostApiV1Ping(w http.ResponseWriter, r *http.Request) {
-	var request PostApiV1PingRequestObject
+// CreateDatei operation middleware
+func (sh *strictHandler) CreateDatei(w http.ResponseWriter, r *http.Request) {
+	var request CreateDateiRequestObject
 
-	var body PostApiV1PingJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+	if reader, err := r.MultipartReader(); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode multipart body: %w", err))
 		return
+	} else {
+		request.Body = reader
 	}
-	request.Body = &body
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.PostApiV1Ping(ctx, request.(PostApiV1PingRequestObject))
+		return sh.ssi.CreateDatei(ctx, request.(CreateDateiRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "PostApiV1Ping")
+		handler = middleware(handler, "CreateDatei")
 	}
 
 	response, err := handler(r.Context(), w, r, request)
 
 	if err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(PostApiV1PingResponseObject); ok {
-		if err := validResponse.VisitPostApiV1PingResponse(w); err != nil {
+	} else if validResponse, ok := response.(CreateDateiResponseObject); ok {
+		if err := validResponse.VisitCreateDateiResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteDatei operation middleware
+func (sh *strictHandler) DeleteDatei(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request DeleteDateiRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteDatei(ctx, request.(DeleteDateiRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteDatei")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteDateiResponseObject); ok {
+		if err := validResponse.VisitDeleteDateiResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateDatei operation middleware
+func (sh *strictHandler) UpdateDatei(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request UpdateDateiRequestObject
+
+	request.Id = id
+
+	if reader, err := r.MultipartReader(); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode multipart body: %w", err))
+		return
+	} else {
+		request.Body = reader
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateDatei(ctx, request.(UpdateDateiRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateDatei")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateDateiResponseObject); ok {
+		if err := validResponse.VisitUpdateDateiResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DownloadDatei operation middleware
+func (sh *strictHandler) DownloadDatei(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request DownloadDateiRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DownloadDatei(ctx, request.(DownloadDateiRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DownloadDatei")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DownloadDateiResponseObject); ok {
+		if err := validResponse.VisitDownloadDateiResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -335,11 +711,29 @@ func (sh *strictHandler) PostApiV1Ping(w http.ResponseWriter, r *http.Request) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"H4sIAAAAAAAC/8xYX2/bNhD/KgS3hxRQYmcrBsxvab1iGdquWNv1ocgDLZ2iaySSIY/x3MDffSAp2bJE",
+	"x17abntqQx3v3+/ud0ff81w1WkmQZPnsntu8gkaE/z43IAjmggD/gFsHlvypNkqDIYQgU2IN/t8CbG5Q",
+	"EyrJZ/wF1sAKQYKdqHAm6oypBomVyrACDeSkDIJ9wjNeKtMI4jO+QCnMimecVhr4jFsyKK/5OuNSNAkr",
+	"r0UDQSFVwCQsWXB1fH+dcQO3Dg0UfPYxKrvaSKnFJ8jJW4nXRyHmIQ3FBY09CBlCJRlhA5ZEo/vxFILg",
+	"1H9JhdRqfbYaa31vwbDLOVMlC1LK9LU6hwXPuHR1LRY++WQcJAxgkdAs8dYBwwIkYYmQUjxWZOctYAlf",
+	"P1RAFXgI0DK0TGzQ7QG5UKoGIb2yWhBY+hOMDffvuajr30s++3jPvzdQ8hn/brItyElbjZMATXdrfZUN",
+	"vHgZtLK7KDBxulai8PnzlRFKdG/CtvDXKG+gCJYuE7mLgEShWGnsxBefXTX+cLeUjwUpXdjPnTEgifmv",
+	"XRRdbR9UqYW/m4rgTfiyBYhdzh/jMxlhq3Q/vPOfDjfDsSYeao5lpVgrxpAeE4fTxb6+fikssfj9H7f2",
+	"gG2CL/0WynqE0ndiLyP1mmVATBXkN9Y1e/h38znFPkoSSHqVqJJXwtwUailZK8O0gTuE5TEpfYAq2ygi",
+	"o31LyozND4/iTE8Vb/Hzvolm8TMwlGyxIrB9/Sjpp6dbl1ESXIPZx8JdKpLtN/KpwQbehcMRUpevfmFB",
+	"/qgi3ASX8V5pbNT30UvV4ku01O4CVitpYVyQSNDYsZ8XxoiVhyayZlTp87eRP0j9gRSiR8JrC38rEnWC",
+	"g/wxk65ZgPFGgxF2soBSGWBaXKMMBfgkgdcwbcG/zlIqKe9D+z5mRXoNyzCZBmvSly1EsIwzo1uK2jHV",
+	"Vz4ulEFQ64xbyJ1BWr31EMQgFiAMmF+J9IWjyq8PuaCWleK3F53Xv314x4cD+lkQYaRuQDJnUV4zwaJg",
+	"wBk2MlsXKyLN194flKXyhgjJpzLSIrt4c8kzftexIz8/m55NfXKUBik08hn/MRz5mUhVCGMiNE7uzidF",
+	"t+pdQ0DM4xXi8XNzW+rhqhENEBgblpQhV/6FjWt61WbAujoWtxe4dRAAjHjxGpswq2JtRwBL4Wris/Pp",
+	"NFWPI4iHlhgpZm9Q77GoytLCHpMpg1e+A2J/h4T9MJ2GURNnQVjYtK5b8CefbKyArfKHOnnMIAHdwehF",
+	"Sxuu8Gg+jR4MljF5J2osWIiW9TAK5euaxvdNq0zU9VabVjYBeO+lwyMFgKVnqlgNYm9cTaiFoYnv0VPf",
+	"useHn3hOrXcZx0+l9QiA868GQJuFcdJjQ7X8z6zLc7C2dHW9OoiA6ULxcj8ndlklyxpzYidwdn2WMT1c",
+	"QqXyr0IniycD8GK+mOg97bzATgtP7rFYR6M1EIyRnYfzo5o5JiEM5dBJnjS2jRRG6C5U/aY6MMYTffV0",
+	"nKvoQQwlBcPeK5sc7odBSC8UdXdY7IIAjabVEISYPyZ6HSQor8aJ7k3C/z7R36R/E7P+qP6d/lv9274l",
+	"vqB/jymwnfKIOdmWR7I/J/454ZfyvQN33gr8H/v0IfhUTkCnlgwI/wobAxMfYu3ljFfgXybxx7V4eDpH",
+	"q5XFbpcabM5EIq8aT5jxKlsiVWFvDOH2Ixsvdp2JA6+Hwe8k+zWuvxYJtWh3NLT7s9GIgTrpbZGt138H",
+	"AAD///hJCUm2FAAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

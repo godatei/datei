@@ -11,9 +11,10 @@ import (
 var v = viper.NewWithOptions()
 
 func NewConfig(path string) error {
-	v = viper.NewWithOptions()
+	v = viper.NewWithOptions(
+		viper.EnvKeyReplacer(strings.NewReplacer(".", "_")),
+	)
 
-	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.SetEnvPrefix("DATEI")
 	v.AutomaticEnv()
 
@@ -30,6 +31,13 @@ func NewConfig(path string) error {
 	} else {
 		v.SetDefault("logging.level", "info")
 	}
+	v.SetDefault("storage.s3.bucket", "")
+	v.SetDefault("storage.s3.create_bucket", "true")
+	v.SetDefault("storage.s3.endpoint", "")
+	v.SetDefault("storage.s3.region", "")
+	v.SetDefault("storage.s3.use_path_style", "")
+	v.SetDefault("storage.s3.access_key_id", "")
+	v.SetDefault("storage.s3.secret_access_key", "")
 
 	if path != "" {
 		v.SetConfigFile(path)
@@ -56,4 +64,24 @@ func ServerAddr() string {
 
 func LoggingLevel() string {
 	return v.GetString("logging.level")
+}
+
+type S3Config struct {
+	Bucket       string
+	CreateBucket bool `mapstructure:"create_bucket"`
+
+	Endpoint        string
+	Region          string
+	UsePathStyle    bool   `mapstructure:"use_path_style"`
+	AccessKeyID     string `mapstructure:"access_key_id"`
+	SecretAccessKey string `mapstructure:"secret_access_key"`
+}
+
+func StorageS3() (S3Config, error) {
+	cfg := S3Config{CreateBucket: true}
+	err := v.Sub("storage.s3").Unmarshal(&cfg)
+	if err != nil {
+		err = fmt.Errorf("failed to parse StorageConfig: %w", err)
+	}
+	return cfg, err
 }

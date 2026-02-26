@@ -1,0 +1,11 @@
+type: object
+required:
+  - name
+properties:
+  name:
+    type: string
+    description: Name for the new Datei
+  file:
+    type: string
+    format: binary
+    description: File data (optional, omit for directories)
