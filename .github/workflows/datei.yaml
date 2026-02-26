@@ -137,6 +137,8 @@ jobs:
         env:
           DATEI_DATABASE_URI: postgres://test-user:test-password@localhost:5432/datei
           DATEI_SERVER_ADDR: 0.0.0.0:8080
+          DATEI_STORAGE_S3_ACCESS_KEY_ID: github-actions
+          DATEI_STORAGE_S3_SECRET_ACCESS_KEY: github-actions
 
       - name: Generate SBOM for frontend project
         uses: anchore/sbom-action@17ae1740179002c89186b61233e0f892c3118b11 # v0.23.0
