@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/godatei/datei/internal/db"
+	"github.com/godatei/datei/internal/events"
 	"github.com/godatei/datei/internal/mapping"
 	"github.com/godatei/datei/internal/storage"
 	"github.com/godatei/datei/pkg/api"
@@ -13,14 +14,18 @@ import (
 )
 
 type DateiService struct {
-	db    *pgxpool.Pool
-	store storage.Store
+	db         *pgxpool.Pool
+	store      storage.Store
+	repository DateiRepository
+	publisher  events.EventPublisher
 }
 
-func NewDateiService(db *pgxpool.Pool, store storage.Store) *DateiService {
+func NewDateiService(db *pgxpool.Pool, store storage.Store, repository DateiRepository, publisher events.EventPublisher) *DateiService {
 	return &DateiService{
-		db:    db,
-		store: store,
+		db:         db,
+		store:      store,
+		repository: repository,
+		publisher:  publisher,
 	}
 }
 

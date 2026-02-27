@@ -38,6 +38,8 @@ func NewConfig(path string) error {
 	v.SetDefault("storage.s3.use_path_style", "")
 	v.SetDefault("storage.s3.access_key_id", "")
 	v.SetDefault("storage.s3.secret_access_key", "")
+	v.SetDefault("eventstore.snapshot_threshold", 100)
+	v.SetDefault("watermill.topic", "datei-events")
 
 	if path != "" {
 		v.SetConfigFile(path)
@@ -84,4 +86,24 @@ func StorageS3() (S3Config, error) {
 		err = fmt.Errorf("failed to parse StorageConfig: %w", err)
 	}
 	return cfg, err
+}
+
+type EventStoreConfig struct {
+	SnapshotThreshold int
+}
+
+func EventStore() EventStoreConfig {
+	return EventStoreConfig{
+		SnapshotThreshold: v.GetInt("eventstore.snapshot_threshold"),
+	}
+}
+
+type WatermillConfig struct {
+	Topic string
+}
+
+func Watermill() WatermillConfig {
+	return WatermillConfig{
+		Topic: v.GetString("watermill.topic"),
+	}
 }
