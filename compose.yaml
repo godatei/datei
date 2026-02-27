@@ -2,7 +2,7 @@ name: datei-dev
 
 services:
   postgres:
-    image: 'postgres:18.2-alpine3.23'
+    image: 'postgres:18.3-alpine3.23'
     environment:
       POSTGRES_USER: local
       POSTGRES_PASSWORD: local

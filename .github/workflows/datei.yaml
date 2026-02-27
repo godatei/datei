@@ -66,7 +66,7 @@ jobs:
   build:
     services:
       postgres:
-        image: postgres:18.2-alpine3.23
+        image: postgres:18.3-alpine3.23
         env:
           POSTGRES_USER: test-user
           POSTGRES_PASSWORD: test-password
