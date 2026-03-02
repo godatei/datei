@@ -39,7 +39,6 @@ func NewConfig(path string) error {
 	v.SetDefault("storage.s3.access_key_id", "")
 	v.SetDefault("storage.s3.secret_access_key", "")
 	v.SetDefault("eventstore.snapshot_threshold", 100)
-	v.SetDefault("watermill.topic", "datei-events")
 
 	if path != "" {
 		v.SetConfigFile(path)
@@ -95,15 +94,5 @@ type EventStoreConfig struct {
 func EventStore() EventStoreConfig {
 	return EventStoreConfig{
 		SnapshotThreshold: v.GetInt("eventstore.snapshot_threshold"),
-	}
-}
-
-type WatermillConfig struct {
-	Topic string
-}
-
-func Watermill() WatermillConfig {
-	return WatermillConfig{
-		Topic: v.GetString("watermill.topic"),
 	}
 }

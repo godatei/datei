@@ -90,18 +90,9 @@ func run(ctx context.Context, options Options) error {
 	// Initialize event store
 	eventStore := events.NewPostgresEventStore(db)
 
-	// Initialize Watermill publisher for event distribution
-	watermillCfg := config.Watermill()
-	publisher, err := events.NewWatermillPublisher(db, watermillCfg.Topic)
-	if err != nil {
-		slog.Error("failed to initialize Watermill publisher", "error", err)
-		return err
-	}
-	defer publisher.Close()
-
 	// Initialize datei repository
 	esConfig := config.EventStore()
-	repository := datei.NewPostgresDateiRepository(db, eventStore, publisher, &datei.RepositoryConfig{
+	repository := datei.NewPostgresDateiRepository(db, eventStore, &datei.RepositoryConfig{
 		SnapshotThreshold: esConfig.SnapshotThreshold,
 	})
 
@@ -118,7 +109,7 @@ func run(ctx context.Context, options Options) error {
 		slogchi.New(slog.Default()),
 		oapimiddleware.OapiRequestValidator(swagger),
 	)
-	strictHandler := server.NewStrictHandler(server.NewServer(db, store, repository, publisher), nil)
+	strictHandler := server.NewStrictHandler(server.NewServer(db, store, repository), nil)
 	server.HandlerFromMux(strictHandler, apiMux)
 
 	rootMux := chi.NewRouter()

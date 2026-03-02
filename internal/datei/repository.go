@@ -25,7 +25,6 @@ type DateiRepository interface {
 type PostgresDateiRepository struct {
 	db         *pgxpool.Pool
 	eventStore events.EventStore
-	publisher  events.EventPublisher
 	config     *RepositoryConfig
 }
 
@@ -35,14 +34,13 @@ type RepositoryConfig struct {
 }
 
 // NewPostgresDateiRepository creates a new repository
-func NewPostgresDateiRepository(db *pgxpool.Pool, eventStore events.EventStore, publisher events.EventPublisher, config *RepositoryConfig) *PostgresDateiRepository {
+func NewPostgresDateiRepository(db *pgxpool.Pool, eventStore events.EventStore, config *RepositoryConfig) *PostgresDateiRepository {
 	if config == nil {
 		config = &RepositoryConfig{SnapshotThreshold: 100}
 	}
 	return &PostgresDateiRepository{
 		db:         db,
 		eventStore: eventStore,
-		publisher:  publisher,
 		config:     config,
 	}
 }
@@ -117,15 +115,6 @@ func (r *PostgresDateiRepository) Save(ctx context.Context, aggregate *DateiAggr
 	// Commit transaction
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
-	}
-
-	// After successful commit, publish events to Watermill for subscribers
-	// This runs AFTER commit succeeds, so even if publishing fails, state is consistent
-	for _, event := range uncommittedEvents {
-		if err := r.publisher.PublishEvent(ctx, event); err != nil {
-			// Log error but don't fail - use eventual consistency recovery
-			fmt.Printf("failed to publish event %s: %v\n", event.EventType(), err)
-		}
 	}
 
 	// Mark events as committed
