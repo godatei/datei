@@ -3,8 +3,8 @@
 --
 
 
--- Dumped from database version 18.2
--- Dumped by pg_dump version 18.2
+-- Dumped from database version 18.3
+-- Dumped by pg_dump version 18.3
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -156,6 +156,47 @@ CREATE TABLE public.datei_permission (
 
 
 --
+-- Name: datei_permission_projection; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.datei_permission_projection (
+    id uuid NOT NULL,
+    datei_id uuid NOT NULL,
+    user_account_id uuid,
+    user_group_id uuid,
+    permission_type public.datei_permission_type NOT NULL,
+    is_favorite boolean DEFAULT false NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    CONSTRAINT ck_datei_permission_projection_grantee CHECK ((((user_account_id IS NOT NULL) AND (user_group_id IS NULL)) OR ((user_account_id IS NULL) AND (user_group_id IS NOT NULL))))
+);
+
+
+--
+-- Name: datei_projection; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.datei_projection (
+    id uuid NOT NULL,
+    parent_id uuid,
+    is_directory boolean DEFAULT false NOT NULL,
+    linked_datei_id uuid,
+    latest_name text NOT NULL,
+    latest_version_s3_key text,
+    latest_version_file_size bigint,
+    latest_version_checksum text,
+    latest_version_mime_type text,
+    latest_version_content_md text,
+    latest_version_content_search tsvector GENERATED ALWAYS AS (to_tsvector('simple'::regconfig, COALESCE(latest_version_content_md, ''::text))) STORED,
+    created_by uuid,
+    trashed_at timestamp with time zone,
+    trashed_by uuid,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL,
+    projection_version integer DEFAULT 1 NOT NULL
+);
+
+
+--
 -- Name: datei_version; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -171,6 +212,41 @@ CREATE TABLE public.datei_version (
     created_by uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
+
+
+--
+-- Name: event_store; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.event_store (
+    id bigint NOT NULL,
+    stream_id uuid NOT NULL,
+    stream_version integer NOT NULL,
+    event_type character varying NOT NULL,
+    event_data jsonb NOT NULL,
+    event_metadata jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT ck_event_stream_version CHECK ((stream_version > 0))
+);
+
+
+--
+-- Name: event_store_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.event_store_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: event_store_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.event_store_id_seq OWNED BY public.event_store.id;
 
 
 --
@@ -280,6 +356,13 @@ CREATE TABLE public.user_group_member (
     role public.user_group_role DEFAULT 'member'::public.user_group_role NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
+
+
+--
+-- Name: event_store id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.event_store ALTER COLUMN id SET DEFAULT nextval('public.event_store_id_seq'::regclass);
 
 
 --
