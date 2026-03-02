@@ -46,7 +46,7 @@ export interface Datei {
   /**
    * Current name of the Datei
    */
-  name?: string | null;
+  name: string | null;
 
   /**
    * Parent directory ID

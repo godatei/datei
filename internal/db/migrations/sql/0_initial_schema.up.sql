@@ -122,19 +122,17 @@ CREATE TABLE datei_projection (
   mime_type TEXT,
   content_md TEXT,
   content_search TSVECTOR GENERATED ALWAYS AS (to_tsvector('simple', coalesce(content_md, ''))) STORED,
-  created_by UUID REFERENCES user_account(id) ON DELETE RESTRICT,
-  trashed_at TIMESTAMPTZ,
-  trashed_by UUID REFERENCES user_account(id) ON DELETE RESTRICT,
   created_at TIMESTAMPTZ NOT NULL,
   updated_at TIMESTAMPTZ NOT NULL,
+  trashed_at TIMESTAMPTZ,
+  created_by UUID REFERENCES user_account(id) ON DELETE RESTRICT,
   updated_by UUID REFERENCES user_account(id) ON DELETE RESTRICT,
+  trashed_by UUID REFERENCES user_account(id) ON DELETE RESTRICT,
   projection_version INT NOT NULL DEFAULT 1
 );
 
 CREATE INDEX idx_datei_projection_parent_id ON datei_projection(parent_id);
 CREATE INDEX idx_datei_projection_linked_datei_id ON datei_projection(linked_datei_id) WHERE linked_datei_id IS NOT NULL;
-CREATE INDEX idx_datei_projection_trashed_at ON datei_projection(trashed_at) WHERE trashed_at IS NOT NULL;
-CREATE INDEX idx_datei_projection_created_by ON datei_projection(created_by) WHERE created_by IS NOT NULL;
 CREATE INDEX idx_datei_projection_content_search ON datei_projection USING GIN(content_search);
 
 -- ============================================================================

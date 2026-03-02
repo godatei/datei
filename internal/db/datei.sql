@@ -6,47 +6,46 @@ SELECT * FROM datei_projection ORDER BY created_at DESC;
 
 -- name: InsertDateiProjection :exec
 INSERT INTO datei_projection
- (id, parent_id, is_directory, name,
-  created_by, created_at, updated_at, updated_by, projection_version)
- VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 1);
+ (id, parent_id, is_directory, name, created_at, updated_at, projection_version)
+ VALUES ($1, $2, $3, $4, $5, $6, 1);
 
 -- name: UpdateDateiProjectionName :exec
 UPDATE datei_projection
- SET name = $1, updated_at = $2, updated_by = $3, projection_version = projection_version + 1
- WHERE id = $4;
+ SET name = $1, updated_at = $2, updated_by = NULL, projection_version = projection_version + 1
+ WHERE id = $3;
 
 -- name: UpdateDateiProjectionVersion :exec
 UPDATE datei_projection
  SET s3_key = $1, size = $2, checksum = $3, mime_type = $4,
-     content_md = $5, updated_at = $6, updated_by = $7, projection_version = projection_version + 1
- WHERE id = $8;
+     content_md = $5, updated_at = $6, updated_by = NULL, projection_version = projection_version + 1
+ WHERE id = $7;
 
 -- name: UpdateDateiProjectionParent :exec
 UPDATE datei_projection
- SET parent_id = $1, updated_at = $2, updated_by = $3, projection_version = projection_version + 1
- WHERE id = $4;
+ SET parent_id = $1, updated_at = $2, updated_by = NULL, projection_version = projection_version + 1
+ WHERE id = $3;
 
 -- name: UpdateDateiProjectionTrashed :exec
 UPDATE datei_projection
- SET trashed_at = $1, trashed_by = $2, updated_at = $3, updated_by = $4,
+ SET trashed_at = $1, trashed_by = NULL, updated_at = $2, updated_by = NULL,
      projection_version = projection_version + 1
- WHERE id = $5;
+ WHERE id = $3;
 
 -- name: UpdateDateiProjectionRestored :exec
 UPDATE datei_projection
- SET trashed_at = NULL, trashed_by = NULL, updated_at = $1, updated_by = $2,
+ SET trashed_at = NULL, trashed_by = NULL, updated_at = $1, updated_by = NULL,
      projection_version = projection_version + 1
- WHERE id = $3;
+ WHERE id = $2;
 
 -- name: UpdateDateiProjectionLinked :exec
 UPDATE datei_projection
- SET linked_datei_id = $1, updated_at = $2, updated_by = $3, projection_version = projection_version + 1
- WHERE id = $4;
+ SET linked_datei_id = $1, updated_at = $2, updated_by = NULL, projection_version = projection_version + 1
+ WHERE id = $3;
 
 -- name: UpdateDateiProjectionUnlinked :exec
 UPDATE datei_projection
- SET linked_datei_id = NULL, updated_at = $1, updated_by = $2, projection_version = projection_version + 1
- WHERE id = $3;
+ SET linked_datei_id = NULL, updated_at = $1, updated_by = NULL, projection_version = projection_version + 1
+ WHERE id = $2;
 
 -- name: InsertDateiPermissionProjection :exec
 INSERT INTO datei_permission_projection

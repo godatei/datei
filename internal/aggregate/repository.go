@@ -75,7 +75,11 @@ func (r *PostgresDateiRepository) Save(ctx context.Context, agg *DateiAggregate)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	defer func() { returnErr = errors.Join(returnErr, tx.Rollback(ctx)) }()
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil && !errors.Is(err, pgx.ErrTxClosed) {
+			returnErr = errors.Join(returnErr, err)
+		}
+	}()
 
 	// Append events to event store (with optimistic locking)
 	if err := r.eventStore.AppendToStream(

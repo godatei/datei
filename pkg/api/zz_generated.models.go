@@ -45,7 +45,7 @@ type Datei struct {
 	MimeType *string `json:"mimeType,omitempty"`
 
 	// Name Current name of the Datei
-	Name *string `json:"name,omitempty"`
+	Name *string `json:"name"`
 
 	// ParentId Parent directory ID
 	ParentId *openapi_types.UUID `json:"parentId,omitempty"`

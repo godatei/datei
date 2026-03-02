@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 
 	"github.com/godatei/datei/internal/datei"
 	"github.com/godatei/datei/pkg/api"
@@ -91,6 +92,7 @@ func (s *server) CreateDatei(
 		ContentType: contentType,
 	})
 	if err != nil {
+		slog.Error("endpoint error", "error", err)
 		return CreateDatei400Response{}, nil
 	}
 

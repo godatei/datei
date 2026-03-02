@@ -68,9 +68,10 @@ func (a *DateiAggregate) Create(
 	if id == uuid.Nil {
 		return errors.New("invalid datei id")
 	}
-	if createdBy == uuid.Nil {
-		return errors.New("created_by cannot be nil")
-	}
+	// TODO: Uncomment if user management is implemented
+	// if createdBy == uuid.Nil {
+	//	return errors.New("created_by cannot be nil")
+	//}
 	if name == "" {
 		return errors.New("name cannot be empty")
 	}
