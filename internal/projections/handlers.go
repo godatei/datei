@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/godatei/datei/internal/events"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -15,29 +14,16 @@ import (
 
 // UpdateProjectionForDateiCreated updates projections after a datei is created
 func UpdateProjectionForDateiCreated(ctx context.Context, tx pgx.Tx, event *events.DateiCreatedEvent) error {
-	// Create datei_name record
-	nameID := uuid.New()
+	// Create datei_projection record with embedded initial name data
 	_, err := tx.Exec(ctx,
-		`INSERT INTO datei_name_projection (id, datei_id, name, created_by, created_at)
-		 VALUES ($1, $2, $3, $4, $5)`,
-		nameID,
-		event.ID,
-		event.Name,
-		event.CreatedBy,
-		event.CreatedAt,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to insert datei_name_projection: %w", err)
-	}
-
-	// Create datei_projection record
-	_, err = tx.Exec(ctx,
-		`INSERT INTO datei_projection (id, parent_id, is_directory, latest_name_id, created_by, created_at, updated_at, projection_version)
+		`INSERT INTO datei_projection
+		 (id, parent_id, is_directory, latest_name,
+		  created_by, created_at, updated_at, projection_version)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, 1)`,
 		event.ID,
 		event.ParentID,
 		event.IsDirectory,
-		nameID,
+		event.Name,
 		event.CreatedBy,
 		event.CreatedAt,
 		event.CreatedAt,
@@ -51,26 +37,12 @@ func UpdateProjectionForDateiCreated(ctx context.Context, tx pgx.Tx, event *even
 
 // UpdateProjectionForDateiRenamed updates projections after a datei is renamed
 func UpdateProjectionForDateiRenamed(ctx context.Context, tx pgx.Tx, event *events.DateiRenamedEvent) error {
-	// Create new name record
-	nameID := uuid.New()
+	// Update datei projection with new name
 	_, err := tx.Exec(ctx,
-		`INSERT INTO datei_name_projection (id, datei_id, name, created_by, created_at)
-		 VALUES ($1, $2, $3, $4, $5)`,
-		nameID,
-		event.ID,
-		event.NewName,
-		event.RenamedBy,
-		event.RenamedAt,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to insert datei_name_projection: %w", err)
-	}
-
-	// Update datei projection to point to new name
-	_, err = tx.Exec(ctx,
-		`UPDATE datei_projection SET latest_name_id = $1, updated_at = $2, projection_version = projection_version + 1
+		`UPDATE datei_projection
+		 SET latest_name = $1, updated_at = $2, projection_version = projection_version + 1
 		 WHERE id = $3`,
-		nameID,
+		event.NewName,
 		event.RenamedAt,
 		event.ID,
 	)
@@ -82,30 +54,24 @@ func UpdateProjectionForDateiRenamed(ctx context.Context, tx pgx.Tx, event *even
 }
 
 // UpdateProjectionForDateiVersionUploaded updates projections after a new version is uploaded
-func UpdateProjectionForDateiVersionUploaded(ctx context.Context, tx pgx.Tx, event *events.DateiVersionUploadedEvent) error {
-	// Create new version record
+func UpdateProjectionForDateiVersionUploaded(
+	ctx context.Context,
+	tx pgx.Tx,
+	event *events.DateiVersionUploadedEvent,
+) error {
+	// Update datei projection with new version data
 	_, err := tx.Exec(ctx,
-		`INSERT INTO datei_version_projection (id, datei_id, s3_key, file_size, checksum, mime_type, content_md, created_by, created_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-		event.VersionID,
-		event.ID,
+		`UPDATE datei_projection
+		 SET latest_version_s3_key = $1, latest_version_file_size = $2,
+		     latest_version_checksum = $3, latest_version_mime_type = $4,
+		     latest_version_content_md = $5, updated_at = $6,
+		     projection_version = projection_version + 1
+		 WHERE id = $7`,
 		event.S3Key,
 		event.FileSize,
 		event.Checksum,
 		event.MimeType,
 		event.ContentMD,
-		event.UploadedBy,
-		event.UploadedAt,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to insert datei_version_projection: %w", err)
-	}
-
-	// Update datei projection to point to new version
-	_, err = tx.Exec(ctx,
-		`UPDATE datei_projection SET latest_version_id = $1, updated_at = $2, projection_version = projection_version + 1
-		 WHERE id = $3`,
-		event.VersionID,
 		event.UploadedAt,
 		event.ID,
 	)
@@ -135,7 +101,9 @@ func UpdateProjectionForDateiMoved(ctx context.Context, tx pgx.Tx, event *events
 // UpdateProjectionForDateiTrashed updates projections after a datei is trashed
 func UpdateProjectionForDateiTrashed(ctx context.Context, tx pgx.Tx, event *events.DateiTrashedEvent) error {
 	_, err := tx.Exec(ctx,
-		`UPDATE datei_projection SET trashed_at = $1, trashed_by = $2, updated_at = $3, projection_version = projection_version + 1
+		`UPDATE datei_projection
+		 SET trashed_at = $1, trashed_by = $2, updated_at = $3,
+		     projection_version = projection_version + 1
 		 WHERE id = $4`,
 		event.TrashedAt,
 		event.TrashedBy,
@@ -152,7 +120,9 @@ func UpdateProjectionForDateiTrashed(ctx context.Context, tx pgx.Tx, event *even
 // UpdateProjectionForDateiRestored updates projections after a datei is restored
 func UpdateProjectionForDateiRestored(ctx context.Context, tx pgx.Tx, event *events.DateiRestoredEvent) error {
 	_, err := tx.Exec(ctx,
-		`UPDATE datei_projection SET trashed_at = NULL, trashed_by = NULL, updated_at = $1, projection_version = projection_version + 1
+		`UPDATE datei_projection
+		 SET trashed_at = NULL, trashed_by = NULL, updated_at = $1,
+		     projection_version = projection_version + 1
 		 WHERE id = $2`,
 		event.RestoredAt,
 		event.ID,
@@ -200,9 +170,14 @@ func UpdateProjectionForDateiUnlinked(ctx context.Context, tx pgx.Tx, event *eve
 // ============================================================================
 
 // UpdateProjectionForDateiPermissionGranted updates projections after a permission is granted
-func UpdateProjectionForDateiPermissionGranted(ctx context.Context, tx pgx.Tx, event *events.DateiPermissionGrantedEvent) error {
+func UpdateProjectionForDateiPermissionGranted(
+	ctx context.Context,
+	tx pgx.Tx,
+	event *events.DateiPermissionGrantedEvent,
+) error {
 	_, err := tx.Exec(ctx,
-		`INSERT INTO datei_permission_projection (id, datei_id, user_account_id, user_group_id, permission_type, created_at)
+		`INSERT INTO datei_permission_projection
+		 (id, datei_id, user_account_id, user_group_id, permission_type, created_at)
 		 VALUES ($1, $2, $3, $4, $5, $6)`,
 		event.ID,
 		event.DateiID,
@@ -219,7 +194,11 @@ func UpdateProjectionForDateiPermissionGranted(ctx context.Context, tx pgx.Tx, e
 }
 
 // UpdateProjectionForDateiPermissionRevoked updates projections after a permission is revoked
-func UpdateProjectionForDateiPermissionRevoked(ctx context.Context, tx pgx.Tx, event *events.DateiPermissionRevokedEvent) error {
+func UpdateProjectionForDateiPermissionRevoked(
+	ctx context.Context,
+	tx pgx.Tx,
+	event *events.DateiPermissionRevokedEvent,
+) error {
 	_, err := tx.Exec(ctx,
 		`DELETE FROM datei_permission_projection
 		 WHERE id = $1`,

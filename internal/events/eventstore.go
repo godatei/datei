@@ -163,7 +163,6 @@ func (es *PostgresEventStore) GetLatestSnapshot(ctx context.Context, streamID uu
 		 LIMIT 1`,
 		streamID,
 	).Scan(&stream, &version, &state)
-
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil

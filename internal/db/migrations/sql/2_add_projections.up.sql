@@ -1,5 +1,6 @@
 -- Projection Tables: Read Models for Event Store
 -- These tables are denormalized views updated by event handlers
+-- Single datei_projection table containing current state with embedded latest name/version data
 
 -- ============================================================================
 -- Datei Projection (Current state of datei entities)
@@ -10,8 +11,16 @@ CREATE TABLE datei_projection (
   parent_id UUID REFERENCES datei(id) ON DELETE RESTRICT,
   is_directory BOOLEAN NOT NULL DEFAULT false,
   linked_datei_id UUID REFERENCES datei(id) ON DELETE SET NULL,
-  latest_name_id UUID REFERENCES datei_name(id) ON DELETE RESTRICT,
-  latest_version_id UUID REFERENCES datei_version(id) ON DELETE RESTRICT,
+  -- Latest name data (embedded, no separate history table needed - history is in event store)
+  latest_name TEXT NOT NULL,
+  -- Latest version data (embedded, no separate history table needed - history is in event store)
+  latest_version_s3_key TEXT,
+  latest_version_file_size BIGINT,
+  latest_version_checksum TEXT,
+  latest_version_mime_type TEXT,
+  latest_version_content_md TEXT,
+  latest_version_content_search TSVECTOR GENERATED ALWAYS AS (to_tsvector('simple', coalesce(latest_version_content_md, ''))) STORED,
+  -- Core metadata
   created_by UUID REFERENCES user_account(id) ON DELETE RESTRICT,
   trashed_at TIMESTAMPTZ,
   trashed_by UUID REFERENCES user_account(id) ON DELETE RESTRICT,
@@ -20,47 +29,12 @@ CREATE TABLE datei_projection (
   projection_version INT NOT NULL DEFAULT 1 -- Which event version created this state
 );
 
--- Same indexes as original datei table
+-- Indexes for common queries
 CREATE INDEX idx_datei_projection_parent_id ON datei_projection(parent_id);
 CREATE INDEX idx_datei_projection_linked_datei_id ON datei_projection(linked_datei_id) WHERE linked_datei_id IS NOT NULL;
 CREATE INDEX idx_datei_projection_trashed_at ON datei_projection(trashed_at) WHERE trashed_at IS NOT NULL;
 CREATE INDEX idx_datei_projection_created_by ON datei_projection(created_by) WHERE created_by IS NOT NULL;
-CREATE INDEX idx_datei_projection_latest_name_id ON datei_projection(latest_name_id) WHERE latest_name_id IS NOT NULL;
-CREATE INDEX idx_datei_projection_latest_version_id ON datei_projection(latest_version_id) WHERE latest_version_id IS NOT NULL;
-
--- ============================================================================
--- Datei Name Projection (Name history)
--- ============================================================================
-
-CREATE TABLE datei_name_projection (
-  id UUID PRIMARY KEY,
-  datei_id UUID NOT NULL REFERENCES datei_projection(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  created_by UUID REFERENCES user_account(id) ON DELETE RESTRICT,
-  created_at TIMESTAMPTZ NOT NULL
-);
-
-CREATE INDEX idx_datei_name_projection_datei_id ON datei_name_projection(datei_id);
-
--- ============================================================================
--- Datei Version Projection (Version history with full-text search)
--- ============================================================================
-
-CREATE TABLE datei_version_projection (
-  id UUID PRIMARY KEY,
-  datei_id UUID NOT NULL REFERENCES datei_projection(id) ON DELETE CASCADE,
-  s3_key TEXT NOT NULL,
-  file_size BIGINT NOT NULL,
-  checksum TEXT NOT NULL,
-  mime_type TEXT NOT NULL,
-  content_md TEXT,
-  content_search TSVECTOR GENERATED ALWAYS AS (to_tsvector('simple', coalesce(content_md, ''))) STORED,
-  created_by UUID REFERENCES user_account(id) ON DELETE RESTRICT,
-  created_at TIMESTAMPTZ NOT NULL
-);
-
-CREATE INDEX idx_datei_version_projection_datei_id ON datei_version_projection(datei_id);
-CREATE INDEX idx_datei_version_projection_content_search ON datei_version_projection USING GIN(content_search);
+CREATE INDEX idx_datei_projection_latest_version_content_search ON datei_projection USING GIN(latest_version_content_search);
 
 -- ============================================================================
 -- Datei Permission Projection (Access control)
