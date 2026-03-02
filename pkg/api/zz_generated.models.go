@@ -20,11 +20,20 @@ type CreateDateiRequest struct {
 
 // Datei defines model for Datei.
 type Datei struct {
+	// Checksum File checksum (null for directories)
+	Checksum *string `json:"checksum,omitempty"`
+
+	// ContentMd Markdown content preview
+	ContentMd *string `json:"contentMd,omitempty"`
+
 	// CreatedAt Creation timestamp
 	CreatedAt time.Time `json:"createdAt"`
 
 	// CreatedBy User ID of creator
 	CreatedBy *openapi_types.UUID `json:"createdBy,omitempty"`
+
+	// FileSize File size in bytes (null for directories)
+	FileSize *int64 `json:"fileSize,omitempty"`
 
 	// Id Unique identifier
 	Id openapi_types.UUID `json:"id"`
@@ -32,11 +41,11 @@ type Datei struct {
 	// IsDirectory Whether this is a directory
 	IsDirectory bool `json:"isDirectory"`
 
-	// LatestVersion Latest version/upload of the file
-	LatestVersion *DateiVersion `json:"latestVersion,omitempty"`
-
 	// LinkedDateiId ID of linked Datei (for symlinks)
 	LinkedDateiId *openapi_types.UUID `json:"linkedDateiId,omitempty"`
+
+	// MimeType MIME type (null for directories)
+	MimeType *string `json:"mimeType,omitempty"`
 
 	// Name Current name of the Datei
 	Name *string `json:"name,omitempty"`
@@ -52,21 +61,6 @@ type Datei struct {
 
 	// UpdatedAt Last update timestamp
 	UpdatedAt time.Time `json:"updatedAt"`
-}
-
-// DateiVersion defines model for DateiVersion.
-type DateiVersion struct {
-	// Checksum File checksum
-	Checksum string `json:"checksum"`
-
-	// ContentMd Markdown content preview
-	ContentMd *string `json:"contentMd,omitempty"`
-
-	// FileSize File size in bytes
-	FileSize int64 `json:"fileSize"`
-
-	// MimeType MIME type
-	MimeType string `json:"mimeType"`
 }
 
 // ListDateiResponse defines model for ListDateiResponse.

@@ -150,20 +150,6 @@ type AuditLog struct {
 	CreatedAt  time.Time  `db:"created_at"`
 }
 
-type Datei struct {
-	ID              uuid.UUID  `db:"id"`
-	ParentID        *uuid.UUID `db:"parent_id"`
-	IsDirectory     bool       `db:"is_directory"`
-	LinkedDateiID   *uuid.UUID `db:"linked_datei_id"`
-	LatestNameID    *uuid.UUID `db:"latest_name_id"`
-	LatestVersionID *uuid.UUID `db:"latest_version_id"`
-	CreatedBy       *uuid.UUID `db:"created_by"`
-	TrashedAt       *time.Time `db:"trashed_at"`
-	TrashedBy       *uuid.UUID `db:"trashed_by"`
-	CreatedAt       time.Time  `db:"created_at"`
-	UpdatedAt       time.Time  `db:"updated_at"`
-}
-
 type DateiAnnotation struct {
 	ID        uuid.UUID `db:"id"`
 	DateiID   uuid.UUID `db:"datei_id"`
@@ -185,14 +171,6 @@ type DateiComment struct {
 type DateiLabel struct {
 	DateiID uuid.UUID `db:"datei_id"`
 	LabelID uuid.UUID `db:"label_id"`
-}
-
-type DateiName struct {
-	ID        uuid.UUID  `db:"id"`
-	DateiID   uuid.UUID  `db:"datei_id"`
-	Name      string     `db:"name"`
-	CreatedBy *uuid.UUID `db:"created_by"`
-	CreatedAt time.Time  `db:"created_at"`
 }
 
 type DateiPermission struct {
@@ -233,19 +211,6 @@ type DateiProjection struct {
 	CreatedAt                  time.Time   `db:"created_at"`
 	UpdatedAt                  time.Time   `db:"updated_at"`
 	ProjectionVersion          int32       `db:"projection_version"`
-}
-
-type DateiVersion struct {
-	ID            uuid.UUID   `db:"id"`
-	DateiID       uuid.UUID   `db:"datei_id"`
-	S3Key         string      `db:"s3_key"`
-	FileSize      int64       `db:"file_size"`
-	Checksum      string      `db:"checksum"`
-	MimeType      string      `db:"mime_type"`
-	ContentMd     *string     `db:"content_md"`
-	ContentSearch interface{} `db:"content_search"`
-	CreatedBy     *uuid.UUID  `db:"created_by"`
-	CreatedAt     time.Time   `db:"created_at"`
 }
 
 type EventStore struct {

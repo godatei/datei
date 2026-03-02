@@ -44,7 +44,6 @@ func (e DateiRenamedEvent) StreamID() uuid.UUID { return e.ID }
 // DateiVersionUploadedEvent fired when a new file version is uploaded
 type DateiVersionUploadedEvent struct {
 	ID         uuid.UUID `json:"id"`
-	VersionID  uuid.UUID `json:"version_id"`
 	S3Key      string    `json:"s3_key"`
 	FileSize   int64     `json:"file_size"`
 	Checksum   string    `json:"checksum"`

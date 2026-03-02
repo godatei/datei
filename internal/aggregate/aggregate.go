@@ -121,7 +121,6 @@ func (a *DateiAggregate) Rename(newName string, renamedBy uuid.UUID, now time.Ti
 
 // UploadVersion creates a new file version
 func (a *DateiAggregate) UploadVersion(
-	versionID uuid.UUID,
 	s3Key string,
 	fileSize int64,
 	checksum string,
@@ -136,16 +135,12 @@ func (a *DateiAggregate) UploadVersion(
 	if a.IsDirectory {
 		return errors.New("cannot upload file to directory")
 	}
-	if versionID == uuid.Nil {
-		return errors.New("invalid version id")
-	}
 	if s3Key == "" {
 		return errors.New("s3_key cannot be empty")
 	}
 
 	event := events.DateiVersionUploadedEvent{
 		ID:         a.ID,
-		VersionID:  versionID,
 		S3Key:      s3Key,
 		FileSize:   fileSize,
 		Checksum:   checksum,
@@ -284,7 +279,6 @@ func (a *DateiAggregate) ApplyEvent(event events.DomainEvent) {
 
 	case events.DateiVersionUploadedEvent:
 		a.CurrentVersion = &DateiVersion{
-			ID:        e.VersionID,
 			S3Key:     e.S3Key,
 			FileSize:  e.FileSize,
 			Checksum:  e.Checksum,

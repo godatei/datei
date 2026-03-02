@@ -26,12 +26,23 @@ properties:
     type: string
     nullable: true
     description: Current name of the Datei
-  latestVersion:
-    allOf:
-      - $ref: './DateiVersion.yaml'
+  fileSize:
+    type: integer
+    format: int64
     nullable: true
-    type: object
-    description: Latest version/upload of the file
+    description: File size in bytes (null for directories)
+  checksum:
+    type: string
+    nullable: true
+    description: File checksum (null for directories)
+  mimeType:
+    type: string
+    nullable: true
+    description: MIME type (null for directories)
+  contentMd:
+    type: string
+    nullable: true
+    description: Markdown content preview
   createdBy:
     type: string
     format: uuid

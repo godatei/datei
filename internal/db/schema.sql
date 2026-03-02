@@ -2,10 +2,6 @@
 -- PostgreSQL database dump
 --
 
-
--- Dumped from database version 18.3
--- Dumped by pg_dump version 18.3
-
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
@@ -18,44 +14,25 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
---
--- Name: datei_permission_type; Type: TYPE; Schema: public; Owner: -
---
-
 CREATE TYPE public.datei_permission_type AS ENUM (
     'owner',
     'read_write',
     'read_only'
 );
 
-
---
--- Name: public_link_permission_type; Type: TYPE; Schema: public; Owner: -
---
-
 CREATE TYPE public.public_link_permission_type AS ENUM (
     'read_only',
     'read_write'
 );
-
-
---
--- Name: user_group_role; Type: TYPE; Schema: public; Owner: -
---
 
 CREATE TYPE public.user_group_role AS ENUM (
     'admin',
     'member'
 );
 
-
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
-
---
--- Name: audit_log; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.audit_log (
     id uuid DEFAULT uuidv7() NOT NULL,
@@ -68,30 +45,6 @@ CREATE TABLE public.audit_log (
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
-
---
--- Name: datei; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.datei (
-    id uuid DEFAULT uuidv7() NOT NULL,
-    parent_id uuid,
-    is_directory boolean DEFAULT false NOT NULL,
-    linked_datei_id uuid,
-    latest_name_id uuid,
-    latest_version_id uuid,
-    created_by uuid,
-    trashed_at timestamp with time zone,
-    trashed_by uuid,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
---
--- Name: datei_annotation; Type: TABLE; Schema: public; Owner: -
---
-
 CREATE TABLE public.datei_annotation (
     id uuid DEFAULT uuidv7() NOT NULL,
     datei_id uuid NOT NULL,
@@ -100,11 +53,6 @@ CREATE TABLE public.datei_annotation (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
-
-
---
--- Name: datei_comment; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.datei_comment (
     id uuid DEFAULT uuidv7() NOT NULL,
@@ -115,33 +63,10 @@ CREATE TABLE public.datei_comment (
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
-
---
--- Name: datei_label; Type: TABLE; Schema: public; Owner: -
---
-
 CREATE TABLE public.datei_label (
     datei_id uuid NOT NULL,
     label_id uuid NOT NULL
 );
-
-
---
--- Name: datei_name; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.datei_name (
-    id uuid DEFAULT uuidv7() NOT NULL,
-    datei_id uuid NOT NULL,
-    name text NOT NULL,
-    created_by uuid,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
---
--- Name: datei_permission; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.datei_permission (
     id uuid DEFAULT uuidv7() NOT NULL,
@@ -154,11 +79,6 @@ CREATE TABLE public.datei_permission (
     CONSTRAINT ck_datei_permission_grantee CHECK ((((user_account_id IS NOT NULL) AND (user_group_id IS NULL)) OR ((user_account_id IS NULL) AND (user_group_id IS NOT NULL))))
 );
 
-
---
--- Name: datei_permission_projection; Type: TABLE; Schema: public; Owner: -
---
-
 CREATE TABLE public.datei_permission_projection (
     id uuid NOT NULL,
     datei_id uuid NOT NULL,
@@ -169,11 +89,6 @@ CREATE TABLE public.datei_permission_projection (
     created_at timestamp with time zone NOT NULL,
     CONSTRAINT ck_datei_permission_projection_grantee CHECK ((((user_account_id IS NOT NULL) AND (user_group_id IS NULL)) OR ((user_account_id IS NULL) AND (user_group_id IS NOT NULL))))
 );
-
-
---
--- Name: datei_projection; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.datei_projection (
     id uuid NOT NULL,
@@ -195,29 +110,6 @@ CREATE TABLE public.datei_projection (
     projection_version integer DEFAULT 1 NOT NULL
 );
 
-
---
--- Name: datei_version; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.datei_version (
-    id uuid DEFAULT uuidv7() NOT NULL,
-    datei_id uuid NOT NULL,
-    s3_key text NOT NULL,
-    file_size bigint NOT NULL,
-    checksum text NOT NULL,
-    mime_type text NOT NULL,
-    content_md text,
-    content_search tsvector GENERATED ALWAYS AS (to_tsvector('simple'::regconfig, COALESCE(content_md, ''::text))) STORED,
-    created_by uuid,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
---
--- Name: event_store; Type: TABLE; Schema: public; Owner: -
---
-
 CREATE TABLE public.event_store (
     id bigint NOT NULL,
     stream_id uuid NOT NULL,
@@ -229,11 +121,6 @@ CREATE TABLE public.event_store (
     CONSTRAINT ck_event_stream_version CHECK ((stream_version > 0))
 );
 
-
---
--- Name: event_store_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
 CREATE SEQUENCE public.event_store_id_seq
     START WITH 1
     INCREMENT BY 1
@@ -241,17 +128,9 @@ CREATE SEQUENCE public.event_store_id_seq
     NO MAXVALUE
     CACHE 1;
 
-
---
--- Name: event_store_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
 ALTER SEQUENCE public.event_store_id_seq OWNED BY public.event_store.id;
 
-
---
--- Name: label; Type: TABLE; Schema: public; Owner: -
---
+ALTER TABLE ONLY public.event_store ALTER COLUMN id SET DEFAULT nextval('public.event_store_id_seq'::regclass);
 
 CREATE TABLE public.label (
     id uuid DEFAULT uuidv7() NOT NULL,
@@ -260,11 +139,6 @@ CREATE TABLE public.label (
     background_color text DEFAULT '#000000'::text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
-
-
---
--- Name: public_link; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.public_link (
     id uuid DEFAULT uuidv7() NOT NULL,
@@ -275,20 +149,10 @@ CREATE TABLE public.public_link (
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
-
---
--- Name: public_link_datei; Type: TABLE; Schema: public; Owner: -
---
-
 CREATE TABLE public.public_link_datei (
     public_link_id uuid NOT NULL,
     datei_id uuid NOT NULL
 );
-
-
---
--- Name: user_account; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.user_account (
     id uuid DEFAULT uuidv7() NOT NULL,
@@ -304,11 +168,6 @@ CREATE TABLE public.user_account (
     CONSTRAINT ck_user_account_mfa CHECK (((mfa_enabled = false) OR (mfa_secret IS NOT NULL)))
 );
 
-
---
--- Name: user_account_mfa_recovery_code; Type: TABLE; Schema: public; Owner: -
---
-
 CREATE TABLE public.user_account_mfa_recovery_code (
     id uuid DEFAULT uuidv7() NOT NULL,
     user_account_id uuid NOT NULL,
@@ -317,11 +176,6 @@ CREATE TABLE public.user_account_mfa_recovery_code (
     used_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
-
-
---
--- Name: user_email; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.user_email (
     id uuid DEFAULT uuidv7() NOT NULL,
@@ -332,11 +186,6 @@ CREATE TABLE public.user_email (
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
-
---
--- Name: user_group; Type: TABLE; Schema: public; Owner: -
---
-
 CREATE TABLE public.user_group (
     id uuid DEFAULT uuidv7() NOT NULL,
     name text NOT NULL,
@@ -345,11 +194,6 @@ CREATE TABLE public.user_group (
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
-
---
--- Name: user_group_member; Type: TABLE; Schema: public; Owner: -
---
-
 CREATE TABLE public.user_group_member (
     user_account_id uuid NOT NULL,
     user_group_id uuid NOT NULL,
@@ -357,16 +201,6 @@ CREATE TABLE public.user_group_member (
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
-
---
--- Name: event_store id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.event_store ALTER COLUMN id SET DEFAULT nextval('public.event_store_id_seq'::regclass);
-
-
 --
 -- PostgreSQL database dump complete
 --
-
-

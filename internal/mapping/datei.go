@@ -7,26 +7,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// MapProjectionVersionToAPI converts the embedded version fields of a DateiProjection to an API DateiVersion.
-// Returns nil when no version has been uploaded yet.
-func MapProjectionVersionToAPI(p *db.DateiProjection) *api.DateiVersion {
-	if p.LatestVersionS3Key == nil {
-		return nil
-	}
-
-	v := &api.DateiVersion{
-		Checksum: *p.LatestVersionChecksum,
-		FileSize: *p.LatestVersionFileSize,
-		MimeType: *p.LatestVersionMimeType,
-	}
-
-	if p.LatestVersionContentMd != nil {
-		v.ContentMd = p.LatestVersionContentMd
-	}
-
-	return v
-}
-
 // MapDateiProjectionToAPI converts a db.DateiProjection to an api.Datei.
 func MapDateiProjectionToAPI(p *db.DateiProjection) *api.Datei {
 	if p == nil {
@@ -34,12 +14,15 @@ func MapDateiProjectionToAPI(p *db.DateiProjection) *api.Datei {
 	}
 
 	result := &api.Datei{
-		Id:            p.ID,
-		IsDirectory:   p.IsDirectory,
-		Name:          &p.LatestName,
-		CreatedAt:     p.CreatedAt,
-		UpdatedAt:     p.UpdatedAt,
-		LatestVersion: MapProjectionVersionToAPI(p),
+		Id:          p.ID,
+		IsDirectory: p.IsDirectory,
+		Name:        &p.LatestName,
+		CreatedAt:   p.CreatedAt,
+		UpdatedAt:   p.UpdatedAt,
+		FileSize:    p.LatestVersionFileSize,
+		Checksum:    p.LatestVersionChecksum,
+		MimeType:    p.LatestVersionMimeType,
+		ContentMd:   p.LatestVersionContentMd,
 	}
 
 	if p.ParentID != nil {
@@ -111,12 +94,10 @@ func MapAggregateToAPI(a *aggregate.DateiAggregate) *api.Datei {
 	}
 
 	if a.CurrentVersion != nil {
-		result.LatestVersion = &api.DateiVersion{
-			Checksum:  a.CurrentVersion.Checksum,
-			FileSize:  a.CurrentVersion.FileSize,
-			MimeType:  a.CurrentVersion.MimeType,
-			ContentMd: a.CurrentVersion.ContentMD,
-		}
+		result.FileSize = &a.CurrentVersion.FileSize
+		result.Checksum = &a.CurrentVersion.Checksum
+		result.MimeType = &a.CurrentVersion.MimeType
+		result.ContentMd = a.CurrentVersion.ContentMD
 	}
 
 	return result

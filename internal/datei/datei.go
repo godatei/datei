@@ -100,9 +100,8 @@ func (s *DateiService) CreateDatei(ctx context.Context, input CreateDateiInput) 
 			return nil, err
 		}
 
-		versionID := uuid.New()
 		if err = agg.UploadVersion(
-			versionID, hash, fileSize, hash, input.ContentType, nil, uuid.Nil, now,
+			hash, fileSize, hash, input.ContentType, nil, uuid.Nil, now,
 		); err != nil {
 			return nil, err
 		}
@@ -183,9 +182,8 @@ func (s *DateiService) UpdateDatei(ctx context.Context, input UpdateDateiInput) 
 			return nil, err
 		}
 
-		versionID := uuid.New()
 		if err = agg.UploadVersion(
-			versionID, hash, fileSize, hash, input.ContentType, nil, uuid.Nil, now,
+			hash, fileSize, hash, input.ContentType, nil, uuid.Nil, now,
 		); err != nil {
 			return nil, err
 		}
