@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/events"
 	"github.com/godatei/datei/internal/projections"
 	"github.com/google/uuid"
@@ -102,8 +103,9 @@ func (r *PostgresDateiRepository) Save(ctx context.Context, aggregate *DateiAggr
 	}
 
 	// Update projections synchronously (same transaction)
+	q := db.New(tx)
 	for _, event := range uncommittedEvents {
-		if err := r.updateProjection(ctx, tx, event); err != nil {
+		if err := r.updateProjection(ctx, q, event); err != nil {
 			return fmt.Errorf("failed to update projection for %s: %w", event.EventType(), err)
 		}
 	}
@@ -120,37 +122,37 @@ func (r *PostgresDateiRepository) Save(ctx context.Context, aggregate *DateiAggr
 }
 
 // updateProjection updates read models based on domain events
-func (r *PostgresDateiRepository) updateProjection(ctx context.Context, tx pgx.Tx, event events.DomainEvent) error {
+func (r *PostgresDateiRepository) updateProjection(ctx context.Context, q *db.Queries, event events.DomainEvent) error {
 	switch e := event.(type) {
 	case events.DateiCreatedEvent:
-		return projections.UpdateProjectionForDateiCreated(ctx, tx, &e)
+		return projections.UpdateProjectionForDateiCreated(ctx, q, &e)
 
 	case events.DateiRenamedEvent:
-		return projections.UpdateProjectionForDateiRenamed(ctx, tx, &e)
+		return projections.UpdateProjectionForDateiRenamed(ctx, q, &e)
 
 	case events.DateiVersionUploadedEvent:
-		return projections.UpdateProjectionForDateiVersionUploaded(ctx, tx, &e)
+		return projections.UpdateProjectionForDateiVersionUploaded(ctx, q, &e)
 
 	case events.DateiMovedEvent:
-		return projections.UpdateProjectionForDateiMoved(ctx, tx, &e)
+		return projections.UpdateProjectionForDateiMoved(ctx, q, &e)
 
 	case events.DateiTrashedEvent:
-		return projections.UpdateProjectionForDateiTrashed(ctx, tx, &e)
+		return projections.UpdateProjectionForDateiTrashed(ctx, q, &e)
 
 	case events.DateiRestoredEvent:
-		return projections.UpdateProjectionForDateiRestored(ctx, tx, &e)
+		return projections.UpdateProjectionForDateiRestored(ctx, q, &e)
 
 	case events.DateiLinkedEvent:
-		return projections.UpdateProjectionForDateiLinked(ctx, tx, &e)
+		return projections.UpdateProjectionForDateiLinked(ctx, q, &e)
 
 	case events.DateiUnlinkedEvent:
-		return projections.UpdateProjectionForDateiUnlinked(ctx, tx, &e)
+		return projections.UpdateProjectionForDateiUnlinked(ctx, q, &e)
 
 	case events.DateiPermissionGrantedEvent:
-		return projections.UpdateProjectionForDateiPermissionGranted(ctx, tx, &e)
+		return projections.UpdateProjectionForDateiPermissionGranted(ctx, q, &e)
 
 	case events.DateiPermissionRevokedEvent:
-		return projections.UpdateProjectionForDateiPermissionRevoked(ctx, tx, &e)
+		return projections.UpdateProjectionForDateiPermissionRevoked(ctx, q, &e)
 
 	default:
 		return errors.New("unknown event type")

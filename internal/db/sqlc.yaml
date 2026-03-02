@@ -3,6 +3,7 @@ sql:
   - engine: 'postgresql'
     queries:
       - 'datei.sql'
+      - 'event_store.sql'
     schema: 'schema.sql'
     gen:
       go:

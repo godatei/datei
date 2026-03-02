@@ -205,6 +205,36 @@ type DateiPermission struct {
 	CreatedAt      time.Time           `db:"created_at"`
 }
 
+type DateiPermissionProjection struct {
+	ID             uuid.UUID           `db:"id"`
+	DateiID        uuid.UUID           `db:"datei_id"`
+	UserAccountID  *uuid.UUID          `db:"user_account_id"`
+	UserGroupID    *uuid.UUID          `db:"user_group_id"`
+	PermissionType DateiPermissionType `db:"permission_type"`
+	IsFavorite     bool                `db:"is_favorite"`
+	CreatedAt      time.Time           `db:"created_at"`
+}
+
+type DateiProjection struct {
+	ID                         uuid.UUID   `db:"id"`
+	ParentID                   *uuid.UUID  `db:"parent_id"`
+	IsDirectory                bool        `db:"is_directory"`
+	LinkedDateiID              *uuid.UUID  `db:"linked_datei_id"`
+	LatestName                 string      `db:"latest_name"`
+	LatestVersionS3Key         *string     `db:"latest_version_s3_key"`
+	LatestVersionFileSize      *int64      `db:"latest_version_file_size"`
+	LatestVersionChecksum      *string     `db:"latest_version_checksum"`
+	LatestVersionMimeType      *string     `db:"latest_version_mime_type"`
+	LatestVersionContentMd     *string     `db:"latest_version_content_md"`
+	LatestVersionContentSearch interface{} `db:"latest_version_content_search"`
+	CreatedBy                  *uuid.UUID  `db:"created_by"`
+	TrashedAt                  *time.Time  `db:"trashed_at"`
+	TrashedBy                  *uuid.UUID  `db:"trashed_by"`
+	CreatedAt                  time.Time   `db:"created_at"`
+	UpdatedAt                  time.Time   `db:"updated_at"`
+	ProjectionVersion          int32       `db:"projection_version"`
+}
+
 type DateiVersion struct {
 	ID            uuid.UUID   `db:"id"`
 	DateiID       uuid.UUID   `db:"datei_id"`
@@ -216,6 +246,16 @@ type DateiVersion struct {
 	ContentSearch interface{} `db:"content_search"`
 	CreatedBy     *uuid.UUID  `db:"created_by"`
 	CreatedAt     time.Time   `db:"created_at"`
+}
+
+type EventStore struct {
+	ID            int64     `db:"id"`
+	StreamID      uuid.UUID `db:"stream_id"`
+	StreamVersion int32     `db:"stream_version"`
+	EventType     string    `db:"event_type"`
+	EventData     []byte    `db:"event_data"`
+	EventMetadata []byte    `db:"event_metadata"`
+	CreatedAt     time.Time `db:"created_at"`
 }
 
 type Label struct {

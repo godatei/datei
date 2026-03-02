@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -92,6 +93,16 @@ func (q *Queries) CreateDateiVersion(ctx context.Context, arg CreateDateiVersion
 	return i, err
 }
 
+const deleteDateiPermissionProjection = `-- name: DeleteDateiPermissionProjection :exec
+DELETE FROM datei_permission_projection
+ WHERE id = $1
+`
+
+func (q *Queries) DeleteDateiPermissionProjection(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteDateiPermissionProjection, id)
+	return err
+}
+
 const getDateiByID = `-- name: GetDateiByID :one
 SELECT id, parent_id, is_directory, linked_datei_id, latest_name_id, latest_version_id, created_by, trashed_at, trashed_by, created_at, updated_at FROM datei WHERE id = $1
 `
@@ -161,6 +172,63 @@ func (q *Queries) GetDateiByIDWithDetails(ctx context.Context, id uuid.UUID) (Ge
 		&i.DateiVersion.CreatedAt,
 	)
 	return i, err
+}
+
+const insertDateiPermissionProjection = `-- name: InsertDateiPermissionProjection :exec
+INSERT INTO datei_permission_projection
+ (id, datei_id, user_account_id, user_group_id, permission_type, created_at)
+ VALUES ($1, $2, $3, $4, $5, $6)
+`
+
+type InsertDateiPermissionProjectionParams struct {
+	ID             uuid.UUID           `db:"id"`
+	DateiID        uuid.UUID           `db:"datei_id"`
+	UserAccountID  *uuid.UUID          `db:"user_account_id"`
+	UserGroupID    *uuid.UUID          `db:"user_group_id"`
+	PermissionType DateiPermissionType `db:"permission_type"`
+	CreatedAt      time.Time           `db:"created_at"`
+}
+
+func (q *Queries) InsertDateiPermissionProjection(ctx context.Context, arg InsertDateiPermissionProjectionParams) error {
+	_, err := q.db.Exec(ctx, insertDateiPermissionProjection,
+		arg.ID,
+		arg.DateiID,
+		arg.UserAccountID,
+		arg.UserGroupID,
+		arg.PermissionType,
+		arg.CreatedAt,
+	)
+	return err
+}
+
+const insertDateiProjection = `-- name: InsertDateiProjection :exec
+INSERT INTO datei_projection
+ (id, parent_id, is_directory, latest_name,
+  created_by, created_at, updated_at, projection_version)
+ VALUES ($1, $2, $3, $4, $5, $6, $7, 1)
+`
+
+type InsertDateiProjectionParams struct {
+	ID          uuid.UUID  `db:"id"`
+	ParentID    *uuid.UUID `db:"parent_id"`
+	IsDirectory bool       `db:"is_directory"`
+	LatestName  string     `db:"latest_name"`
+	CreatedBy   *uuid.UUID `db:"created_by"`
+	CreatedAt   time.Time  `db:"created_at"`
+	UpdatedAt   time.Time  `db:"updated_at"`
+}
+
+func (q *Queries) InsertDateiProjection(ctx context.Context, arg InsertDateiProjectionParams) error {
+	_, err := q.db.Exec(ctx, insertDateiProjection,
+		arg.ID,
+		arg.ParentID,
+		arg.IsDirectory,
+		arg.LatestName,
+		arg.CreatedBy,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
 }
 
 const listDateiWithDetails = `-- name: ListDateiWithDetails :many
@@ -301,4 +369,144 @@ func (q *Queries) UpdateDateiLatestVersionID(ctx context.Context, arg UpdateDate
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const updateDateiProjectionLinked = `-- name: UpdateDateiProjectionLinked :exec
+UPDATE datei_projection
+ SET linked_datei_id = $1, updated_at = $2, projection_version = projection_version + 1
+ WHERE id = $3
+`
+
+type UpdateDateiProjectionLinkedParams struct {
+	LinkedDateiID *uuid.UUID `db:"linked_datei_id"`
+	UpdatedAt     time.Time  `db:"updated_at"`
+	ID            uuid.UUID  `db:"id"`
+}
+
+func (q *Queries) UpdateDateiProjectionLinked(ctx context.Context, arg UpdateDateiProjectionLinkedParams) error {
+	_, err := q.db.Exec(ctx, updateDateiProjectionLinked, arg.LinkedDateiID, arg.UpdatedAt, arg.ID)
+	return err
+}
+
+const updateDateiProjectionName = `-- name: UpdateDateiProjectionName :exec
+UPDATE datei_projection
+ SET latest_name = $1, updated_at = $2, projection_version = projection_version + 1
+ WHERE id = $3
+`
+
+type UpdateDateiProjectionNameParams struct {
+	LatestName string    `db:"latest_name"`
+	UpdatedAt  time.Time `db:"updated_at"`
+	ID         uuid.UUID `db:"id"`
+}
+
+func (q *Queries) UpdateDateiProjectionName(ctx context.Context, arg UpdateDateiProjectionNameParams) error {
+	_, err := q.db.Exec(ctx, updateDateiProjectionName, arg.LatestName, arg.UpdatedAt, arg.ID)
+	return err
+}
+
+const updateDateiProjectionParent = `-- name: UpdateDateiProjectionParent :exec
+UPDATE datei_projection
+ SET parent_id = $1, updated_at = $2, projection_version = projection_version + 1
+ WHERE id = $3
+`
+
+type UpdateDateiProjectionParentParams struct {
+	ParentID  *uuid.UUID `db:"parent_id"`
+	UpdatedAt time.Time  `db:"updated_at"`
+	ID        uuid.UUID  `db:"id"`
+}
+
+func (q *Queries) UpdateDateiProjectionParent(ctx context.Context, arg UpdateDateiProjectionParentParams) error {
+	_, err := q.db.Exec(ctx, updateDateiProjectionParent, arg.ParentID, arg.UpdatedAt, arg.ID)
+	return err
+}
+
+const updateDateiProjectionRestored = `-- name: UpdateDateiProjectionRestored :exec
+UPDATE datei_projection
+ SET trashed_at = NULL, trashed_by = NULL, updated_at = $1,
+     projection_version = projection_version + 1
+ WHERE id = $2
+`
+
+type UpdateDateiProjectionRestoredParams struct {
+	UpdatedAt time.Time `db:"updated_at"`
+	ID        uuid.UUID `db:"id"`
+}
+
+func (q *Queries) UpdateDateiProjectionRestored(ctx context.Context, arg UpdateDateiProjectionRestoredParams) error {
+	_, err := q.db.Exec(ctx, updateDateiProjectionRestored, arg.UpdatedAt, arg.ID)
+	return err
+}
+
+const updateDateiProjectionTrashed = `-- name: UpdateDateiProjectionTrashed :exec
+UPDATE datei_projection
+ SET trashed_at = $1, trashed_by = $2, updated_at = $3,
+     projection_version = projection_version + 1
+ WHERE id = $4
+`
+
+type UpdateDateiProjectionTrashedParams struct {
+	TrashedAt *time.Time `db:"trashed_at"`
+	TrashedBy *uuid.UUID `db:"trashed_by"`
+	UpdatedAt time.Time  `db:"updated_at"`
+	ID        uuid.UUID  `db:"id"`
+}
+
+func (q *Queries) UpdateDateiProjectionTrashed(ctx context.Context, arg UpdateDateiProjectionTrashedParams) error {
+	_, err := q.db.Exec(ctx, updateDateiProjectionTrashed,
+		arg.TrashedAt,
+		arg.TrashedBy,
+		arg.UpdatedAt,
+		arg.ID,
+	)
+	return err
+}
+
+const updateDateiProjectionUnlinked = `-- name: UpdateDateiProjectionUnlinked :exec
+UPDATE datei_projection
+ SET linked_datei_id = NULL, updated_at = $1, projection_version = projection_version + 1
+ WHERE id = $2
+`
+
+type UpdateDateiProjectionUnlinkedParams struct {
+	UpdatedAt time.Time `db:"updated_at"`
+	ID        uuid.UUID `db:"id"`
+}
+
+func (q *Queries) UpdateDateiProjectionUnlinked(ctx context.Context, arg UpdateDateiProjectionUnlinkedParams) error {
+	_, err := q.db.Exec(ctx, updateDateiProjectionUnlinked, arg.UpdatedAt, arg.ID)
+	return err
+}
+
+const updateDateiProjectionVersion = `-- name: UpdateDateiProjectionVersion :exec
+UPDATE datei_projection
+ SET latest_version_s3_key = $1, latest_version_file_size = $2,
+     latest_version_checksum = $3, latest_version_mime_type = $4,
+     latest_version_content_md = $5, updated_at = $6,
+     projection_version = projection_version + 1
+ WHERE id = $7
+`
+
+type UpdateDateiProjectionVersionParams struct {
+	LatestVersionS3Key     *string   `db:"latest_version_s3_key"`
+	LatestVersionFileSize  *int64    `db:"latest_version_file_size"`
+	LatestVersionChecksum  *string   `db:"latest_version_checksum"`
+	LatestVersionMimeType  *string   `db:"latest_version_mime_type"`
+	LatestVersionContentMd *string   `db:"latest_version_content_md"`
+	UpdatedAt              time.Time `db:"updated_at"`
+	ID                     uuid.UUID `db:"id"`
+}
+
+func (q *Queries) UpdateDateiProjectionVersion(ctx context.Context, arg UpdateDateiProjectionVersionParams) error {
+	_, err := q.db.Exec(ctx, updateDateiProjectionVersion,
+		arg.LatestVersionS3Key,
+		arg.LatestVersionFileSize,
+		arg.LatestVersionChecksum,
+		arg.LatestVersionMimeType,
+		arg.LatestVersionContentMd,
+		arg.UpdatedAt,
+		arg.ID,
+	)
+	return err
 }
