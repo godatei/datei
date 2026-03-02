@@ -72,4 +72,9 @@ export interface Datei {
    * Last update timestamp
    */
   updatedAt: string;
+
+  /**
+   * User ID who last updated it
+   */
+  updatedBy?: string | null;
 }

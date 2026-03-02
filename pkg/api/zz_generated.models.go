@@ -61,6 +61,9 @@ type Datei struct {
 
 	// UpdatedAt Last update timestamp
 	UpdatedAt time.Time `json:"updatedAt"`
+
+	// UpdatedBy User ID who last updated it
+	UpdatedBy *openapi_types.UUID `json:"updatedBy,omitempty"`
 }
 
 // ListDateiResponse defines model for ListDateiResponse.

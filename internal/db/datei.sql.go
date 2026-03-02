@@ -23,7 +23,7 @@ func (q *Queries) DeleteDateiPermissionProjection(ctx context.Context, id uuid.U
 }
 
 const getDateiProjectionByID = `-- name: GetDateiProjectionByID :one
-SELECT id, parent_id, is_directory, linked_datei_id, name, s3_key, size, checksum, mime_type, content_md, content_search, created_by, trashed_at, trashed_by, created_at, updated_at, projection_version FROM datei_projection WHERE id = $1
+SELECT id, parent_id, is_directory, linked_datei_id, name, s3_key, size, checksum, mime_type, content_md, content_search, created_by, trashed_at, trashed_by, created_at, updated_at, updated_by, projection_version FROM datei_projection WHERE id = $1
 `
 
 func (q *Queries) GetDateiProjectionByID(ctx context.Context, id uuid.UUID) (DateiProjection, error) {
@@ -46,6 +46,7 @@ func (q *Queries) GetDateiProjectionByID(ctx context.Context, id uuid.UUID) (Dat
 		&i.TrashedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.UpdatedBy,
 		&i.ProjectionVersion,
 	)
 	return i, err
@@ -81,8 +82,8 @@ func (q *Queries) InsertDateiPermissionProjection(ctx context.Context, arg Inser
 const insertDateiProjection = `-- name: InsertDateiProjection :exec
 INSERT INTO datei_projection
  (id, parent_id, is_directory, name,
-  created_by, created_at, updated_at, projection_version)
- VALUES ($1, $2, $3, $4, $5, $6, $7, 1)
+  created_by, created_at, updated_at, updated_by, projection_version)
+ VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 1)
 `
 
 type InsertDateiProjectionParams struct {
@@ -93,6 +94,7 @@ type InsertDateiProjectionParams struct {
 	CreatedBy   *uuid.UUID `db:"created_by"`
 	CreatedAt   time.Time  `db:"created_at"`
 	UpdatedAt   time.Time  `db:"updated_at"`
+	UpdatedBy   *uuid.UUID `db:"updated_by"`
 }
 
 func (q *Queries) InsertDateiProjection(ctx context.Context, arg InsertDateiProjectionParams) error {
@@ -104,12 +106,13 @@ func (q *Queries) InsertDateiProjection(ctx context.Context, arg InsertDateiProj
 		arg.CreatedBy,
 		arg.CreatedAt,
 		arg.UpdatedAt,
+		arg.UpdatedBy,
 	)
 	return err
 }
 
 const listDateiProjections = `-- name: ListDateiProjections :many
-SELECT id, parent_id, is_directory, linked_datei_id, name, s3_key, size, checksum, mime_type, content_md, content_search, created_by, trashed_at, trashed_by, created_at, updated_at, projection_version FROM datei_projection ORDER BY created_at DESC
+SELECT id, parent_id, is_directory, linked_datei_id, name, s3_key, size, checksum, mime_type, content_md, content_search, created_by, trashed_at, trashed_by, created_at, updated_at, updated_by, projection_version FROM datei_projection ORDER BY created_at DESC
 `
 
 func (q *Queries) ListDateiProjections(ctx context.Context) ([]DateiProjection, error) {
@@ -138,6 +141,7 @@ func (q *Queries) ListDateiProjections(ctx context.Context) ([]DateiProjection, 
 			&i.TrashedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.UpdatedBy,
 			&i.ProjectionVersion,
 		); err != nil {
 			return nil, err
@@ -152,83 +156,103 @@ func (q *Queries) ListDateiProjections(ctx context.Context) ([]DateiProjection, 
 
 const updateDateiProjectionLinked = `-- name: UpdateDateiProjectionLinked :exec
 UPDATE datei_projection
- SET linked_datei_id = $1, updated_at = $2, projection_version = projection_version + 1
- WHERE id = $3
+ SET linked_datei_id = $1, updated_at = $2, updated_by = $3, projection_version = projection_version + 1
+ WHERE id = $4
 `
 
 type UpdateDateiProjectionLinkedParams struct {
 	LinkedDateiID *uuid.UUID `db:"linked_datei_id"`
 	UpdatedAt     time.Time  `db:"updated_at"`
+	UpdatedBy     *uuid.UUID `db:"updated_by"`
 	ID            uuid.UUID  `db:"id"`
 }
 
 func (q *Queries) UpdateDateiProjectionLinked(ctx context.Context, arg UpdateDateiProjectionLinkedParams) error {
-	_, err := q.db.Exec(ctx, updateDateiProjectionLinked, arg.LinkedDateiID, arg.UpdatedAt, arg.ID)
+	_, err := q.db.Exec(ctx, updateDateiProjectionLinked,
+		arg.LinkedDateiID,
+		arg.UpdatedAt,
+		arg.UpdatedBy,
+		arg.ID,
+	)
 	return err
 }
 
 const updateDateiProjectionName = `-- name: UpdateDateiProjectionName :exec
 UPDATE datei_projection
- SET name = $1, updated_at = $2, projection_version = projection_version + 1
- WHERE id = $3
+ SET name = $1, updated_at = $2, updated_by = $3, projection_version = projection_version + 1
+ WHERE id = $4
 `
 
 type UpdateDateiProjectionNameParams struct {
-	Name      string    `db:"name"`
-	UpdatedAt time.Time `db:"updated_at"`
-	ID        uuid.UUID `db:"id"`
+	Name      string     `db:"name"`
+	UpdatedAt time.Time  `db:"updated_at"`
+	UpdatedBy *uuid.UUID `db:"updated_by"`
+	ID        uuid.UUID  `db:"id"`
 }
 
 func (q *Queries) UpdateDateiProjectionName(ctx context.Context, arg UpdateDateiProjectionNameParams) error {
-	_, err := q.db.Exec(ctx, updateDateiProjectionName, arg.Name, arg.UpdatedAt, arg.ID)
+	_, err := q.db.Exec(ctx, updateDateiProjectionName,
+		arg.Name,
+		arg.UpdatedAt,
+		arg.UpdatedBy,
+		arg.ID,
+	)
 	return err
 }
 
 const updateDateiProjectionParent = `-- name: UpdateDateiProjectionParent :exec
 UPDATE datei_projection
- SET parent_id = $1, updated_at = $2, projection_version = projection_version + 1
- WHERE id = $3
+ SET parent_id = $1, updated_at = $2, updated_by = $3, projection_version = projection_version + 1
+ WHERE id = $4
 `
 
 type UpdateDateiProjectionParentParams struct {
 	ParentID  *uuid.UUID `db:"parent_id"`
 	UpdatedAt time.Time  `db:"updated_at"`
+	UpdatedBy *uuid.UUID `db:"updated_by"`
 	ID        uuid.UUID  `db:"id"`
 }
 
 func (q *Queries) UpdateDateiProjectionParent(ctx context.Context, arg UpdateDateiProjectionParentParams) error {
-	_, err := q.db.Exec(ctx, updateDateiProjectionParent, arg.ParentID, arg.UpdatedAt, arg.ID)
+	_, err := q.db.Exec(ctx, updateDateiProjectionParent,
+		arg.ParentID,
+		arg.UpdatedAt,
+		arg.UpdatedBy,
+		arg.ID,
+	)
 	return err
 }
 
 const updateDateiProjectionRestored = `-- name: UpdateDateiProjectionRestored :exec
 UPDATE datei_projection
- SET trashed_at = NULL, trashed_by = NULL, updated_at = $1,
+ SET trashed_at = NULL, trashed_by = NULL, updated_at = $1, updated_by = $2,
      projection_version = projection_version + 1
- WHERE id = $2
+ WHERE id = $3
 `
 
 type UpdateDateiProjectionRestoredParams struct {
-	UpdatedAt time.Time `db:"updated_at"`
-	ID        uuid.UUID `db:"id"`
+	UpdatedAt time.Time  `db:"updated_at"`
+	UpdatedBy *uuid.UUID `db:"updated_by"`
+	ID        uuid.UUID  `db:"id"`
 }
 
 func (q *Queries) UpdateDateiProjectionRestored(ctx context.Context, arg UpdateDateiProjectionRestoredParams) error {
-	_, err := q.db.Exec(ctx, updateDateiProjectionRestored, arg.UpdatedAt, arg.ID)
+	_, err := q.db.Exec(ctx, updateDateiProjectionRestored, arg.UpdatedAt, arg.UpdatedBy, arg.ID)
 	return err
 }
 
 const updateDateiProjectionTrashed = `-- name: UpdateDateiProjectionTrashed :exec
 UPDATE datei_projection
- SET trashed_at = $1, trashed_by = $2, updated_at = $3,
+ SET trashed_at = $1, trashed_by = $2, updated_at = $3, updated_by = $4,
      projection_version = projection_version + 1
- WHERE id = $4
+ WHERE id = $5
 `
 
 type UpdateDateiProjectionTrashedParams struct {
 	TrashedAt *time.Time `db:"trashed_at"`
 	TrashedBy *uuid.UUID `db:"trashed_by"`
 	UpdatedAt time.Time  `db:"updated_at"`
+	UpdatedBy *uuid.UUID `db:"updated_by"`
 	ID        uuid.UUID  `db:"id"`
 }
 
@@ -237,6 +261,7 @@ func (q *Queries) UpdateDateiProjectionTrashed(ctx context.Context, arg UpdateDa
 		arg.TrashedAt,
 		arg.TrashedBy,
 		arg.UpdatedAt,
+		arg.UpdatedBy,
 		arg.ID,
 	)
 	return err
@@ -244,35 +269,37 @@ func (q *Queries) UpdateDateiProjectionTrashed(ctx context.Context, arg UpdateDa
 
 const updateDateiProjectionUnlinked = `-- name: UpdateDateiProjectionUnlinked :exec
 UPDATE datei_projection
- SET linked_datei_id = NULL, updated_at = $1, projection_version = projection_version + 1
- WHERE id = $2
+ SET linked_datei_id = NULL, updated_at = $1, updated_by = $2, projection_version = projection_version + 1
+ WHERE id = $3
 `
 
 type UpdateDateiProjectionUnlinkedParams struct {
-	UpdatedAt time.Time `db:"updated_at"`
-	ID        uuid.UUID `db:"id"`
+	UpdatedAt time.Time  `db:"updated_at"`
+	UpdatedBy *uuid.UUID `db:"updated_by"`
+	ID        uuid.UUID  `db:"id"`
 }
 
 func (q *Queries) UpdateDateiProjectionUnlinked(ctx context.Context, arg UpdateDateiProjectionUnlinkedParams) error {
-	_, err := q.db.Exec(ctx, updateDateiProjectionUnlinked, arg.UpdatedAt, arg.ID)
+	_, err := q.db.Exec(ctx, updateDateiProjectionUnlinked, arg.UpdatedAt, arg.UpdatedBy, arg.ID)
 	return err
 }
 
 const updateDateiProjectionVersion = `-- name: UpdateDateiProjectionVersion :exec
 UPDATE datei_projection
  SET s3_key = $1, size = $2, checksum = $3, mime_type = $4,
-     content_md = $5, updated_at = $6, projection_version = projection_version + 1
- WHERE id = $7
+     content_md = $5, updated_at = $6, updated_by = $7, projection_version = projection_version + 1
+ WHERE id = $8
 `
 
 type UpdateDateiProjectionVersionParams struct {
-	S3Key     *string   `db:"s3_key"`
-	Size      *int64    `db:"size"`
-	Checksum  *string   `db:"checksum"`
-	MimeType  *string   `db:"mime_type"`
-	ContentMd *string   `db:"content_md"`
-	UpdatedAt time.Time `db:"updated_at"`
-	ID        uuid.UUID `db:"id"`
+	S3Key     *string    `db:"s3_key"`
+	Size      *int64     `db:"size"`
+	Checksum  *string    `db:"checksum"`
+	MimeType  *string    `db:"mime_type"`
+	ContentMd *string    `db:"content_md"`
+	UpdatedAt time.Time  `db:"updated_at"`
+	UpdatedBy *uuid.UUID `db:"updated_by"`
+	ID        uuid.UUID  `db:"id"`
 }
 
 func (q *Queries) UpdateDateiProjectionVersion(ctx context.Context, arg UpdateDateiProjectionVersionParams) error {
@@ -283,6 +310,7 @@ func (q *Queries) UpdateDateiProjectionVersion(ctx context.Context, arg UpdateDa
 		arg.MimeType,
 		arg.ContentMd,
 		arg.UpdatedAt,
+		arg.UpdatedBy,
 		arg.ID,
 	)
 	return err

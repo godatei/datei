@@ -199,6 +199,7 @@ type DateiProjection struct {
 	TrashedBy         *uuid.UUID  `db:"trashed_by"`
 	CreatedAt         time.Time   `db:"created_at"`
 	UpdatedAt         time.Time   `db:"updated_at"`
+	UpdatedBy         *uuid.UUID  `db:"updated_by"`
 	ProjectionVersion int32       `db:"projection_version"`
 }
 

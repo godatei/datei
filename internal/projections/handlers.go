@@ -22,6 +22,7 @@ func UpdateProjectionForDateiCreated(ctx context.Context, q *db.Queries, event *
 		CreatedBy:   &event.CreatedBy,
 		CreatedAt:   event.CreatedAt,
 		UpdatedAt:   event.CreatedAt,
+		UpdatedBy:   &event.CreatedBy,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to insert datei_projection: %w", err)
@@ -35,6 +36,7 @@ func UpdateProjectionForDateiRenamed(ctx context.Context, q *db.Queries, event *
 	err := q.UpdateDateiProjectionName(ctx, db.UpdateDateiProjectionNameParams{
 		Name:      event.NewName,
 		UpdatedAt: event.RenamedAt,
+		UpdatedBy: &event.RenamedBy,
 		ID:        event.ID,
 	})
 	if err != nil {
@@ -57,6 +59,7 @@ func UpdateProjectionForDateiVersionUploaded(
 		MimeType:  &event.MimeType,
 		ContentMd: event.ContentMD,
 		UpdatedAt: event.UploadedAt,
+		UpdatedBy: &event.UploadedBy,
 		ID:        event.ID,
 	})
 	if err != nil {
@@ -71,6 +74,7 @@ func UpdateProjectionForDateiMoved(ctx context.Context, q *db.Queries, event *ev
 	err := q.UpdateDateiProjectionParent(ctx, db.UpdateDateiProjectionParentParams{
 		ParentID:  event.NewParentID,
 		UpdatedAt: event.MovedAt,
+		UpdatedBy: &event.MovedBy,
 		ID:        event.ID,
 	})
 	if err != nil {
@@ -86,6 +90,7 @@ func UpdateProjectionForDateiTrashed(ctx context.Context, q *db.Queries, event *
 		TrashedAt: &event.TrashedAt,
 		TrashedBy: &event.TrashedBy,
 		UpdatedAt: event.TrashedAt,
+		UpdatedBy: &event.TrashedBy,
 		ID:        event.ID,
 	})
 	if err != nil {
@@ -99,6 +104,7 @@ func UpdateProjectionForDateiTrashed(ctx context.Context, q *db.Queries, event *
 func UpdateProjectionForDateiRestored(ctx context.Context, q *db.Queries, event *events.DateiRestoredEvent) error {
 	err := q.UpdateDateiProjectionRestored(ctx, db.UpdateDateiProjectionRestoredParams{
 		UpdatedAt: event.RestoredAt,
+		UpdatedBy: &event.RestoredBy,
 		ID:        event.ID,
 	})
 	if err != nil {
@@ -113,6 +119,7 @@ func UpdateProjectionForDateiLinked(ctx context.Context, q *db.Queries, event *e
 	err := q.UpdateDateiProjectionLinked(ctx, db.UpdateDateiProjectionLinkedParams{
 		LinkedDateiID: &event.LinkedDateiID,
 		UpdatedAt:     event.LinkedAt,
+		UpdatedBy:     &event.LinkedBy,
 		ID:            event.ID,
 	})
 	if err != nil {
@@ -126,6 +133,7 @@ func UpdateProjectionForDateiLinked(ctx context.Context, q *db.Queries, event *e
 func UpdateProjectionForDateiUnlinked(ctx context.Context, q *db.Queries, event *events.DateiUnlinkedEvent) error {
 	err := q.UpdateDateiProjectionUnlinked(ctx, db.UpdateDateiProjectionUnlinkedParams{
 		UpdatedAt: event.UnlinkedAt,
+		UpdatedBy: &event.UnlinkedBy,
 		ID:        event.ID,
 	})
 	if err != nil {

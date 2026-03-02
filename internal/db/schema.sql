@@ -144,6 +144,7 @@ CREATE TABLE public.datei_projection (
     trashed_by uuid,
     created_at timestamp with time zone NOT NULL,
     updated_at timestamp with time zone NOT NULL,
+    updated_by uuid,
     projection_version integer DEFAULT 1 NOT NULL
 );
 

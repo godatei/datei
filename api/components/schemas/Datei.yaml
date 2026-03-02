@@ -66,3 +66,8 @@ properties:
     type: string
     format: date-time
     description: Last update timestamp
+  updatedBy:
+    type: string
+    format: uuid
+    nullable: true
+    description: User ID who last updated it

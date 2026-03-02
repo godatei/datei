@@ -127,6 +127,7 @@ CREATE TABLE datei_projection (
   trashed_by UUID REFERENCES user_account(id) ON DELETE RESTRICT,
   created_at TIMESTAMPTZ NOT NULL,
   updated_at TIMESTAMPTZ NOT NULL,
+  updated_by UUID REFERENCES user_account(id) ON DELETE RESTRICT,
   projection_version INT NOT NULL DEFAULT 1
 );
 

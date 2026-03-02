@@ -28,6 +28,7 @@ type DateiAggregate struct {
 	TrashedAt *time.Time
 	TrashedBy *uuid.UUID
 	UpdatedAt time.Time
+	UpdatedBy uuid.UUID
 
 	// Event tracking
 	uncommittedEvents []events.DomainEvent
@@ -264,10 +265,12 @@ func (a *DateiAggregate) ApplyEvent(event events.DomainEvent) {
 		a.CreatedBy = e.CreatedBy
 		a.CreatedAt = e.CreatedAt
 		a.UpdatedAt = e.CreatedAt
+		a.UpdatedBy = e.CreatedBy
 
 	case events.DateiRenamedEvent:
 		a.Name = e.NewName
 		a.UpdatedAt = e.RenamedAt
+		a.UpdatedBy = e.RenamedBy
 
 	case events.DateiVersionUploadedEvent:
 		a.S3Key = &e.S3Key
@@ -276,28 +279,34 @@ func (a *DateiAggregate) ApplyEvent(event events.DomainEvent) {
 		a.MimeType = &e.MimeType
 		a.ContentMD = e.ContentMD
 		a.UpdatedAt = e.UploadedAt
+		a.UpdatedBy = e.UploadedBy
 
 	case events.DateiMovedEvent:
 		a.ParentID = e.NewParentID
 		a.UpdatedAt = e.MovedAt
+		a.UpdatedBy = e.MovedBy
 
 	case events.DateiTrashedEvent:
 		a.TrashedAt = &e.TrashedAt
 		a.TrashedBy = &e.TrashedBy
 		a.UpdatedAt = e.TrashedAt
+		a.UpdatedBy = e.TrashedBy
 
 	case events.DateiRestoredEvent:
 		a.TrashedAt = nil
 		a.TrashedBy = nil
 		a.UpdatedAt = e.RestoredAt
+		a.UpdatedBy = e.RestoredBy
 
 	case events.DateiLinkedEvent:
 		a.LinkedDateiID = &e.LinkedDateiID
 		a.UpdatedAt = e.LinkedAt
+		a.UpdatedBy = e.LinkedBy
 
 	case events.DateiUnlinkedEvent:
 		a.LinkedDateiID = nil
 		a.UpdatedAt = e.UnlinkedAt
+		a.UpdatedBy = e.UnlinkedBy
 	}
 }
 

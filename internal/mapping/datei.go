@@ -45,6 +45,10 @@ func MapDateiProjectionToAPI(p *db.DateiProjection) *api.Datei {
 		result.TrashedBy = p.TrashedBy
 	}
 
+	if p.UpdatedBy != nil {
+		result.UpdatedBy = p.UpdatedBy
+	}
+
 	return result
 }
 
@@ -95,6 +99,10 @@ func MapAggregateToAPI(a *aggregate.DateiAggregate) *api.Datei {
 
 	if a.TrashedBy != nil {
 		result.TrashedBy = a.TrashedBy
+	}
+
+	if a.UpdatedBy != uuid.Nil {
+		result.UpdatedBy = &a.UpdatedBy
 	}
 
 	return result
