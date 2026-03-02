@@ -127,8 +127,7 @@ CREATE TABLE datei_projection (
   trashed_at TIMESTAMPTZ,
   created_by UUID REFERENCES user_account(id) ON DELETE RESTRICT,
   updated_by UUID REFERENCES user_account(id) ON DELETE RESTRICT,
-  trashed_by UUID REFERENCES user_account(id) ON DELETE RESTRICT,
-  projection_version INT NOT NULL DEFAULT 1
+  trashed_by UUID REFERENCES user_account(id) ON DELETE RESTRICT
 );
 
 CREATE INDEX idx_datei_projection_parent_id ON datei_projection(parent_id);

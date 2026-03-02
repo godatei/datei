@@ -139,13 +139,12 @@ CREATE TABLE public.datei_projection (
     mime_type text,
     content_md text,
     content_search tsvector GENERATED ALWAYS AS (to_tsvector('simple'::regconfig, COALESCE(content_md, ''::text))) STORED,
-    created_by uuid,
-    trashed_at timestamp with time zone,
-    trashed_by uuid,
     created_at timestamp with time zone NOT NULL,
     updated_at timestamp with time zone NOT NULL,
+    trashed_at timestamp with time zone,
+    created_by uuid,
     updated_by uuid,
-    projection_version integer DEFAULT 1 NOT NULL
+    trashed_by uuid
 );
 
 

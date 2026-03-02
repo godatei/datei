@@ -23,7 +23,7 @@ func (q *Queries) DeleteDateiPermissionProjection(ctx context.Context, id uuid.U
 }
 
 const getDateiProjectionByID = `-- name: GetDateiProjectionByID :one
-SELECT id, parent_id, is_directory, linked_datei_id, name, s3_key, size, checksum, mime_type, content_md, content_search, created_by, trashed_at, trashed_by, created_at, updated_at, updated_by, projection_version FROM datei_projection WHERE id = $1
+SELECT id, parent_id, is_directory, linked_datei_id, name, s3_key, size, checksum, mime_type, content_md, content_search, created_at, updated_at, trashed_at, created_by, updated_by, trashed_by FROM datei_projection WHERE id = $1
 `
 
 func (q *Queries) GetDateiProjectionByID(ctx context.Context, id uuid.UUID) (DateiProjection, error) {
@@ -41,13 +41,12 @@ func (q *Queries) GetDateiProjectionByID(ctx context.Context, id uuid.UUID) (Dat
 		&i.MimeType,
 		&i.ContentMd,
 		&i.ContentSearch,
-		&i.CreatedBy,
-		&i.TrashedAt,
-		&i.TrashedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.TrashedAt,
+		&i.CreatedBy,
 		&i.UpdatedBy,
-		&i.ProjectionVersion,
+		&i.TrashedBy,
 	)
 	return i, err
 }
@@ -81,8 +80,8 @@ func (q *Queries) InsertDateiPermissionProjection(ctx context.Context, arg Inser
 
 const insertDateiProjection = `-- name: InsertDateiProjection :exec
 INSERT INTO datei_projection
- (id, parent_id, is_directory, name, created_at, updated_at, projection_version)
- VALUES ($1, $2, $3, $4, $5, $6, 1)
+ (id, parent_id, is_directory, name, created_at, updated_at)
+ VALUES ($1, $2, $3, $4, $5, $6)
 `
 
 type InsertDateiProjectionParams struct {
@@ -107,7 +106,7 @@ func (q *Queries) InsertDateiProjection(ctx context.Context, arg InsertDateiProj
 }
 
 const listDateiProjections = `-- name: ListDateiProjections :many
-SELECT id, parent_id, is_directory, linked_datei_id, name, s3_key, size, checksum, mime_type, content_md, content_search, created_by, trashed_at, trashed_by, created_at, updated_at, updated_by, projection_version FROM datei_projection ORDER BY created_at DESC
+SELECT id, parent_id, is_directory, linked_datei_id, name, s3_key, size, checksum, mime_type, content_md, content_search, created_at, updated_at, trashed_at, created_by, updated_by, trashed_by FROM datei_projection ORDER BY created_at DESC
 `
 
 func (q *Queries) ListDateiProjections(ctx context.Context) ([]DateiProjection, error) {
@@ -131,13 +130,12 @@ func (q *Queries) ListDateiProjections(ctx context.Context) ([]DateiProjection, 
 			&i.MimeType,
 			&i.ContentMd,
 			&i.ContentSearch,
-			&i.CreatedBy,
-			&i.TrashedAt,
-			&i.TrashedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.TrashedAt,
+			&i.CreatedBy,
 			&i.UpdatedBy,
-			&i.ProjectionVersion,
+			&i.TrashedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -151,7 +149,7 @@ func (q *Queries) ListDateiProjections(ctx context.Context) ([]DateiProjection, 
 
 const updateDateiProjectionLinked = `-- name: UpdateDateiProjectionLinked :exec
 UPDATE datei_projection
- SET linked_datei_id = $1, updated_at = $2, updated_by = NULL, projection_version = projection_version + 1
+ SET linked_datei_id = $1, updated_at = $2, updated_by = NULL
  WHERE id = $3
 `
 
@@ -168,7 +166,7 @@ func (q *Queries) UpdateDateiProjectionLinked(ctx context.Context, arg UpdateDat
 
 const updateDateiProjectionName = `-- name: UpdateDateiProjectionName :exec
 UPDATE datei_projection
- SET name = $1, updated_at = $2, updated_by = NULL, projection_version = projection_version + 1
+ SET name = $1, updated_at = $2, updated_by = NULL
  WHERE id = $3
 `
 
@@ -185,7 +183,7 @@ func (q *Queries) UpdateDateiProjectionName(ctx context.Context, arg UpdateDatei
 
 const updateDateiProjectionParent = `-- name: UpdateDateiProjectionParent :exec
 UPDATE datei_projection
- SET parent_id = $1, updated_at = $2, updated_by = NULL, projection_version = projection_version + 1
+ SET parent_id = $1, updated_at = $2, updated_by = NULL
  WHERE id = $3
 `
 
@@ -202,8 +200,7 @@ func (q *Queries) UpdateDateiProjectionParent(ctx context.Context, arg UpdateDat
 
 const updateDateiProjectionRestored = `-- name: UpdateDateiProjectionRestored :exec
 UPDATE datei_projection
- SET trashed_at = NULL, trashed_by = NULL, updated_at = $1, updated_by = NULL,
-     projection_version = projection_version + 1
+ SET trashed_at = NULL, trashed_by = NULL, updated_at = $1, updated_by = NULL
  WHERE id = $2
 `
 
@@ -219,8 +216,7 @@ func (q *Queries) UpdateDateiProjectionRestored(ctx context.Context, arg UpdateD
 
 const updateDateiProjectionTrashed = `-- name: UpdateDateiProjectionTrashed :exec
 UPDATE datei_projection
- SET trashed_at = $1, trashed_by = NULL, updated_at = $2, updated_by = NULL,
-     projection_version = projection_version + 1
+ SET trashed_at = $1, trashed_by = NULL, updated_at = $2, updated_by = NULL
  WHERE id = $3
 `
 
@@ -237,7 +233,7 @@ func (q *Queries) UpdateDateiProjectionTrashed(ctx context.Context, arg UpdateDa
 
 const updateDateiProjectionUnlinked = `-- name: UpdateDateiProjectionUnlinked :exec
 UPDATE datei_projection
- SET linked_datei_id = NULL, updated_at = $1, updated_by = NULL, projection_version = projection_version + 1
+ SET linked_datei_id = NULL, updated_at = $1, updated_by = NULL
  WHERE id = $2
 `
 
@@ -254,7 +250,7 @@ func (q *Queries) UpdateDateiProjectionUnlinked(ctx context.Context, arg UpdateD
 const updateDateiProjectionVersion = `-- name: UpdateDateiProjectionVersion :exec
 UPDATE datei_projection
  SET s3_key = $1, size = $2, checksum = $3, mime_type = $4,
-     content_md = $5, updated_at = $6, updated_by = NULL, projection_version = projection_version + 1
+     content_md = $5, updated_at = $6, updated_by = NULL
  WHERE id = $7
 `
 

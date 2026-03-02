@@ -183,24 +183,23 @@ type DateiPermissionProjection struct {
 }
 
 type DateiProjection struct {
-	ID                uuid.UUID   `db:"id"`
-	ParentID          *uuid.UUID  `db:"parent_id"`
-	IsDirectory       bool        `db:"is_directory"`
-	LinkedDateiID     *uuid.UUID  `db:"linked_datei_id"`
-	Name              string      `db:"name"`
-	S3Key             *string     `db:"s3_key"`
-	Size              *int64      `db:"size"`
-	Checksum          *string     `db:"checksum"`
-	MimeType          *string     `db:"mime_type"`
-	ContentMd         *string     `db:"content_md"`
-	ContentSearch     interface{} `db:"content_search"`
-	CreatedBy         *uuid.UUID  `db:"created_by"`
-	TrashedAt         *time.Time  `db:"trashed_at"`
-	TrashedBy         *uuid.UUID  `db:"trashed_by"`
-	CreatedAt         time.Time   `db:"created_at"`
-	UpdatedAt         time.Time   `db:"updated_at"`
-	UpdatedBy         *uuid.UUID  `db:"updated_by"`
-	ProjectionVersion int32       `db:"projection_version"`
+	ID            uuid.UUID   `db:"id"`
+	ParentID      *uuid.UUID  `db:"parent_id"`
+	IsDirectory   bool        `db:"is_directory"`
+	LinkedDateiID *uuid.UUID  `db:"linked_datei_id"`
+	Name          string      `db:"name"`
+	S3Key         *string     `db:"s3_key"`
+	Size          *int64      `db:"size"`
+	Checksum      *string     `db:"checksum"`
+	MimeType      *string     `db:"mime_type"`
+	ContentMd     *string     `db:"content_md"`
+	ContentSearch interface{} `db:"content_search"`
+	CreatedAt     time.Time   `db:"created_at"`
+	UpdatedAt     time.Time   `db:"updated_at"`
+	TrashedAt     *time.Time  `db:"trashed_at"`
+	CreatedBy     *uuid.UUID  `db:"created_by"`
+	UpdatedBy     *uuid.UUID  `db:"updated_by"`
+	TrashedBy     *uuid.UUID  `db:"trashed_by"`
 }
 
 type EventStore struct {
