@@ -127,39 +127,42 @@ func (s *server) UpdateDatei(
 	ctx context.Context,
 	request UpdateDateiRequestObject,
 ) (UpdateDateiResponseObject, error) {
-	// Parse multipart request
-	reader := request.Body
 	var name *string
 	var fileData io.Reader
 	var fileName string
 	contentType := "application/octet-stream"
 
-	for {
-		part, err := reader.NextPart()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return UpdateDatei400Response{}, nil
-		}
-
-		switch part.FormName() {
-		case "name":
-			buf := make([]byte, 256)
-			n, _ := part.Read(buf)
-			if n > 0 {
-				nameStr := string(buf[:n])
-				name = &nameStr
+	if reader := request.MultipartBody; reader != nil {
+		// Parse multipart request
+		for {
+			part, err := reader.NextPart()
+			if err == io.EOF {
+				break
 			}
-		case fileFormField:
-			fileName = part.FileName()
-			if fileDataBytes, err := io.ReadAll(part); err != nil {
+			if err != nil {
 				return UpdateDatei400Response{}, nil
-			} else {
-				fileData = bytes.NewReader(fileDataBytes)
 			}
-			contentType = part.Header.Get("Content-Type")
+
+			switch part.FormName() {
+			case "name":
+				buf := make([]byte, 256)
+				n, _ := part.Read(buf)
+				if n > 0 {
+					nameStr := string(buf[:n])
+					name = &nameStr
+				}
+			case fileFormField:
+				fileName = part.FileName()
+				if fileDataBytes, err := io.ReadAll(part); err != nil {
+					return UpdateDatei400Response{}, nil
+				} else {
+					fileData = bytes.NewReader(fileDataBytes)
+				}
+				contentType = part.Header.Get("Content-Type")
+			}
 		}
+	} else if reader := request.FormdataBody; reader != nil {
+		name = reader.Name
 	}
 
 	result, err := s.dateiService.UpdateDatei(ctx, datei.UpdateDateiInput{

@@ -15,6 +15,9 @@ patch:
       multipart/form-data:
         schema:
           $ref: '../components/requestBodies/UpdateDateiRequest.yaml'
+      application/x-www-form-urlencoded:
+        schema:
+          $ref: '../components/requestBodies/UpdateDateiRequest.yaml'
   responses:
     '200':
       description: Datei updated successfully

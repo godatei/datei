@@ -10,7 +10,7 @@ import { RequestBuilder } from '../../request-builder';
 import { Datei } from '../../models/datei';
 import { UpdateDateiRequest } from '../../models/update-datei-request';
 
-export interface UpdateDatei$Params {
+export interface UpdateDatei$XWwwFormUrlencoded$Params {
 
 /**
  * Datei ID
@@ -19,11 +19,11 @@ export interface UpdateDatei$Params {
       body: UpdateDateiRequest
 }
 
-export function updateDatei(http: HttpClient, rootUrl: string, params: UpdateDatei$Params, context?: HttpContext): Observable<StrictHttpResponse<Datei>> {
-  const rb = new RequestBuilder(rootUrl, updateDatei.PATH, 'patch');
+export function updateDatei$XWwwFormUrlencoded(http: HttpClient, rootUrl: string, params: UpdateDatei$XWwwFormUrlencoded$Params, context?: HttpContext): Observable<StrictHttpResponse<Datei>> {
+  const rb = new RequestBuilder(rootUrl, updateDatei$XWwwFormUrlencoded.PATH, 'patch');
   if (params) {
     rb.path('id', params.id, {});
-    rb.body(params.body, 'multipart/form-data');
+    rb.body(params.body, 'application/x-www-form-urlencoded');
   }
 
   return http.request(
@@ -36,4 +36,4 @@ export function updateDatei(http: HttpClient, rootUrl: string, params: UpdateDat
   );
 }
 
-updateDatei.PATH = '/api/v1/datei/{id}';
+updateDatei$XWwwFormUrlencoded.PATH = '/api/v1/datei/{id}';

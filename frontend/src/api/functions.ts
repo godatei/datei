@@ -7,7 +7,9 @@ export type { CreateDatei$Params as CreateDatei$Params } from './fn/operations/c
 export { createDatei as createDatei } from './fn/operations/create-datei';
 export type { DeleteDatei$Params as DeleteDatei$Params } from './fn/operations/delete-datei';
 export { deleteDatei as deleteDatei } from './fn/operations/delete-datei';
-export type { UpdateDatei$Params as UpdateDatei$Params } from './fn/operations/update-datei';
-export { updateDatei as updateDatei } from './fn/operations/update-datei';
+export type { UpdateDatei$FormData$Params as UpdateDatei$FormData$Params } from './fn/operations/update-datei-form-data';
+export { updateDatei$FormData as updateDatei$FormData } from './fn/operations/update-datei-form-data';
+export type { UpdateDatei$XWwwFormUrlencoded$Params as UpdateDatei$XWwwFormUrlencoded$Params } from './fn/operations/update-datei-x-www-form-urlencoded';
+export { updateDatei$XWwwFormUrlencoded as updateDatei$XWwwFormUrlencoded } from './fn/operations/update-datei-x-www-form-urlencoded';
 export type { DownloadDatei$Params as DownloadDatei$Params } from './fn/operations/download-datei';
 export { downloadDatei as downloadDatei } from './fn/operations/download-datei';

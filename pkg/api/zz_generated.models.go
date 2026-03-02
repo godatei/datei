@@ -96,5 +96,8 @@ type ListDateiParams struct {
 // CreateDateiMultipartRequestBody defines body for CreateDatei for multipart/form-data ContentType.
 type CreateDateiMultipartRequestBody = CreateDateiRequest
 
+// UpdateDateiFormdataRequestBody defines body for UpdateDatei for application/x-www-form-urlencoded ContentType.
+type UpdateDateiFormdataRequestBody = UpdateDateiRequest
+
 // UpdateDateiMultipartRequestBody defines body for UpdateDatei for multipart/form-data ContentType.
 type UpdateDateiMultipartRequestBody = UpdateDateiRequest
