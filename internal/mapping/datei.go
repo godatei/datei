@@ -16,13 +16,13 @@ func MapDateiProjectionToAPI(p *db.DateiProjection) *api.Datei {
 	result := &api.Datei{
 		Id:          p.ID,
 		IsDirectory: p.IsDirectory,
-		Name:        &p.LatestName,
+		Name:        &p.Name,
 		CreatedAt:   p.CreatedAt,
 		UpdatedAt:   p.UpdatedAt,
-		FileSize:    p.LatestVersionFileSize,
-		Checksum:    p.LatestVersionChecksum,
-		MimeType:    p.LatestVersionMimeType,
-		ContentMd:   p.LatestVersionContentMd,
+		Size:        p.Size,
+		Checksum:    p.Checksum,
+		MimeType:    p.MimeType,
+		ContentMd:   p.ContentMd,
 	}
 
 	if p.ParentID != nil {
@@ -68,9 +68,13 @@ func MapAggregateToAPI(a *aggregate.DateiAggregate) *api.Datei {
 	result := &api.Datei{
 		Id:          a.ID,
 		IsDirectory: a.IsDirectory,
-		Name:        &a.CurrentName,
+		Name:        &a.Name,
 		CreatedAt:   a.CreatedAt,
 		UpdatedAt:   a.UpdatedAt,
+		Size:        a.Size,
+		Checksum:    a.Checksum,
+		MimeType:    a.MimeType,
+		ContentMd:   a.ContentMD,
 	}
 
 	if a.ParentID != nil {
@@ -91,13 +95,6 @@ func MapAggregateToAPI(a *aggregate.DateiAggregate) *api.Datei {
 
 	if a.TrashedBy != nil {
 		result.TrashedBy = a.TrashedBy
-	}
-
-	if a.CurrentVersion != nil {
-		result.FileSize = &a.CurrentVersion.FileSize
-		result.Checksum = &a.CurrentVersion.Checksum
-		result.MimeType = &a.CurrentVersion.MimeType
-		result.ContentMd = a.CurrentVersion.ContentMD
 	}
 
 	return result

@@ -18,7 +18,7 @@ func UpdateProjectionForDateiCreated(ctx context.Context, q *db.Queries, event *
 		ID:          event.ID,
 		ParentID:    event.ParentID,
 		IsDirectory: event.IsDirectory,
-		LatestName:  event.Name,
+		Name:        event.Name,
 		CreatedBy:   &event.CreatedBy,
 		CreatedAt:   event.CreatedAt,
 		UpdatedAt:   event.CreatedAt,
@@ -33,9 +33,9 @@ func UpdateProjectionForDateiCreated(ctx context.Context, q *db.Queries, event *
 // UpdateProjectionForDateiRenamed updates projections after a datei is renamed
 func UpdateProjectionForDateiRenamed(ctx context.Context, q *db.Queries, event *events.DateiRenamedEvent) error {
 	err := q.UpdateDateiProjectionName(ctx, db.UpdateDateiProjectionNameParams{
-		LatestName: event.NewName,
-		UpdatedAt:  event.RenamedAt,
-		ID:         event.ID,
+		Name:      event.NewName,
+		UpdatedAt: event.RenamedAt,
+		ID:        event.ID,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to update datei_projection: %w", err)
@@ -51,13 +51,13 @@ func UpdateProjectionForDateiVersionUploaded(
 	event *events.DateiVersionUploadedEvent,
 ) error {
 	err := q.UpdateDateiProjectionVersion(ctx, db.UpdateDateiProjectionVersionParams{
-		LatestVersionS3Key:     &event.S3Key,
-		LatestVersionFileSize:  &event.FileSize,
-		LatestVersionChecksum:  &event.Checksum,
-		LatestVersionMimeType:  &event.MimeType,
-		LatestVersionContentMd: event.ContentMD,
-		UpdatedAt:              event.UploadedAt,
-		ID:                     event.ID,
+		S3Key:     &event.S3Key,
+		Size:      &event.FileSize,
+		Checksum:  &event.Checksum,
+		MimeType:  &event.MimeType,
+		ContentMd: event.ContentMD,
+		UpdatedAt: event.UploadedAt,
+		ID:        event.ID,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to update datei_projection: %w", err)

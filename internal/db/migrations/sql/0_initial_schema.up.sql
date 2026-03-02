@@ -115,13 +115,13 @@ CREATE TABLE datei_projection (
   parent_id UUID REFERENCES datei_projection(id) ON DELETE RESTRICT,
   is_directory BOOLEAN NOT NULL DEFAULT false,
   linked_datei_id UUID REFERENCES datei_projection(id) ON DELETE SET NULL,
-  latest_name TEXT NOT NULL,
-  latest_version_s3_key TEXT,
-  latest_version_file_size BIGINT,
-  latest_version_checksum TEXT,
-  latest_version_mime_type TEXT,
-  latest_version_content_md TEXT,
-  latest_version_content_search TSVECTOR GENERATED ALWAYS AS (to_tsvector('simple', coalesce(latest_version_content_md, ''))) STORED,
+  name TEXT NOT NULL,
+  s3_key TEXT,
+  size BIGINT,
+  checksum TEXT,
+  mime_type TEXT,
+  content_md TEXT,
+  content_search TSVECTOR GENERATED ALWAYS AS (to_tsvector('simple', coalesce(content_md, ''))) STORED,
   created_by UUID REFERENCES user_account(id) ON DELETE RESTRICT,
   trashed_at TIMESTAMPTZ,
   trashed_by UUID REFERENCES user_account(id) ON DELETE RESTRICT,
@@ -134,7 +134,7 @@ CREATE INDEX idx_datei_projection_parent_id ON datei_projection(parent_id);
 CREATE INDEX idx_datei_projection_linked_datei_id ON datei_projection(linked_datei_id) WHERE linked_datei_id IS NOT NULL;
 CREATE INDEX idx_datei_projection_trashed_at ON datei_projection(trashed_at) WHERE trashed_at IS NOT NULL;
 CREATE INDEX idx_datei_projection_created_by ON datei_projection(created_by) WHERE created_by IS NOT NULL;
-CREATE INDEX idx_datei_projection_latest_version_content_search ON datei_projection USING GIN(latest_version_content_search);
+CREATE INDEX idx_datei_projection_content_search ON datei_projection USING GIN(content_search);
 
 -- ============================================================================
 -- Datei Permission Projection (Access control — read model)

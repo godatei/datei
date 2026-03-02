@@ -24,11 +24,6 @@ export interface Datei {
   createdBy?: string | null;
 
   /**
-   * File size in bytes (null for directories)
-   */
-  fileSize?: number | null;
-
-  /**
    * Unique identifier
    */
   id: string;
@@ -57,6 +52,11 @@ export interface Datei {
    * Parent directory ID
    */
   parentId?: string | null;
+
+  /**
+   * File size in bytes (null for directories)
+   */
+  size?: number | null;
 
   /**
    * Trash timestamp

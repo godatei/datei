@@ -139,17 +139,6 @@ func (ns NullUserGroupRole) Value() (driver.Value, error) {
 	return string(ns.UserGroupRole), nil
 }
 
-type AuditLog struct {
-	ID         uuid.UUID  `db:"id"`
-	ActorID    *uuid.UUID `db:"actor_id"`
-	Action     string     `db:"action"`
-	TargetType string     `db:"target_type"`
-	TargetID   uuid.UUID  `db:"target_id"`
-	Metadata   []byte     `db:"metadata"`
-	IpAddress  *string    `db:"ip_address"`
-	CreatedAt  time.Time  `db:"created_at"`
-}
-
 type DateiAnnotation struct {
 	ID        uuid.UUID `db:"id"`
 	DateiID   uuid.UUID `db:"datei_id"`
@@ -194,23 +183,23 @@ type DateiPermissionProjection struct {
 }
 
 type DateiProjection struct {
-	ID                         uuid.UUID   `db:"id"`
-	ParentID                   *uuid.UUID  `db:"parent_id"`
-	IsDirectory                bool        `db:"is_directory"`
-	LinkedDateiID              *uuid.UUID  `db:"linked_datei_id"`
-	LatestName                 string      `db:"latest_name"`
-	LatestVersionS3Key         *string     `db:"latest_version_s3_key"`
-	LatestVersionFileSize      *int64      `db:"latest_version_file_size"`
-	LatestVersionChecksum      *string     `db:"latest_version_checksum"`
-	LatestVersionMimeType      *string     `db:"latest_version_mime_type"`
-	LatestVersionContentMd     *string     `db:"latest_version_content_md"`
-	LatestVersionContentSearch interface{} `db:"latest_version_content_search"`
-	CreatedBy                  *uuid.UUID  `db:"created_by"`
-	TrashedAt                  *time.Time  `db:"trashed_at"`
-	TrashedBy                  *uuid.UUID  `db:"trashed_by"`
-	CreatedAt                  time.Time   `db:"created_at"`
-	UpdatedAt                  time.Time   `db:"updated_at"`
-	ProjectionVersion          int32       `db:"projection_version"`
+	ID                uuid.UUID   `db:"id"`
+	ParentID          *uuid.UUID  `db:"parent_id"`
+	IsDirectory       bool        `db:"is_directory"`
+	LinkedDateiID     *uuid.UUID  `db:"linked_datei_id"`
+	Name              string      `db:"name"`
+	S3Key             *string     `db:"s3_key"`
+	Size              *int64      `db:"size"`
+	Checksum          *string     `db:"checksum"`
+	MimeType          *string     `db:"mime_type"`
+	ContentMd         *string     `db:"content_md"`
+	ContentSearch     interface{} `db:"content_search"`
+	CreatedBy         *uuid.UUID  `db:"created_by"`
+	TrashedAt         *time.Time  `db:"trashed_at"`
+	TrashedBy         *uuid.UUID  `db:"trashed_by"`
+	CreatedAt         time.Time   `db:"created_at"`
+	UpdatedAt         time.Time   `db:"updated_at"`
+	ProjectionVersion int32       `db:"projection_version"`
 }
 
 type EventStore struct {

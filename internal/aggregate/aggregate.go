@@ -8,18 +8,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// DateiVersion represents a file version
-type DateiVersion struct {
-	ID        uuid.UUID
-	S3Key     string
-	FileSize  int64
-	Checksum  string
-	MimeType  string
-	ContentMD *string
-	CreatedBy uuid.UUID
-	CreatedAt time.Time
-}
-
 // DateiAggregate represents the domain entity for a file or directory
 type DateiAggregate struct {
 	// Identity
@@ -29,13 +17,17 @@ type DateiAggregate struct {
 	LinkedDateiID *uuid.UUID
 
 	// Current state (derived from events)
-	CurrentName    string
-	CurrentVersion *DateiVersion
-	CreatedBy      uuid.UUID
-	CreatedAt      time.Time
-	TrashedAt      *time.Time
-	TrashedBy      *uuid.UUID
-	UpdatedAt      time.Time
+	Name      string
+	S3Key     *string
+	Size      *int64
+	Checksum  *string
+	MimeType  *string
+	ContentMD *string
+	CreatedBy uuid.UUID
+	CreatedAt time.Time
+	TrashedAt *time.Time
+	TrashedBy *uuid.UUID
+	UpdatedAt time.Time
 
 	// Event tracking
 	uncommittedEvents []events.DomainEvent
@@ -103,13 +95,13 @@ func (a *DateiAggregate) Rename(newName string, renamedBy uuid.UUID, now time.Ti
 	if newName == "" {
 		return errors.New("name cannot be empty")
 	}
-	if newName == a.CurrentName {
+	if newName == a.Name {
 		return errors.New("new name is same as current name")
 	}
 
 	event := events.DateiRenamedEvent{
 		ID:        a.ID,
-		OldName:   a.CurrentName,
+		OldName:   a.Name,
 		NewName:   newName,
 		RenamedBy: renamedBy,
 		RenamedAt: now,
@@ -268,25 +260,21 @@ func (a *DateiAggregate) ApplyEvent(event events.DomainEvent) {
 		a.ID = e.ID
 		a.ParentID = e.ParentID
 		a.IsDirectory = e.IsDirectory
-		a.CurrentName = e.Name
+		a.Name = e.Name
 		a.CreatedBy = e.CreatedBy
 		a.CreatedAt = e.CreatedAt
 		a.UpdatedAt = e.CreatedAt
 
 	case events.DateiRenamedEvent:
-		a.CurrentName = e.NewName
+		a.Name = e.NewName
 		a.UpdatedAt = e.RenamedAt
 
 	case events.DateiVersionUploadedEvent:
-		a.CurrentVersion = &DateiVersion{
-			S3Key:     e.S3Key,
-			FileSize:  e.FileSize,
-			Checksum:  e.Checksum,
-			MimeType:  e.MimeType,
-			ContentMD: e.ContentMD,
-			CreatedBy: e.UploadedBy,
-			CreatedAt: e.UploadedAt,
-		}
+		a.S3Key = &e.S3Key
+		a.Size = &e.FileSize
+		a.Checksum = &e.Checksum
+		a.MimeType = &e.MimeType
+		a.ContentMD = e.ContentMD
 		a.UpdatedAt = e.UploadedAt
 
 	case events.DateiMovedEvent:

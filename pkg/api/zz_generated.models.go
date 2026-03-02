@@ -32,9 +32,6 @@ type Datei struct {
 	// CreatedBy User ID of creator
 	CreatedBy *openapi_types.UUID `json:"createdBy,omitempty"`
 
-	// FileSize File size in bytes (null for directories)
-	FileSize *int64 `json:"fileSize,omitempty"`
-
 	// Id Unique identifier
 	Id openapi_types.UUID `json:"id"`
 
@@ -52,6 +49,9 @@ type Datei struct {
 
 	// ParentId Parent directory ID
 	ParentId *openapi_types.UUID `json:"parentId,omitempty"`
+
+	// Size File size in bytes (null for directories)
+	Size *int64 `json:"size,omitempty"`
 
 	// TrashedAt Trash timestamp
 	TrashedAt *time.Time `json:"trashedAt,omitempty"`

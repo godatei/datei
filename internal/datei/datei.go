@@ -135,20 +135,20 @@ func (s *DateiService) DownloadDatei(ctx context.Context, dateiID uuid.UUID) (*D
 		return nil, ErrIsDirectory
 	}
 
-	if projection.LatestVersionS3Key == nil {
+	if projection.S3Key == nil {
 		return nil, errors.New("no version available")
 	}
 
-	reader, err := s.store.GetObject(ctx, *projection.LatestVersionS3Key)
+	reader, err := s.store.GetObject(ctx, *projection.S3Key)
 	if err != nil {
 		return nil, err
 	}
 
 	return &DownloadDateiOutput{
 		Reader:          reader,
-		ContentType:     *projection.LatestVersionMimeType,
-		ContentLength:   *projection.LatestVersionFileSize,
-		ContentFileName: projection.LatestName,
+		ContentType:     *projection.MimeType,
+		ContentLength:   *projection.Size,
+		ContentFileName: projection.Name,
 	}, nil
 }
 
