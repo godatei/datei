@@ -63,7 +63,14 @@ func (a *DateiAggregate) recordEvent(event events.DomainEvent) {
 // ============================================================================
 
 // Create initializes a new datei
-func (a *DateiAggregate) Create(id uuid.UUID, parentID *uuid.UUID, isDirectory bool, name string, createdBy uuid.UUID, now time.Time) error {
+func (a *DateiAggregate) Create(
+	id uuid.UUID,
+	parentID *uuid.UUID,
+	isDirectory bool,
+	name string,
+	createdBy uuid.UUID,
+	now time.Time,
+) error {
 	// Validation
 	if id == uuid.Nil {
 		return errors.New("invalid datei id")
@@ -113,7 +120,16 @@ func (a *DateiAggregate) Rename(newName string, renamedBy uuid.UUID, now time.Ti
 }
 
 // UploadVersion creates a new file version
-func (a *DateiAggregate) UploadVersion(versionID uuid.UUID, s3Key string, fileSize int64, checksum string, mimeType string, contentMD *string, uploadedBy uuid.UUID, now time.Time) error {
+func (a *DateiAggregate) UploadVersion(
+	versionID uuid.UUID,
+	s3Key string,
+	fileSize int64,
+	checksum string,
+	mimeType string,
+	contentMD *string,
+	uploadedBy uuid.UUID,
+	now time.Time,
+) error {
 	if a.ID == uuid.Nil {
 		return errors.New("cannot upload: datei not created")
 	}

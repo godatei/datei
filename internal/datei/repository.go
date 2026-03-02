@@ -34,7 +34,11 @@ type RepositoryConfig struct {
 }
 
 // NewPostgresDateiRepository creates a new repository
-func NewPostgresDateiRepository(db *pgxpool.Pool, eventStore events.EventStore, config *RepositoryConfig) *PostgresDateiRepository {
+func NewPostgresDateiRepository(
+	db *pgxpool.Pool,
+	eventStore events.EventStore,
+	config *RepositoryConfig,
+) *PostgresDateiRepository {
 	if config == nil {
 		config = &RepositoryConfig{SnapshotThreshold: 100}
 	}
@@ -48,23 +52,17 @@ func NewPostgresDateiRepository(db *pgxpool.Pool, eventStore events.EventStore, 
 // LoadByID reconstructs an aggregate from events (with snapshot optimization)
 func (r *PostgresDateiRepository) LoadByID(ctx context.Context, id uuid.UUID) (*DateiAggregate, error) {
 	// Load events with snapshot optimization
-	eventList, snapshot, err := r.eventStore.GetEventsWithSnapshot(ctx, id)
+	eventList, err := r.eventStore.GetEvents(ctx, id, 0)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load events: %w", err)
 	}
 
-	if len(eventList) == 0 && snapshot == nil {
+	if len(eventList) == 0 {
 		return nil, fmt.Errorf("datei not found: %w", context.Canceled)
 	}
 
 	// Create aggregate and apply events
 	aggregate := &DateiAggregate{}
-
-	// If we have a snapshot, restore from it first
-	if snapshot != nil {
-		// TODO: Deserialize snapshot state into aggregate
-		// For now, we'll just start from scratch
-	}
 
 	// Replay all events to reconstruct current state
 	if err := aggregate.ReplayEvents(eventList); err != nil {
@@ -79,7 +77,7 @@ func (r *PostgresDateiRepository) LoadByID(ctx context.Context, id uuid.UUID) (*
 }
 
 // Save persists an aggregate's uncommitted events and updates projections
-func (r *PostgresDateiRepository) Save(ctx context.Context, aggregate *DateiAggregate) error {
+func (r *PostgresDateiRepository) Save(ctx context.Context, aggregate *DateiAggregate) (returnErr error) {
 	uncommittedEvents := aggregate.GetUncommittedEvents()
 	if len(uncommittedEvents) == 0 {
 		return nil // Nothing to save
@@ -90,10 +88,16 @@ func (r *PostgresDateiRepository) Save(ctx context.Context, aggregate *DateiAggr
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() { returnErr = errors.Join(returnErr, tx.Rollback(ctx)) }()
 
 	// Append events to event store (with optimistic locking)
-	if err := r.eventStore.AppendToStream(ctx, tx, aggregate.ID, uncommittedEvents, aggregate.version-len(uncommittedEvents)); err != nil {
+	if err := r.eventStore.AppendToStream(
+		ctx,
+		tx,
+		aggregate.ID,
+		uncommittedEvents,
+		aggregate.version-len(uncommittedEvents),
+	); err != nil {
 		return fmt.Errorf("failed to append events: %w", err)
 	}
 
@@ -101,14 +105,6 @@ func (r *PostgresDateiRepository) Save(ctx context.Context, aggregate *DateiAggr
 	for _, event := range uncommittedEvents {
 		if err := r.updateProjection(ctx, tx, event); err != nil {
 			return fmt.Errorf("failed to update projection for %s: %w", event.EventType(), err)
-		}
-	}
-
-	// Create snapshot if threshold reached
-	if aggregate.version%r.config.SnapshotThreshold == 0 {
-		if err := r.eventStore.SaveSnapshot(ctx, tx, aggregate.ID, aggregate.version, aggregate); err != nil {
-			// Log but don't fail if snapshot fails
-			fmt.Printf("failed to save snapshot: %v\n", err)
 		}
 	}
 
