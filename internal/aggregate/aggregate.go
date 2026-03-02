@@ -1,4 +1,4 @@
-package datei
+package aggregate
 
 import (
 	"errors"

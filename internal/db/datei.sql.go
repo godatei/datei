@@ -12,87 +12,6 @@ import (
 	"github.com/google/uuid"
 )
 
-const createDatei = `-- name: CreateDatei :one
-INSERT INTO datei (is_directory) VALUES ($1) RETURNING id, parent_id, is_directory, linked_datei_id, latest_name_id, latest_version_id, created_by, trashed_at, trashed_by, created_at, updated_at
-`
-
-func (q *Queries) CreateDatei(ctx context.Context, isDirectory bool) (Datei, error) {
-	row := q.db.QueryRow(ctx, createDatei, isDirectory)
-	var i Datei
-	err := row.Scan(
-		&i.ID,
-		&i.ParentID,
-		&i.IsDirectory,
-		&i.LinkedDateiID,
-		&i.LatestNameID,
-		&i.LatestVersionID,
-		&i.CreatedBy,
-		&i.TrashedAt,
-		&i.TrashedBy,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const createDateiName = `-- name: CreateDateiName :one
-INSERT INTO datei_name (datei_id, name) VALUES ($1, $2) RETURNING id, datei_id, name, created_by, created_at
-`
-
-type CreateDateiNameParams struct {
-	DateiID uuid.UUID `db:"datei_id"`
-	Name    string    `db:"name"`
-}
-
-func (q *Queries) CreateDateiName(ctx context.Context, arg CreateDateiNameParams) (DateiName, error) {
-	row := q.db.QueryRow(ctx, createDateiName, arg.DateiID, arg.Name)
-	var i DateiName
-	err := row.Scan(
-		&i.ID,
-		&i.DateiID,
-		&i.Name,
-		&i.CreatedBy,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
-const createDateiVersion = `-- name: CreateDateiVersion :one
-INSERT INTO datei_version (datei_id, s3_key, file_size, checksum, mime_type) VALUES ($1, $2, $3, $4, $5) RETURNING id, datei_id, s3_key, file_size, checksum, mime_type, content_md, content_search, created_by, created_at
-`
-
-type CreateDateiVersionParams struct {
-	DateiID  uuid.UUID `db:"datei_id"`
-	S3Key    string    `db:"s3_key"`
-	FileSize int64     `db:"file_size"`
-	Checksum string    `db:"checksum"`
-	MimeType string    `db:"mime_type"`
-}
-
-func (q *Queries) CreateDateiVersion(ctx context.Context, arg CreateDateiVersionParams) (DateiVersion, error) {
-	row := q.db.QueryRow(ctx, createDateiVersion,
-		arg.DateiID,
-		arg.S3Key,
-		arg.FileSize,
-		arg.Checksum,
-		arg.MimeType,
-	)
-	var i DateiVersion
-	err := row.Scan(
-		&i.ID,
-		&i.DateiID,
-		&i.S3Key,
-		&i.FileSize,
-		&i.Checksum,
-		&i.MimeType,
-		&i.ContentMd,
-		&i.ContentSearch,
-		&i.CreatedBy,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
 const deleteDateiPermissionProjection = `-- name: DeleteDateiPermissionProjection :exec
 DELETE FROM datei_permission_projection
  WHERE id = $1
@@ -103,73 +22,31 @@ func (q *Queries) DeleteDateiPermissionProjection(ctx context.Context, id uuid.U
 	return err
 }
 
-const getDateiByID = `-- name: GetDateiByID :one
-SELECT id, parent_id, is_directory, linked_datei_id, latest_name_id, latest_version_id, created_by, trashed_at, trashed_by, created_at, updated_at FROM datei WHERE id = $1
+const getDateiProjectionByID = `-- name: GetDateiProjectionByID :one
+SELECT id, parent_id, is_directory, linked_datei_id, latest_name, latest_version_s3_key, latest_version_file_size, latest_version_checksum, latest_version_mime_type, latest_version_content_md, latest_version_content_search, created_by, trashed_at, trashed_by, created_at, updated_at, projection_version FROM datei_projection WHERE id = $1
 `
 
-func (q *Queries) GetDateiByID(ctx context.Context, id uuid.UUID) (Datei, error) {
-	row := q.db.QueryRow(ctx, getDateiByID, id)
-	var i Datei
+func (q *Queries) GetDateiProjectionByID(ctx context.Context, id uuid.UUID) (DateiProjection, error) {
+	row := q.db.QueryRow(ctx, getDateiProjectionByID, id)
+	var i DateiProjection
 	err := row.Scan(
 		&i.ID,
 		&i.ParentID,
 		&i.IsDirectory,
 		&i.LinkedDateiID,
-		&i.LatestNameID,
-		&i.LatestVersionID,
+		&i.LatestName,
+		&i.LatestVersionS3Key,
+		&i.LatestVersionFileSize,
+		&i.LatestVersionChecksum,
+		&i.LatestVersionMimeType,
+		&i.LatestVersionContentMd,
+		&i.LatestVersionContentSearch,
 		&i.CreatedBy,
 		&i.TrashedAt,
 		&i.TrashedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getDateiByIDWithDetails = `-- name: GetDateiByIDWithDetails :one
-SELECT d.id, d.parent_id, d.is_directory, d.linked_datei_id, d.latest_name_id, d.latest_version_id, d.created_by, d.trashed_at, d.trashed_by, d.created_at, d.updated_at, ln.id, ln.datei_id, ln.name, ln.created_by, ln.created_at, lv.id, lv.datei_id, lv.s3_key, lv.file_size, lv.checksum, lv.mime_type, lv.content_md, lv.content_search, lv.created_by, lv.created_at
-FROM datei d
-LEFT JOIN datei_name ln ON d.latest_name_id = ln.id
-LEFT JOIN datei_version lv ON d.latest_version_id = lv.id
-WHERE d.id = $1
-`
-
-type GetDateiByIDWithDetailsRow struct {
-	Datei        Datei        `db:"datei"`
-	DateiName    DateiName    `db:"datei_name"`
-	DateiVersion DateiVersion `db:"datei_version"`
-}
-
-func (q *Queries) GetDateiByIDWithDetails(ctx context.Context, id uuid.UUID) (GetDateiByIDWithDetailsRow, error) {
-	row := q.db.QueryRow(ctx, getDateiByIDWithDetails, id)
-	var i GetDateiByIDWithDetailsRow
-	err := row.Scan(
-		&i.Datei.ID,
-		&i.Datei.ParentID,
-		&i.Datei.IsDirectory,
-		&i.Datei.LinkedDateiID,
-		&i.Datei.LatestNameID,
-		&i.Datei.LatestVersionID,
-		&i.Datei.CreatedBy,
-		&i.Datei.TrashedAt,
-		&i.Datei.TrashedBy,
-		&i.Datei.CreatedAt,
-		&i.Datei.UpdatedAt,
-		&i.DateiName.ID,
-		&i.DateiName.DateiID,
-		&i.DateiName.Name,
-		&i.DateiName.CreatedBy,
-		&i.DateiName.CreatedAt,
-		&i.DateiVersion.ID,
-		&i.DateiVersion.DateiID,
-		&i.DateiVersion.S3Key,
-		&i.DateiVersion.FileSize,
-		&i.DateiVersion.Checksum,
-		&i.DateiVersion.MimeType,
-		&i.DateiVersion.ContentMd,
-		&i.DateiVersion.ContentSearch,
-		&i.DateiVersion.CreatedBy,
-		&i.DateiVersion.CreatedAt,
+		&i.ProjectionVersion,
 	)
 	return i, err
 }
@@ -231,56 +108,37 @@ func (q *Queries) InsertDateiProjection(ctx context.Context, arg InsertDateiProj
 	return err
 }
 
-const listDateiWithDetails = `-- name: ListDateiWithDetails :many
-SELECT d.id, d.parent_id, d.is_directory, d.linked_datei_id, d.latest_name_id, d.latest_version_id, d.created_by, d.trashed_at, d.trashed_by, d.created_at, d.updated_at, ln.id, ln.datei_id, ln.name, ln.created_by, ln.created_at, lv.id, lv.datei_id, lv.s3_key, lv.file_size, lv.checksum, lv.mime_type, lv.content_md, lv.content_search, lv.created_by, lv.created_at
-FROM datei d
-LEFT JOIN datei_name ln ON d.latest_name_id = ln.id
-LEFT JOIN datei_version lv ON d.latest_version_id = lv.id
-ORDER BY d.created_at DESC
+const listDateiProjections = `-- name: ListDateiProjections :many
+SELECT id, parent_id, is_directory, linked_datei_id, latest_name, latest_version_s3_key, latest_version_file_size, latest_version_checksum, latest_version_mime_type, latest_version_content_md, latest_version_content_search, created_by, trashed_at, trashed_by, created_at, updated_at, projection_version FROM datei_projection ORDER BY created_at DESC
 `
 
-type ListDateiWithDetailsRow struct {
-	Datei        Datei        `db:"datei"`
-	DateiName    DateiName    `db:"datei_name"`
-	DateiVersion DateiVersion `db:"datei_version"`
-}
-
-func (q *Queries) ListDateiWithDetails(ctx context.Context) ([]ListDateiWithDetailsRow, error) {
-	rows, err := q.db.Query(ctx, listDateiWithDetails)
+func (q *Queries) ListDateiProjections(ctx context.Context) ([]DateiProjection, error) {
+	rows, err := q.db.Query(ctx, listDateiProjections)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListDateiWithDetailsRow
+	var items []DateiProjection
 	for rows.Next() {
-		var i ListDateiWithDetailsRow
+		var i DateiProjection
 		if err := rows.Scan(
-			&i.Datei.ID,
-			&i.Datei.ParentID,
-			&i.Datei.IsDirectory,
-			&i.Datei.LinkedDateiID,
-			&i.Datei.LatestNameID,
-			&i.Datei.LatestVersionID,
-			&i.Datei.CreatedBy,
-			&i.Datei.TrashedAt,
-			&i.Datei.TrashedBy,
-			&i.Datei.CreatedAt,
-			&i.Datei.UpdatedAt,
-			&i.DateiName.ID,
-			&i.DateiName.DateiID,
-			&i.DateiName.Name,
-			&i.DateiName.CreatedBy,
-			&i.DateiName.CreatedAt,
-			&i.DateiVersion.ID,
-			&i.DateiVersion.DateiID,
-			&i.DateiVersion.S3Key,
-			&i.DateiVersion.FileSize,
-			&i.DateiVersion.Checksum,
-			&i.DateiVersion.MimeType,
-			&i.DateiVersion.ContentMd,
-			&i.DateiVersion.ContentSearch,
-			&i.DateiVersion.CreatedBy,
-			&i.DateiVersion.CreatedAt,
+			&i.ID,
+			&i.ParentID,
+			&i.IsDirectory,
+			&i.LinkedDateiID,
+			&i.LatestName,
+			&i.LatestVersionS3Key,
+			&i.LatestVersionFileSize,
+			&i.LatestVersionChecksum,
+			&i.LatestVersionMimeType,
+			&i.LatestVersionContentMd,
+			&i.LatestVersionContentSearch,
+			&i.CreatedBy,
+			&i.TrashedAt,
+			&i.TrashedBy,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ProjectionVersion,
 		); err != nil {
 			return nil, err
 		}
@@ -290,85 +148,6 @@ func (q *Queries) ListDateiWithDetails(ctx context.Context) ([]ListDateiWithDeta
 		return nil, err
 	}
 	return items, nil
-}
-
-const setDateiTrashedAt = `-- name: SetDateiTrashedAt :one
-UPDATE datei SET trashed_at = now(), updated_at = now() WHERE id = $1 RETURNING id, parent_id, is_directory, linked_datei_id, latest_name_id, latest_version_id, created_by, trashed_at, trashed_by, created_at, updated_at
-`
-
-func (q *Queries) SetDateiTrashedAt(ctx context.Context, id uuid.UUID) (Datei, error) {
-	row := q.db.QueryRow(ctx, setDateiTrashedAt, id)
-	var i Datei
-	err := row.Scan(
-		&i.ID,
-		&i.ParentID,
-		&i.IsDirectory,
-		&i.LinkedDateiID,
-		&i.LatestNameID,
-		&i.LatestVersionID,
-		&i.CreatedBy,
-		&i.TrashedAt,
-		&i.TrashedBy,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const updateDateiLatestNameID = `-- name: UpdateDateiLatestNameID :one
-UPDATE datei SET latest_name_id = $2, updated_at = now() WHERE id = $1 RETURNING id, parent_id, is_directory, linked_datei_id, latest_name_id, latest_version_id, created_by, trashed_at, trashed_by, created_at, updated_at
-`
-
-type UpdateDateiLatestNameIDParams struct {
-	ID           uuid.UUID  `db:"id"`
-	LatestNameID *uuid.UUID `db:"latest_name_id"`
-}
-
-func (q *Queries) UpdateDateiLatestNameID(ctx context.Context, arg UpdateDateiLatestNameIDParams) (Datei, error) {
-	row := q.db.QueryRow(ctx, updateDateiLatestNameID, arg.ID, arg.LatestNameID)
-	var i Datei
-	err := row.Scan(
-		&i.ID,
-		&i.ParentID,
-		&i.IsDirectory,
-		&i.LinkedDateiID,
-		&i.LatestNameID,
-		&i.LatestVersionID,
-		&i.CreatedBy,
-		&i.TrashedAt,
-		&i.TrashedBy,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const updateDateiLatestVersionID = `-- name: UpdateDateiLatestVersionID :one
-UPDATE datei SET latest_version_id = $2, updated_at = now() WHERE id = $1 RETURNING id, parent_id, is_directory, linked_datei_id, latest_name_id, latest_version_id, created_by, trashed_at, trashed_by, created_at, updated_at
-`
-
-type UpdateDateiLatestVersionIDParams struct {
-	ID              uuid.UUID  `db:"id"`
-	LatestVersionID *uuid.UUID `db:"latest_version_id"`
-}
-
-func (q *Queries) UpdateDateiLatestVersionID(ctx context.Context, arg UpdateDateiLatestVersionIDParams) (Datei, error) {
-	row := q.db.QueryRow(ctx, updateDateiLatestVersionID, arg.ID, arg.LatestVersionID)
-	var i Datei
-	err := row.Scan(
-		&i.ID,
-		&i.ParentID,
-		&i.IsDirectory,
-		&i.LinkedDateiID,
-		&i.LatestNameID,
-		&i.LatestVersionID,
-		&i.CreatedBy,
-		&i.TrashedAt,
-		&i.TrashedBy,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
 }
 
 const updateDateiProjectionLinked = `-- name: UpdateDateiProjectionLinked :exec

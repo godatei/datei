@@ -1,15 +1,9 @@
 type: object
 required:
-  - id
   - fileSize
   - checksum
   - mimeType
-  - createdAt
 properties:
-  id:
-    type: string
-    format: uuid
-    description: Version ID
   fileSize:
     type: integer
     format: int64
@@ -24,12 +18,3 @@ properties:
     type: string
     nullable: true
     description: Markdown content preview
-  createdBy:
-    type: string
-    format: uuid
-    nullable: true
-    description: User ID of uploader
-  createdAt:
-    type: string
-    format: date-time
-    description: Version creation timestamp

@@ -14,24 +14,9 @@ export interface DateiVersion {
   contentMd?: string | null;
 
   /**
-   * Version creation timestamp
-   */
-  createdAt: string;
-
-  /**
-   * User ID of uploader
-   */
-  createdBy?: string | null;
-
-  /**
    * File size in bytes
    */
   fileSize: number;
-
-  /**
-   * Version ID
-   */
-  id: string;
 
   /**
    * MIME type

@@ -12,9 +12,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/godatei/datei/internal/aggregate"
 	"github.com/godatei/datei/internal/buildconfig"
 	"github.com/godatei/datei/internal/config"
-	"github.com/godatei/datei/internal/datei"
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/db/migrations"
 	"github.com/godatei/datei/internal/events"
@@ -87,14 +87,8 @@ func run(ctx context.Context, options Options) error {
 		return err
 	}
 
-	// Initialize event store
 	eventStore := events.NewPostgresEventStore(db)
-
-	// Initialize datei repository
-	esConfig := config.EventStore()
-	repository := datei.NewPostgresDateiRepository(db, eventStore, &datei.RepositoryConfig{
-		SnapshotThreshold: esConfig.SnapshotThreshold,
-	})
+	repository := aggregate.NewPostgresDateiRepository(db, eventStore)
 
 	swagger, err := server.GetSwagger()
 	if err != nil {

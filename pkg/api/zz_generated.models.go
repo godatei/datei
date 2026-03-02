@@ -62,17 +62,8 @@ type DateiVersion struct {
 	// ContentMd Markdown content preview
 	ContentMd *string `json:"contentMd,omitempty"`
 
-	// CreatedAt Version creation timestamp
-	CreatedAt time.Time `json:"createdAt"`
-
-	// CreatedBy User ID of uploader
-	CreatedBy *openapi_types.UUID `json:"createdBy,omitempty"`
-
 	// FileSize File size in bytes
 	FileSize int64 `json:"fileSize"`
-
-	// Id Version ID
-	Id openapi_types.UUID `json:"id"`
 
 	// MimeType MIME type
 	MimeType string `json:"mimeType"`

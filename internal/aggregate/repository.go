@@ -1,4 +1,4 @@
-package datei
+package aggregate
 
 import (
 	"context"
@@ -26,27 +26,13 @@ type DateiRepository interface {
 type PostgresDateiRepository struct {
 	db         *pgxpool.Pool
 	eventStore events.EventStore
-	config     *RepositoryConfig
-}
-
-// RepositoryConfig holds configuration for the repository
-type RepositoryConfig struct {
-	SnapshotThreshold int // Create snapshot every N events
 }
 
 // NewPostgresDateiRepository creates a new repository
-func NewPostgresDateiRepository(
-	db *pgxpool.Pool,
-	eventStore events.EventStore,
-	config *RepositoryConfig,
-) *PostgresDateiRepository {
-	if config == nil {
-		config = &RepositoryConfig{SnapshotThreshold: 100}
-	}
+func NewPostgresDateiRepository(db *pgxpool.Pool, eventStore events.EventStore) *PostgresDateiRepository {
 	return &PostgresDateiRepository{
 		db:         db,
 		eventStore: eventStore,
-		config:     config,
 	}
 }
 
@@ -63,23 +49,23 @@ func (r *PostgresDateiRepository) LoadByID(ctx context.Context, id uuid.UUID) (*
 	}
 
 	// Create aggregate and apply events
-	aggregate := &DateiAggregate{}
+	agg := &DateiAggregate{}
 
 	// Replay all events to reconstruct current state
-	if err := aggregate.ReplayEvents(eventList); err != nil {
+	if err := agg.ReplayEvents(eventList); err != nil {
 		return nil, fmt.Errorf("failed to replay events: %w", err)
 	}
 
 	// Mark events as committed (they're from store, not uncommitted)
-	aggregate.version = len(eventList)
-	aggregate.uncommittedEvents = []events.DomainEvent{}
+	agg.version = len(eventList)
+	agg.uncommittedEvents = []events.DomainEvent{}
 
-	return aggregate, nil
+	return agg, nil
 }
 
 // Save persists an aggregate's uncommitted events and updates projections
-func (r *PostgresDateiRepository) Save(ctx context.Context, aggregate *DateiAggregate) (returnErr error) {
-	uncommittedEvents := aggregate.GetUncommittedEvents()
+func (r *PostgresDateiRepository) Save(ctx context.Context, agg *DateiAggregate) (returnErr error) {
+	uncommittedEvents := agg.GetUncommittedEvents()
 	if len(uncommittedEvents) == 0 {
 		return nil // Nothing to save
 	}
@@ -95,9 +81,9 @@ func (r *PostgresDateiRepository) Save(ctx context.Context, aggregate *DateiAggr
 	if err := r.eventStore.AppendToStream(
 		ctx,
 		tx,
-		aggregate.ID,
+		agg.ID,
 		uncommittedEvents,
-		aggregate.version-len(uncommittedEvents),
+		agg.version-len(uncommittedEvents),
 	); err != nil {
 		return fmt.Errorf("failed to append events: %w", err)
 	}
@@ -116,13 +102,17 @@ func (r *PostgresDateiRepository) Save(ctx context.Context, aggregate *DateiAggr
 	}
 
 	// Mark events as committed
-	aggregate.MarkEventsAsCommitted()
+	agg.MarkEventsAsCommitted()
 
 	return nil
 }
 
 // updateProjection updates read models based on domain events
-func (r *PostgresDateiRepository) updateProjection(ctx context.Context, q *db.Queries, event events.DomainEvent) error {
+func (r *PostgresDateiRepository) updateProjection(
+	ctx context.Context,
+	q *db.Queries,
+	event events.DomainEvent,
+) error {
 	switch e := event.(type) {
 	case events.DateiCreatedEvent:
 		return projections.UpdateProjectionForDateiCreated(ctx, q, &e)
