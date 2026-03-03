@@ -1,0 +1,9 @@
+type: object
+allOf:
+  - $ref: ./UpdateDateiRequest.yaml
+properties:
+  file:
+    type: string
+    format: binary
+    description: New file data (optional)
+    nullable: true

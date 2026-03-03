@@ -77,12 +77,12 @@ type ListDateiResponse struct {
 
 // UpdateDateiRequest defines model for UpdateDateiRequest.
 type UpdateDateiRequest struct {
-	// File New file data (optional)
-	File *openapi_types.File `json:"file,omitempty"`
-
 	// Name New name for the Datei (optional)
 	Name *string `json:"name,omitempty"`
 }
+
+// UpdateDateiWithFileRequest defines model for UpdateDateiWithFileRequest.
+type UpdateDateiWithFileRequest = UpdateDateiRequest
 
 // ListDateiParams defines parameters for ListDatei.
 type ListDateiParams struct {
@@ -100,4 +100,4 @@ type CreateDateiMultipartRequestBody = CreateDateiRequest
 type UpdateDateiFormdataRequestBody = UpdateDateiRequest
 
 // UpdateDateiMultipartRequestBody defines body for UpdateDatei for multipart/form-data ContentType.
-type UpdateDateiMultipartRequestBody = UpdateDateiRequest
+type UpdateDateiMultipartRequestBody = UpdateDateiWithFileRequest

@@ -5,3 +5,4 @@ export type { CreateDateiRequest } from './models/create-datei-request';
 export type { Datei } from './models/datei';
 export type { ListDateiResponse } from './models/list-datei-response';
 export type { UpdateDateiRequest } from './models/update-datei-request';
+export type { UpdateDateiWithFileRequest } from './models/update-datei-with-file-request';

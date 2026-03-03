@@ -4,11 +4,6 @@
 export interface UpdateDateiRequest {
 
   /**
-   * New file data (optional)
-   */
-  file?: Blob | null;
-
-  /**
    * New name for the Datei (optional)
    */
   name?: string | null;

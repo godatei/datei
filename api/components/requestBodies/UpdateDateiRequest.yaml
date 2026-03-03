@@ -4,8 +4,3 @@ properties:
     type: string
     description: New name for the Datei (optional)
     nullable: true
-  file:
-    type: string
-    format: binary
-    description: New file data (optional)
-    nullable: true

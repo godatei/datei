@@ -8,7 +8,7 @@ import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
 import { Datei } from '../../models/datei';
-import { UpdateDateiRequest } from '../../models/update-datei-request';
+import { UpdateDateiWithFileRequest } from '../../models/update-datei-with-file-request';
 
 export interface UpdateDatei$FormData$Params {
 
@@ -16,7 +16,7 @@ export interface UpdateDatei$FormData$Params {
  * Datei ID
  */
   id: string;
-      body: UpdateDateiRequest
+      body: UpdateDateiWithFileRequest
 }
 
 export function updateDatei$FormData(http: HttpClient, rootUrl: string, params: UpdateDatei$FormData$Params, context?: HttpContext): Observable<StrictHttpResponse<Datei>> {
