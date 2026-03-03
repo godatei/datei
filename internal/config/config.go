@@ -85,3 +85,7 @@ func StorageS3() (S3Config, error) {
 	}
 	return cfg, err
 }
+
+type EventStoreConfig struct {
+	SnapshotThreshold int
+}

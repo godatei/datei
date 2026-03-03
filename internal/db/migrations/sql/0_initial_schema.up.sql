@@ -1,5 +1,4 @@
 -- Datei: Initial Database Schema
--- High performance self-hosted document management solution
 
 -- ============================================================================
 -- User & Group Tables
@@ -82,82 +81,89 @@ CREATE TABLE label (
 );
 
 -- ============================================================================
--- Datei (Core Table)
+-- Event Store
 -- ============================================================================
 
-CREATE TABLE datei (
-  id UUID PRIMARY KEY DEFAULT uuidv7(),
-  parent_id UUID REFERENCES datei(id) ON DELETE RESTRICT,
-  is_directory BOOLEAN NOT NULL DEFAULT false,
-  linked_datei_id UUID REFERENCES datei(id) ON DELETE SET NULL,
-  latest_name_id UUID,
-  latest_version_id UUID,
-  created_by UUID REFERENCES user_account(id) ON DELETE RESTRICT,
-  trashed_at TIMESTAMPTZ,
-  trashed_by UUID REFERENCES user_account(id) ON DELETE RESTRICT,
+CREATE TABLE datei_event (
+  id BIGSERIAL PRIMARY KEY,
+  stream_id UUID NOT NULL,
+  stream_version INT NOT NULL,
+  event_type VARCHAR NOT NULL,
+  event_data JSONB NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  CONSTRAINT ck_event_stream_version CHECK (stream_version > 0),
+  CONSTRAINT uq_event_store_stream_version UNIQUE (stream_id, stream_version)
 );
 
-CREATE INDEX idx_datei_parent_id ON datei(parent_id);
-CREATE INDEX idx_datei_linked_datei_id ON datei(linked_datei_id) WHERE linked_datei_id IS NOT NULL;
-CREATE INDEX idx_datei_trashed_at ON datei(trashed_at) WHERE trashed_at IS NOT NULL;
-CREATE INDEX idx_datei_created_by ON datei(created_by) WHERE created_by IS NOT NULL;
+CREATE INDEX idx_datei_event_stream_id ON datei_event(stream_id);
+CREATE INDEX idx_datei_event_created_at ON datei_event(created_at DESC);
+CREATE INDEX idx_datei_event_event_type ON datei_event(event_type);
 
 -- ============================================================================
--- Datei Name (Name History)
+-- Datei Permission Type
 -- ============================================================================
 
-CREATE TABLE datei_name (
-  id UUID PRIMARY KEY DEFAULT uuidv7(),
-  datei_id UUID NOT NULL REFERENCES datei(id) ON DELETE CASCADE,
+CREATE TYPE datei_permission_type AS ENUM ('owner', 'read_write', 'read_only');
+
+-- ============================================================================
+-- Datei Projection (Current state — read model updated by event handlers)
+-- ============================================================================
+
+CREATE TABLE datei_projection (
+  id UUID PRIMARY KEY,
+  parent_id UUID REFERENCES datei_projection(id) ON DELETE RESTRICT,
+  is_directory BOOLEAN NOT NULL DEFAULT false,
+  linked_datei_id UUID REFERENCES datei_projection(id) ON DELETE SET NULL,
   name TEXT NOT NULL,
-  created_by UUID REFERENCES user_account(id) ON DELETE RESTRICT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_datei_name_datei_id ON datei_name(datei_id);
-
--- Deferred FK: datei.latest_name_id -> datei_name.id
-ALTER TABLE datei
-  ADD CONSTRAINT fk_datei_latest_name
-  FOREIGN KEY (latest_name_id) REFERENCES datei_name(id) ON DELETE RESTRICT;
-
-CREATE INDEX idx_datei_latest_name_id ON datei(latest_name_id) WHERE latest_name_id IS NOT NULL;
-
--- ============================================================================
--- Datei Version
--- ============================================================================
-
-CREATE TABLE datei_version (
-  id UUID PRIMARY KEY DEFAULT uuidv7(),
-  datei_id UUID NOT NULL REFERENCES datei(id) ON DELETE CASCADE,
-  s3_key TEXT NOT NULL,
-  file_size BIGINT NOT NULL,
-  checksum TEXT NOT NULL,
-  mime_type TEXT NOT NULL,
+  s3_key TEXT,
+  size BIGINT,
+  checksum TEXT,
+  mime_type TEXT,
   content_md TEXT,
   content_search TSVECTOR GENERATED ALWAYS AS (to_tsvector('simple', coalesce(content_md, ''))) STORED,
+  created_at TIMESTAMPTZ NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL,
+  trashed_at TIMESTAMPTZ,
   created_by UUID REFERENCES user_account(id) ON DELETE RESTRICT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  updated_by UUID REFERENCES user_account(id) ON DELETE RESTRICT,
+  trashed_by UUID REFERENCES user_account(id) ON DELETE RESTRICT
 );
 
-CREATE INDEX idx_datei_version_datei_id ON datei_version(datei_id);
-CREATE INDEX idx_datei_version_content_search ON datei_version USING GIN(content_search);
+CREATE INDEX idx_datei_projection_parent_id ON datei_projection(parent_id);
+CREATE INDEX idx_datei_projection_linked_datei_id ON datei_projection(linked_datei_id) WHERE linked_datei_id IS NOT NULL;
+CREATE INDEX idx_datei_projection_content_search ON datei_projection USING GIN(content_search);
 
--- Deferred FK: datei.latest_version_id -> datei_version.id
-ALTER TABLE datei
-  ADD CONSTRAINT fk_datei_latest_version
-  FOREIGN KEY (latest_version_id) REFERENCES datei_version(id) ON DELETE RESTRICT;
+-- ============================================================================
+-- Datei Permission Projection (Access control — read model)
+-- ============================================================================
 
-CREATE INDEX idx_datei_latest_version_id ON datei(latest_version_id) WHERE latest_version_id IS NOT NULL;
+CREATE TABLE datei_permission_projection (
+  id UUID PRIMARY KEY,
+  datei_id UUID NOT NULL REFERENCES datei_projection(id) ON DELETE CASCADE,
+  user_account_id UUID REFERENCES user_account(id) ON DELETE RESTRICT,
+  user_group_id UUID REFERENCES user_group(id) ON DELETE RESTRICT,
+  permission_type datei_permission_type NOT NULL,
+  is_favorite BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL,
+  CONSTRAINT ck_datei_permission_projection_grantee CHECK (
+    (user_account_id IS NOT NULL AND user_group_id IS NULL) OR
+    (user_account_id IS NULL AND user_group_id IS NOT NULL)
+  )
+);
+
+CREATE INDEX idx_datei_permission_projection_datei_id ON datei_permission_projection(datei_id);
+CREATE INDEX idx_datei_permission_projection_user_account_id ON datei_permission_projection(user_account_id) WHERE user_account_id IS NOT NULL;
+CREATE INDEX idx_datei_permission_projection_user_group_id ON datei_permission_projection(user_group_id) WHERE user_group_id IS NOT NULL;
+CREATE UNIQUE INDEX uq_datei_permission_projection_owner ON datei_permission_projection(datei_id) WHERE permission_type = 'owner';
+CREATE UNIQUE INDEX uq_datei_permission_projection_user ON datei_permission_projection(datei_id, user_account_id) WHERE user_account_id IS NOT NULL;
+CREATE UNIQUE INDEX uq_datei_permission_projection_group ON datei_permission_projection(datei_id, user_group_id) WHERE user_group_id IS NOT NULL;
 
 -- ============================================================================
 -- Datei Label (Relation Table)
 -- ============================================================================
 
 CREATE TABLE datei_label (
-  datei_id UUID NOT NULL REFERENCES datei(id) ON DELETE CASCADE,
+  datei_id UUID NOT NULL REFERENCES datei_projection(id) ON DELETE CASCADE,
   label_id UUID NOT NULL REFERENCES label(id) ON DELETE CASCADE,
   PRIMARY KEY (datei_id, label_id)
 );
@@ -170,7 +176,7 @@ CREATE INDEX idx_datei_label_label_id ON datei_label(label_id);
 
 CREATE TABLE datei_annotation (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
-  datei_id UUID NOT NULL REFERENCES datei(id) ON DELETE CASCADE,
+  datei_id UUID NOT NULL REFERENCES datei_projection(id) ON DELETE CASCADE,
   key TEXT NOT NULL,
   value TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -181,14 +187,12 @@ CREATE TABLE datei_annotation (
 CREATE INDEX idx_datei_annotation_datei_id ON datei_annotation(datei_id);
 
 -- ============================================================================
--- Datei Permission
+-- Datei Permission (Write model)
 -- ============================================================================
-
-CREATE TYPE datei_permission_type AS ENUM ('owner', 'read_write', 'read_only');
 
 CREATE TABLE datei_permission (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
-  datei_id UUID NOT NULL REFERENCES datei(id) ON DELETE CASCADE,
+  datei_id UUID NOT NULL REFERENCES datei_projection(id) ON DELETE CASCADE,
   user_account_id UUID REFERENCES user_account(id) ON DELETE RESTRICT,
   user_group_id UUID REFERENCES user_group(id) ON DELETE RESTRICT,
   permission_type datei_permission_type NOT NULL,
@@ -231,7 +235,7 @@ CREATE INDEX idx_public_link_expires_at ON public_link(expires_at) WHERE expires
 
 CREATE TABLE public_link_datei (
   public_link_id UUID NOT NULL REFERENCES public_link(id) ON DELETE CASCADE,
-  datei_id UUID NOT NULL REFERENCES datei(id) ON DELETE CASCADE,
+  datei_id UUID NOT NULL REFERENCES datei_projection(id) ON DELETE CASCADE,
   PRIMARY KEY (public_link_id, datei_id)
 );
 
@@ -243,7 +247,7 @@ CREATE INDEX idx_public_link_datei_datei_id ON public_link_datei(datei_id);
 
 CREATE TABLE datei_comment (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
-  datei_id UUID NOT NULL REFERENCES datei(id) ON DELETE CASCADE,
+  datei_id UUID NOT NULL REFERENCES datei_projection(id) ON DELETE CASCADE,
   user_account_id UUID NOT NULL REFERENCES user_account(id) ON DELETE RESTRICT,
   content TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -252,23 +256,3 @@ CREATE TABLE datei_comment (
 
 CREATE INDEX idx_datei_comment_datei_id ON datei_comment(datei_id);
 CREATE INDEX idx_datei_comment_user_account_id ON datei_comment(user_account_id);
-
--- ============================================================================
--- Audit Log
--- ============================================================================
-
-CREATE TABLE audit_log (
-  id UUID PRIMARY KEY DEFAULT uuidv7(),
-  actor_id UUID REFERENCES user_account(id) ON DELETE RESTRICT,
-  action TEXT NOT NULL,
-  target_type TEXT NOT NULL,
-  target_id UUID NOT NULL,
-  metadata JSONB,
-  ip_address TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_audit_log_actor_id ON audit_log(actor_id) WHERE actor_id IS NOT NULL;
-CREATE INDEX idx_audit_log_target ON audit_log(target_type, target_id);
-CREATE INDEX idx_audit_log_action ON audit_log(action);
-CREATE INDEX idx_audit_log_created_at ON audit_log(created_at);

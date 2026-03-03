@@ -12,10 +12,12 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/godatei/datei/internal/aggregate"
 	"github.com/godatei/datei/internal/buildconfig"
 	"github.com/godatei/datei/internal/config"
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/db/migrations"
+	"github.com/godatei/datei/internal/events"
 	"github.com/godatei/datei/internal/frontend"
 	"github.com/godatei/datei/internal/server"
 	"github.com/godatei/datei/internal/storage"
@@ -85,6 +87,9 @@ func run(ctx context.Context, options Options) error {
 		return err
 	}
 
+	eventStore := events.NewPostgresEventStore(db)
+	repository := aggregate.NewPostgresDateiRepository(db, eventStore)
+
 	swagger, err := server.GetSwagger()
 	if err != nil {
 		slog.Error("swagger error", "error", err)
@@ -98,7 +103,7 @@ func run(ctx context.Context, options Options) error {
 		slogchi.New(slog.Default()),
 		oapimiddleware.OapiRequestValidator(swagger),
 	)
-	strictHandler := server.NewStrictHandler(server.NewServer(db, store), nil)
+	strictHandler := server.NewStrictHandler(server.NewServer(db, store, repository), nil)
 	server.HandlerFromMux(strictHandler, apiMux)
 
 	rootMux := chi.NewRouter()

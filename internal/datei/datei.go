@@ -2,25 +2,36 @@ package datei
 
 import (
 	"context"
+	"errors"
 	"io"
+	"time"
 
+	"github.com/godatei/datei/internal/aggregate"
+	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/mapping"
 	"github.com/godatei/datei/internal/storage"
 	"github.com/godatei/datei/pkg/api"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type DateiService struct {
-	db    *pgxpool.Pool
-	store storage.Store
+	db         *pgxpool.Pool
+	store      storage.Store
+	repository aggregate.DateiRepository
 }
 
-func NewDateiService(db *pgxpool.Pool, store storage.Store) *DateiService {
+func NewDateiService(
+	db *pgxpool.Pool,
+	store storage.Store,
+	repository aggregate.DateiRepository,
+) *DateiService {
 	return &DateiService{
-		db:    db,
-		store: store,
+		db:         db,
+		store:      store,
+		repository: repository,
 	}
 }
 
@@ -40,13 +51,11 @@ type ListDateiOutput struct {
 func (s *DateiService) ListDatei(ctx context.Context, input ListDateiInput) (*ListDateiOutput, error) {
 	queries := db.New(s.db)
 
-	// Get all Datei records with details in a single query
-	allDateiWithDetails, err := queries.ListDateiWithDetails(ctx)
+	allProjections, err := queries.ListDateiProjections(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	// Apply pagination
 	limit := input.Limit
 	if limit <= 0 {
 		limit = 100
@@ -56,14 +65,11 @@ func (s *DateiService) ListDatei(ctx context.Context, input ListDateiInput) (*Li
 		offset = 0
 	}
 
-	total := len(allDateiWithDetails)
-	start := min(offset, len(allDateiWithDetails))
-	end := min(offset+limit, len(allDateiWithDetails))
+	total := len(allProjections)
+	start := min(offset, len(allProjections))
+	end := min(offset+limit, len(allProjections))
 
-	paginatedDatei := allDateiWithDetails[start:end]
-
-	// Map to API response
-	items := mapping.MapDBDateiDetailsSliceToAPI(paginatedDatei)
+	items := mapping.MapDateiProjectionSliceToAPI(allProjections[start:end])
 
 	return &ListDateiOutput{
 		Items: items,
@@ -81,67 +87,33 @@ type CreateDateiInput struct {
 
 // CreateDatei creates a new datei record with optional file upload
 func (s *DateiService) CreateDatei(ctx context.Context, input CreateDateiInput) (*api.Datei, error) {
-	queries := db.New(s.db)
-
-	// Create Datei record
 	isDirectory := input.Reader == nil
-	datei, err := queries.CreateDatei(ctx, isDirectory)
-	if err != nil {
+	id := uuid.New()
+	now := time.Now()
+
+	agg := &aggregate.DateiAggregate{}
+	if err := agg.Create(id, nil, isDirectory, input.Name, uuid.Nil, now); err != nil {
 		return nil, err
 	}
 
-	// Create DateiName
-	nameRecord, err := queries.CreateDateiName(ctx, db.CreateDateiNameParams{
-		DateiID: datei.ID,
-		Name:    input.Name,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// Update Datei with latest name ID
-	datei, err = queries.UpdateDateiLatestNameID(ctx, db.UpdateDateiLatestNameIDParams{
-		ID:           datei.ID,
-		LatestNameID: &nameRecord.ID,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// Handle file upload if provided
-	var latestVersion *db.DateiVersion
 	if input.Reader != nil && input.FileName != "" {
 		hash, fileSize, err := s.store.PutObject(ctx, input.Reader, input.ContentType)
 		if err != nil {
 			return nil, err
 		}
 
-		versionRecord, err := queries.CreateDateiVersion(ctx, db.CreateDateiVersionParams{
-			DateiID:  datei.ID,
-			S3Key:    hash,
-			FileSize: fileSize,
-			Checksum: hash,
-			MimeType: input.ContentType,
-		})
-		if err != nil {
+		if err = agg.UploadVersion(
+			hash, fileSize, hash, input.ContentType, nil, uuid.Nil, now,
+		); err != nil {
 			return nil, err
 		}
-
-		// Update Datei with latest version ID
-		datei, err = queries.UpdateDateiLatestVersionID(ctx, db.UpdateDateiLatestVersionIDParams{
-			ID:              datei.ID,
-			LatestVersionID: &versionRecord.ID,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		latestVersion = &versionRecord
 	}
 
-	// Map to API response
-	response := mapping.MapDBDateiToAPI(&datei, latestVersion, &input.Name)
-	return response, nil
+	if err := s.repository.Save(ctx, agg); err != nil {
+		return nil, err
+	}
+
+	return mapping.MapAggregateToAPI(agg), nil
 }
 
 // DownloadDateiOutput contains the response for downloading a datei
@@ -156,28 +128,31 @@ type DownloadDateiOutput struct {
 func (s *DateiService) DownloadDatei(ctx context.Context, dateiID uuid.UUID) (*DownloadDateiOutput, error) {
 	queries := db.New(s.db)
 
-	// Get Datei with details to check if it exists and has a version
-	details, err := queries.GetDateiByIDWithDetails(ctx, dateiID)
-	if err != nil {
+	projection, err := queries.GetDateiProjectionByID(ctx, dateiID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, dateierrors.ErrNotFound
+	} else if err != nil {
 		return nil, err
 	}
 
-	// Check if it's a directory
-	if details.Datei.IsDirectory {
-		return nil, ErrIsDirectory
+	if projection.IsDirectory {
+		return nil, dateierrors.ErrIsDirectory
 	}
 
-	// Get the file from storage
-	reader, err := s.store.GetObject(ctx, details.DateiVersion.S3Key)
+	if projection.S3Key == nil || projection.MimeType == nil || projection.Size == nil {
+		return nil, dateierrors.ErrNoContent
+	}
+
+	reader, err := s.store.GetObject(ctx, *projection.S3Key)
 	if err != nil {
 		return nil, err
 	}
 
 	return &DownloadDateiOutput{
 		Reader:          reader,
-		ContentType:     details.DateiVersion.MimeType,
-		ContentLength:   details.DateiVersion.FileSize,
-		ContentFileName: details.DateiName.Name,
+		ContentType:     *projection.MimeType,
+		ContentLength:   *projection.Size,
+		ContentFileName: projection.Name,
 	}, nil
 }
 
@@ -192,86 +167,49 @@ type UpdateDateiInput struct {
 
 // UpdateDatei updates a datei record with optional name and/or file
 func (s *DateiService) UpdateDatei(ctx context.Context, input UpdateDateiInput) (*api.Datei, error) {
-	queries := db.New(s.db)
-
-	// Get existing Datei
-	datei, err := queries.GetDateiByID(ctx, input.ID)
+	agg, err := s.repository.LoadByID(ctx, input.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Update name if provided
-	if input.Name != nil {
-		nameRecord, err := queries.CreateDateiName(ctx, db.CreateDateiNameParams{
-			DateiID: datei.ID,
-			Name:    *input.Name,
-		})
-		if err != nil {
-			return nil, err
-		}
+	now := time.Now()
 
-		datei, err = queries.UpdateDateiLatestNameID(ctx, db.UpdateDateiLatestNameIDParams{
-			ID:           datei.ID,
-			LatestNameID: &nameRecord.ID,
-		})
-		if err != nil {
+	if input.Name != nil {
+		if err := agg.Rename(*input.Name, uuid.Nil, now); err != nil {
 			return nil, err
 		}
 	}
 
-	// Update file if provided
 	if input.Reader != nil && input.FileName != "" {
 		hash, fileSize, err := s.store.PutObject(ctx, input.Reader, input.ContentType)
 		if err != nil {
 			return nil, err
 		}
 
-		versionRecord, err := queries.CreateDateiVersion(ctx, db.CreateDateiVersionParams{
-			DateiID:  datei.ID,
-			S3Key:    hash,
-			FileSize: fileSize,
-			Checksum: hash,
-			MimeType: input.ContentType,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		datei, err = queries.UpdateDateiLatestVersionID(ctx, db.UpdateDateiLatestVersionIDParams{
-			ID:              datei.ID,
-			LatestVersionID: &versionRecord.ID,
-		})
-		if err != nil {
+		if err = agg.UploadVersion(
+			hash, fileSize, hash, input.ContentType, nil, uuid.Nil, now,
+		); err != nil {
 			return nil, err
 		}
 	}
 
-	// Fetch updated details for response
-	details, err := queries.GetDateiByIDWithDetails(ctx, datei.ID)
-	if err != nil {
+	if err := s.repository.Save(ctx, agg); err != nil {
 		return nil, err
 	}
 
-	// Map to API response
-	response := mapping.MapDBDateiToAPI(&details.Datei, &details.DateiVersion, &details.DateiName.Name)
-	return response, nil
+	return mapping.MapAggregateToAPI(agg), nil
 }
 
 // DeleteDatei soft-deletes a datei record
 func (s *DateiService) DeleteDatei(ctx context.Context, dateiID uuid.UUID) error {
-	queries := db.New(s.db)
-
-	// Get Datei to verify it exists
-	_, err := queries.GetDateiByID(ctx, dateiID)
+	agg, err := s.repository.LoadByID(ctx, dateiID)
 	if err != nil {
 		return err
 	}
 
-	// Soft delete by setting trashed_at
-	_, err = queries.SetDateiTrashedAt(ctx, dateiID)
-	if err != nil {
+	if err := agg.Trash(uuid.Nil, time.Now()); err != nil {
 		return err
 	}
 
-	return nil
+	return s.repository.Save(ctx, agg)
 }

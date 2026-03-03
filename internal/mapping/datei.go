@@ -1,90 +1,109 @@
 package mapping
 
 import (
+	"github.com/godatei/datei/internal/aggregate"
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/pkg/api"
+	"github.com/google/uuid"
 )
 
-// MapDBVersionToAPI converts a database DateiVersion to an API DateiVersion
-func MapDBVersionToAPI(dbVersion *db.DateiVersion) *api.DateiVersion {
-	if dbVersion == nil {
+// MapDateiProjectionToAPI converts a db.DateiProjection to an api.Datei.
+func MapDateiProjectionToAPI(p *db.DateiProjection) *api.Datei {
+	if p == nil {
 		return nil
 	}
 
-	apiVersion := &api.DateiVersion{
-		Checksum:  dbVersion.Checksum,
-		CreatedAt: dbVersion.CreatedAt,
-		FileSize:  dbVersion.FileSize,
-		Id:        dbVersion.ID,
-		MimeType:  dbVersion.MimeType,
+	result := &api.Datei{
+		Id:          p.ID,
+		IsDirectory: p.IsDirectory,
+		Name:        &p.Name,
+		CreatedAt:   p.CreatedAt,
+		UpdatedAt:   p.UpdatedAt,
+		Size:        p.Size,
+		Checksum:    p.Checksum,
+		MimeType:    p.MimeType,
+		ContentMd:   p.ContentMd,
 	}
 
-	if dbVersion.ContentMd != nil {
-		apiVersion.ContentMd = dbVersion.ContentMd
+	if p.ParentID != nil {
+		result.ParentId = p.ParentID
 	}
 
-	if dbVersion.CreatedBy != nil {
-		createdByUUID := *dbVersion.CreatedBy
-		apiVersion.CreatedBy = &createdByUUID
+	if p.LinkedDateiID != nil {
+		result.LinkedDateiId = p.LinkedDateiID
 	}
 
-	return apiVersion
+	if p.CreatedBy != nil {
+		result.CreatedBy = p.CreatedBy
+	}
+
+	if p.TrashedAt != nil {
+		result.TrashedAt = p.TrashedAt
+	}
+
+	if p.TrashedBy != nil {
+		result.TrashedBy = p.TrashedBy
+	}
+
+	if p.UpdatedBy != nil {
+		result.UpdatedBy = p.UpdatedBy
+	}
+
+	return result
 }
 
-// MapDBDateiToAPI converts a database Datei to an API DateiResponse
-func MapDBDateiToAPI(dbDatei *db.Datei, latestVersion *db.DateiVersion, name *string) *api.Datei {
-	if dbDatei == nil {
-		return nil
-	}
-
-	response := &api.Datei{
-		CreatedAt:   dbDatei.CreatedAt,
-		Id:          dbDatei.ID,
-		IsDirectory: dbDatei.IsDirectory,
-		Name:        name,
-		UpdatedAt:   dbDatei.UpdatedAt,
-	}
-
-	// Map optional parent ID
-	if dbDatei.ParentID != nil {
-		response.ParentId = dbDatei.ParentID
-	}
-
-	// Map optional linked Datei ID
-	if dbDatei.LinkedDateiID != nil {
-		response.LinkedDateiId = dbDatei.LinkedDateiID
-	}
-
-	// Map optional created by
-	if dbDatei.CreatedBy != nil {
-		response.CreatedBy = dbDatei.CreatedBy
-	}
-
-	// Map trashed info
-	if dbDatei.TrashedAt != nil {
-		response.TrashedAt = dbDatei.TrashedAt
-	}
-
-	if dbDatei.TrashedBy != nil {
-		response.TrashedBy = dbDatei.TrashedBy
-	}
-
-	// Map latest version if provided
-	if latestVersion != nil {
-		response.LatestVersion = MapDBVersionToAPI(latestVersion)
-	}
-
-	return response
-}
-
-// MapDBDateiDetailsSliceToAPI converts a slice of ListDateiWithDetailsRow to API DateiResponse slice
-func MapDBDateiDetailsSliceToAPI(details []db.ListDateiWithDetailsRow) []api.Datei {
-	result := make([]api.Datei, 0, len(details))
-	for _, row := range details {
-		mapped := MapDBDateiToAPI(&row.Datei, &row.DateiVersion, &row.DateiName.Name)
-		if mapped != nil {
+// MapDateiProjectionSliceToAPI converts a slice of db.DateiProjection to a slice of api.Datei.
+func MapDateiProjectionSliceToAPI(projections []db.DateiProjection) []api.Datei {
+	result := make([]api.Datei, 0, len(projections))
+	for i := range projections {
+		if mapped := MapDateiProjectionToAPI(&projections[i]); mapped != nil {
 			result = append(result, *mapped)
 		}
 	}
+	return result
+}
+
+// MapAggregateToAPI converts a DateiAggregate to an api.Datei.
+func MapAggregateToAPI(a *aggregate.DateiAggregate) *api.Datei {
+	if a == nil {
+		return nil
+	}
+
+	result := &api.Datei{
+		Id:          a.ID,
+		IsDirectory: a.IsDirectory,
+		Name:        &a.Name,
+		CreatedAt:   a.CreatedAt,
+		UpdatedAt:   a.UpdatedAt,
+		Size:        a.Size,
+		Checksum:    a.Checksum,
+		MimeType:    a.MimeType,
+		ContentMd:   a.ContentMD,
+	}
+
+	if a.ParentID != nil {
+		result.ParentId = a.ParentID
+	}
+
+	if a.LinkedDateiID != nil {
+		result.LinkedDateiId = a.LinkedDateiID
+	}
+
+	if a.CreatedBy != uuid.Nil {
+		result.CreatedBy = &a.CreatedBy
+	}
+
+	if a.TrashedAt != nil {
+		result.TrashedAt = a.TrashedAt
+	}
+
+	if a.TrashedBy != nil {
+		result.TrashedBy = a.TrashedBy
+	}
+
+	if a.UpdatedBy != uuid.Nil {
+		result.UpdatedBy = &a.UpdatedBy
+	}
+
 	return result
 }

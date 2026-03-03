@@ -5,8 +5,10 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 
 	"github.com/godatei/datei/internal/datei"
+	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/pkg/api"
 )
 
@@ -91,6 +93,7 @@ func (s *server) CreateDatei(
 		ContentType: contentType,
 	})
 	if err != nil {
+		slog.Error("endpoint error", "error", err)
 		return CreateDatei400Response{}, nil
 	}
 
@@ -104,9 +107,10 @@ func (s *server) DownloadDatei(
 ) (DownloadDateiResponseObject, error) {
 	result, err := s.dateiService.DownloadDatei(ctx, request.Id)
 	if err != nil {
-		if err == datei.ErrIsDirectory {
+		if err == dateierrors.ErrIsDirectory {
 			return DownloadDatei409Response{}, nil
 		}
+		slog.Error("download error", "error", err)
 		return DownloadDatei404Response{}, nil
 	}
 
@@ -125,39 +129,42 @@ func (s *server) UpdateDatei(
 	ctx context.Context,
 	request UpdateDateiRequestObject,
 ) (UpdateDateiResponseObject, error) {
-	// Parse multipart request
-	reader := request.Body
 	var name *string
 	var fileData io.Reader
 	var fileName string
 	contentType := "application/octet-stream"
 
-	for {
-		part, err := reader.NextPart()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return UpdateDatei400Response{}, nil
-		}
-
-		switch part.FormName() {
-		case "name":
-			buf := make([]byte, 256)
-			n, _ := part.Read(buf)
-			if n > 0 {
-				nameStr := string(buf[:n])
-				name = &nameStr
+	if reader := request.MultipartBody; reader != nil {
+		// Parse multipart request
+		for {
+			part, err := reader.NextPart()
+			if err == io.EOF {
+				break
 			}
-		case fileFormField:
-			fileName = part.FileName()
-			if fileDataBytes, err := io.ReadAll(part); err != nil {
+			if err != nil {
 				return UpdateDatei400Response{}, nil
-			} else {
-				fileData = bytes.NewReader(fileDataBytes)
 			}
-			contentType = part.Header.Get("Content-Type")
+
+			switch part.FormName() {
+			case "name":
+				buf := make([]byte, 256)
+				n, _ := part.Read(buf)
+				if n > 0 {
+					nameStr := string(buf[:n])
+					name = &nameStr
+				}
+			case fileFormField:
+				fileName = part.FileName()
+				if fileDataBytes, err := io.ReadAll(part); err != nil {
+					return UpdateDatei400Response{}, nil
+				} else {
+					fileData = bytes.NewReader(fileDataBytes)
+				}
+				contentType = part.Header.Get("Content-Type")
+			}
 		}
+	} else if reader := request.FormdataBody; reader != nil {
+		name = reader.Name
 	}
 
 	result, err := s.dateiService.UpdateDatei(ctx, datei.UpdateDateiInput{

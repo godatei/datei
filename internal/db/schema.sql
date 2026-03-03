@@ -3,8 +3,8 @@
 --
 
 
--- Dumped from database version 18.2
--- Dumped by pg_dump version 18.2
+-- Dumped from database version 18.3
+-- Dumped by pg_dump version 18.3
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -54,41 +54,6 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: audit_log; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.audit_log (
-    id uuid DEFAULT uuidv7() NOT NULL,
-    actor_id uuid,
-    action text NOT NULL,
-    target_type text NOT NULL,
-    target_id uuid NOT NULL,
-    metadata jsonb,
-    ip_address text,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
---
--- Name: datei; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.datei (
-    id uuid DEFAULT uuidv7() NOT NULL,
-    parent_id uuid,
-    is_directory boolean DEFAULT false NOT NULL,
-    linked_datei_id uuid,
-    latest_name_id uuid,
-    latest_version_id uuid,
-    created_by uuid,
-    trashed_at timestamp with time zone,
-    trashed_by uuid,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
---
 -- Name: datei_annotation; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -117,25 +82,46 @@ CREATE TABLE public.datei_comment (
 
 
 --
+-- Name: datei_event; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.datei_event (
+    id bigint NOT NULL,
+    stream_id uuid NOT NULL,
+    stream_version integer NOT NULL,
+    event_type character varying NOT NULL,
+    event_data jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT ck_event_stream_version CHECK ((stream_version > 0))
+);
+
+
+--
+-- Name: datei_event_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.datei_event_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: datei_event_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.datei_event_id_seq OWNED BY public.datei_event.id;
+
+
+--
 -- Name: datei_label; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.datei_label (
     datei_id uuid NOT NULL,
     label_id uuid NOT NULL
-);
-
-
---
--- Name: datei_name; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.datei_name (
-    id uuid DEFAULT uuidv7() NOT NULL,
-    datei_id uuid NOT NULL,
-    name text NOT NULL,
-    created_by uuid,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -156,20 +142,43 @@ CREATE TABLE public.datei_permission (
 
 
 --
--- Name: datei_version; Type: TABLE; Schema: public; Owner: -
+-- Name: datei_permission_projection; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.datei_version (
-    id uuid DEFAULT uuidv7() NOT NULL,
+CREATE TABLE public.datei_permission_projection (
+    id uuid NOT NULL,
     datei_id uuid NOT NULL,
-    s3_key text NOT NULL,
-    file_size bigint NOT NULL,
-    checksum text NOT NULL,
-    mime_type text NOT NULL,
+    user_account_id uuid,
+    user_group_id uuid,
+    permission_type public.datei_permission_type NOT NULL,
+    is_favorite boolean DEFAULT false NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    CONSTRAINT ck_datei_permission_projection_grantee CHECK ((((user_account_id IS NOT NULL) AND (user_group_id IS NULL)) OR ((user_account_id IS NULL) AND (user_group_id IS NOT NULL))))
+);
+
+
+--
+-- Name: datei_projection; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.datei_projection (
+    id uuid NOT NULL,
+    parent_id uuid,
+    is_directory boolean DEFAULT false NOT NULL,
+    linked_datei_id uuid,
+    name text NOT NULL,
+    s3_key text,
+    size bigint,
+    checksum text,
+    mime_type text,
     content_md text,
     content_search tsvector GENERATED ALWAYS AS (to_tsvector('simple'::regconfig, COALESCE(content_md, ''::text))) STORED,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL,
+    trashed_at timestamp with time zone,
     created_by uuid,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_by uuid,
+    trashed_by uuid
 );
 
 
@@ -280,6 +289,13 @@ CREATE TABLE public.user_group_member (
     role public.user_group_role DEFAULT 'member'::public.user_group_role NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
+
+
+--
+-- Name: datei_event id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.datei_event ALTER COLUMN id SET DEFAULT nextval('public.datei_event_id_seq'::regclass);
 
 
 --

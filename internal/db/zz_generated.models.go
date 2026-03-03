@@ -139,31 +139,6 @@ func (ns NullUserGroupRole) Value() (driver.Value, error) {
 	return string(ns.UserGroupRole), nil
 }
 
-type AuditLog struct {
-	ID         uuid.UUID  `db:"id"`
-	ActorID    *uuid.UUID `db:"actor_id"`
-	Action     string     `db:"action"`
-	TargetType string     `db:"target_type"`
-	TargetID   uuid.UUID  `db:"target_id"`
-	Metadata   []byte     `db:"metadata"`
-	IpAddress  *string    `db:"ip_address"`
-	CreatedAt  time.Time  `db:"created_at"`
-}
-
-type Datei struct {
-	ID              uuid.UUID  `db:"id"`
-	ParentID        *uuid.UUID `db:"parent_id"`
-	IsDirectory     bool       `db:"is_directory"`
-	LinkedDateiID   *uuid.UUID `db:"linked_datei_id"`
-	LatestNameID    *uuid.UUID `db:"latest_name_id"`
-	LatestVersionID *uuid.UUID `db:"latest_version_id"`
-	CreatedBy       *uuid.UUID `db:"created_by"`
-	TrashedAt       *time.Time `db:"trashed_at"`
-	TrashedBy       *uuid.UUID `db:"trashed_by"`
-	CreatedAt       time.Time  `db:"created_at"`
-	UpdatedAt       time.Time  `db:"updated_at"`
-}
-
 type DateiAnnotation struct {
 	ID        uuid.UUID `db:"id"`
 	DateiID   uuid.UUID `db:"datei_id"`
@@ -182,17 +157,18 @@ type DateiComment struct {
 	UpdatedAt     time.Time `db:"updated_at"`
 }
 
+type DateiEvent struct {
+	ID            int64     `db:"id"`
+	StreamID      uuid.UUID `db:"stream_id"`
+	StreamVersion int32     `db:"stream_version"`
+	EventType     string    `db:"event_type"`
+	EventData     []byte    `db:"event_data"`
+	CreatedAt     time.Time `db:"created_at"`
+}
+
 type DateiLabel struct {
 	DateiID uuid.UUID `db:"datei_id"`
 	LabelID uuid.UUID `db:"label_id"`
-}
-
-type DateiName struct {
-	ID        uuid.UUID  `db:"id"`
-	DateiID   uuid.UUID  `db:"datei_id"`
-	Name      string     `db:"name"`
-	CreatedBy *uuid.UUID `db:"created_by"`
-	CreatedAt time.Time  `db:"created_at"`
 }
 
 type DateiPermission struct {
@@ -205,17 +181,34 @@ type DateiPermission struct {
 	CreatedAt      time.Time           `db:"created_at"`
 }
 
-type DateiVersion struct {
+type DateiPermissionProjection struct {
+	ID             uuid.UUID           `db:"id"`
+	DateiID        uuid.UUID           `db:"datei_id"`
+	UserAccountID  *uuid.UUID          `db:"user_account_id"`
+	UserGroupID    *uuid.UUID          `db:"user_group_id"`
+	PermissionType DateiPermissionType `db:"permission_type"`
+	IsFavorite     bool                `db:"is_favorite"`
+	CreatedAt      time.Time           `db:"created_at"`
+}
+
+type DateiProjection struct {
 	ID            uuid.UUID   `db:"id"`
-	DateiID       uuid.UUID   `db:"datei_id"`
-	S3Key         string      `db:"s3_key"`
-	FileSize      int64       `db:"file_size"`
-	Checksum      string      `db:"checksum"`
-	MimeType      string      `db:"mime_type"`
+	ParentID      *uuid.UUID  `db:"parent_id"`
+	IsDirectory   bool        `db:"is_directory"`
+	LinkedDateiID *uuid.UUID  `db:"linked_datei_id"`
+	Name          string      `db:"name"`
+	S3Key         *string     `db:"s3_key"`
+	Size          *int64      `db:"size"`
+	Checksum      *string     `db:"checksum"`
+	MimeType      *string     `db:"mime_type"`
 	ContentMd     *string     `db:"content_md"`
 	ContentSearch interface{} `db:"content_search"`
-	CreatedBy     *uuid.UUID  `db:"created_by"`
 	CreatedAt     time.Time   `db:"created_at"`
+	UpdatedAt     time.Time   `db:"updated_at"`
+	TrashedAt     *time.Time  `db:"trashed_at"`
+	CreatedBy     *uuid.UUID  `db:"created_by"`
+	UpdatedBy     *uuid.UUID  `db:"updated_by"`
+	TrashedBy     *uuid.UUID  `db:"trashed_by"`
 }
 
 type Label struct {
