@@ -8,6 +8,7 @@ import (
 	"log/slog"
 
 	"github.com/godatei/datei/internal/datei"
+	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/pkg/api"
 )
 
@@ -106,9 +107,10 @@ func (s *server) DownloadDatei(
 ) (DownloadDateiResponseObject, error) {
 	result, err := s.dateiService.DownloadDatei(ctx, request.Id)
 	if err != nil {
-		if err == datei.ErrIsDirectory {
+		if err == dateierrors.ErrIsDirectory {
 			return DownloadDatei409Response{}, nil
 		}
+		slog.Error("download error", "error", err)
 		return DownloadDatei404Response{}, nil
 	}
 

@@ -7,11 +7,13 @@ import (
 	"time"
 
 	"github.com/godatei/datei/internal/aggregate"
+	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/mapping"
 	"github.com/godatei/datei/internal/storage"
 	"github.com/godatei/datei/pkg/api"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -127,16 +129,18 @@ func (s *DateiService) DownloadDatei(ctx context.Context, dateiID uuid.UUID) (*D
 	queries := db.New(s.db)
 
 	projection, err := queries.GetDateiProjectionByID(ctx, dateiID)
-	if err != nil {
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, dateierrors.ErrNotFound
+	} else if err != nil {
 		return nil, err
 	}
 
 	if projection.IsDirectory {
-		return nil, ErrIsDirectory
+		return nil, dateierrors.ErrIsDirectory
 	}
 
 	if projection.S3Key == nil {
-		return nil, errors.New("no version available")
+		return nil, dateierrors.ErrNoContent
 	}
 
 	reader, err := s.store.GetObject(ctx, *projection.S3Key)

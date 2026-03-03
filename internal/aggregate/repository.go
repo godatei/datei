@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/events"
 	"github.com/godatei/datei/internal/projections"
@@ -45,7 +46,7 @@ func (r *PostgresDateiRepository) LoadByID(ctx context.Context, id uuid.UUID) (*
 	}
 
 	if len(eventList) == 0 {
-		return nil, fmt.Errorf("datei not found: %w", context.Canceled)
+		return nil, fmt.Errorf("datei not found: %w", dateierrors.ErrNotFound)
 	}
 
 	// Create aggregate and apply events
