@@ -82,7 +82,13 @@ type UpdateDateiRequest struct {
 }
 
 // UpdateDateiWithFileRequest defines model for UpdateDateiWithFileRequest.
-type UpdateDateiWithFileRequest = UpdateDateiRequest
+type UpdateDateiWithFileRequest struct {
+	// File New file data (optional)
+	File *openapi_types.File `json:"file,omitempty"`
+
+	// Name New name for the Datei (optional)
+	Name *string `json:"name,omitempty"`
+}
 
 // ListDateiParams defines parameters for ListDatei.
 type ListDateiParams struct {

@@ -1,7 +1,9 @@
 type: object
-allOf:
-  - $ref: ./UpdateDateiRequest.yaml
 properties:
+  name:
+    type: string
+    description: New name for the Datei (optional)
+    nullable: true
   file:
     type: string
     format: binary
