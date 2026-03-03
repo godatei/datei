@@ -7,12 +7,13 @@
 CREATE TABLE user_account (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
   name TEXT NOT NULL,
-  password_hash TEXT NOT NULL,
-  password_salt TEXT NOT NULL,
+  password_hash BYTEA NOT NULL,
+  password_salt BYTEA NOT NULL,
   mfa_secret TEXT,
   mfa_enabled BOOLEAN NOT NULL DEFAULT false,
   mfa_enabled_at TIMESTAMPTZ,
   archived_at TIMESTAMPTZ,
+  last_logged_in_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   CONSTRAINT ck_user_account_mfa CHECK (
@@ -25,8 +26,8 @@ CREATE INDEX idx_user_account_archived_at ON user_account(archived_at) WHERE arc
 CREATE TABLE user_account_mfa_recovery_code (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
   user_account_id UUID NOT NULL REFERENCES user_account(id) ON DELETE CASCADE,
-  code_hash TEXT NOT NULL,
-  code_salt TEXT NOT NULL,
+  code_hash BYTEA NOT NULL,
+  code_salt BYTEA NOT NULL,
   used_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -98,6 +99,25 @@ CREATE TABLE datei_event (
 CREATE INDEX idx_datei_event_stream_id ON datei_event(stream_id);
 CREATE INDEX idx_datei_event_created_at ON datei_event(created_at DESC);
 CREATE INDEX idx_datei_event_event_type ON datei_event(event_type);
+
+-- ============================================================================
+-- User Account Event Store
+-- ============================================================================
+
+CREATE TABLE user_account_event (
+  id BIGSERIAL PRIMARY KEY,
+  stream_id UUID NOT NULL,
+  stream_version INT NOT NULL,
+  event_type VARCHAR NOT NULL,
+  event_data JSONB NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT ck_user_account_event_stream_version CHECK (stream_version > 0),
+  CONSTRAINT uq_user_account_event_stream_version UNIQUE (stream_id, stream_version)
+);
+
+CREATE INDEX idx_user_account_event_stream_id ON user_account_event(stream_id);
+CREATE INDEX idx_user_account_event_created_at ON user_account_event(created_at DESC);
+CREATE INDEX idx_user_account_event_event_type ON user_account_event(event_type);
 
 -- ============================================================================
 -- Datei Permission Type

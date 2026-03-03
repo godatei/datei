@@ -13,12 +13,14 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/godatei/datei/internal/aggregate"
+	"github.com/godatei/datei/internal/authn"
 	"github.com/godatei/datei/internal/buildconfig"
 	"github.com/godatei/datei/internal/config"
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/db/migrations"
 	"github.com/godatei/datei/internal/events"
 	"github.com/godatei/datei/internal/frontend"
+	"github.com/godatei/datei/internal/mailer"
 	"github.com/godatei/datei/internal/server"
 	"github.com/godatei/datei/internal/storage"
 	oapimiddleware "github.com/oapi-codegen/nethttp-middleware"
@@ -87,8 +89,20 @@ func run(ctx context.Context, options Options) error {
 		return err
 	}
 
-	eventStore := events.NewPostgresEventStore(db)
-	repository := aggregate.NewPostgresDateiRepository(db, eventStore)
+	dateiEventStore := events.NewPostgresEventStore(db)
+	dateiRepository := aggregate.NewPostgresDateiRepository(db, dateiEventStore)
+
+	userEventStore := events.NewUserAccountEventStore(db)
+	userRepository := aggregate.NewPostgresUserRepository(db, userEventStore)
+
+	// Create mailer
+	var m mailer.Mailer
+	mc := config.Mailer()
+	if mc.Enabled {
+		m = mailer.NewSMTPMailer(mc.SMTP.Host, mc.SMTP.Port, mc.SMTP.Username, mc.SMTP.Password, mc.SMTP.From)
+	} else {
+		m = mailer.NewNoopMailer()
+	}
 
 	swagger, err := server.GetSwagger()
 	if err != nil {
@@ -96,20 +110,42 @@ func run(ctx context.Context, options Options) error {
 		return err
 	}
 
+	// Datei API routes (oapi-codegen generated, auth required)
 	apiMux := chi.NewRouter()
 	apiMux.Use(
 		chimiddleware.RequestID,
 		chimiddleware.RealIP,
 		slogchi.New(slog.Default()),
+		authn.Middleware,
 		oapimiddleware.OapiRequestValidator(swagger),
 	)
-	strictHandler := server.NewStrictHandler(server.NewServer(db, store, repository), nil)
+	strictHandler := server.NewStrictHandler(server.NewServer(db, store, dateiRepository), nil)
 	server.HandlerFromMux(strictHandler, apiMux)
+
+	// Auth routes (public, rate-limited)
+	authMux := chi.NewRouter()
+	authMux.Use(
+		chimiddleware.RequestID,
+		chimiddleware.RealIP,
+		slogchi.New(slog.Default()),
+	)
+	authMux.Mount("/", server.AuthRoutes(db, userRepository, m))
+
+	// Settings routes (auth required)
+	settingsMux := chi.NewRouter()
+	settingsMux.Use(
+		chimiddleware.RequestID,
+		chimiddleware.RealIP,
+		slogchi.New(slog.Default()),
+	)
+	settingsMux.Mount("/", server.SettingsRoutes(db, userRepository, m))
 
 	rootMux := chi.NewRouter()
 	rootMux.Use(chimiddleware.Recoverer)
-	rootMux.Handle("/*", frontend.NewHandler())
+	rootMux.Mount("/api/v1/auth", authMux)
+	rootMux.Mount("/api/v1/settings", settingsMux)
 	rootMux.Handle("/api/*", apiMux)
+	rootMux.Handle("/*", frontend.NewHandler())
 
 	httpServer := &http.Server{Handler: rootMux, Addr: config.ServerAddr()}
 
