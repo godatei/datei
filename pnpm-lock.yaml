@@ -62,7 +62,7 @@ importers:
         version: 9.39.3
       '@redocly/cli':
         specifier: ^2.19.2
-        version: 2.20.1(@opentelemetry/api@1.9.0)(core-js@3.48.0)
+        version: 2.20.3(@opentelemetry/api@1.9.0)(core-js@3.48.0)
       angular-eslint:
         specifier: 21.2.0
         version: 21.2.0(@angular/cli@21.2.0(@types/node@25.3.3)(chokidar@5.0.0))(chokidar@5.0.0)(eslint@9.39.3)(typescript-eslint@8.56.1(eslint@9.39.3)(typescript@5.9.3))(typescript@5.9.3)
@@ -1351,27 +1351,27 @@ packages:
   '@redocly/ajv@8.18.0':
     resolution: {integrity: sha512-F+LMD2IDIXuHxgpLJh3nkLj9+tSaEzoUWd+7fONGq5pe2169FUDjpEkOfEpoGLz1sbZni/69p07OsecNfAOpqA==}
 
-  '@redocly/cli@2.20.1':
-    resolution: {integrity: sha512-bBP6NmMMyHW2+7AJxAhKq0jRBg6eNGX7DGBOipW0TWQexaIh7+KJLR+pv15SgK57J8zAJSyAC53CeqJ2DVA4hg==}
+  '@redocly/cli@2.20.3':
+    resolution: {integrity: sha512-Jp2FtUMsfdg536XlxLQJdsGFapfMNtK8+Jve4hVCmMfC3brlb+xZUhC9Wt0CHIRw1RYf1aI4E5V0EO0i3x3/nQ==}
     engines: {node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10'}
     hasBin: true
 
   '@redocly/config@0.22.0':
     resolution: {integrity: sha512-gAy93Ddo01Z3bHuVdPWfCwzgfaYgMdaZPcfL7JZ7hWJoK9V0lXDbigTWkhiPFAaLWzbOJ+kbUQG1+XwIm0KRGQ==}
 
-  '@redocly/config@0.43.0':
-    resolution: {integrity: sha512-AbyFKRHKJ2VBmh9nO2lrG9tO2Gu/Lmnfdj4Uwoh7h/a7jWr1104t4fBgQZs/NwgGBAOkGmyQYAvardwyBeRGZA==}
+  '@redocly/config@0.44.0':
+    resolution: {integrity: sha512-UHKkWcCNZrGiKBbrQ1CE08ElrOUGm5H97Zn8+wkp80Uu2AT/go5In1sbqvhHxViPYtu1MLdy7qKiifSyOL3W/A==}
 
-  '@redocly/openapi-core@1.34.8':
-    resolution: {integrity: sha512-/oy8sXi5xK4+HvcFR7xS1A74zJ5aS6rtacNEr91SczLqvtxz79opxp7yYpdYtfGQAp6igx9eU9alwSC/R/X3Cg==}
+  '@redocly/openapi-core@1.34.10':
+    resolution: {integrity: sha512-XCBR/9WHJ0cpezuunHMZjuFMl4KqUo7eiFwzrQrvm7lTXt0EBd3No8UY+9OyzXpDfreGEMMtxmaLZ+ksVw378g==}
     engines: {node: '>=18.17.0', npm: '>=9.5.0'}
 
-  '@redocly/openapi-core@2.20.1':
-    resolution: {integrity: sha512-ZwrvkLg8SdPiLvv1P/CLHR6vuZ+Qjor65sVxHPo8HSzVr1Tce50jPGLU6Z/tF6j61hwSp4GpdzHCXuDMOWIfsw==}
+  '@redocly/openapi-core@2.20.3':
+    resolution: {integrity: sha512-i+yVsGvieqfL5ySq9N0+qQ1nxNTW0e1uTH9B+EIgkWNogV6Fuj1tcMZKlhUX7CGRIOZ+lR1AXDcAFuWVYlp9YA==}
     engines: {node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10'}
 
-  '@redocly/respect-core@2.20.1':
-    resolution: {integrity: sha512-FELZyfDwBLow37k6C2V3eqUXpsslv+gKnSuqR0ureZisSFmUp0Ey7hEcscrV9FiKPOLDeVITlIYKRKGa6PTAJw==}
+  '@redocly/respect-core@2.20.3':
+    resolution: {integrity: sha512-6HVHhDNW4B73V9p4F45Ykbq7d+6QZB+IYLElyMnQ5arBHrPfLAGRVlqE2NCd6gDciE/Y57XuZ+neY5qk1VmYNQ==}
     engines: {node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10'}
 
   '@rolldown/binding-android-arm64@1.0.0-rc.4':
@@ -2316,8 +2316,8 @@ packages:
   fast-xml-builder@1.0.0:
     resolution: {integrity: sha512-fpZuDogrAgnyt9oDDz+5DBz0zgPdPZz6D4IR7iESxRXElrlGTRkHJ9eEt+SACRJwT0FNFrt71DFQIUFBJfX/uQ==}
 
-  fast-xml-parser@5.4.1:
-    resolution: {integrity: sha512-BQ30U1mKkvXQXXkAGcuyUA/GA26oEB7NzOtsxCDtyu62sjGw5QraKFhx2Em3WQNjPw9PG6MQ9yuIIgkSDfGu5A==}
+  fast-xml-parser@5.4.2:
+    resolution: {integrity: sha512-pw/6pIl4k0CSpElPEJhDppLzaixDEuWui2CUQQBH/ECDf7+y6YwA4Gf7Tyb0Rfe4DIMuZipYj4AEL0nACKglvQ==}
     hasBin: true
 
   fdir@6.5.0:
@@ -2568,10 +2568,6 @@ packages:
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
 
-  js-yaml@4.1.0:
-    resolution: {integrity: sha512-wpxZs9NoxZaJESJGIZTyDEaYpl0FKSA+FB9aJiyemKhMwkxQg63h4T1KJgUGHpTqPDNRcmmYLugrRjJlBtWvRA==}
-    hasBin: true
-
   js-yaml@4.1.1:
     resolution: {integrity: sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA==}
     hasBin: true
@@ -2742,8 +2738,8 @@ packages:
   minimatch@3.1.3:
     resolution: {integrity: sha512-M2GCs7Vk83NxkUyQV1bkABc4yxgz9kILhHImZiBPAZ9ybuvCb0/H7lEl5XvIg3g+9d4eNotkZA5IWwYl0tibaA==}
 
-  minimatch@5.1.6:
-    resolution: {integrity: sha512-lKwV/1brpG6mBUFHtb7NUmtABCb2WZZmm2wNiOA5hAb8VdCS4B3dtMWyvcoViccwAW/COERjXLt0zP1zXUN26g==}
+  minimatch@5.1.9:
+    resolution: {integrity: sha512-7o1wEA2RyMP7Iu7GNba9vc0RWWGACJOCZBJX2GJWip0ikV+wcOsgVuY9uE8CPiyQhkGFSlhuSkZPavN7u1c2Fw==}
     engines: {node: '>=10'}
 
   minimist@1.2.8:
@@ -2958,8 +2954,8 @@ packages:
     resolution: {integrity: sha512-VXJjc87FScF88uafS3JllDgvAm+c/Slfz06lorj2uAY34rlUu0Nt+v8wreiImcrgAjjIHp1rXpTDlLOGw29WwQ==}
     engines: {node: '>=18'}
 
-  openapi-sampler@1.7.0:
-    resolution: {integrity: sha512-fWq32F5vqGpgRJYIarC/9Y1wC9tKnRDcCOjsDJ7MIcSv2HsE7kNifcXIZ8FVtNStBUWxYrEk/MKqVF0SwZ5gog==}
+  openapi-sampler@1.7.1:
+    resolution: {integrity: sha512-pKFRROcYyxRt9GIn0NmS+GkWPS19l0CLQRYAnHk4m1Qp+G43ssVNcfRMs1sLkGrVMuFWO4P4F6YMXeXnfyFGuQ==}
 
   openapi-types@12.1.3:
     resolution: {integrity: sha512-N4YtSYJqghVu4iek2ZUvcN/0aqH1kRDuNqzcycDxhOUpg7GdvLa2F3DgS6yBNhInhv2r/6I0Flkn7CqL8+nIcw==}
@@ -5033,14 +5029,14 @@ snapshots:
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
 
-  '@redocly/cli@2.20.1(@opentelemetry/api@1.9.0)(core-js@3.48.0)':
+  '@redocly/cli@2.20.3(@opentelemetry/api@1.9.0)(core-js@3.48.0)':
     dependencies:
       '@opentelemetry/exporter-trace-otlp-http': 0.202.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/resources': 2.0.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-node': 2.0.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 1.34.0
-      '@redocly/openapi-core': 2.20.1
-      '@redocly/respect-core': 2.20.1
+      '@redocly/openapi-core': 2.20.3
+      '@redocly/respect-core': 2.20.3
       abort-controller: 3.0.0
       ajv: '@redocly/ajv@8.18.0'
       ajv-formats: 3.0.1(@redocly/ajv@8.18.0)
@@ -5074,28 +5070,28 @@ snapshots:
 
   '@redocly/config@0.22.0': {}
 
-  '@redocly/config@0.43.0':
+  '@redocly/config@0.44.0':
     dependencies:
       json-schema-to-ts: 2.7.2
 
-  '@redocly/openapi-core@1.34.8':
+  '@redocly/openapi-core@1.34.10':
     dependencies:
       '@redocly/ajv': 8.11.2
       '@redocly/config': 0.22.0
       colorette: 1.4.0
       https-proxy-agent: 7.0.6
       js-levenshtein: 1.1.6
-      js-yaml: 4.1.0
-      minimatch: 5.1.6
+      js-yaml: 4.1.1
+      minimatch: 5.1.9
       pluralize: 8.0.0
       yaml-ast-parser: 0.0.43
     transitivePeerDependencies:
       - supports-color
 
-  '@redocly/openapi-core@2.20.1':
+  '@redocly/openapi-core@2.20.3':
     dependencies:
       '@redocly/ajv': 8.18.0
-      '@redocly/config': 0.43.0
+      '@redocly/config': 0.44.0
       ajv: '@redocly/ajv@8.18.0'
       ajv-formats: 3.0.1(@redocly/ajv@8.18.0)
       colorette: 1.4.0
@@ -5105,18 +5101,18 @@ snapshots:
       pluralize: 8.0.0
       yaml-ast-parser: 0.0.43
 
-  '@redocly/respect-core@2.20.1':
+  '@redocly/respect-core@2.20.3':
     dependencies:
       '@faker-js/faker': 7.6.0
       '@noble/hashes': 1.8.0
       '@redocly/ajv': 8.18.0
-      '@redocly/openapi-core': 2.20.1
+      '@redocly/openapi-core': 2.20.3
       ajv: '@redocly/ajv@8.18.0'
       better-ajv-errors: 1.2.0(@redocly/ajv@8.18.0)
       colorette: 2.0.20
       json-pointer: 0.6.2
       jsonpath-rfc9535: 1.3.0
-      openapi-sampler: 1.7.0
+      openapi-sampler: 1.7.1
       outdent: 0.8.0
       picomatch: 4.0.3
 
@@ -6055,7 +6051,7 @@ snapshots:
 
   fast-xml-builder@1.0.0: {}
 
-  fast-xml-parser@5.4.1:
+  fast-xml-parser@5.4.2:
     dependencies:
       fast-xml-builder: 1.0.0
       strnum: 2.2.0
@@ -6289,10 +6285,6 @@ snapshots:
 
   js-tokens@4.0.0: {}
 
-  js-yaml@4.1.0:
-    dependencies:
-      argparse: 2.0.1
-
   js-yaml@4.1.1:
     dependencies:
       argparse: 2.0.1
@@ -6485,7 +6477,7 @@ snapshots:
     dependencies:
       brace-expansion: 1.1.12
 
-  minimatch@5.1.6:
+  minimatch@5.1.9:
     dependencies:
       brace-expansion: 2.0.2
 
@@ -6728,10 +6720,10 @@ snapshots:
     dependencies:
       mimic-function: 5.0.1
 
-  openapi-sampler@1.7.0:
+  openapi-sampler@1.7.1:
     dependencies:
       '@types/json-schema': 7.0.15
-      fast-xml-parser: 5.4.1
+      fast-xml-parser: 5.4.2
       json-pointer: 0.6.2
 
   openapi-types@12.1.3: {}
@@ -6957,7 +6949,7 @@ snapshots:
 
   redoc@2.5.1(core-js@3.48.0)(mobx@6.15.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(styled-components@6.3.9(react-dom@19.2.4(react@19.2.4))(react@19.2.4)):
     dependencies:
-      '@redocly/openapi-core': 1.34.8
+      '@redocly/openapi-core': 1.34.10
       classnames: 2.5.1
       core-js: 3.48.0
       decko: 1.2.0
@@ -6969,7 +6961,7 @@ snapshots:
       marked: 4.3.0
       mobx: 6.15.0
       mobx-react: 9.2.0(mobx@6.15.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      openapi-sampler: 1.7.0
+      openapi-sampler: 1.7.1
       path-browserify: 1.0.1
       perfect-scrollbar: 1.5.6
       polished: 4.3.1
