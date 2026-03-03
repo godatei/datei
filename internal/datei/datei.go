@@ -60,11 +60,8 @@ func (s *DateiService) ListDatei(ctx context.Context, input ListDateiInput) (*Li
 	if limit <= 0 {
 		limit = 100
 	}
-	offset := input.Offset
-	if offset < 0 {
-		offset = 0
-	}
 
+	offset := max(input.Offset, 0)
 	total := len(allProjections)
 	start := min(offset, len(allProjections))
 	end := min(offset+limit, len(allProjections))
@@ -79,7 +76,6 @@ func (s *DateiService) ListDatei(ctx context.Context, input ListDateiInput) (*Li
 
 // CreateDateiInput contains parameters for creating a datei
 type CreateDateiInput struct {
-	Name        string
 	Reader      io.Reader
 	FileName    string
 	ContentType string
@@ -92,18 +88,18 @@ func (s *DateiService) CreateDatei(ctx context.Context, input CreateDateiInput) 
 	now := time.Now()
 
 	agg := &aggregate.DateiAggregate{}
-	if err := agg.Create(id, nil, isDirectory, input.Name, uuid.Nil, now); err != nil {
+	if err := agg.Create(id, nil, isDirectory, input.FileName, uuid.Nil, now); err != nil {
 		return nil, err
 	}
 
 	if input.Reader != nil && input.FileName != "" {
-		hash, fileSize, err := s.store.PutObject(ctx, input.Reader, input.ContentType)
+		putResult, err := s.store.PutObject(ctx, input.Reader, input.FileName, input.ContentType)
 		if err != nil {
 			return nil, err
 		}
 
 		if err = agg.UploadVersion(
-			hash, fileSize, hash, input.ContentType, nil, uuid.Nil, now,
+			putResult.StorageKey, putResult.Size, putResult.Checksum, input.ContentType, nil, uuid.Nil, now,
 		); err != nil {
 			return nil, err
 		}
@@ -181,13 +177,13 @@ func (s *DateiService) UpdateDatei(ctx context.Context, input UpdateDateiInput) 
 	}
 
 	if input.Reader != nil && input.FileName != "" {
-		hash, fileSize, err := s.store.PutObject(ctx, input.Reader, input.ContentType)
+		putResult, err := s.store.PutObject(ctx, input.Reader, input.FileName, input.ContentType)
 		if err != nil {
 			return nil, err
 		}
 
 		if err = agg.UploadVersion(
-			hash, fileSize, hash, input.ContentType, nil, uuid.Nil, now,
+			putResult.StorageKey, putResult.Size, putResult.Checksum, input.ContentType, nil, uuid.Nil, now,
 		); err != nil {
 			return nil, err
 		}

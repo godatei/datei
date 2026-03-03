@@ -11,5 +11,5 @@ export interface CreateDateiRequest {
   /**
    * Name for the new Datei
    */
-  name: string;
+  name?: string;
 }

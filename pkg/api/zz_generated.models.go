@@ -15,7 +15,7 @@ type CreateDateiRequest struct {
 	File *openapi_types.File `json:"file,omitempty"`
 
 	// Name Name for the new Datei
-	Name string `json:"name"`
+	Name *string `json:"name,omitempty"`
 }
 
 // Datei defines model for Datei.
