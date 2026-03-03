@@ -139,7 +139,7 @@ func (s *DateiService) DownloadDatei(ctx context.Context, dateiID uuid.UUID) (*D
 		return nil, dateierrors.ErrIsDirectory
 	}
 
-	if projection.S3Key == nil {
+	if projection.S3Key == nil || projection.MimeType == nil || projection.Size == nil {
 		return nil, dateierrors.ErrNoContent
 	}
 
