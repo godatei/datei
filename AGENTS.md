@@ -58,17 +58,17 @@ When implementing a new feature, follow these steps **in order**. Steps are anno
 
 #### Phase 1: Infrastructure (schema, API spec, code generation)
 
-1. **Add database migration** in `internal/db/migrations/sql/` *(skip if frontend-only)*
+1. **Add database migration** in `internal/db/migrations/sql/` _(skip if frontend-only)_
    - Create `<next_version>_<name>.up.sql` and `<next_version>_<name>.down.sql`
    - Add/alter tables, columns, indexes, or enums needed for the new feature
    - Run `mise run:datei:migrate` to apply the migration against the running database
    - Run `mise import-db-schema` to export the live schema to `internal/db/zz_generated_schema.sql` — sqlc reads this file, so generation will fail or produce wrong types without it
 
-2. **Define the API endpoint** in the OpenAPI spec *(skip if frontend-only with no new API)*
+2. **Define the API endpoint** in the OpenAPI spec _(skip if frontend-only with no new API)_
    - Add/update path in `api/paths/<name>.yaml` and reference it in `api/openapi.yaml`
    - Add request/response schemas in `api/components/schemas/` and `api/components/requestBodies/`
 
-3. **Write the SQL queries** in `internal/db/*.sql` *(skip if frontend-only)*
+3. **Write the SQL queries** in `internal/db/*.sql` _(skip if frontend-only)_
    - Add projection queries in `internal/db/datei.sql` (or a new `.sql` file)
    - Use sqlc comment format: `-- name: QueryName :exec` or `:one` or `:many`
 
@@ -76,7 +76,7 @@ When implementing a new feature, follow these steps **in order**. Steps are anno
    - This regenerates backend models, server interface, sqlc Go code, AND the frontend TypeScript client
    - Always run this after changing OpenAPI specs, SQL queries, or the database schema
 
-#### Phase 2: Event Sourcing (domain logic) *(skip entirely if frontend-only)*
+#### Phase 2: Event Sourcing (domain logic) _(skip entirely if frontend-only)_
 
 5. **Define the event** in `internal/events/domain.go`
    - Create a struct implementing `DomainEvent` (with `EventType()` and `StreamID()` methods)
@@ -104,7 +104,7 @@ When implementing a new feature, follow these steps **in order**. Steps are anno
 10. **Wire the projection** in `internal/aggregate/repository.go`
     - Add a case in `updateProjection()` to dispatch to the new handler
 
-#### Phase 3: Service and HTTP layer *(skip if frontend-only)*
+#### Phase 3: Service and HTTP layer _(skip if frontend-only)_
 
 11. **Add the service method** in `internal/datei/datei.go` (or new service file)
     - Define `Input`/`Output` structs for the operation
@@ -117,7 +117,7 @@ When implementing a new feature, follow these steps **in order**. Steps are anno
 
 13. **Add DTO mapping** in `internal/mapping/` if needed
 
-#### Phase 4: Frontend *(skip if backend-only)*
+#### Phase 4: Frontend _(skip if backend-only)_
 
 14. **Implement the UI** using the generated API client from `frontend/src/api/`
     - The TypeScript client was already regenerated in step 4
