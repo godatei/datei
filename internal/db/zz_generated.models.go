@@ -157,6 +157,15 @@ type DateiComment struct {
 	UpdatedAt     time.Time `db:"updated_at"`
 }
 
+type DateiEvent struct {
+	ID            int64     `db:"id"`
+	StreamID      uuid.UUID `db:"stream_id"`
+	StreamVersion int32     `db:"stream_version"`
+	EventType     string    `db:"event_type"`
+	EventData     []byte    `db:"event_data"`
+	CreatedAt     time.Time `db:"created_at"`
+}
+
 type DateiLabel struct {
 	DateiID uuid.UUID `db:"datei_id"`
 	LabelID uuid.UUID `db:"label_id"`
@@ -200,16 +209,6 @@ type DateiProjection struct {
 	CreatedBy     *uuid.UUID  `db:"created_by"`
 	UpdatedBy     *uuid.UUID  `db:"updated_by"`
 	TrashedBy     *uuid.UUID  `db:"trashed_by"`
-}
-
-type EventStore struct {
-	ID            int64     `db:"id"`
-	StreamID      uuid.UUID `db:"stream_id"`
-	StreamVersion int32     `db:"stream_version"`
-	EventType     string    `db:"event_type"`
-	EventData     []byte    `db:"event_data"`
-	EventMetadata []byte    `db:"event_metadata"`
-	CreatedAt     time.Time `db:"created_at"`
 }
 
 type Label struct {

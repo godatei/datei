@@ -63,7 +63,7 @@ func (es *PostgresEventStore) AppendToStream(
 
 		version := expectedVersion + i + 1
 
-		err = q.InsertEventStoreEvent(ctx, db.InsertEventStoreEventParams{
+		err = q.InsertDateiEvent(ctx, db.InsertDateiEventParams{
 			StreamID:      streamID,
 			StreamVersion: int32(version),
 			EventType:     event.EventType(),
@@ -85,7 +85,7 @@ func (es *PostgresEventStore) GetEvents(
 ) ([]DomainEvent, error) {
 	q := db.New(es.db)
 
-	rows, err := q.GetEventsByStreamID(ctx, db.GetEventsByStreamIDParams{
+	rows, err := q.GetDateiEventsByStreamID(ctx, db.GetDateiEventsByStreamIDParams{
 		StreamID:      streamID,
 		StreamVersion: int32(fromVersion),
 	})

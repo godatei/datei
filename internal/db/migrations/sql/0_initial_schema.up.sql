@@ -84,21 +84,20 @@ CREATE TABLE label (
 -- Event Store
 -- ============================================================================
 
-CREATE TABLE event_store (
+CREATE TABLE datei_event (
   id BIGSERIAL PRIMARY KEY,
   stream_id UUID NOT NULL,
   stream_version INT NOT NULL,
   event_type VARCHAR NOT NULL,
   event_data JSONB NOT NULL,
-  event_metadata JSONB,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   CONSTRAINT ck_event_stream_version CHECK (stream_version > 0),
   CONSTRAINT uq_event_store_stream_version UNIQUE (stream_id, stream_version)
 );
 
-CREATE INDEX idx_event_store_stream_id ON event_store(stream_id);
-CREATE INDEX idx_event_store_created_at ON event_store(created_at DESC);
-CREATE INDEX idx_event_store_event_type ON event_store(event_type);
+CREATE INDEX idx_datei_event_stream_id ON datei_event(stream_id);
+CREATE INDEX idx_datei_event_created_at ON datei_event(created_at DESC);
+CREATE INDEX idx_datei_event_event_type ON datei_event(event_type);
 
 -- ============================================================================
 -- Datei Permission Type

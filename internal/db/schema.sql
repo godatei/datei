@@ -82,6 +82,40 @@ CREATE TABLE public.datei_comment (
 
 
 --
+-- Name: datei_event; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.datei_event (
+    id bigint NOT NULL,
+    stream_id uuid NOT NULL,
+    stream_version integer NOT NULL,
+    event_type character varying NOT NULL,
+    event_data jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT ck_event_stream_version CHECK ((stream_version > 0))
+);
+
+
+--
+-- Name: datei_event_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.datei_event_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: datei_event_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.datei_event_id_seq OWNED BY public.datei_event.id;
+
+
+--
 -- Name: datei_label; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -146,41 +180,6 @@ CREATE TABLE public.datei_projection (
     updated_by uuid,
     trashed_by uuid
 );
-
-
---
--- Name: event_store; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.event_store (
-    id bigint NOT NULL,
-    stream_id uuid NOT NULL,
-    stream_version integer NOT NULL,
-    event_type character varying NOT NULL,
-    event_data jsonb NOT NULL,
-    event_metadata jsonb,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT ck_event_stream_version CHECK ((stream_version > 0))
-);
-
-
---
--- Name: event_store_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.event_store_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: event_store_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.event_store_id_seq OWNED BY public.event_store.id;
 
 
 --
@@ -293,10 +292,10 @@ CREATE TABLE public.user_group_member (
 
 
 --
--- Name: event_store id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: datei_event id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.event_store ALTER COLUMN id SET DEFAULT nextval('public.event_store_id_seq'::regclass);
+ALTER TABLE ONLY public.datei_event ALTER COLUMN id SET DEFAULT nextval('public.datei_event_id_seq'::regclass);
 
 
 --
