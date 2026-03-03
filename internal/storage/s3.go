@@ -9,12 +9,16 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"path"
+	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/aws/smithy-go"
 	"github.com/godatei/datei/internal/config"
 )
 
@@ -60,13 +64,17 @@ func (s *s3Store) Initialize(ctx context.Context) error {
 }
 
 // PutObject implements [Store].
-func (s *s3Store) PutObject(ctx context.Context, data io.Reader, contentType string) (string, int64, error) {
+func (s *s3Store) PutObject(
+	ctx context.Context,
+	data io.Reader,
+	name, contentType string,
+) (*PutObjectOutput, error) {
 	var rs io.ReadSeeker
 	if drs, ok := data.(io.ReadSeeker); ok {
 		rs = drs
 	} else {
 		if buf, err := io.ReadAll(data); err != nil {
-			return "", 0, fmt.Errorf("read data: %w", err)
+			return nil, fmt.Errorf("read data: %w", err)
 		} else {
 			rs = bytes.NewReader(buf)
 		}
@@ -75,41 +83,70 @@ func (s *s3Store) PutObject(ctx context.Context, data io.Reader, contentType str
 	var size int64
 	h := sha256.New()
 	if s, err := io.Copy(h, rs); err != nil {
-		return "", 0, fmt.Errorf("generate sha256: %w", err)
+		return nil, fmt.Errorf("generate sha256: %w", err)
 	} else {
 		size = s
 	}
 
-	key := hex.EncodeToString(h.Sum(nil))
+	checksum := hex.EncodeToString(h.Sum(nil))
 
 	if _, err := rs.Seek(0, io.SeekStart); err != nil {
-		return "", 0, fmt.Errorf("reset reader: %w", err)
+		return nil, fmt.Errorf("reset reader: %w", err)
 	}
 
-	ho, err := s.client.HeadObject(ctx, &s3.HeadObjectInput{
-		Bucket: &s.config.Bucket,
-		Key:    &key,
-	})
-	if err == nil {
-		slog.Debug("object already exists", "key", key)
-		return key, *ho.ContentLength, nil
-	} else if _, ok := errors.AsType[*types.NotFound](err); !ok {
-		return "", 0, fmt.Errorf("s3 head object: %w", err)
+	var s3Key string
+	s3Prefix := path.Join("data", time.Now().Format("2006/01/02"))
+
+	for {
+		for i := 0; ; i++ {
+			if i == 0 {
+				s3Key = name
+			} else {
+				ext := path.Ext(name)
+				s3Key = fmt.Sprintf("%v (%v)%v", strings.TrimSuffix(name, ext), i, ext)
+			}
+
+			s3Key = path.Join(s3Prefix, s3Key)
+
+			_, err := s.client.HeadObject(ctx, &s3.HeadObjectInput{
+				Bucket: &s.config.Bucket,
+				Key:    &s3Key,
+			})
+
+			if _, isNotFound := errors.AsType[*types.NotFound](err); isNotFound {
+				break
+			} else if err != nil {
+				return nil, fmt.Errorf("s3 head object: %w", err)
+			} else {
+				slog.Debug("object already exists", "key", s3Key)
+			}
+		}
+
+		slog.Debug("creating object", "key", s3Key)
+
+		_, err := s.client.PutObject(ctx, &s3.PutObjectInput{
+			Bucket:         &s.config.Bucket,
+			Key:            &s3Key,
+			Body:           rs,
+			ContentType:    &contentType,
+			ChecksumSHA256: &checksum,
+			// Prevent object overwrites
+			// Reference: https://docs.aws.amazon.com/AmazonS3/latest/userguide/conditional-writes.html
+			IfNoneMatch: new("*"),
+		})
+		if err != nil {
+			aerr, ok := errors.AsType[smithy.APIError](err)
+			if ok && (aerr.ErrorCode() == "ConditionalRequestConflict" || aerr.ErrorCode() == "PreconditionFailed") {
+				slog.Warn("conflict during s3 put object", "error", err)
+				continue
+			}
+			return nil, fmt.Errorf("s3 put object: %w", err)
+		} else {
+			break
+		}
 	}
 
-	slog.Debug("creating object", "key", key)
-
-	_, err = s.client.PutObject(ctx, &s3.PutObjectInput{
-		Bucket:      &s.config.Bucket,
-		Key:         &key,
-		Body:        rs,
-		ContentType: &contentType,
-	})
-	if err != nil {
-		return "", 0, fmt.Errorf("s3 put object: %w", err)
-	}
-
-	return key, size, nil
+	return &PutObjectOutput{StorageKey: s3Key, Checksum: checksum, Size: size}, nil
 }
 
 // DeleteObject implements [Store].

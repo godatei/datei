@@ -62,7 +62,7 @@ export class DashboardComponent {
     this.uploading.set(true);
     try {
       const file = el.files[0];
-      await this.api.invoke(createDatei, { body: { name: file.name, file: file } });
+      await this.api.invoke(createDatei, { body: { file } });
       this.refresh.update((v) => v + 1);
     } catch (e) {
       console.error(e);

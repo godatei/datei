@@ -49,7 +49,6 @@ func (s *server) CreateDatei(
 ) (CreateDateiResponseObject, error) {
 	// Parse multipart request
 	reader := request.Body
-	var name string
 	var fileData io.Reader
 	var fileName string
 	var contentType string
@@ -60,18 +59,22 @@ func (s *server) CreateDatei(
 			break
 		}
 		if err != nil {
-			return CreateDatei400Response{}, nil
+			return CreateDatei400JSONResponse{Message: err.Error()}, nil
 		}
 
 		switch part.FormName() {
-		case "name":
-			buf := make([]byte, 256)
-			n, _ := part.Read(buf)
-			name = string(buf[:n])
+		case nameFormField:
+			fileNameData, err := io.ReadAll(part)
+			if err != nil {
+				return CreateDatei400JSONResponse{Message: err.Error()}, nil
+			}
+			fileName = string(fileNameData)
 		case fileFormField:
-			fileName = part.FileName()
+			if fileName == "" {
+				fileName = part.FileName()
+			}
 			if fileDataBytes, err := io.ReadAll(part); err != nil {
-				return CreateDatei400Response{}, nil
+				return CreateDatei400JSONResponse{Message: err.Error()}, nil
 			} else {
 				fileData = bytes.NewReader(fileDataBytes)
 			}
@@ -82,19 +85,22 @@ func (s *server) CreateDatei(
 		}
 	}
 
-	if name == "" {
-		return CreateDatei400Response{}, nil
+	if fileName == "" {
+		return CreateDatei400JSONResponse{Message: "filename is required"}, nil
+	}
+
+	if fileData == nil {
+		return CreateDatei400JSONResponse{Message: "file is required (directory creation is not implemented)"}, nil
 	}
 
 	result, err := s.dateiService.CreateDatei(ctx, datei.CreateDateiInput{
-		Name:        name,
 		Reader:      fileData,
 		FileName:    fileName,
 		ContentType: contentType,
 	})
 	if err != nil {
 		slog.Error("endpoint error", "error", err)
-		return CreateDatei400Response{}, nil
+		return CreateDatei400JSONResponse{Message: err.Error()}, nil
 	}
 
 	return CreateDatei201JSONResponse(*result), nil
