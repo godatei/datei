@@ -62,7 +62,7 @@ depends = ["generate:backend", "build:frontend"]
 
 [tasks."build:container"]
 depends = "build:datei"
-run = "docker build -t ghcr.io/godatei/datei:snapshot ."
+run = "podman build -t ghcr.io/godatei/datei:snapshot ."
 
 [tasks."lint:backend"]
 depends = ["generate:backend"]

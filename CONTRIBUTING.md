@@ -13,7 +13,7 @@ You can then start the necessary containers and the application with:
 
 ```shell
 # Start the database and a mock SMTP server
-docker compose up -d
+podman compose up -d
 # Start Datei
 mise watch serve -r
 ```
