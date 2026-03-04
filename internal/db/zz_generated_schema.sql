@@ -1,3 +1,4 @@
+-- Generated via: mise run import-db-schema
 --
 -- PostgreSQL database dump
 --
@@ -226,16 +227,51 @@ CREATE TABLE public.public_link_datei (
 CREATE TABLE public.user_account (
     id uuid DEFAULT uuidv7() NOT NULL,
     name text NOT NULL,
-    password_hash text NOT NULL,
-    password_salt text NOT NULL,
+    password_hash bytea NOT NULL,
+    password_salt bytea NOT NULL,
     mfa_secret text,
     mfa_enabled boolean DEFAULT false NOT NULL,
     mfa_enabled_at timestamp with time zone,
     archived_at timestamp with time zone,
+    last_logged_in_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT ck_user_account_mfa CHECK (((mfa_enabled = false) OR (mfa_secret IS NOT NULL)))
 );
+
+
+--
+-- Name: user_account_event; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_account_event (
+    id bigint NOT NULL,
+    stream_id uuid NOT NULL,
+    stream_version integer NOT NULL,
+    event_type character varying NOT NULL,
+    event_data jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT ck_user_account_event_stream_version CHECK ((stream_version > 0))
+);
+
+
+--
+-- Name: user_account_event_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.user_account_event_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: user_account_event_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.user_account_event_id_seq OWNED BY public.user_account_event.id;
 
 
 --
@@ -245,8 +281,8 @@ CREATE TABLE public.user_account (
 CREATE TABLE public.user_account_mfa_recovery_code (
     id uuid DEFAULT uuidv7() NOT NULL,
     user_account_id uuid NOT NULL,
-    code_hash text NOT NULL,
-    code_salt text NOT NULL,
+    code_hash bytea NOT NULL,
+    code_salt bytea NOT NULL,
     used_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -296,6 +332,13 @@ CREATE TABLE public.user_group_member (
 --
 
 ALTER TABLE ONLY public.datei_event ALTER COLUMN id SET DEFAULT nextval('public.datei_event_id_seq'::regclass);
+
+
+--
+-- Name: user_account_event id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_account_event ALTER COLUMN id SET DEFAULT nextval('public.user_account_event_id_seq'::regclass);
 
 
 --

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/godatei/datei/internal/aggregate"
+	"github.com/godatei/datei/internal/authn"
 	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/mapping"
@@ -91,8 +92,10 @@ func (s *DateiService) CreateDatei(ctx context.Context, input CreateDateiInput) 
 	id := uuid.New()
 	now := time.Now()
 
+	userID := userIDFromContext(ctx)
+
 	agg := &aggregate.DateiAggregate{}
-	if err := agg.Create(id, nil, isDirectory, input.Name, uuid.Nil, now); err != nil {
+	if err := agg.Create(id, nil, isDirectory, input.Name, userID, now); err != nil {
 		return nil, err
 	}
 
@@ -103,7 +106,7 @@ func (s *DateiService) CreateDatei(ctx context.Context, input CreateDateiInput) 
 		}
 
 		if err = agg.UploadVersion(
-			hash, fileSize, hash, input.ContentType, nil, uuid.Nil, now,
+			hash, fileSize, hash, input.ContentType, nil, userID, now,
 		); err != nil {
 			return nil, err
 		}
@@ -174,8 +177,10 @@ func (s *DateiService) UpdateDatei(ctx context.Context, input UpdateDateiInput) 
 
 	now := time.Now()
 
+	userID := userIDFromContext(ctx)
+
 	if input.Name != nil {
-		if err := agg.Rename(*input.Name, uuid.Nil, now); err != nil {
+		if err := agg.Rename(*input.Name, userID, now); err != nil {
 			return nil, err
 		}
 	}
@@ -187,7 +192,7 @@ func (s *DateiService) UpdateDatei(ctx context.Context, input UpdateDateiInput) 
 		}
 
 		if err = agg.UploadVersion(
-			hash, fileSize, hash, input.ContentType, nil, uuid.Nil, now,
+			hash, fileSize, hash, input.ContentType, nil, userID, now,
 		); err != nil {
 			return nil, err
 		}
@@ -207,9 +212,18 @@ func (s *DateiService) DeleteDatei(ctx context.Context, dateiID uuid.UUID) error
 		return err
 	}
 
-	if err := agg.Trash(uuid.Nil, time.Now()); err != nil {
+	userID := userIDFromContext(ctx)
+	if err := agg.Trash(userID, time.Now()); err != nil {
 		return err
 	}
 
 	return s.repository.Save(ctx, agg)
+}
+
+func userIDFromContext(ctx context.Context) uuid.UUID {
+	info, err := authn.FromContext(ctx)
+	if err != nil {
+		return uuid.Nil
+	}
+	return info.UserID
 }

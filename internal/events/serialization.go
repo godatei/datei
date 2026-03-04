@@ -78,6 +78,90 @@ func Deserialize(eventType string, data []byte) (DomainEvent, error) {
 		}
 		return event, nil
 
+	case "UserRegistered":
+		var event UserRegisteredEvent
+		if err := json.Unmarshal(data, &event); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal UserRegisteredEvent: %w", err)
+		}
+		return event, nil
+
+	case "UserNameChanged":
+		var event UserNameChangedEvent
+		if err := json.Unmarshal(data, &event); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal UserNameChangedEvent: %w", err)
+		}
+		return event, nil
+
+	case "UserPasswordChanged":
+		var event UserPasswordChangedEvent
+		if err := json.Unmarshal(data, &event); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal UserPasswordChangedEvent: %w", err)
+		}
+		return event, nil
+
+	case "UserEmailChanged":
+		var event UserEmailChangedEvent
+		if err := json.Unmarshal(data, &event); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal UserEmailChangedEvent: %w", err)
+		}
+		return event, nil
+
+	case "UserEmailVerified":
+		var event UserEmailVerifiedEvent
+		if err := json.Unmarshal(data, &event); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal UserEmailVerifiedEvent: %w", err)
+		}
+		return event, nil
+
+	case "UserMFASetupInitiated":
+		var event UserMFASetupInitiatedEvent
+		if err := json.Unmarshal(data, &event); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal UserMFASetupInitiatedEvent: %w", err)
+		}
+		return event, nil
+
+	case "UserMFAEnabled":
+		var event UserMFAEnabledEvent
+		if err := json.Unmarshal(data, &event); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal UserMFAEnabledEvent: %w", err)
+		}
+		return event, nil
+
+	case "UserMFADisabled":
+		var event UserMFADisabledEvent
+		if err := json.Unmarshal(data, &event); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal UserMFADisabledEvent: %w", err)
+		}
+		return event, nil
+
+	case "UserMFARecoveryCodeUsed":
+		var event UserMFARecoveryCodeUsedEvent
+		if err := json.Unmarshal(data, &event); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal UserMFARecoveryCodeUsedEvent: %w", err)
+		}
+		return event, nil
+
+	case "UserMFARecoveryCodesRegenerated":
+		var event UserMFARecoveryCodesRegeneratedEvent
+		if err := json.Unmarshal(data, &event); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal UserMFARecoveryCodesRegeneratedEvent: %w", err)
+		}
+		return event, nil
+
+	case "UserArchived":
+		var event UserArchivedEvent
+		if err := json.Unmarshal(data, &event); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal UserArchivedEvent: %w", err)
+		}
+		return event, nil
+
+	case "UserLoggedIn":
+		var event UserLoggedInEvent
+		if err := json.Unmarshal(data, &event); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal UserLoggedInEvent: %w", err)
+		}
+		return event, nil
+
 	default:
 		return nil, fmt.Errorf("unknown event type: %s", eventType)
 	}

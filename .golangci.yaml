@@ -51,6 +51,13 @@ linters:
       - third_party$
       - builtin$
       - examples$
+    rules:
+      - linters: [dupl]
+        path: internal/aggregate/(repository|user_repository)\.go
+      - linters: [dupl]
+        path: internal/events/(eventstore|user_eventstore)\.go
+      - linters: [gocyclo]
+        path: internal/events/serialization\.go
   settings:
     gocritic:
       disabled-checks:
