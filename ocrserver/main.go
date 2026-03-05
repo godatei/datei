@@ -79,6 +79,8 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 	}
 	defer os.RemoveAll(tmpDir)
 
+	slog.Debug("created temp dir", "dir", tmpDir)
+
 	tmpFile, err := os.Create(path.Join(tmpDir, "file"))
 	if err != nil {
 		slog.Error("failed to create temp file", "error", err)
@@ -98,6 +100,8 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 		ocrFiles, err = split(tmpFile.Name())
 		if err != nil {
 			slog.Error("error splitting PDF", "error", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 	} else {
 		ocrFiles = []string{tmpFile.Name()}
@@ -105,11 +109,11 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 
 	if len(ocrFiles) > 1 {
 		slices.SortFunc(ocrFiles, func(a, b string) int {
-			aa, err := strconv.Atoi(strings.TrimSuffix(strings.TrimPrefix(a, "page-"), ".jpg"))
+			aa, err := strconv.Atoi(strings.TrimSuffix(strings.TrimPrefix(path.Base(a), "page-"), ".jpg"))
 			if err != nil {
 				return -1
 			}
-			bb, err := strconv.Atoi(strings.TrimSuffix(strings.TrimPrefix(b, "page-"), ".jpg"))
+			bb, err := strconv.Atoi(strings.TrimSuffix(strings.TrimPrefix(path.Base(b), "page-"), ".jpg"))
 			if err != nil {
 				return 1
 			}
@@ -117,12 +121,14 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	slog.Debug("running ocr", "files", ocrFiles)
+
 	out := new(strings.Builder)
 	for i, file := range ocrFiles {
 		slog.Debug("running ocr", "file", file)
-		out1, err := ocr(file, []string{"eng-best"}, "")
+		out1, err := ocr(file, []string{"eng"}, "")
 		if err != nil {
-			slog.Debug("ocr error", "error", err)
+			slog.Error("ocr error", "error", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -144,10 +150,10 @@ func split(file string) ([]string, error) {
 	mw := imagick.NewMagickWand()
 	defer mw.Destroy()
 
-	dir := path.Base(file)
+	dir := path.Dir(file)
 
 	_, err := imagick.ConvertImageCommand([]string{
-		"convert",
+		"magick",
 		"-density", "300",
 		file,
 		path.Join(dir, "page.jpg"),

@@ -1,0 +1,31 @@
+FROM golang:1.26-alpine AS builder
+
+RUN apk add --no-cache \
+    gcc \
+    g++ \
+    musl-dev \
+    pkgconf \
+    tesseract-ocr-dev \
+    imagemagick-dev
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+RUN CGO_ENABLED=1 go build -ldflags "-s" -o ocrserver .
+
+
+FROM alpine AS runtime
+
+RUN apk add --no-cache \
+    tesseract-ocr \
+    tesseract-ocr-data-eng \
+    imagemagick \
+    ghostscript
+
+COPY --from=builder /app/ocrserver /usr/local/bin/ocrserver
+
+EXPOSE 8585
+ENTRYPOINT ["/usr/local/bin/ocrserver"]
