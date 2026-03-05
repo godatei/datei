@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi"
+	"github.com/ledongthuc/pdf"
 	"github.com/otiai10/gosseract/v2"
 	"github.com/spf13/pflag"
 	"gopkg.in/gographics/imagick.v3/imagick"
@@ -95,8 +97,24 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	tmpFile.Close()
+
 	var ocrFiles []string
 	if contentType := fileHeader.Header.Get("Content-Type"); contentType == "application/pdf" {
+		pdfText, err := pdfToText(tmpFile.Name())
+		if err != nil {
+			slog.Warn("error getting PDF text", "error", err)
+		} else if pdfText != "" {
+			w.Header().Add("Content-Type", "application/json")
+			if err := json.NewEncoder(w).Encode(map[string]any{"text": pdfText}); err != nil {
+				slog.Debug("failed to write response", "error", err)
+				w.WriteHeader(http.StatusInternalServerError)
+			}
+			return
+		} else {
+			slog.Debug("pdf text is empty")
+		}
+
 		ocrFiles, err = split(tmpFile.Name())
 		if err != nil {
 			slog.Error("error splitting PDF", "error", err)
@@ -144,6 +162,26 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 		slog.Debug("failed to write response", "error", err)
 		w.WriteHeader(http.StatusInternalServerError)
 	}
+}
+
+func pdfToText(file string) (string, error) {
+	f, r, err := pdf.Open(file)
+	if err != nil {
+		return "", fmt.Errorf("pdf.Open: %w", err)
+	}
+	defer f.Close()
+
+	tr, err := r.GetPlainText()
+	if err != nil {
+		return "", fmt.Errorf("GetPlainText: %w", err)
+	}
+
+	var buf bytes.Buffer
+	if _, err := io.Copy(&buf, tr); err != nil {
+		return "", fmt.Errorf("Copy: %w", err)
+	}
+
+	return buf.String(), nil
 }
 
 func split(file string) ([]string, error) {
