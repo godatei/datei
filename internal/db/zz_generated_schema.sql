@@ -1,3 +1,4 @@
+-- Generated via: mise run import-db-schema
 --
 -- PostgreSQL database dump
 --

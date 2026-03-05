@@ -4,7 +4,7 @@ sql:
     queries:
       - 'datei.sql'
       - 'datei_event.sql'
-    schema: 'schema.sql'
+    schema: 'zz_generated_schema.sql'
     gen:
       go:
         package: 'db'

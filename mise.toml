@@ -8,6 +8,7 @@ ko = "0.18.1"
 node = "24"
 pnpm = "10.30.3"
 github-cli = "2.87.3"
+podman = "5.8.0"
 
 [env]
 _.source = ['hack/current-commit.sh']
@@ -61,7 +62,7 @@ depends = ["generate:backend", "build:frontend"]
 
 [tasks."build:container"]
 depends = "build:datei"
-run = "docker build -t ghcr.io/godatei/datei:snapshot ."
+run = "podman build -t ghcr.io/godatei/datei:snapshot ."
 
 [tasks."lint:backend"]
 depends = ["generate:backend"]
@@ -105,4 +106,4 @@ run = 'go run -ldflags="{{vars.ldflags}}" . migrate'
 description = 'Migrate the database to the latest schema version. Protip: `mise run:datei:migrate -- --to xx` to migrate to a specific version'
 
 [tasks."import-db-schema"]
-run = 'podman compose exec --no-tty postgres pg_dump datei --user=local --section=pre-data --no-owner --no-privileges --exclude-table=schema_migrations | grep --invert-match "^\\\\" > internal/db/schema.sql'
+run = 'echo "-- Generated via: mise run import-db-schema" > internal/db/zz_generated_schema.sql && podman compose exec --no-tty postgres pg_dump datei --user=local --section=pre-data --no-owner --no-privileges --exclude-table=schema_migrations | grep --invert-match "^\\\\" >> internal/db/zz_generated_schema.sql'
