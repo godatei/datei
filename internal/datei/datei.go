@@ -4,12 +4,15 @@ import (
 	"context"
 	"errors"
 	"io"
+	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/godatei/datei/internal/aggregate"
 	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/mapping"
+	"github.com/godatei/datei/internal/ocr"
 	"github.com/godatei/datei/internal/storage"
 	"github.com/godatei/datei/pkg/api"
 	"github.com/google/uuid"
@@ -21,18 +24,53 @@ type DateiService struct {
 	db         *pgxpool.Pool
 	store      storage.Store
 	repository aggregate.DateiRepository
+	ocrClient  *ocr.Client
 }
 
 func NewDateiService(
 	db *pgxpool.Pool,
 	store storage.Store,
 	repository aggregate.DateiRepository,
+	ocrClient *ocr.Client,
 ) *DateiService {
 	return &DateiService{
 		db:         db,
 		store:      store,
 		repository: repository,
+		ocrClient:  ocrClient,
 	}
+}
+
+func isOCRable(contentType string) bool {
+	return strings.HasPrefix(contentType, "image/") || contentType == "application/pdf"
+}
+
+func (s *DateiService) startOCR(ctx context.Context, dateiID uuid.UUID, s3Key, checksum, contentType string) {
+	if s.ocrClient == nil || !isOCRable(contentType) {
+		return
+	}
+	go func() {
+		ctx := context.WithoutCancel(ctx)
+		reader, err := s.store.GetObject(ctx, s3Key)
+		if err != nil {
+			slog.Warn("ocr: failed to get object from store", "error", err, "dateiID", dateiID)
+			return
+		}
+		defer reader.Close()
+		text, err := s.ocrClient.ExtractText(ctx, reader, contentType)
+		if err != nil {
+			slog.Warn("ocr: extraction failed", "error", err, "dateiID", dateiID)
+			return
+		}
+		queries := db.New(s.db)
+		if err := queries.UpdateDateiProjectionContentMD(ctx, db.UpdateDateiProjectionContentMDParams{
+			ContentMd: &text,
+			ID:        dateiID,
+			Checksum:  &checksum,
+		}); err != nil {
+			slog.Warn("ocr: failed to update projection", "error", err, "dateiID", dateiID)
+		}
+	}()
 }
 
 // ListDateiInput contains parameters for listing datei records
@@ -111,6 +149,10 @@ func (s *DateiService) CreateDatei(ctx context.Context, input CreateDateiInput) 
 
 	if err := s.repository.Save(ctx, agg); err != nil {
 		return nil, err
+	}
+
+	if input.Reader != nil && input.FileName != "" && agg.S3Key != nil && agg.Checksum != nil {
+		s.startOCR(ctx, agg.ID, *agg.S3Key, *agg.Checksum, input.ContentType)
 	}
 
 	return mapping.MapAggregateToAPI(agg), nil
@@ -195,6 +237,10 @@ func (s *DateiService) UpdateDatei(ctx context.Context, input UpdateDateiInput) 
 
 	if err := s.repository.Save(ctx, agg); err != nil {
 		return nil, err
+	}
+
+	if input.Reader != nil && input.FileName != "" && agg.S3Key != nil && agg.Checksum != nil {
+		s.startOCR(ctx, agg.ID, *agg.S3Key, *agg.Checksum, input.ContentType)
 	}
 
 	return mapping.MapAggregateToAPI(agg), nil
