@@ -19,6 +19,7 @@ import (
 	"github.com/godatei/datei/internal/db/migrations"
 	"github.com/godatei/datei/internal/events"
 	"github.com/godatei/datei/internal/frontend"
+	"github.com/godatei/datei/internal/ocr"
 	"github.com/godatei/datei/internal/server"
 	"github.com/godatei/datei/internal/storage"
 	oapimiddleware "github.com/oapi-codegen/nethttp-middleware"
@@ -90,6 +91,12 @@ func run(ctx context.Context, options Options) error {
 	eventStore := events.NewPostgresEventStore(db)
 	repository := aggregate.NewPostgresDateiRepository(db, eventStore)
 
+	var ocrClient *ocr.Client
+	if uri := config.OCRServerURI(); uri != "" {
+		slog.Info("OCR enabled", "server_uri", uri)
+		ocrClient = ocr.NewClient(uri)
+	}
+
 	swagger, err := server.GetSwagger()
 	if err != nil {
 		slog.Error("swagger error", "error", err)
@@ -103,7 +110,7 @@ func run(ctx context.Context, options Options) error {
 		slogchi.New(slog.Default()),
 		oapimiddleware.OapiRequestValidator(swagger),
 	)
-	strictHandler := server.NewStrictHandler(server.NewServer(db, store, repository), nil)
+	strictHandler := server.NewStrictHandler(server.NewServer(db, store, repository, ocrClient), nil)
 	server.HandlerFromMux(strictHandler, apiMux)
 
 	rootMux := chi.NewRouter()

@@ -38,6 +38,7 @@ func NewConfig(path string) error {
 	v.SetDefault("storage.s3.use_path_style", "")
 	v.SetDefault("storage.s3.access_key_id", "")
 	v.SetDefault("storage.s3.secret_access_key", "")
+	v.SetDefault("ocr.server_uri", "")
 
 	if path != "" {
 		v.SetConfigFile(path)
@@ -84,6 +85,10 @@ func StorageS3() (S3Config, error) {
 		err = fmt.Errorf("failed to parse StorageConfig: %w", err)
 	}
 	return cfg, err
+}
+
+func OCRServerURI() string {
+	return v.GetString("ocr.server_uri")
 }
 
 type EventStoreConfig struct {

@@ -153,7 +153,7 @@ func split(file string) ([]string, error) {
 	dir := path.Dir(file)
 
 	_, err := imagick.ConvertImageCommand([]string{
-		"magick",
+		"convert",
 		"-density", "300",
 		file,
 		path.Join(dir, "page.jpg"),

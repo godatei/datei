@@ -34,6 +34,7 @@ services:
       context: ocrserver
     ports:
       - '127.0.0.1:8585:8585'
+    restart: unless-stopped
 
 volumes:
   postgres:

@@ -147,6 +147,23 @@ func (q *Queries) ListDateiProjections(ctx context.Context) ([]DateiProjection, 
 	return items, nil
 }
 
+const updateDateiProjectionContentMD = `-- name: UpdateDateiProjectionContentMD :exec
+UPDATE datei_projection
+ SET content_md = $1
+ WHERE id = $2 AND checksum = $3
+`
+
+type UpdateDateiProjectionContentMDParams struct {
+	ContentMd *string   `db:"content_md"`
+	ID        uuid.UUID `db:"id"`
+	Checksum  *string   `db:"checksum"`
+}
+
+func (q *Queries) UpdateDateiProjectionContentMD(ctx context.Context, arg UpdateDateiProjectionContentMDParams) error {
+	_, err := q.db.Exec(ctx, updateDateiProjectionContentMD, arg.ContentMd, arg.ID, arg.Checksum)
+	return err
+}
+
 const updateDateiProjectionLinked = `-- name: UpdateDateiProjectionLinked :exec
 UPDATE datei_projection
  SET linked_datei_id = $1, updated_at = $2, updated_by = NULL
