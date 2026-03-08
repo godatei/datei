@@ -3,7 +3,7 @@ env_shell_expand = false
 
 [tools]
 go = "1.26.1"
-golangci-lint = "2.11.1"
+golangci-lint = "2.11.2"
 ko = "0.18.1"
 node = "24"
 pnpm = "10.30.3"
