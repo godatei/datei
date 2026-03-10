@@ -24,7 +24,7 @@
     ]
   },
   "private": true,
-  "packageManager": "pnpm@10.30.3",
+  "packageManager": "pnpm@10.32.0",
   "dependencies": {
     "@angular/animations": "^21.2.0",
     "@angular/cdk": "~21.2.0",
