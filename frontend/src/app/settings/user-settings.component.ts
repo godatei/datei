@@ -1,13 +1,28 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import type { UserEmail } from '~/api/models/user-email';
 import { AuthService } from '~/frontend/services/auth.service';
 import { SettingsService } from '~/frontend/services/settings.service';
+
+function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
+  const password = control.get('password')?.value;
+  const confirm = control.get('confirmPassword')?.value;
+  return password === confirm ? null : { passwordMismatch: true };
+}
 
 @Component({
   selector: 'app-user-settings',
@@ -18,6 +33,8 @@ import { SettingsService } from '~/frontend/services/settings.service';
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    MatChipsModule,
+    MatIconModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
   ],
@@ -39,6 +56,65 @@ import { SettingsService } from '~/frontend/services/settings.service';
         </mat-card-content>
       </mat-card>
 
+      <!-- Emails -->
+      <mat-card>
+        <mat-card-header><mat-card-title>Email Addresses</mat-card-title></mat-card-header>
+        <mat-card-content>
+          @for (email of emails(); track email.id) {
+            <div class="email-row">
+              <span class="email-address">{{ email.email }}</span>
+              <span class="email-badges">
+                @if (email.isPrimary) {
+                  <mat-chip-set>
+                    <mat-chip highlighted>Primary</mat-chip>
+                  </mat-chip-set>
+                }
+                @if (email.verified) {
+                  <mat-chip-set>
+                    <mat-chip>Verified</mat-chip>
+                  </mat-chip-set>
+                } @else {
+                  <mat-chip-set>
+                    <mat-chip>Unverified</mat-chip>
+                  </mat-chip-set>
+                }
+              </span>
+              <span class="email-actions">
+                @if (!email.isPrimary && email.verified) {
+                  <button mat-button (click)="setPrimary(email.id)" [disabled]="emailsLoading()">
+                    Set primary
+                  </button>
+                }
+                @if (!email.isPrimary) {
+                  <button
+                    mat-button
+                    color="warn"
+                    (click)="removeEmailAddress(email.id)"
+                    [disabled]="emailsLoading()"
+                    [attr.aria-label]="'Remove ' + email.email"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                }
+              </span>
+            </div>
+          }
+          <form [formGroup]="addEmailForm" (ngSubmit)="addNewEmail()">
+            <mat-form-field appearance="outline">
+              <mat-label>Add email address</mat-label>
+              <input matInput formControlName="email" type="email" />
+            </mat-form-field>
+            <button
+              mat-flat-button
+              type="submit"
+              [disabled]="emailsLoading() || addEmailForm.invalid"
+            >
+              Add email
+            </button>
+          </form>
+        </mat-card-content>
+      </mat-card>
+
       <!-- Change Password -->
       <mat-card>
         <mat-card-header><mat-card-title>Change Password</mat-card-title></mat-card-header>
@@ -53,6 +129,18 @@ import { SettingsService } from '~/frontend/services/settings.service';
                 autocomplete="new-password"
               />
               <mat-hint>At least 8 characters</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Confirm new password</mat-label>
+              <input
+                matInput
+                formControlName="confirmPassword"
+                type="password"
+                autocomplete="new-password"
+              />
+              @if (passwordForm.hasError('passwordMismatch')) {
+                <mat-error>Passwords do not match</mat-error>
+              }
             </mat-form-field>
             <button
               mat-flat-button
@@ -90,12 +178,11 @@ import { SettingsService } from '~/frontend/services/settings.service';
             </form>
           } @else if (recoveryCodes()) {
             <p>Save these recovery codes in a safe place:</p>
-            <pre class="recovery-codes">{{
-              recoveryCodes()!.join(
-                '
-'
-              )
-            }}</pre>
+            <ul class="recovery-codes" role="list" aria-label="Recovery codes">
+              @for (code of recoveryCodes()!; track code) {
+                <li>{{ code }}</li>
+              }
+            </ul>
             <button mat-flat-button (click)="recoveryCodes.set(undefined)">Done</button>
           } @else {
             <button mat-flat-button (click)="setupMFA()" [disabled]="mfaLoading()">
@@ -137,6 +224,24 @@ import { SettingsService } from '~/frontend/services/settings.service';
     mat-form-field {
       width: 100%;
     }
+    .email-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0;
+    }
+    .email-address {
+      flex: 1;
+      word-break: break-all;
+    }
+    .email-badges {
+      display: flex;
+      gap: 0.25rem;
+    }
+    .email-actions {
+      display: flex;
+      gap: 0.25rem;
+    }
     .mfa-secret {
       font-family: monospace;
       word-break: break-all;
@@ -146,6 +251,7 @@ import { SettingsService } from '~/frontend/services/settings.service';
       background: var(--mat-sys-surface-container);
       padding: 1rem;
       border-radius: 8px;
+      list-style: none;
     }
   `,
 })
@@ -155,6 +261,8 @@ export class UserSettingsComponent {
   private readonly snackBar = inject(MatSnackBar);
   private readonly fb = inject(FormBuilder);
 
+  readonly emails = signal<UserEmail[]>([]);
+  readonly emailsLoading = signal(false);
   readonly profileLoading = signal(false);
   readonly passwordLoading = signal(false);
   readonly mfaLoading = signal(false);
@@ -165,17 +273,83 @@ export class UserSettingsComponent {
     name: [this.auth.getClaims()?.name ?? '', Validators.required],
   });
 
-  readonly passwordForm = this.fb.nonNullable.group({
-    password: ['', [Validators.required, Validators.minLength(8)]],
-  });
+  readonly passwordForm = this.fb.nonNullable.group(
+    {
+      password: ['', [Validators.required, Validators.minLength(8)]],
+      confirmPassword: ['', Validators.required],
+    },
+    { validators: passwordMatchValidator },
+  );
 
   readonly mfaEnableForm = this.fb.nonNullable.group({
     code: ['', [Validators.required, Validators.minLength(6)]],
   });
 
+  readonly addEmailForm = this.fb.nonNullable.group({
+    email: ['', [Validators.required, Validators.email]],
+  });
+
   readonly mfaDisableForm = this.fb.nonNullable.group({
     password: ['', Validators.required],
   });
+
+  constructor() {
+    this.loadEmails();
+  }
+
+  private loadEmails() {
+    this.emailsLoading.set(true);
+    this.settings.getEmails().subscribe({
+      next: (emails) => {
+        this.emails.set(emails);
+        this.emailsLoading.set(false);
+      },
+      error: () => this.emailsLoading.set(false),
+    });
+  }
+
+  addNewEmail() {
+    this.emailsLoading.set(true);
+    this.settings.addEmail(this.addEmailForm.getRawValue().email).subscribe({
+      next: () => {
+        this.addEmailForm.reset();
+        this.snackBar.open('Email added', 'OK', { duration: 3000 });
+        this.loadEmails();
+      },
+      error: () => {
+        this.emailsLoading.set(false);
+        this.snackBar.open('Failed to add email', 'OK', { duration: 3000 });
+      },
+    });
+  }
+
+  removeEmailAddress(emailId: string) {
+    this.emailsLoading.set(true);
+    this.settings.removeEmail(emailId).subscribe({
+      next: () => {
+        this.snackBar.open('Email removed', 'OK', { duration: 3000 });
+        this.loadEmails();
+      },
+      error: () => {
+        this.emailsLoading.set(false);
+        this.snackBar.open('Failed to remove email', 'OK', { duration: 3000 });
+      },
+    });
+  }
+
+  setPrimary(emailId: string) {
+    this.emailsLoading.set(true);
+    this.settings.setPrimaryEmail(emailId).subscribe({
+      next: () => {
+        this.snackBar.open('Primary email updated', 'OK', { duration: 3000 });
+        this.loadEmails();
+      },
+      error: () => {
+        this.emailsLoading.set(false);
+        this.snackBar.open('Failed to set primary email', 'OK', { duration: 3000 });
+      },
+    });
+  }
 
   updateProfile() {
     this.profileLoading.set(true);

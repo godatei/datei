@@ -201,6 +201,35 @@ type UserEmailVerifiedEvent struct {
 func (e UserEmailVerifiedEvent) EventType() string   { return "UserEmailVerified" }
 func (e UserEmailVerifiedEvent) StreamID() uuid.UUID { return e.ID }
 
+type UserEmailAddedEvent struct {
+	ID      uuid.UUID `json:"id"`
+	EmailID uuid.UUID `json:"email_id"`
+	Email   string    `json:"email"`
+	AddedAt time.Time `json:"added_at"`
+}
+
+func (e UserEmailAddedEvent) EventType() string   { return "UserEmailAdded" }
+func (e UserEmailAddedEvent) StreamID() uuid.UUID { return e.ID }
+
+type UserEmailRemovedEvent struct {
+	ID        uuid.UUID `json:"id"`
+	EmailID   uuid.UUID `json:"email_id"`
+	RemovedAt time.Time `json:"removed_at"`
+}
+
+func (e UserEmailRemovedEvent) EventType() string   { return "UserEmailRemoved" }
+func (e UserEmailRemovedEvent) StreamID() uuid.UUID { return e.ID }
+
+type UserEmailSetPrimaryEvent struct {
+	ID                uuid.UUID `json:"id"`
+	OldPrimaryEmailID uuid.UUID `json:"old_primary_email_id"`
+	NewPrimaryEmailID uuid.UUID `json:"new_primary_email_id"`
+	ChangedAt         time.Time `json:"changed_at"`
+}
+
+func (e UserEmailSetPrimaryEvent) EventType() string   { return "UserEmailSetPrimary" }
+func (e UserEmailSetPrimaryEvent) StreamID() uuid.UUID { return e.ID }
+
 type UserMFASetupInitiatedEvent struct {
 	ID          uuid.UUID `json:"id"`
 	MFASecret   string    `json:"mfa_secret"`

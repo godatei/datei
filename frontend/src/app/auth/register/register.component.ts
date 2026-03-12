@@ -1,5 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -7,6 +13,12 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '~/frontend/services/auth.service';
+
+function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
+  const password = control.get('password')?.value;
+  const confirm = control.get('confirmPassword')?.value;
+  return password === confirm ? null : { passwordMismatch: true };
+}
 
 @Component({
   selector: 'app-register',
@@ -51,6 +63,19 @@ import { AuthService } from '~/frontend/services/auth.service';
                 autocomplete="new-password"
               />
               <mat-hint>At least 8 characters</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Confirm password</mat-label>
+              <input
+                matInput
+                formControlName="confirmPassword"
+                type="password"
+                autocomplete="new-password"
+              />
+              @if (form.hasError('passwordMismatch')) {
+                <mat-error>Passwords do not match</mat-error>
+              }
             </mat-form-field>
 
             <button mat-flat-button type="submit" [disabled]="loading() || form.invalid">
@@ -111,11 +136,15 @@ export class RegisterComponent {
   readonly loading = signal(false);
   readonly errorMessage = signal('');
 
-  readonly form = this.fb.nonNullable.group({
-    name: ['', Validators.required],
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(8)]],
-  });
+  readonly form = this.fb.nonNullable.group(
+    {
+      name: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(8)]],
+      confirmPassword: ['', Validators.required],
+    },
+    { validators: passwordMatchValidator },
+  );
 
   onSubmit() {
     if (this.form.invalid) return;

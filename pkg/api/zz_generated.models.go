@@ -9,6 +9,15 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+const (
+	BearerHttpAuthenticationScopes = "bearerHttpAuthentication.Scopes"
+)
+
+// AddEmailRequest defines model for AddEmailRequest.
+type AddEmailRequest struct {
+	Email openapi_types.Email `json:"email"`
+}
+
 // CreateDateiRequest defines model for CreateDateiRequest.
 type CreateDateiRequest struct {
 	// File File data (optional, omit for directories)
@@ -66,6 +75,21 @@ type Datei struct {
 	UpdatedBy *openapi_types.UUID `json:"updatedBy,omitempty"`
 }
 
+// DisableMFARequest defines model for DisableMFARequest.
+type DisableMFARequest struct {
+	Password string `json:"password"`
+}
+
+// EnableMFARequest defines model for EnableMFARequest.
+type EnableMFARequest struct {
+	Code string `json:"code"`
+}
+
+// EnableMFAResponse defines model for EnableMFAResponse.
+type EnableMFAResponse struct {
+	RecoveryCodes []string `json:"recoveryCodes"`
+}
+
 // ListDateiResponse defines model for ListDateiResponse.
 type ListDateiResponse struct {
 	// Items Array of Datei objects
@@ -73,6 +97,62 @@ type ListDateiResponse struct {
 
 	// Total Total number of items (before pagination)
 	Total int `json:"total"`
+}
+
+// ListEmailsResponse defines model for ListEmailsResponse.
+type ListEmailsResponse struct {
+	Emails []UserEmail `json:"emails"`
+}
+
+// LoginConfigResponse defines model for LoginConfigResponse.
+type LoginConfigResponse struct {
+	RegistrationEnabled bool `json:"registrationEnabled"`
+}
+
+// LoginRequest defines model for LoginRequest.
+type LoginRequest struct {
+	Email    string  `json:"email"`
+	MfaCode  *string `json:"mfaCode,omitempty"`
+	Password string  `json:"password"`
+}
+
+// LoginResponse defines model for LoginResponse.
+type LoginResponse struct {
+	RequiresMfa *bool   `json:"requiresMfa,omitempty"`
+	Token       *string `json:"token,omitempty"`
+}
+
+// MFARecoveryCodesStatusResponse defines model for MFARecoveryCodesStatusResponse.
+type MFARecoveryCodesStatusResponse struct {
+	RemainingCodes int `json:"remainingCodes"`
+}
+
+// RegenerateMFARecoveryCodesRequest defines model for RegenerateMFARecoveryCodesRequest.
+type RegenerateMFARecoveryCodesRequest struct {
+	Password string `json:"password"`
+}
+
+// RegenerateMFARecoveryCodesResponse defines model for RegenerateMFARecoveryCodesResponse.
+type RegenerateMFARecoveryCodesResponse struct {
+	RecoveryCodes []string `json:"recoveryCodes"`
+}
+
+// RegisterRequest defines model for RegisterRequest.
+type RegisterRequest struct {
+	Email    string `json:"email"`
+	Name     string `json:"name"`
+	Password string `json:"password"`
+}
+
+// ResetPasswordRequest defines model for ResetPasswordRequest.
+type ResetPasswordRequest struct {
+	Email string `json:"email"`
+}
+
+// SetupMFAResponse defines model for SetupMFAResponse.
+type SetupMFAResponse struct {
+	QrCodeUrl string `json:"qrCodeUrl"`
+	Secret    string `json:"secret"`
 }
 
 // UpdateDateiRequest defines model for UpdateDateiRequest.
@@ -90,6 +170,26 @@ type UpdateDateiWithFileRequest struct {
 	Name *string `json:"name,omitempty"`
 }
 
+// UpdateUserEmailRequest defines model for UpdateUserEmailRequest.
+type UpdateUserEmailRequest struct {
+	Email string `json:"email"`
+}
+
+// UpdateUserRequest defines model for UpdateUserRequest.
+type UpdateUserRequest struct {
+	Name     *string `json:"name,omitempty"`
+	Password *string `json:"password,omitempty"`
+}
+
+// UserEmail defines model for UserEmail.
+type UserEmail struct {
+	CreatedAt time.Time           `json:"createdAt"`
+	Email     openapi_types.Email `json:"email"`
+	Id        openapi_types.UUID  `json:"id"`
+	IsPrimary bool                `json:"isPrimary"`
+	Verified  bool                `json:"verified"`
+}
+
 // ListDateiParams defines parameters for ListDatei.
 type ListDateiParams struct {
 	// Limit Maximum number of results
@@ -99,6 +199,15 @@ type ListDateiParams struct {
 	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
+// LoginJSONRequestBody defines body for Login for application/json ContentType.
+type LoginJSONRequestBody = LoginRequest
+
+// RegisterJSONRequestBody defines body for Register for application/json ContentType.
+type RegisterJSONRequestBody = RegisterRequest
+
+// ResetPasswordJSONRequestBody defines body for ResetPassword for application/json ContentType.
+type ResetPasswordJSONRequestBody = ResetPasswordRequest
+
 // CreateDateiMultipartRequestBody defines body for CreateDatei for multipart/form-data ContentType.
 type CreateDateiMultipartRequestBody = CreateDateiRequest
 
@@ -107,3 +216,21 @@ type UpdateDateiFormdataRequestBody = UpdateDateiRequest
 
 // UpdateDateiMultipartRequestBody defines body for UpdateDatei for multipart/form-data ContentType.
 type UpdateDateiMultipartRequestBody = UpdateDateiWithFileRequest
+
+// AddEmailJSONRequestBody defines body for AddEmail for application/json ContentType.
+type AddEmailJSONRequestBody = AddEmailRequest
+
+// DisableMFAJSONRequestBody defines body for DisableMFA for application/json ContentType.
+type DisableMFAJSONRequestBody = DisableMFARequest
+
+// EnableMFAJSONRequestBody defines body for EnableMFA for application/json ContentType.
+type EnableMFAJSONRequestBody = EnableMFARequest
+
+// RegenerateMFARecoveryCodesJSONRequestBody defines body for RegenerateMFARecoveryCodes for application/json ContentType.
+type RegenerateMFARecoveryCodesJSONRequestBody = RegenerateMFARecoveryCodesRequest
+
+// UpdateUserJSONRequestBody defines body for UpdateUser for application/json ContentType.
+type UpdateUserJSONRequestBody = UpdateUserRequest
+
+// UpdateUserEmailJSONRequestBody defines body for UpdateUserEmail for application/json ContentType.
+type UpdateUserEmailJSONRequestBody = UpdateUserEmailRequest

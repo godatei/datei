@@ -27,7 +27,8 @@ export const authGuard: CanActivateFn = (_: ActivatedRouteSnapshot, state: Route
   const router = inject(Router);
   const claims = auth.getClaims();
 
-  if (!claims) {
+  if (!claims || claims.exp * 1000 <= Date.now()) {
+    auth.logout();
     return router.createUrlTree(['/login']);
   }
   if (claims.password_reset) {

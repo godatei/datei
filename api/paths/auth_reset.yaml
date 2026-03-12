@@ -1,0 +1,13 @@
+post:
+  operationId: ResetPassword
+  summary: Request a password reset email
+  security: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/ResetPasswordRequest.yaml'
+  responses:
+    '204':
+      description: Reset email sent

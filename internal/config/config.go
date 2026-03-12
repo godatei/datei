@@ -112,6 +112,9 @@ func ServerHost() string {
 func AuthJWTSecret() []byte {
 	secret := v.GetString("auth.jwt_secret")
 	if secret == "" {
+		if buildconfig.IsRelease() {
+			panic("auth.jwt_secret must be configured in release builds")
+		}
 		return []byte("dev-jwt-secret-do-not-use-in-production")
 	}
 	decoded, err := base64.StdEncoding.DecodeString(secret)

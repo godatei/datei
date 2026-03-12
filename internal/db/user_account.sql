@@ -31,17 +31,24 @@ UPDATE user_account SET last_logged_in_at = $1 WHERE id = $2;
 -- User Email Projection Writes
 -- ============================================================================
 
--- name: InsertUserEmailProjection :exec
-INSERT INTO user_email (id, user_account_id, email, is_primary, created_at)
+-- name: InsertUserAccountEmailProjection :exec
+INSERT INTO user_account_email (id, user_account_id, email, is_primary, created_at)
 VALUES ($1, $2, $3, $4, $5);
 
--- name: UpdateUserEmailProjectionEmail :exec
-UPDATE user_email SET email = $1, verified_at = NULL
+-- name: UpdateUserAccountEmailProjectionEmail :exec
+UPDATE user_account_email SET email = $1, verified_at = NULL
 WHERE user_account_id = $2 AND is_primary = true;
 
--- name: UpdateUserEmailProjectionVerified :exec
-UPDATE user_email SET verified_at = $1
+-- name: UpdateUserAccountEmailProjectionVerified :exec
+UPDATE user_account_email SET verified_at = $1
 WHERE user_account_id = $2 AND is_primary = true;
+
+-- name: DeleteUserAccountEmailProjection :exec
+DELETE FROM user_account_email WHERE id = $1;
+
+-- name: SetUserAccountEmailPrimaryProjection :exec
+UPDATE user_account_email SET is_primary = (id = $1)
+WHERE user_account_id = $2;
 
 -- ============================================================================
 -- MFA Recovery Code Projection Writes
@@ -68,12 +75,21 @@ SELECT * FROM user_account WHERE id = $1;
 
 -- name: GetUserAccountByEmail :one
 SELECT ua.* FROM user_account ua
-JOIN user_email ue ON ue.user_account_id = ua.id
+JOIN user_account_email ue ON ue.user_account_id = ua.id
 WHERE ue.email = $1 AND ua.archived_at IS NULL;
 
 -- name: GetPrimaryEmailForUser :one
-SELECT * FROM user_email
+SELECT * FROM user_account_email
 WHERE user_account_id = $1 AND is_primary = true;
+
+-- name: GetEmailsForUser :many
+SELECT * FROM user_account_email
+WHERE user_account_id = $1
+ORDER BY is_primary DESC, created_at;
+
+-- name: GetEmailByID :one
+SELECT * FROM user_account_email
+WHERE id = $1 AND user_account_id = $2;
 
 -- name: GetUnusedMFARecoveryCodes :many
 SELECT * FROM user_account_mfa_recovery_code

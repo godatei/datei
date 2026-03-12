@@ -15,7 +15,7 @@ internal/
 ├── projections/      # Read model projection handlers
 ├── datei/            # Domain services (business logic orchestration)
 ├── db/               # sqlc config, SQL queries, generated code, migrations
-├── server/           # HTTP endpoints (oapi-codegen generated + handlers)
+├── server/           # HTTP endpoints (oapi-codegen generated + handlers: endpoints_auth, endpoints_settings, endpoints_emails, endpoints_datei)
 ├── storage/          # File storage abstraction (S3)
 ├── mapping/          # DTO conversions (aggregate/projection → API)
 ├── config/           # Viper-based configuration
@@ -41,6 +41,8 @@ frontend/
 ## Code Generation (CRITICAL)
 
 This project relies heavily on code generation. NEVER edit files prefixed with `zz_generated`. Instead, edit the source files and regenerate.
+
+**ALL HTTP endpoints must be defined in the OpenAPI spec first** (`api/paths/*.yaml`), including auth and settings endpoints. Never hand-write Chi/HTTP handlers without an OpenAPI definition. The generated `StrictServerInterface` is the contract — implement its methods in `internal/server/endpoints_*.go`.
 
 ### Generation Chain
 

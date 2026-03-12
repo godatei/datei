@@ -144,6 +144,52 @@ func (a *UserAggregate) VerifyEmail(now time.Time) error {
 	return nil
 }
 
+func (a *UserAggregate) AddEmail(emailID uuid.UUID, email string, now time.Time) error {
+	if a.ID == uuid.Nil {
+		return errors.New("user not created")
+	}
+	if email == "" {
+		return errors.New("email cannot be empty")
+	}
+
+	a.recordEvent(events.UserEmailAddedEvent{
+		ID:      a.ID,
+		EmailID: emailID,
+		Email:   email,
+		AddedAt: now,
+	})
+	return nil
+}
+
+func (a *UserAggregate) RemoveEmail(emailID uuid.UUID, now time.Time) error {
+	if a.ID == uuid.Nil {
+		return errors.New("user not created")
+	}
+
+	a.recordEvent(events.UserEmailRemovedEvent{
+		ID:        a.ID,
+		EmailID:   emailID,
+		RemovedAt: now,
+	})
+	return nil
+}
+
+func (a *UserAggregate) SetPrimaryEmail(
+	oldPrimaryEmailID, newPrimaryEmailID uuid.UUID, now time.Time,
+) error {
+	if a.ID == uuid.Nil {
+		return errors.New("user not created")
+	}
+
+	a.recordEvent(events.UserEmailSetPrimaryEvent{
+		ID:                a.ID,
+		OldPrimaryEmailID: oldPrimaryEmailID,
+		NewPrimaryEmailID: newPrimaryEmailID,
+		ChangedAt:         now,
+	})
+	return nil
+}
+
 func (a *UserAggregate) InitiateMFASetup(secret string, now time.Time) error {
 	if a.ID == uuid.Nil {
 		return errors.New("user not created")
@@ -283,6 +329,16 @@ func (a *UserAggregate) ApplyEvent(event events.DomainEvent) {
 	case events.UserEmailVerifiedEvent:
 		a.EmailVerified = true
 		a.UpdatedAt = e.VerifiedAt
+
+	case events.UserEmailAddedEvent:
+		a.UpdatedAt = e.AddedAt
+
+	case events.UserEmailRemovedEvent:
+		a.UpdatedAt = e.RemovedAt
+
+	case events.UserEmailSetPrimaryEvent:
+		a.EmailID = e.NewPrimaryEmailID
+		a.UpdatedAt = e.ChangedAt
 
 	case events.UserMFASetupInitiatedEvent:
 		a.MFASecret = &e.MFASecret

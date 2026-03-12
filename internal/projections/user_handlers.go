@@ -21,14 +21,14 @@ func UpdateProjectionForUserRegistered(
 		return fmt.Errorf("failed to insert user_account projection: %w", err)
 	}
 
-	if err := q.InsertUserEmailProjection(ctx, db.InsertUserEmailProjectionParams{
+	if err := q.InsertUserAccountEmailProjection(ctx, db.InsertUserAccountEmailProjectionParams{
 		ID:            event.EmailID,
 		UserAccountID: event.ID,
 		Email:         event.Email,
 		IsPrimary:     true,
 		CreatedAt:     event.CreatedAt,
 	}); err != nil {
-		return fmt.Errorf("failed to insert user_email projection: %w", err)
+		return fmt.Errorf("failed to insert user_account_email projection: %w", err)
 	}
 
 	return nil
@@ -56,7 +56,7 @@ func UpdateProjectionForUserPasswordChanged(
 func UpdateProjectionForUserEmailChanged(
 	ctx context.Context, q *db.Queries, event *events.UserEmailChangedEvent,
 ) error {
-	return q.UpdateUserEmailProjectionEmail(ctx, db.UpdateUserEmailProjectionEmailParams{
+	return q.UpdateUserAccountEmailProjectionEmail(ctx, db.UpdateUserAccountEmailProjectionEmailParams{
 		Email:         event.NewEmail,
 		UserAccountID: event.ID,
 	})
@@ -65,8 +65,35 @@ func UpdateProjectionForUserEmailChanged(
 func UpdateProjectionForUserEmailVerified(
 	ctx context.Context, q *db.Queries, event *events.UserEmailVerifiedEvent,
 ) error {
-	return q.UpdateUserEmailProjectionVerified(ctx, db.UpdateUserEmailProjectionVerifiedParams{
+	return q.UpdateUserAccountEmailProjectionVerified(ctx, db.UpdateUserAccountEmailProjectionVerifiedParams{
 		VerifiedAt:    &event.VerifiedAt,
+		UserAccountID: event.ID,
+	})
+}
+
+func UpdateProjectionForUserEmailAdded(
+	ctx context.Context, q *db.Queries, event *events.UserEmailAddedEvent,
+) error {
+	return q.InsertUserAccountEmailProjection(ctx, db.InsertUserAccountEmailProjectionParams{
+		ID:            event.EmailID,
+		UserAccountID: event.ID,
+		Email:         event.Email,
+		IsPrimary:     false,
+		CreatedAt:     event.AddedAt,
+	})
+}
+
+func UpdateProjectionForUserEmailRemoved(
+	ctx context.Context, q *db.Queries, event *events.UserEmailRemovedEvent,
+) error {
+	return q.DeleteUserAccountEmailProjection(ctx, event.EmailID)
+}
+
+func UpdateProjectionForUserEmailSetPrimary(
+	ctx context.Context, q *db.Queries, event *events.UserEmailSetPrimaryEvent,
+) error {
+	return q.SetUserAccountEmailPrimaryProjection(ctx, db.SetUserAccountEmailPrimaryProjectionParams{
+		ID:            event.NewPrimaryEmailID,
 		UserAccountID: event.ID,
 	})
 }

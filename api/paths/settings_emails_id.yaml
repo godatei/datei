@@ -1,0 +1,19 @@
+delete:
+  operationId: RemoveEmail
+  summary: Remove a non-primary email
+  security:
+    - bearerHttpAuthentication: []
+  parameters:
+    - name: emailId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '204':
+      description: Email removed
+    '400':
+      description: Cannot remove primary email
+    '404':
+      description: Email not found

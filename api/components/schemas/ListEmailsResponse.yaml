@@ -1,0 +1,8 @@
+type: object
+required:
+  - emails
+properties:
+  emails:
+    type: array
+    items:
+      $ref: './UserEmail.yaml'

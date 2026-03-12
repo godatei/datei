@@ -1,5 +1,6 @@
 import {
   HttpClient,
+  HttpContextToken,
   HttpErrorResponse,
   HttpInterceptorFn,
   HttpRequest,
@@ -7,10 +8,18 @@ import {
 import { inject, Injectable, signal, computed } from '@angular/core';
 import { jwtDecode } from 'jwt-decode';
 import { Observable, tap, map, throwError } from 'rxjs';
+import {
+  login as loginFn,
+  register as registerFn,
+  resetPassword as resetPasswordFn,
+  getLoginConfig as getLoginConfigFn,
+} from '~/api/functions';
+import type { LoginConfigResponse } from '~/api/models/login-config-response';
 
 const tokenStorageKey = 'datei_token';
 const actionTokenStorageKey = 'datei_action_token';
-const authBaseUrl = '/api/v1/auth';
+
+export const USE_ACTION_TOKEN = new HttpContextToken<boolean>(() => false);
 
 export interface JWTClaims {
   sub: string;
@@ -20,15 +29,6 @@ export interface JWTClaims {
   password_reset?: boolean;
   exp: number;
   [claim: string]: unknown;
-}
-
-interface LoginResponse {
-  token?: string;
-  requiresMfa?: boolean;
-}
-
-interface LoginConfig {
-  registrationEnabled: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -67,29 +67,30 @@ export class AuthService {
   }
 
   login(email: string, password: string, mfaCode?: string): Observable<{ requiresMfa: boolean }> {
-    return this.httpClient
-      .post<LoginResponse>(`${authBaseUrl}/login`, { email, password, mfaCode })
-      .pipe(
-        tap((r) => {
-          if (!r.requiresMfa && r.token) {
-            this.token = r.token;
-            this.actionToken = null;
-          }
-        }),
-        map((r) => ({ requiresMfa: r.requiresMfa ?? false })),
-      );
+    return loginFn(this.httpClient, '', { body: { email, password, mfaCode } }).pipe(
+      map((r) => r.body),
+      tap((r) => {
+        if (!r.requiresMfa && r.token) {
+          this.token = r.token;
+          this.actionToken = null;
+        }
+      }),
+      map((r) => ({ requiresMfa: r.requiresMfa ?? false })),
+    );
   }
 
   register(email: string, name: string, password: string): Observable<void> {
-    return this.httpClient.post<void>(`${authBaseUrl}/register`, { email, name, password });
+    return registerFn(this.httpClient, '', { body: { email, name, password } }).pipe(
+      map(() => undefined),
+    );
   }
 
   resetPassword(email: string): Observable<void> {
-    return this.httpClient.post<void>(`${authBaseUrl}/reset`, { email });
+    return resetPasswordFn(this.httpClient, '', { body: { email } }).pipe(map(() => undefined));
   }
 
-  loginConfig(): Observable<LoginConfig> {
-    return this.httpClient.get<LoginConfig>(`${authBaseUrl}/login/config`);
+  loginConfig(): Observable<LoginConfigResponse> {
+    return getLoginConfigFn(this.httpClient, '').pipe(map((r) => r.body));
   }
 
   getClaims(): JWTClaims | undefined {
@@ -97,15 +98,7 @@ export class AuthService {
     return claims;
   }
 
-  getTokenAndClaims(): { token: string | null; claims: JWTClaims | undefined } {
-    const actionToken = this.actionToken;
-    if (actionToken !== null) {
-      try {
-        return { token: actionToken, claims: jwtDecode<JWTClaims>(actionToken) };
-      } catch {
-        /* invalid token */
-      }
-    }
+  getSessionTokenAndClaims(): { token: string | null; claims: JWTClaims | undefined } {
     const token = this.token;
     if (token !== null) {
       try {
@@ -117,6 +110,24 @@ export class AuthService {
     return { token: null, claims: undefined };
   }
 
+  getActionTokenAndClaims(): { token: string | null; claims: JWTClaims | undefined } {
+    const actionToken = this.actionToken;
+    if (actionToken !== null) {
+      try {
+        return { token: actionToken, claims: jwtDecode<JWTClaims>(actionToken) };
+      } catch {
+        /* invalid token */
+      }
+    }
+    return { token: null, claims: undefined };
+  }
+
+  getTokenAndClaims(): { token: string | null; claims: JWTClaims | undefined } {
+    const action = this.getActionTokenAndClaims();
+    if (action.claims) return action;
+    return this.getSessionTokenAndClaims();
+  }
+
   logout(): void {
     this.token = null;
     this.actionToken = null;
@@ -126,7 +137,10 @@ export class AuthService {
 export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
   if (authenticatedRoute(req)) {
-    const { token, claims } = auth.getTokenAndClaims();
+    const useAction = req.context.get(USE_ACTION_TOKEN);
+    const { token, claims } = useAction
+      ? auth.getActionTokenAndClaims()
+      : auth.getSessionTokenAndClaims();
     if (claims && claims.exp * 1000 > Date.now()) {
       return next(req.clone({ headers: req.headers.set('Authorization', `Bearer ${token}`) })).pipe(
         tap({
@@ -148,7 +162,7 @@ export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
 };
 
 function authenticatedRoute(req: HttpRequest<unknown>): boolean {
-  return !req.url.startsWith(authBaseUrl);
+  return !req.url.startsWith('/api/v1/auth');
 }
 
 function redirectToLogin(email?: string) {

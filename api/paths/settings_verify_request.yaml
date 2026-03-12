@@ -1,0 +1,8 @@
+post:
+  operationId: RequestEmailVerification
+  summary: Request an email verification link
+  security:
+    - bearerHttpAuthentication: []
+  responses:
+    '204':
+      description: Verification email sent
