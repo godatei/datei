@@ -1,0 +1,18 @@
+post:
+  operationId: DisableMFA
+  summary: Disable MFA
+  security:
+    - bearerHttpAuthentication: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/DisableMFARequest.yaml'
+  responses:
+    '204':
+      description: MFA disabled
+    '400':
+      description: MFA not enabled
+    '401':
+      description: Invalid password

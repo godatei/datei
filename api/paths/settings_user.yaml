@@ -1,0 +1,16 @@
+post:
+  operationId: UpdateUser
+  summary: Update user name or password
+  security:
+    - bearerHttpAuthentication: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/UpdateUserRequest.yaml'
+  responses:
+    '204':
+      description: User updated
+    '400':
+      description: Invalid input

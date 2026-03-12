@@ -1,0 +1,19 @@
+patch:
+  operationId: SetPrimaryEmail
+  summary: Set an email as primary
+  security:
+    - bearerHttpAuthentication: []
+  parameters:
+    - name: emailId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '204':
+      description: Email set as primary
+    '400':
+      description: Email must be verified to set as primary
+    '404':
+      description: Email not found

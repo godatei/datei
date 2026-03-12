@@ -12,13 +12,16 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/httprate"
 	"github.com/godatei/datei/internal/aggregate"
+	"github.com/godatei/datei/internal/authn"
 	"github.com/godatei/datei/internal/buildconfig"
 	"github.com/godatei/datei/internal/config"
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/db/migrations"
 	"github.com/godatei/datei/internal/events"
 	"github.com/godatei/datei/internal/frontend"
+	"github.com/godatei/datei/internal/mailer"
 	"github.com/godatei/datei/internal/server"
 	"github.com/godatei/datei/internal/storage"
 	oapimiddleware "github.com/oapi-codegen/nethttp-middleware"
@@ -87,8 +90,20 @@ func run(ctx context.Context, options Options) error {
 		return err
 	}
 
-	eventStore := events.NewPostgresEventStore(db)
-	repository := aggregate.NewPostgresDateiRepository(db, eventStore)
+	dateiEventStore := events.NewPostgresEventStore(db)
+	dateiRepository := aggregate.NewPostgresDateiRepository(db, dateiEventStore)
+
+	userEventStore := events.NewUserAccountEventStore(db)
+	userRepository := aggregate.NewPostgresUserRepository(db, userEventStore)
+
+	// Create mailer
+	var m mailer.Mailer
+	mc := config.Mailer()
+	if mc.Enabled {
+		m = mailer.NewSMTPMailer(mc.SMTP.Host, mc.SMTP.Port, mc.SMTP.Username, mc.SMTP.Password, mc.SMTP.From)
+	} else {
+		m = mailer.NewNoopMailer()
+	}
 
 	swagger, err := server.GetSwagger()
 	if err != nil {
@@ -96,20 +111,73 @@ func run(ctx context.Context, options Options) error {
 		return err
 	}
 
-	apiMux := chi.NewRouter()
-	apiMux.Use(
+	// Create the unified server implementing StrictServerInterface
+	srv := server.NewServer(db, store, dateiRepository, userRepository, m)
+	strictHandler := server.NewStrictHandler(srv, nil)
+
+	// Build a wrapper for per-route registration with different middleware groups
+	wrapper := server.ServerInterfaceWrapper{
+		Handler: strictHandler,
+		ErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		},
+	}
+
+	commonMiddleware := chi.Chain(
 		chimiddleware.RequestID,
 		chimiddleware.RealIP,
 		slogchi.New(slog.Default()),
-		oapimiddleware.OapiRequestValidator(swagger),
 	)
-	strictHandler := server.NewStrictHandler(server.NewServer(db, store, repository), nil)
-	server.HandlerFromMux(strictHandler, apiMux)
 
 	rootMux := chi.NewRouter()
 	rootMux.Use(chimiddleware.Recoverer)
+
+	// Auth routes (public, rate-limited)
+	rootMux.Group(func(r chi.Router) {
+		r.Use(commonMiddleware...)
+		r.Use(httprate.Limit(
+			10, 1*time.Minute,
+			httprate.WithKeyFuncs(httprate.KeyByRealIP, httprate.KeyByEndpoint),
+		))
+		r.Post("/api/v1/auth/login", wrapper.Login)
+		r.Get("/api/v1/auth/login/config", wrapper.GetLoginConfig)
+		r.Post("/api/v1/auth/register", wrapper.Register)
+		r.Post("/api/v1/auth/reset", wrapper.ResetPassword)
+	})
+
+	// Settings routes (auth required)
+	rootMux.Group(func(r chi.Router) {
+		r.Use(commonMiddleware...)
+		r.Use(authn.Middleware)
+		r.Post("/api/v1/settings/user", wrapper.UpdateUser)
+		r.Patch("/api/v1/settings/user/email", wrapper.UpdateUserEmail)
+		r.Post("/api/v1/settings/verify/request", wrapper.RequestEmailVerification)
+		r.Post("/api/v1/settings/verify/confirm", wrapper.ConfirmEmailVerification)
+		r.Post("/api/v1/settings/mfa/setup", wrapper.SetupMFA)
+		r.Post("/api/v1/settings/mfa/enable", wrapper.EnableMFA)
+		r.Post("/api/v1/settings/mfa/disable", wrapper.DisableMFA)
+		r.Post("/api/v1/settings/mfa/recovery-codes/regenerate", wrapper.RegenerateMFARecoveryCodes)
+		r.Get("/api/v1/settings/mfa/recovery-codes/status", wrapper.GetMFARecoveryCodesStatus)
+		r.Get("/api/v1/settings/emails", wrapper.ListEmails)
+		r.Post("/api/v1/settings/emails", wrapper.AddEmail)
+		r.Delete("/api/v1/settings/emails/{emailId}", wrapper.RemoveEmail)
+		r.Patch("/api/v1/settings/emails/{emailId}/primary", wrapper.SetPrimaryEmail)
+	})
+
+	// Datei routes (session token required + OpenAPI request validation)
+	rootMux.Group(func(r chi.Router) {
+		r.Use(commonMiddleware...)
+		r.Use(authn.Middleware)
+		r.Use(authn.RequireSessionTokenMiddleware)
+		r.Use(oapimiddleware.OapiRequestValidator(swagger))
+		r.Get("/api/v1/datei", wrapper.ListDatei)
+		r.Post("/api/v1/datei", wrapper.CreateDatei)
+		r.Delete("/api/v1/datei/{id}", wrapper.DeleteDatei)
+		r.Patch("/api/v1/datei/{id}", wrapper.UpdateDatei)
+		r.Get("/api/v1/datei/{id}/download", wrapper.DownloadDatei)
+	})
+
 	rootMux.Handle("/*", frontend.NewHandler())
-	rootMux.Handle("/api/*", apiMux)
 
 	httpServer := &http.Server{Handler: rootMux, Addr: config.ServerAddr()}
 

@@ -1,0 +1,6 @@
+type: object
+properties:
+  token:
+    type: string
+  requiresMfa:
+    type: boolean

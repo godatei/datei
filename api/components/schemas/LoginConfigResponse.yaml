@@ -1,0 +1,6 @@
+type: object
+required:
+  - registrationEnabled
+properties:
+  registrationEnabled:
+    type: boolean
