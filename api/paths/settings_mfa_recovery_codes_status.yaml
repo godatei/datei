@@ -1,0 +1,12 @@
+get:
+  operationId: GetMFARecoveryCodesStatus
+  summary: Get MFA recovery codes status
+  security:
+    - bearerHttpAuthentication: []
+  responses:
+    '200':
+      description: Recovery codes status
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/MFARecoveryCodesStatusResponse.yaml'

@@ -113,6 +113,27 @@ func Deserialize(eventType string, data []byte) (DomainEvent, error) {
 		}
 		return event, nil
 
+	case "UserEmailAdded":
+		var event UserEmailAddedEvent
+		if err := json.Unmarshal(data, &event); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal UserEmailAddedEvent: %w", err)
+		}
+		return event, nil
+
+	case "UserEmailRemoved":
+		var event UserEmailRemovedEvent
+		if err := json.Unmarshal(data, &event); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal UserEmailRemovedEvent: %w", err)
+		}
+		return event, nil
+
+	case "UserEmailSetPrimary":
+		var event UserEmailSetPrimaryEvent
+		if err := json.Unmarshal(data, &event); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal UserEmailSetPrimaryEvent: %w", err)
+		}
+		return event, nil
+
 	case "UserMFASetupInitiated":
 		var event UserMFASetupInitiatedEvent
 		if err := json.Unmarshal(data, &event); err != nil {

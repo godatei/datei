@@ -1,0 +1,17 @@
+post:
+  operationId: Register
+  summary: Register a new user account
+  security: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/RegisterRequest.yaml'
+  responses:
+    '204':
+      description: Registration successful
+    '400':
+      description: Invalid input or email already registered
+    '403':
+      description: Registration disabled

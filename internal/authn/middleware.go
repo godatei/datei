@@ -49,6 +49,23 @@ func Middleware(next http.Handler) http.Handler {
 	}))
 }
 
+// RequireSessionTokenMiddleware rejects action tokens (password reset, email verification).
+// Use this for routes that should only be accessible with a regular session token.
+func RequireSessionTokenMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		info, err := FromContext(r.Context())
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+		if info.PasswordReset || (info.EmailVerified && info.Name == "") {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 // FromContext retrieves AuthInfo from the request context.
 func FromContext(ctx context.Context) (AuthInfo, error) {
 	if auth, ok := ctx.Value(contextKey{}).(AuthInfo); ok {

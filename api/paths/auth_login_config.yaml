@@ -1,0 +1,11 @@
+get:
+  operationId: GetLoginConfig
+  summary: Get login configuration
+  security: []
+  responses:
+    '200':
+      description: Login configuration
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/LoginConfigResponse.yaml'

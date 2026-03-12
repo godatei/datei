@@ -113,6 +113,12 @@ func (r *PostgresUserRepository) updateProjection(
 		return projections.UpdateProjectionForUserEmailChanged(ctx, q, &e)
 	case events.UserEmailVerifiedEvent:
 		return projections.UpdateProjectionForUserEmailVerified(ctx, q, &e)
+	case events.UserEmailAddedEvent:
+		return projections.UpdateProjectionForUserEmailAdded(ctx, q, &e)
+	case events.UserEmailRemovedEvent:
+		return projections.UpdateProjectionForUserEmailRemoved(ctx, q, &e)
+	case events.UserEmailSetPrimaryEvent:
+		return projections.UpdateProjectionForUserEmailSetPrimary(ctx, q, &e)
 	case events.UserMFASetupInitiatedEvent:
 		return projections.UpdateProjectionForUserMFASetupInitiated(ctx, q, &e)
 	case events.UserMFAEnabledEvent:

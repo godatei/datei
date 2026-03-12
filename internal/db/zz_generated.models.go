@@ -247,6 +247,15 @@ type UserAccount struct {
 	UpdatedAt      time.Time  `db:"updated_at"`
 }
 
+type UserAccountEmail struct {
+	ID            uuid.UUID  `db:"id"`
+	UserAccountID uuid.UUID  `db:"user_account_id"`
+	Email         string     `db:"email"`
+	VerifiedAt    *time.Time `db:"verified_at"`
+	IsPrimary     bool       `db:"is_primary"`
+	CreatedAt     time.Time  `db:"created_at"`
+}
+
 type UserAccountEvent struct {
 	ID            int64     `db:"id"`
 	StreamID      uuid.UUID `db:"stream_id"`
@@ -262,15 +271,6 @@ type UserAccountMfaRecoveryCode struct {
 	CodeHash      []byte     `db:"code_hash"`
 	CodeSalt      []byte     `db:"code_salt"`
 	UsedAt        *time.Time `db:"used_at"`
-	CreatedAt     time.Time  `db:"created_at"`
-}
-
-type UserEmail struct {
-	ID            uuid.UUID  `db:"id"`
-	UserAccountID uuid.UUID  `db:"user_account_id"`
-	Email         string     `db:"email"`
-	VerifiedAt    *time.Time `db:"verified_at"`
-	IsPrimary     bool       `db:"is_primary"`
 	CreatedAt     time.Time  `db:"created_at"`
 }
 

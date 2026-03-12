@@ -34,14 +34,80 @@ func (q *Queries) DeleteAllMFARecoveryCodesProjection(ctx context.Context, userA
 	return err
 }
 
+const deleteUserAccountEmailProjection = `-- name: DeleteUserAccountEmailProjection :exec
+DELETE FROM user_account_email WHERE id = $1
+`
+
+func (q *Queries) DeleteUserAccountEmailProjection(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteUserAccountEmailProjection, id)
+	return err
+}
+
+const getEmailByID = `-- name: GetEmailByID :one
+SELECT id, user_account_id, email, verified_at, is_primary, created_at FROM user_account_email
+WHERE id = $1 AND user_account_id = $2
+`
+
+type GetEmailByIDParams struct {
+	ID            uuid.UUID `db:"id"`
+	UserAccountID uuid.UUID `db:"user_account_id"`
+}
+
+func (q *Queries) GetEmailByID(ctx context.Context, arg GetEmailByIDParams) (UserAccountEmail, error) {
+	row := q.db.QueryRow(ctx, getEmailByID, arg.ID, arg.UserAccountID)
+	var i UserAccountEmail
+	err := row.Scan(
+		&i.ID,
+		&i.UserAccountID,
+		&i.Email,
+		&i.VerifiedAt,
+		&i.IsPrimary,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getEmailsForUser = `-- name: GetEmailsForUser :many
+SELECT id, user_account_id, email, verified_at, is_primary, created_at FROM user_account_email
+WHERE user_account_id = $1
+ORDER BY is_primary DESC, created_at
+`
+
+func (q *Queries) GetEmailsForUser(ctx context.Context, userAccountID uuid.UUID) ([]UserAccountEmail, error) {
+	rows, err := q.db.Query(ctx, getEmailsForUser, userAccountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []UserAccountEmail
+	for rows.Next() {
+		var i UserAccountEmail
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserAccountID,
+			&i.Email,
+			&i.VerifiedAt,
+			&i.IsPrimary,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPrimaryEmailForUser = `-- name: GetPrimaryEmailForUser :one
-SELECT id, user_account_id, email, verified_at, is_primary, created_at FROM user_email
+SELECT id, user_account_id, email, verified_at, is_primary, created_at FROM user_account_email
 WHERE user_account_id = $1 AND is_primary = true
 `
 
-func (q *Queries) GetPrimaryEmailForUser(ctx context.Context, userAccountID uuid.UUID) (UserEmail, error) {
+func (q *Queries) GetPrimaryEmailForUser(ctx context.Context, userAccountID uuid.UUID) (UserAccountEmail, error) {
 	row := q.db.QueryRow(ctx, getPrimaryEmailForUser, userAccountID)
-	var i UserEmail
+	var i UserAccountEmail
 	err := row.Scan(
 		&i.ID,
 		&i.UserAccountID,
@@ -87,7 +153,7 @@ func (q *Queries) GetUnusedMFARecoveryCodes(ctx context.Context, userAccountID u
 
 const getUserAccountByEmail = `-- name: GetUserAccountByEmail :one
 SELECT ua.id, ua.name, ua.password_hash, ua.password_salt, ua.mfa_secret, ua.mfa_enabled, ua.mfa_enabled_at, ua.archived_at, ua.last_logged_in_at, ua.created_at, ua.updated_at FROM user_account ua
-JOIN user_email ue ON ue.user_account_id = ua.id
+JOIN user_account_email ue ON ue.user_account_id = ua.id
 WHERE ue.email = $1 AND ua.archived_at IS NULL
 `
 
@@ -163,6 +229,34 @@ func (q *Queries) InsertMFARecoveryCodeProjection(ctx context.Context, arg Inser
 	return err
 }
 
+const insertUserAccountEmailProjection = `-- name: InsertUserAccountEmailProjection :exec
+
+INSERT INTO user_account_email (id, user_account_id, email, is_primary, created_at)
+VALUES ($1, $2, $3, $4, $5)
+`
+
+type InsertUserAccountEmailProjectionParams struct {
+	ID            uuid.UUID `db:"id"`
+	UserAccountID uuid.UUID `db:"user_account_id"`
+	Email         string    `db:"email"`
+	IsPrimary     bool      `db:"is_primary"`
+	CreatedAt     time.Time `db:"created_at"`
+}
+
+// ============================================================================
+// User Email Projection Writes
+// ============================================================================
+func (q *Queries) InsertUserAccountEmailProjection(ctx context.Context, arg InsertUserAccountEmailProjectionParams) error {
+	_, err := q.db.Exec(ctx, insertUserAccountEmailProjection,
+		arg.ID,
+		arg.UserAccountID,
+		arg.Email,
+		arg.IsPrimary,
+		arg.CreatedAt,
+	)
+	return err
+}
+
 const insertUserAccountProjection = `-- name: InsertUserAccountProjection :exec
 
 INSERT INTO user_account (id, name, password_hash, password_salt, created_at, updated_at)
@@ -191,34 +285,6 @@ func (q *Queries) InsertUserAccountProjection(ctx context.Context, arg InsertUse
 	return err
 }
 
-const insertUserEmailProjection = `-- name: InsertUserEmailProjection :exec
-
-INSERT INTO user_email (id, user_account_id, email, is_primary, created_at)
-VALUES ($1, $2, $3, $4, $5)
-`
-
-type InsertUserEmailProjectionParams struct {
-	ID            uuid.UUID `db:"id"`
-	UserAccountID uuid.UUID `db:"user_account_id"`
-	Email         string    `db:"email"`
-	IsPrimary     bool      `db:"is_primary"`
-	CreatedAt     time.Time `db:"created_at"`
-}
-
-// ============================================================================
-// User Email Projection Writes
-// ============================================================================
-func (q *Queries) InsertUserEmailProjection(ctx context.Context, arg InsertUserEmailProjectionParams) error {
-	_, err := q.db.Exec(ctx, insertUserEmailProjection,
-		arg.ID,
-		arg.UserAccountID,
-		arg.Email,
-		arg.IsPrimary,
-		arg.CreatedAt,
-	)
-	return err
-}
-
 const markMFARecoveryCodeUsedProjection = `-- name: MarkMFARecoveryCodeUsedProjection :exec
 UPDATE user_account_mfa_recovery_code SET used_at = now()
 WHERE id = $1
@@ -226,6 +292,51 @@ WHERE id = $1
 
 func (q *Queries) MarkMFARecoveryCodeUsedProjection(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, markMFARecoveryCodeUsedProjection, id)
+	return err
+}
+
+const setUserAccountEmailPrimaryProjection = `-- name: SetUserAccountEmailPrimaryProjection :exec
+UPDATE user_account_email SET is_primary = (id = $1)
+WHERE user_account_id = $2
+`
+
+type SetUserAccountEmailPrimaryProjectionParams struct {
+	ID            uuid.UUID `db:"id"`
+	UserAccountID uuid.UUID `db:"user_account_id"`
+}
+
+func (q *Queries) SetUserAccountEmailPrimaryProjection(ctx context.Context, arg SetUserAccountEmailPrimaryProjectionParams) error {
+	_, err := q.db.Exec(ctx, setUserAccountEmailPrimaryProjection, arg.ID, arg.UserAccountID)
+	return err
+}
+
+const updateUserAccountEmailProjectionEmail = `-- name: UpdateUserAccountEmailProjectionEmail :exec
+UPDATE user_account_email SET email = $1, verified_at = NULL
+WHERE user_account_id = $2 AND is_primary = true
+`
+
+type UpdateUserAccountEmailProjectionEmailParams struct {
+	Email         string    `db:"email"`
+	UserAccountID uuid.UUID `db:"user_account_id"`
+}
+
+func (q *Queries) UpdateUserAccountEmailProjectionEmail(ctx context.Context, arg UpdateUserAccountEmailProjectionEmailParams) error {
+	_, err := q.db.Exec(ctx, updateUserAccountEmailProjectionEmail, arg.Email, arg.UserAccountID)
+	return err
+}
+
+const updateUserAccountEmailProjectionVerified = `-- name: UpdateUserAccountEmailProjectionVerified :exec
+UPDATE user_account_email SET verified_at = $1
+WHERE user_account_id = $2 AND is_primary = true
+`
+
+type UpdateUserAccountEmailProjectionVerifiedParams struct {
+	VerifiedAt    *time.Time `db:"verified_at"`
+	UserAccountID uuid.UUID  `db:"user_account_id"`
+}
+
+func (q *Queries) UpdateUserAccountEmailProjectionVerified(ctx context.Context, arg UpdateUserAccountEmailProjectionVerifiedParams) error {
+	_, err := q.db.Exec(ctx, updateUserAccountEmailProjectionVerified, arg.VerifiedAt, arg.UserAccountID)
 	return err
 }
 
@@ -333,35 +444,5 @@ func (q *Queries) UpdateUserAccountProjectionPassword(ctx context.Context, arg U
 		arg.UpdatedAt,
 		arg.ID,
 	)
-	return err
-}
-
-const updateUserEmailProjectionEmail = `-- name: UpdateUserEmailProjectionEmail :exec
-UPDATE user_email SET email = $1, verified_at = NULL
-WHERE user_account_id = $2 AND is_primary = true
-`
-
-type UpdateUserEmailProjectionEmailParams struct {
-	Email         string    `db:"email"`
-	UserAccountID uuid.UUID `db:"user_account_id"`
-}
-
-func (q *Queries) UpdateUserEmailProjectionEmail(ctx context.Context, arg UpdateUserEmailProjectionEmailParams) error {
-	_, err := q.db.Exec(ctx, updateUserEmailProjectionEmail, arg.Email, arg.UserAccountID)
-	return err
-}
-
-const updateUserEmailProjectionVerified = `-- name: UpdateUserEmailProjectionVerified :exec
-UPDATE user_email SET verified_at = $1
-WHERE user_account_id = $2 AND is_primary = true
-`
-
-type UpdateUserEmailProjectionVerifiedParams struct {
-	VerifiedAt    *time.Time `db:"verified_at"`
-	UserAccountID uuid.UUID  `db:"user_account_id"`
-}
-
-func (q *Queries) UpdateUserEmailProjectionVerified(ctx context.Context, arg UpdateUserEmailProjectionVerifiedParams) error {
-	_, err := q.db.Exec(ctx, updateUserEmailProjectionVerified, arg.VerifiedAt, arg.UserAccountID)
 	return err
 }

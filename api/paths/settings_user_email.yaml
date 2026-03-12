@@ -1,0 +1,16 @@
+patch:
+  operationId: UpdateUserEmail
+  summary: Change user primary email
+  security:
+    - bearerHttpAuthentication: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/UpdateUserEmailRequest.yaml'
+  responses:
+    '204':
+      description: Email updated
+    '400':
+      description: Invalid input

@@ -4,6 +4,43 @@ info:
   version: 1.0.0
   title: Datei API
 paths:
+  # Auth (public, no authentication required)
+  /api/v1/auth/login:
+    $ref: ./paths/auth_login.yaml
+  /api/v1/auth/login/config:
+    $ref: ./paths/auth_login_config.yaml
+  /api/v1/auth/register:
+    $ref: ./paths/auth_register.yaml
+  /api/v1/auth/reset:
+    $ref: ./paths/auth_reset.yaml
+
+  # Settings (authentication required)
+  /api/v1/settings/user:
+    $ref: ./paths/settings_user.yaml
+  /api/v1/settings/user/email:
+    $ref: ./paths/settings_user_email.yaml
+  /api/v1/settings/verify/request:
+    $ref: ./paths/settings_verify_request.yaml
+  /api/v1/settings/verify/confirm:
+    $ref: ./paths/settings_verify_confirm.yaml
+  /api/v1/settings/mfa/setup:
+    $ref: ./paths/settings_mfa_setup.yaml
+  /api/v1/settings/mfa/enable:
+    $ref: ./paths/settings_mfa_enable.yaml
+  /api/v1/settings/mfa/disable:
+    $ref: ./paths/settings_mfa_disable.yaml
+  /api/v1/settings/mfa/recovery-codes/regenerate:
+    $ref: ./paths/settings_mfa_recovery_codes_regenerate.yaml
+  /api/v1/settings/mfa/recovery-codes/status:
+    $ref: ./paths/settings_mfa_recovery_codes_status.yaml
+  /api/v1/settings/emails:
+    $ref: ./paths/settings_emails.yaml
+  /api/v1/settings/emails/{emailId}:
+    $ref: ./paths/settings_emails_id.yaml
+  /api/v1/settings/emails/{emailId}/primary:
+    $ref: ./paths/settings_emails_id_primary.yaml
+
+  # Datei (authentication required)
   /api/v1/datei:
     $ref: ./paths/datei.yaml
   /api/v1/datei/{id}:
@@ -17,5 +54,3 @@ components:
       type: http
       scheme: Bearer
       bearerFormat: JWT
-#security:
-#  - bearerHttpAuthentication: []

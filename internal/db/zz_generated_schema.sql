@@ -5,7 +5,7 @@
 
 
 -- Dumped from database version 18.3
--- Dumped by pg_dump version 18.3
+-- Dumped by pg_dump version 18.2
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -18,6 +18,20 @@ SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
+
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+--
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON SCHEMA public IS '';
+
 
 --
 -- Name: datei_permission_type; Type: TYPE; Schema: public; Owner: -
@@ -241,6 +255,20 @@ CREATE TABLE public.user_account (
 
 
 --
+-- Name: user_account_email; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_account_email (
+    id uuid DEFAULT uuidv7() NOT NULL,
+    user_account_id uuid NOT NULL,
+    email text NOT NULL,
+    verified_at timestamp with time zone,
+    is_primary boolean DEFAULT false NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
 -- Name: user_account_event; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -284,20 +312,6 @@ CREATE TABLE public.user_account_mfa_recovery_code (
     code_hash bytea NOT NULL,
     code_salt bytea NOT NULL,
     used_at timestamp with time zone,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
---
--- Name: user_email; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.user_email (
-    id uuid DEFAULT uuidv7() NOT NULL,
-    user_account_id uuid NOT NULL,
-    email text NOT NULL,
-    verified_at timestamp with time zone,
-    is_primary boolean DEFAULT false NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 

@@ -34,7 +34,7 @@ CREATE TABLE user_account_mfa_recovery_code (
 
 CREATE INDEX idx_user_account_mfa_recovery_code_user_account_id ON user_account_mfa_recovery_code(user_account_id, used_at);
 
-CREATE TABLE user_email (
+CREATE TABLE user_account_email (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
   user_account_id UUID NOT NULL REFERENCES user_account(id) ON DELETE CASCADE,
   email TEXT NOT NULL UNIQUE,
@@ -43,8 +43,8 @@ CREATE TABLE user_email (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_user_email_user_account_id ON user_email(user_account_id);
-CREATE UNIQUE INDEX uq_user_email_primary ON user_email(user_account_id) WHERE is_primary = true;
+CREATE INDEX idx_user_account_email_user_account_id ON user_account_email(user_account_id);
+CREATE UNIQUE INDEX uq_user_account_email_primary ON user_account_email(user_account_id) WHERE is_primary = true;
 
 CREATE TABLE user_group (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
