@@ -26,7 +26,7 @@ func (s *server) Login(ctx context.Context, request LoginRequestObject) (LoginRe
 	}
 
 	q := db.New(s.pool)
-	user, err := q.GetUserAccountByEmail(ctx, request.Body.Email)
+	user, err := q.GetUserAccountByEmail(ctx, string(request.Body.Email))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return Login400Response{}, nil
@@ -36,7 +36,7 @@ func (s *server) Login(ctx context.Context, request LoginRequestObject) (LoginRe
 	}
 
 	if err := security.VerifyPassword(request.Body.Password, user.PasswordHash, user.PasswordSalt); err != nil {
-		return Login400Response{}, nil
+		return Login401Response{}, nil
 	}
 
 	if user.MfaEnabled {
@@ -134,7 +134,7 @@ func (s *server) Register(ctx context.Context, request RegisterRequestObject) (R
 		return Register400Response{}, nil
 	}
 
-	if request.Body.Email == "" || request.Body.Password == "" || request.Body.Name == "" {
+	if string(request.Body.Email) == "" || request.Body.Password == "" || request.Body.Name == "" {
 		return Register400Response{}, nil
 	}
 	if len(request.Body.Password) < 8 {
@@ -142,7 +142,7 @@ func (s *server) Register(ctx context.Context, request RegisterRequestObject) (R
 	}
 
 	q := db.New(s.pool)
-	_, err := q.GetUserAccountByEmail(ctx, request.Body.Email)
+	_, err := q.GetUserAccountByEmail(ctx, string(request.Body.Email))
 	if err == nil {
 		return Register400Response{}, nil
 	}
@@ -161,7 +161,7 @@ func (s *server) Register(ctx context.Context, request RegisterRequestObject) (R
 	emailID := uuid.New()
 	agg := &aggregate.UserAggregate{}
 	err = agg.Register(
-		userID, request.Body.Name, request.Body.Email, emailID, passwordHash, passwordSalt, time.Now(),
+		userID, request.Body.Name, string(request.Body.Email), emailID, passwordHash, passwordSalt, time.Now(),
 	)
 	if err != nil {
 		slog.Error("failed to create user aggregate", "error", err)
@@ -174,12 +174,12 @@ func (s *server) Register(ctx context.Context, request RegisterRequestObject) (R
 	}
 
 	if config.AuthEmailVerificationRequired() {
-		_, token, err := authjwt.GenerateVerificationToken(userID, request.Body.Email)
+		_, token, err := authjwt.GenerateVerificationToken(userID, string(request.Body.Email))
 		if err != nil {
 			slog.Error("failed to generate verification token", "error", err)
 		} else {
 			verifyURL := fmt.Sprintf("%s/verify?jwt=%s", config.ServerHost(), token)
-			if err := s.mailer.Send(ctx, mailer.EmailVerificationEmail(request.Body.Email, verifyURL)); err != nil {
+			if err := s.mailer.Send(ctx, mailer.EmailVerificationEmail(string(request.Body.Email), verifyURL)); err != nil {
 				slog.Warn("failed to send verification email", "error", err)
 			}
 		}
@@ -197,7 +197,7 @@ func (s *server) ResetPassword(
 	}
 
 	q := db.New(s.pool)
-	user, err := q.GetUserAccountByEmail(ctx, request.Body.Email)
+	user, err := q.GetUserAccountByEmail(ctx, string(request.Body.Email))
 	if err != nil {
 		if !errors.Is(err, pgx.ErrNoRows) {
 			slog.Error("failed to get user for password reset", "error", err)
@@ -215,13 +215,12 @@ func (s *server) ResetPassword(
 	_, token, err := authjwt.GenerateResetToken(user.ID, primaryEmail.Email)
 	if err != nil {
 		slog.Error("failed to generate reset token", "error", err)
-		return nil, fmt.Errorf("failed to generate reset token: %w", err)
+		return ResetPassword204Response{}, nil
 	}
 
 	resetURL := fmt.Sprintf("%s/reset?jwt=%s", config.ServerHost(), token)
 	if err := s.mailer.Send(ctx, mailer.PasswordResetEmail(primaryEmail.Email, resetURL)); err != nil {
 		slog.Warn("failed to send reset email", "error", err)
-		return nil, fmt.Errorf("failed to send reset email: %w", err)
 	}
 
 	return ResetPassword204Response{}, nil

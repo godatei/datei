@@ -145,14 +145,21 @@ func run(ctx context.Context, options Options) error {
 		r.Post("/api/v1/auth/reset", wrapper.ResetPassword)
 	})
 
-	// Settings routes (auth required)
+	// Settings routes that accept action tokens (password reset, email verification)
 	rootMux.Group(func(r chi.Router) {
 		r.Use(commonMiddleware...)
 		r.Use(authn.Middleware)
 		r.Post("/api/v1/settings/user", wrapper.UpdateUser)
+		r.Post("/api/v1/settings/verify/confirm", wrapper.ConfirmEmailVerification)
+	})
+
+	// Settings routes requiring session tokens only
+	rootMux.Group(func(r chi.Router) {
+		r.Use(commonMiddleware...)
+		r.Use(authn.Middleware)
+		r.Use(authn.RequireSessionTokenMiddleware)
 		r.Patch("/api/v1/settings/user/email", wrapper.UpdateUserEmail)
 		r.Post("/api/v1/settings/verify/request", wrapper.RequestEmailVerification)
-		r.Post("/api/v1/settings/verify/confirm", wrapper.ConfirmEmailVerification)
 		r.Post("/api/v1/settings/mfa/setup", wrapper.SetupMFA)
 		r.Post("/api/v1/settings/mfa/enable", wrapper.EnableMFA)
 		r.Post("/api/v1/settings/mfa/disable", wrapper.DisableMFA)

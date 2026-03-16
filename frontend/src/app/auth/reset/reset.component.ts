@@ -9,6 +9,7 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
@@ -30,21 +31,25 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    MatIconModule,
     MatProgressSpinnerModule,
   ],
   template: `
     <div class="auth-container">
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title>Set a new password</mat-card-title>
-        </mat-card-header>
+      <mat-card class="auth-card">
         <mat-card-content>
+          <div class="auth-header">
+            <mat-icon class="brand-icon">cloud_upload</mat-icon>
+            <h1>Set a new password</h1>
+            <p class="subtitle">Choose a strong password for your account</p>
+          </div>
+
           @if (errorMessage()) {
-            <p class="error-message">{{ errorMessage() }}</p>
+            <div class="error-banner">{{ errorMessage() }}</div>
           }
 
-          <form [formGroup]="form" (ngSubmit)="onSubmit()">
-            <mat-form-field appearance="outline">
+          <form class="auth-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+            <mat-form-field class="form-field" appearance="outline">
               <mat-label>New password</mat-label>
               <input
                 matInput
@@ -55,7 +60,7 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
               <mat-hint>At least 8 characters</mat-hint>
             </mat-form-field>
 
-            <mat-form-field appearance="outline">
+            <mat-form-field class="form-field" appearance="outline">
               <mat-label>Confirm new password</mat-label>
               <input
                 matInput
@@ -68,7 +73,12 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
               }
             </mat-form-field>
 
-            <button mat-flat-button type="submit" [disabled]="loading() || form.invalid">
+            <button
+              class="submit-btn"
+              mat-flat-button
+              type="submit"
+              [disabled]="loading() || form.invalid"
+            >
               @if (loading()) {
                 <mat-spinner diameter="20"></mat-spinner>
               } @else {
@@ -80,31 +90,7 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
       </mat-card>
     </div>
   `,
-  styles: `
-    .auth-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 1rem;
-    }
-    mat-card {
-      max-width: 400px;
-      width: 100%;
-    }
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    mat-form-field {
-      width: 100%;
-    }
-    .error-message {
-      color: var(--mat-sys-error);
-      margin-bottom: 1rem;
-    }
-  `,
+  styleUrls: ['../auth-shared.css'],
 })
 export class ResetComponent {
   private readonly settings = inject(SettingsService);

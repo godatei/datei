@@ -6,6 +6,7 @@ required:
 properties:
   email:
     type: string
+    format: email
   name:
     type: string
   password:

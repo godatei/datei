@@ -9,6 +9,7 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router, RouterLink } from '@angular/router';
@@ -29,32 +30,36 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    MatIconModule,
     MatProgressSpinnerModule,
     RouterLink,
   ],
   template: `
     <div class="auth-container">
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title>Create an account</mat-card-title>
-        </mat-card-header>
+      <mat-card class="auth-card">
         <mat-card-content>
+          <div class="auth-header">
+            <mat-icon class="brand-icon">cloud_upload</mat-icon>
+            <h1>Create your account</h1>
+            <p class="subtitle">to get started with Datei</p>
+          </div>
+
           @if (errorMessage()) {
-            <p class="error-message">{{ errorMessage() }}</p>
+            <div class="error-banner">{{ errorMessage() }}</div>
           }
 
-          <form [formGroup]="form" (ngSubmit)="onSubmit()">
-            <mat-form-field appearance="outline">
+          <form class="auth-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+            <mat-form-field class="form-field" appearance="outline">
               <mat-label>Name</mat-label>
               <input matInput formControlName="name" autocomplete="name" />
             </mat-form-field>
 
-            <mat-form-field appearance="outline">
+            <mat-form-field class="form-field" appearance="outline">
               <mat-label>Email</mat-label>
               <input matInput formControlName="email" type="email" autocomplete="email" />
             </mat-form-field>
 
-            <mat-form-field appearance="outline">
+            <mat-form-field class="form-field" appearance="outline">
               <mat-label>Password</mat-label>
               <input
                 matInput
@@ -65,7 +70,7 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
               <mat-hint>At least 8 characters</mat-hint>
             </mat-form-field>
 
-            <mat-form-field appearance="outline">
+            <mat-form-field class="form-field" appearance="outline">
               <mat-label>Confirm password</mat-label>
               <input
                 matInput
@@ -78,11 +83,16 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
               }
             </mat-form-field>
 
-            <button mat-flat-button type="submit" [disabled]="loading() || form.invalid">
+            <button
+              class="submit-btn"
+              mat-flat-button
+              type="submit"
+              [disabled]="loading() || form.invalid"
+            >
               @if (loading()) {
                 <mat-spinner diameter="20"></mat-spinner>
               } @else {
-                Register
+                Create account
               }
             </button>
           </form>
@@ -94,39 +104,7 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
       </mat-card>
     </div>
   `,
-  styles: `
-    .auth-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 1rem;
-    }
-    mat-card {
-      max-width: 400px;
-      width: 100%;
-    }
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    mat-form-field {
-      width: 100%;
-    }
-    .error-message {
-      color: var(--mat-sys-error);
-      margin-bottom: 1rem;
-    }
-    .auth-links {
-      display: flex;
-      justify-content: center;
-      margin-top: 1rem;
-    }
-    .auth-links a {
-      color: var(--mat-sys-primary);
-    }
-  `,
+  styleUrls: ['../auth-shared.css'],
 })
 export class RegisterComponent {
   private readonly auth = inject(AuthService);

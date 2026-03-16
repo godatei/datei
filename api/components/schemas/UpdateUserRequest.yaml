@@ -5,3 +5,5 @@ properties:
   password:
     type: string
     minLength: 8
+  currentPassword:
+    type: string
