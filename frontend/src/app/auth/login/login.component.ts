@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
@@ -17,28 +18,32 @@ import { AuthService } from '~/frontend/services/auth.service';
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    MatIconModule,
     MatProgressSpinnerModule,
     RouterLink,
   ],
   template: `
     <div class="auth-container">
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title>Sign in to Datei</mat-card-title>
-        </mat-card-header>
+      <mat-card class="auth-card">
         <mat-card-content>
+          <div class="auth-header">
+            <mat-icon class="brand-icon">cloud_upload</mat-icon>
+            <h1>Sign in</h1>
+            <p class="subtitle">to continue to Datei</p>
+          </div>
+
           @if (errorMessage()) {
-            <p class="error-message">{{ errorMessage() }}</p>
+            <div class="error-banner">{{ errorMessage() }}</div>
           }
 
           @if (!mfaRequired()) {
-            <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-              <mat-form-field appearance="outline">
+            <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+              <mat-form-field class="form-field" appearance="outline">
                 <mat-label>Email</mat-label>
                 <input matInput formControlName="email" type="email" autocomplete="email" />
               </mat-form-field>
 
-              <mat-form-field appearance="outline">
+              <mat-form-field class="form-field" appearance="outline">
                 <mat-label>Password</mat-label>
                 <input
                   matInput
@@ -48,7 +53,12 @@ import { AuthService } from '~/frontend/services/auth.service';
                 />
               </mat-form-field>
 
-              <button mat-flat-button type="submit" [disabled]="loading() || loginForm.invalid">
+              <button
+                class="submit-btn"
+                mat-flat-button
+                type="submit"
+                [disabled]="loading() || loginForm.invalid"
+              >
                 @if (loading()) {
                   <mat-spinner diameter="20"></mat-spinner>
                 } @else {
@@ -56,15 +66,25 @@ import { AuthService } from '~/frontend/services/auth.service';
                 }
               </button>
             </form>
+
+            <div class="auth-links">
+              <a routerLink="/forgot">Forgot password?</a>
+              <a routerLink="/register">Create an account</a>
+            </div>
           } @else {
-            <form [formGroup]="mfaForm" (ngSubmit)="onMFASubmit()">
-              <mat-form-field appearance="outline">
+            <form class="auth-form" [formGroup]="mfaForm" (ngSubmit)="onMFASubmit()">
+              <mat-form-field class="form-field" appearance="outline">
                 <mat-label>MFA Code</mat-label>
                 <input matInput formControlName="code" autocomplete="one-time-code" />
                 <mat-hint>Enter your 6-digit code or a recovery code</mat-hint>
               </mat-form-field>
 
-              <button mat-flat-button type="submit" [disabled]="loading() || mfaForm.invalid">
+              <button
+                class="submit-btn"
+                mat-flat-button
+                type="submit"
+                [disabled]="loading() || mfaForm.invalid"
+              >
                 @if (loading()) {
                   <mat-spinner diameter="20"></mat-spinner>
                 } @else {
@@ -73,48 +93,11 @@ import { AuthService } from '~/frontend/services/auth.service';
               </button>
             </form>
           }
-
-          <div class="auth-links">
-            <a routerLink="/forgot">Forgot password?</a>
-            <a routerLink="/register">Create an account</a>
-          </div>
         </mat-card-content>
       </mat-card>
     </div>
   `,
-  styles: `
-    .auth-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 1rem;
-    }
-    mat-card {
-      max-width: 400px;
-      width: 100%;
-    }
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    mat-form-field {
-      width: 100%;
-    }
-    .error-message {
-      color: var(--mat-sys-error);
-      margin-bottom: 1rem;
-    }
-    .auth-links {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 1rem;
-    }
-    .auth-links a {
-      color: var(--mat-sys-primary);
-    }
-  `,
+  styleUrls: ['../auth-shared.css'],
 })
 export class LoginComponent {
   private readonly auth = inject(AuthService);

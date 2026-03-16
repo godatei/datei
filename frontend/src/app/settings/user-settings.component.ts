@@ -1,3 +1,4 @@
+import { Clipboard } from '@angular/cdk/clipboard';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import {
   AbstractControl,
@@ -9,6 +10,7 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -34,24 +36,28 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
     MatInputModule,
     MatButtonModule,
     MatChipsModule,
+    MatDividerModule,
     MatIconModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
   ],
   template: `
     <div class="settings-container">
-      <h2>Settings</h2>
+      <h2 class="page-title">Settings</h2>
 
       <!-- Profile -->
       <mat-card>
         <mat-card-header><mat-card-title>Profile</mat-card-title></mat-card-header>
         <mat-card-content>
+          <p class="section-description">Manage your display name</p>
           <form [formGroup]="profileForm" (ngSubmit)="updateProfile()">
             <mat-form-field appearance="outline">
               <mat-label>Name</mat-label>
               <input matInput formControlName="name" />
             </mat-form-field>
-            <button mat-flat-button type="submit" [disabled]="profileLoading()">Save</button>
+            <button mat-flat-button type="submit" [disabled]="profileLoading()" class="action-btn">
+              Save
+            </button>
           </form>
         </mat-card-content>
       </mat-card>
@@ -60,7 +66,8 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
       <mat-card>
         <mat-card-header><mat-card-title>Email Addresses</mat-card-title></mat-card-header>
         <mat-card-content>
-          @for (email of emails(); track email.id) {
+          <p class="section-description">Control your email addresses and verification status</p>
+          @for (email of emails(); track email.id; let last = $last) {
             <div class="email-row">
               <span class="email-address">{{ email.email }}</span>
               <span class="email-badges">
@@ -75,7 +82,7 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
                   </mat-chip-set>
                 } @else {
                   <mat-chip-set>
-                    <mat-chip>Unverified</mat-chip>
+                    <mat-chip class="chip-unverified">Unverified</mat-chip>
                   </mat-chip-set>
                 }
               </span>
@@ -87,7 +94,7 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
                 }
                 @if (!email.isPrimary) {
                   <button
-                    mat-button
+                    mat-icon-button
                     color="warn"
                     (click)="removeEmailAddress(email.id)"
                     [disabled]="emailsLoading()"
@@ -98,8 +105,11 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
                 }
               </span>
             </div>
+            @if (!last) {
+              <mat-divider></mat-divider>
+            }
           }
-          <form [formGroup]="addEmailForm" (ngSubmit)="addNewEmail()">
+          <form [formGroup]="addEmailForm" (ngSubmit)="addNewEmail()" class="add-email-form">
             <mat-form-field appearance="outline">
               <mat-label>Add email address</mat-label>
               <input matInput formControlName="email" type="email" />
@@ -119,7 +129,17 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
       <mat-card>
         <mat-card-header><mat-card-title>Change Password</mat-card-title></mat-card-header>
         <mat-card-content>
+          <p class="section-description">Update your password</p>
           <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+            <mat-form-field appearance="outline">
+              <mat-label>Current password</mat-label>
+              <input
+                matInput
+                formControlName="currentPassword"
+                type="password"
+                autocomplete="current-password"
+              />
+            </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>New password</mat-label>
               <input
@@ -159,49 +179,79 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
           ><mat-card-title>Two-Factor Authentication</mat-card-title></mat-card-header
         >
         <mat-card-content>
+          <p class="section-description">Add an extra layer of security to your account</p>
+
           @if (mfaSetupData()) {
-            <p>Scan this QR code with your authenticator app:</p>
-            <img [src]="mfaSetupData()!.qrCodeUrl" alt="MFA QR Code" width="200" height="200" />
-            <p class="mfa-secret">Secret: {{ mfaSetupData()!.secret }}</p>
-            <form [formGroup]="mfaEnableForm" (ngSubmit)="enableMFA()">
-              <mat-form-field appearance="outline">
-                <mat-label>Verification code</mat-label>
-                <input matInput formControlName="code" autocomplete="one-time-code" />
-              </mat-form-field>
-              <button
-                mat-flat-button
-                type="submit"
-                [disabled]="mfaLoading() || mfaEnableForm.invalid"
-              >
-                Enable MFA
-              </button>
-            </form>
+            <div class="mfa-setup">
+              <p>Scan this QR code with your authenticator app:</p>
+              <div class="qr-container">
+                <img [src]="mfaSetupData()!.qrCodeUrl" alt="MFA QR Code" width="200" height="200" />
+              </div>
+              <div class="secret-row">
+                <span class="mfa-secret">{{ mfaSetupData()!.secret }}</span>
+                <button
+                  mat-icon-button
+                  (click)="copySecret()"
+                  aria-label="Copy secret to clipboard"
+                >
+                  <mat-icon>content_copy</mat-icon>
+                </button>
+              </div>
+              <form [formGroup]="mfaEnableForm" (ngSubmit)="enableMFA()">
+                <mat-form-field appearance="outline">
+                  <mat-label>Verification code</mat-label>
+                  <input matInput formControlName="code" autocomplete="one-time-code" />
+                </mat-form-field>
+                <button
+                  mat-flat-button
+                  type="submit"
+                  [disabled]="mfaLoading() || mfaEnableForm.invalid"
+                >
+                  Enable MFA
+                </button>
+              </form>
+            </div>
           } @else if (recoveryCodes()) {
             <p>Save these recovery codes in a safe place:</p>
-            <ul class="recovery-codes" role="list" aria-label="Recovery codes">
-              @for (code of recoveryCodes()!; track code) {
-                <li>{{ code }}</li>
-              }
-            </ul>
+            <div class="recovery-codes-container">
+              <ul class="recovery-codes" role="list" aria-label="Recovery codes">
+                @for (code of recoveryCodes()!; track code) {
+                  <li>{{ code }}</li>
+                }
+              </ul>
+              <button mat-button (click)="copyRecoveryCodes()">
+                <mat-icon>content_copy</mat-icon>
+                Copy all
+              </button>
+            </div>
             <button mat-flat-button (click)="recoveryCodes.set(undefined)">Done</button>
           } @else {
-            <button mat-flat-button (click)="setupMFA()" [disabled]="mfaLoading()">
+            <button
+              mat-flat-button
+              (click)="setupMFA()"
+              [disabled]="mfaLoading()"
+              class="action-btn"
+            >
               Set up MFA
             </button>
-            <form [formGroup]="mfaDisableForm" (ngSubmit)="disableMFA()">
-              <mat-form-field appearance="outline">
-                <mat-label>Password (to disable MFA)</mat-label>
-                <input matInput formControlName="password" type="password" />
-              </mat-form-field>
-              <button
-                mat-button
-                color="warn"
-                type="submit"
-                [disabled]="mfaLoading() || mfaDisableForm.invalid"
-              >
-                Disable MFA
-              </button>
-            </form>
+
+            <div class="danger-zone">
+              <p class="danger-label">Disable two-factor authentication</p>
+              <form [formGroup]="mfaDisableForm" (ngSubmit)="disableMFA()">
+                <mat-form-field appearance="outline">
+                  <mat-label>Password</mat-label>
+                  <input matInput formControlName="password" type="password" />
+                </mat-form-field>
+                <button
+                  mat-button
+                  color="warn"
+                  type="submit"
+                  [disabled]="mfaLoading() || mfaDisableForm.invalid"
+                >
+                  Disable MFA
+                </button>
+              </form>
+            </div>
           }
         </mat-card-content>
       </mat-card>
@@ -216,6 +266,15 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
       gap: 1.5rem;
       padding: 0 1rem;
     }
+    .page-title {
+      font: var(--mat-sys-headline-small);
+      margin: 0;
+    }
+    .section-description {
+      font: var(--mat-sys-body-medium);
+      color: var(--mat-sys-on-surface-variant);
+      margin: 0 0 1rem;
+    }
     form {
       display: flex;
       flex-direction: column;
@@ -224,11 +283,14 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
     mat-form-field {
       width: 100%;
     }
+    .action-btn {
+      align-self: flex-end;
+    }
     .email-row {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      padding: 0.5rem 0;
+      padding: 0.75rem 0;
     }
     .email-address {
       flex: 1;
@@ -242,16 +304,58 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
       display: flex;
       gap: 0.25rem;
     }
+    .chip-unverified {
+      opacity: 0.7;
+    }
+    .add-email-form {
+      margin-top: 1rem;
+    }
+    .mfa-setup {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .qr-container {
+      display: flex;
+      justify-content: center;
+      background: var(--mat-sys-surface-container);
+      border-radius: 12px;
+      padding: 1rem;
+    }
+    .secret-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
     .mfa-secret {
       font-family: monospace;
       word-break: break-all;
+      flex: 1;
+    }
+    .recovery-codes-container {
+      background: var(--mat-sys-surface-container);
+      border-radius: 8px;
+      padding: 1rem;
     }
     .recovery-codes {
       font-family: monospace;
-      background: var(--mat-sys-surface-container);
-      padding: 1rem;
-      border-radius: 8px;
       list-style: none;
+      padding: 0;
+      margin: 0 0 0.5rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.25rem;
+    }
+    .danger-zone {
+      border: 1px solid var(--mat-sys-error);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+    .danger-label {
+      font: var(--mat-sys-label-large);
+      color: var(--mat-sys-error);
+      margin: 0 0 0.75rem;
     }
   `,
 })
@@ -259,6 +363,7 @@ export class UserSettingsComponent {
   private readonly settings = inject(SettingsService);
   private readonly auth = inject(AuthService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly clipboard = inject(Clipboard);
   private readonly fb = inject(FormBuilder);
 
   readonly emails = signal<UserEmail[]>([]);
@@ -275,6 +380,7 @@ export class UserSettingsComponent {
 
   readonly passwordForm = this.fb.nonNullable.group(
     {
+      currentPassword: ['', Validators.required],
       password: ['', [Validators.required, Validators.minLength(8)]],
       confirmPassword: ['', Validators.required],
     },
@@ -364,7 +470,8 @@ export class UserSettingsComponent {
 
   changePassword() {
     this.passwordLoading.set(true);
-    this.settings.updateUser({ password: this.passwordForm.getRawValue().password }).subscribe({
+    const { currentPassword, password } = this.passwordForm.getRawValue();
+    this.settings.updateUser({ currentPassword, password }).subscribe({
       next: () => {
         this.passwordLoading.set(false);
         this.passwordForm.reset();
@@ -408,5 +515,21 @@ export class UserSettingsComponent {
       },
       error: () => this.mfaLoading.set(false),
     });
+  }
+
+  copySecret() {
+    const secret = this.mfaSetupData()?.secret;
+    if (secret) {
+      this.clipboard.copy(secret);
+      this.snackBar.open('Secret copied', 'OK', { duration: 2000 });
+    }
+  }
+
+  copyRecoveryCodes() {
+    const codes = this.recoveryCodes();
+    if (codes) {
+      this.clipboard.copy(codes.join('\n'));
+      this.snackBar.open('Recovery codes copied', 'OK', { duration: 2000 });
+    }
   }
 }

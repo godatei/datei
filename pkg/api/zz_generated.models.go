@@ -111,9 +111,9 @@ type LoginConfigResponse struct {
 
 // LoginRequest defines model for LoginRequest.
 type LoginRequest struct {
-	Email    string  `json:"email"`
-	MfaCode  *string `json:"mfaCode,omitempty"`
-	Password string  `json:"password"`
+	Email    openapi_types.Email `json:"email"`
+	MfaCode  *string             `json:"mfaCode,omitempty"`
+	Password string              `json:"password"`
 }
 
 // LoginResponse defines model for LoginResponse.
@@ -139,14 +139,14 @@ type RegenerateMFARecoveryCodesResponse struct {
 
 // RegisterRequest defines model for RegisterRequest.
 type RegisterRequest struct {
-	Email    string `json:"email"`
-	Name     string `json:"name"`
-	Password string `json:"password"`
+	Email    openapi_types.Email `json:"email"`
+	Name     string              `json:"name"`
+	Password string              `json:"password"`
 }
 
 // ResetPasswordRequest defines model for ResetPasswordRequest.
 type ResetPasswordRequest struct {
-	Email string `json:"email"`
+	Email openapi_types.Email `json:"email"`
 }
 
 // SetupMFAResponse defines model for SetupMFAResponse.
@@ -172,13 +172,14 @@ type UpdateDateiWithFileRequest struct {
 
 // UpdateUserEmailRequest defines model for UpdateUserEmailRequest.
 type UpdateUserEmailRequest struct {
-	Email string `json:"email"`
+	Email openapi_types.Email `json:"email"`
 }
 
 // UpdateUserRequest defines model for UpdateUserRequest.
 type UpdateUserRequest struct {
-	Name     *string `json:"name,omitempty"`
-	Password *string `json:"password,omitempty"`
+	CurrentPassword *string `json:"currentPassword,omitempty"`
+	Name            *string `json:"name,omitempty"`
+	Password        *string `json:"password,omitempty"`
 }
 
 // UserEmail defines model for UserEmail.

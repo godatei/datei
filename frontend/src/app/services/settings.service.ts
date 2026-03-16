@@ -28,14 +28,14 @@ export class SettingsService {
   private readonly httpClient = inject(HttpClient);
 
   updateUser(
-    request: { name?: string; password?: string },
+    request: { name?: string; password?: string; currentPassword?: string },
     useActionToken = false,
   ): Observable<void> {
     const context = useActionToken ? new HttpContext().set(USE_ACTION_TOKEN, true) : undefined;
     return updateUserFn(this.httpClient, '', { body: request }, context).pipe(map(() => undefined));
   }
 
-  requestEmailChange(email: string): Observable<void> {
+  updatePrimaryEmail(email: string): Observable<void> {
     return updateUserEmailFn(this.httpClient, '', { body: { email } }).pipe(map(() => undefined));
   }
 

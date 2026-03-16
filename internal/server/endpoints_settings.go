@@ -38,6 +38,10 @@ func (s *server) UpdateUser(ctx context.Context, request UpdateUserRequestObject
 
 	now := time.Now()
 	if request.Body.Name != nil {
+		// Password-reset tokens can only change the password, not the name
+		if authInfo.PasswordReset {
+			return UpdateUser400Response{}, nil
+		}
 		if err := agg.ChangeName(*request.Body.Name, now); err != nil {
 			return UpdateUser400Response{}, nil
 		}
@@ -46,6 +50,23 @@ func (s *server) UpdateUser(ctx context.Context, request UpdateUserRequestObject
 		if len(*request.Body.Password) < 8 {
 			return UpdateUser400Response{}, nil
 		}
+
+		// Require current password for in-session password changes (not password-reset flow)
+		if !authInfo.PasswordReset {
+			if request.Body.CurrentPassword == nil || *request.Body.CurrentPassword == "" {
+				return UpdateUser400Response{}, nil
+			}
+			q := db.New(s.pool)
+			user, err := q.GetUserAccountByID(ctx, authInfo.UserID)
+			if err != nil {
+				slog.Error("failed to get user for password verification", "error", err)
+				return nil, fmt.Errorf("failed to get user: %w", err)
+			}
+			if err := security.VerifyPassword(*request.Body.CurrentPassword, user.PasswordHash, user.PasswordSalt); err != nil {
+				return UpdateUser401Response{}, nil
+			}
+		}
+
 		hash, salt, err := security.HashPassword(*request.Body.Password)
 		if err != nil {
 			slog.Error("failed to hash password", "error", err)
@@ -74,13 +95,20 @@ func (s *server) UpdateUserEmail(
 		return UpdateUserEmail400Response{}, nil
 	}
 
+	q := db.New(s.pool)
+	primaryEmail, err := q.GetPrimaryEmailForUser(ctx, authInfo.UserID)
+	if err != nil {
+		slog.Error("failed to get primary email", "error", err)
+		return nil, fmt.Errorf("failed to get primary email: %w", err)
+	}
+
 	agg, err := s.userRepo.LoadByID(ctx, authInfo.UserID)
 	if err != nil {
 		slog.Error("failed to load user", "error", err)
 		return nil, fmt.Errorf("failed to load user: %w", err)
 	}
 
-	if err := agg.ChangeEmail(agg.Email, request.Body.Email, time.Now()); err != nil {
+	if err := agg.ChangeEmail(primaryEmail.Email, string(request.Body.Email), time.Now()); err != nil {
 		return UpdateUserEmail400Response{}, nil
 	}
 
@@ -90,7 +118,7 @@ func (s *server) UpdateUserEmail(
 	}
 
 	if config.AuthEmailVerificationRequired() {
-		s.sendVerificationEmail(ctx, authInfo.UserID, request.Body.Email)
+		s.sendVerificationEmail(ctx, authInfo.UserID, string(request.Body.Email))
 	}
 
 	return UpdateUserEmail204Response{}, nil

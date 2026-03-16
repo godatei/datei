@@ -14,3 +14,5 @@ post:
       description: User updated
     '400':
       description: Invalid input
+    '401':
+      description: Invalid current password
