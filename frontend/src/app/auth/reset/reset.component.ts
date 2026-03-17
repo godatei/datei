@@ -34,62 +34,7 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
     MatIconModule,
     MatProgressSpinnerModule,
   ],
-  template: `
-    <div class="auth-container">
-      <mat-card class="auth-card">
-        <mat-card-content>
-          <div class="auth-header">
-            <mat-icon class="brand-icon">cloud_upload</mat-icon>
-            <h1>Set a new password</h1>
-            <p class="subtitle">Choose a strong password for your account</p>
-          </div>
-
-          @if (errorMessage()) {
-            <div class="error-banner">{{ errorMessage() }}</div>
-          }
-
-          <form class="auth-form" [formGroup]="form" (ngSubmit)="onSubmit()">
-            <mat-form-field class="form-field" appearance="outline">
-              <mat-label>New password</mat-label>
-              <input
-                matInput
-                formControlName="password"
-                type="password"
-                autocomplete="new-password"
-              />
-              <mat-hint>At least 8 characters</mat-hint>
-            </mat-form-field>
-
-            <mat-form-field class="form-field" appearance="outline">
-              <mat-label>Confirm new password</mat-label>
-              <input
-                matInput
-                formControlName="confirmPassword"
-                type="password"
-                autocomplete="new-password"
-              />
-              @if (form.hasError('passwordMismatch')) {
-                <mat-error>Passwords do not match</mat-error>
-              }
-            </mat-form-field>
-
-            <button
-              class="submit-btn"
-              mat-flat-button
-              type="submit"
-              [disabled]="loading() || form.invalid"
-            >
-              @if (loading()) {
-                <mat-spinner diameter="20"></mat-spinner>
-              } @else {
-                Reset password
-              }
-            </button>
-          </form>
-        </mat-card-content>
-      </mat-card>
-    </div>
-  `,
+  templateUrl: './reset.component.html',
   styleUrls: ['../auth-shared.css'],
 })
 export class ResetComponent {

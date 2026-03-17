@@ -1,0 +1,42 @@
+<div class="auth-container">
+  <mat-card class="auth-card">
+    <mat-card-content>
+      <div class="auth-header">
+        <mat-icon class="brand-icon">cloud_upload</mat-icon>
+        <h1>Reset your password</h1>
+        <p class="subtitle">We'll send you a reset link</p>
+      </div>
+
+      @if (success()) {
+        <p class="success-message">
+          If an account exists with that email, you will receive a password reset link shortly.
+        </p>
+        <a class="submit-btn" routerLink="/login" mat-flat-button>Back to sign in</a>
+      } @else {
+        <form class="auth-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+          <mat-form-field class="form-field" appearance="outline">
+            <mat-label>Email</mat-label>
+            <input matInput formControlName="email" type="email" autocomplete="email" />
+          </mat-form-field>
+
+          <button
+            class="submit-btn"
+            mat-flat-button
+            type="submit"
+            [disabled]="loading() || form.invalid"
+          >
+            @if (loading()) {
+              <mat-spinner diameter="20"></mat-spinner>
+            } @else {
+              Send reset link
+            }
+          </button>
+        </form>
+
+        <div class="auth-links">
+          <a routerLink="/login">Back to sign in</a>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>
