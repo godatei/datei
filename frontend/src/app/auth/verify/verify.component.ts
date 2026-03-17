@@ -11,44 +11,8 @@ import { SettingsService } from '~/frontend/services/settings.service';
   selector: 'app-verify',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [MatCardModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule],
-  template: `
-    <div class="auth-container">
-      <mat-card class="auth-card">
-        <mat-card-content>
-          <div class="auth-header">
-            <mat-icon class="brand-icon">mark_email_unread</mat-icon>
-            <h1>Verify your email</h1>
-            <p class="subtitle">Check your inbox for a verification link</p>
-          </div>
-
-          <p class="success-message">
-            We sent a verification email to your address. Click the link in the email to verify your
-            account.
-          </p>
-
-          <div class="verify-actions">
-            <button class="submit-btn" mat-flat-button (click)="resend()" [disabled]="loading()">
-              @if (loading()) {
-                <mat-spinner diameter="20"></mat-spinner>
-              } @else {
-                Resend verification email
-              }
-            </button>
-
-            <button class="submit-btn" mat-button (click)="logout()">Logout</button>
-          </div>
-        </mat-card-content>
-      </mat-card>
-    </div>
-  `,
-  styleUrls: ['../auth-shared.css'],
-  styles: `
-    .verify-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-  `,
+  templateUrl: './verify.component.html',
+  styleUrls: ['../auth-shared.css', './verify.component.css'],
 })
 export class VerifyComponent {
   private readonly settings = inject(SettingsService);
