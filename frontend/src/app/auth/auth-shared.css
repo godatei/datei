@@ -33,6 +33,12 @@
   margin-bottom: 0.75rem;
 }
 
+.auth-header .brand-logo {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 0.75rem;
+}
+
 .auth-header h1 {
   font: var(--mat-sys-title-large);
   margin: 0;

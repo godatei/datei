@@ -235,10 +235,10 @@ CREATE TABLE public.public_link_datei (
 
 
 --
--- Name: user_account; Type: TABLE; Schema: public; Owner: -
+-- Name: user_account_projection; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.user_account (
+CREATE TABLE public.user_account_projection (
     id uuid DEFAULT uuidv7() NOT NULL,
     name text NOT NULL,
     password_hash bytea NOT NULL,
@@ -250,15 +250,15 @@ CREATE TABLE public.user_account (
     last_logged_in_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT ck_user_account_mfa CHECK (((mfa_enabled = false) OR (mfa_secret IS NOT NULL)))
+    CONSTRAINT ck_user_account_projection_mfa CHECK (((mfa_enabled = false) OR (mfa_secret IS NOT NULL)))
 );
 
 
 --
--- Name: user_account_email; Type: TABLE; Schema: public; Owner: -
+-- Name: user_account_email_projection; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.user_account_email (
+CREATE TABLE public.user_account_email_projection (
     id uuid DEFAULT uuidv7() NOT NULL,
     user_account_id uuid NOT NULL,
     email text NOT NULL,
@@ -303,10 +303,10 @@ ALTER SEQUENCE public.user_account_event_id_seq OWNED BY public.user_account_eve
 
 
 --
--- Name: user_account_mfa_recovery_code; Type: TABLE; Schema: public; Owner: -
+-- Name: user_account_mfa_recovery_code_projection; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.user_account_mfa_recovery_code (
+CREATE TABLE public.user_account_mfa_recovery_code_projection (
     id uuid DEFAULT uuidv7() NOT NULL,
     user_account_id uuid NOT NULL,
     code_hash bytea NOT NULL,

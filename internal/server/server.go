@@ -5,16 +5,15 @@ import (
 	"github.com/godatei/datei/internal/datei"
 	"github.com/godatei/datei/internal/mailer"
 	"github.com/godatei/datei/internal/storage"
+	"github.com/godatei/datei/internal/users"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const fileFormField = "file"
 
 type server struct {
-	pool         *pgxpool.Pool
 	dateiService *datei.DateiService
-	userRepo     aggregate.UserRepository
-	mailer       mailer.Mailer
+	userService  *users.UserService
 }
 
 func NewServer(
@@ -25,10 +24,8 @@ func NewServer(
 	m mailer.Mailer,
 ) *server {
 	return &server{
-		pool:         pool,
 		dateiService: datei.NewDateiService(pool, store, dateiRepo),
-		userRepo:     userRepo,
-		mailer:       m,
+		userService:  users.NewUserService(pool, userRepo, m),
 	}
 }
 

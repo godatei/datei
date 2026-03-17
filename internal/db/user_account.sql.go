@@ -13,7 +13,7 @@ import (
 )
 
 const countUnusedMFARecoveryCodes = `-- name: CountUnusedMFARecoveryCodes :one
-SELECT COUNT(*)::int FROM user_account_mfa_recovery_code
+SELECT COUNT(*)::int FROM user_account_mfa_recovery_code_projection
 WHERE user_account_id = $1 AND used_at IS NULL
 `
 
@@ -25,7 +25,7 @@ func (q *Queries) CountUnusedMFARecoveryCodes(ctx context.Context, userAccountID
 }
 
 const deleteAllMFARecoveryCodesProjection = `-- name: DeleteAllMFARecoveryCodesProjection :exec
-DELETE FROM user_account_mfa_recovery_code
+DELETE FROM user_account_mfa_recovery_code_projection
 WHERE user_account_id = $1
 `
 
@@ -35,7 +35,7 @@ func (q *Queries) DeleteAllMFARecoveryCodesProjection(ctx context.Context, userA
 }
 
 const deleteUserAccountEmailProjection = `-- name: DeleteUserAccountEmailProjection :exec
-DELETE FROM user_account_email WHERE id = $1
+DELETE FROM user_account_email_projection WHERE id = $1
 `
 
 func (q *Queries) DeleteUserAccountEmailProjection(ctx context.Context, id uuid.UUID) error {
@@ -44,7 +44,7 @@ func (q *Queries) DeleteUserAccountEmailProjection(ctx context.Context, id uuid.
 }
 
 const getEmailByID = `-- name: GetEmailByID :one
-SELECT id, user_account_id, email, verified_at, is_primary, created_at FROM user_account_email
+SELECT id, user_account_id, email, verified_at, is_primary, created_at FROM user_account_email_projection
 WHERE id = $1 AND user_account_id = $2
 `
 
@@ -53,9 +53,9 @@ type GetEmailByIDParams struct {
 	UserAccountID uuid.UUID `db:"user_account_id"`
 }
 
-func (q *Queries) GetEmailByID(ctx context.Context, arg GetEmailByIDParams) (UserAccountEmail, error) {
+func (q *Queries) GetEmailByID(ctx context.Context, arg GetEmailByIDParams) (UserAccountEmailProjection, error) {
 	row := q.db.QueryRow(ctx, getEmailByID, arg.ID, arg.UserAccountID)
-	var i UserAccountEmail
+	var i UserAccountEmailProjection
 	err := row.Scan(
 		&i.ID,
 		&i.UserAccountID,
@@ -68,20 +68,20 @@ func (q *Queries) GetEmailByID(ctx context.Context, arg GetEmailByIDParams) (Use
 }
 
 const getEmailsForUser = `-- name: GetEmailsForUser :many
-SELECT id, user_account_id, email, verified_at, is_primary, created_at FROM user_account_email
+SELECT id, user_account_id, email, verified_at, is_primary, created_at FROM user_account_email_projection
 WHERE user_account_id = $1
 ORDER BY is_primary DESC, created_at
 `
 
-func (q *Queries) GetEmailsForUser(ctx context.Context, userAccountID uuid.UUID) ([]UserAccountEmail, error) {
+func (q *Queries) GetEmailsForUser(ctx context.Context, userAccountID uuid.UUID) ([]UserAccountEmailProjection, error) {
 	rows, err := q.db.Query(ctx, getEmailsForUser, userAccountID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []UserAccountEmail
+	var items []UserAccountEmailProjection
 	for rows.Next() {
-		var i UserAccountEmail
+		var i UserAccountEmailProjection
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserAccountID,
@@ -101,13 +101,13 @@ func (q *Queries) GetEmailsForUser(ctx context.Context, userAccountID uuid.UUID)
 }
 
 const getPrimaryEmailForUser = `-- name: GetPrimaryEmailForUser :one
-SELECT id, user_account_id, email, verified_at, is_primary, created_at FROM user_account_email
+SELECT id, user_account_id, email, verified_at, is_primary, created_at FROM user_account_email_projection
 WHERE user_account_id = $1 AND is_primary = true
 `
 
-func (q *Queries) GetPrimaryEmailForUser(ctx context.Context, userAccountID uuid.UUID) (UserAccountEmail, error) {
+func (q *Queries) GetPrimaryEmailForUser(ctx context.Context, userAccountID uuid.UUID) (UserAccountEmailProjection, error) {
 	row := q.db.QueryRow(ctx, getPrimaryEmailForUser, userAccountID)
-	var i UserAccountEmail
+	var i UserAccountEmailProjection
 	err := row.Scan(
 		&i.ID,
 		&i.UserAccountID,
@@ -120,19 +120,19 @@ func (q *Queries) GetPrimaryEmailForUser(ctx context.Context, userAccountID uuid
 }
 
 const getUnusedMFARecoveryCodes = `-- name: GetUnusedMFARecoveryCodes :many
-SELECT id, user_account_id, code_hash, code_salt, used_at, created_at FROM user_account_mfa_recovery_code
+SELECT id, user_account_id, code_hash, code_salt, used_at, created_at FROM user_account_mfa_recovery_code_projection
 WHERE user_account_id = $1 AND used_at IS NULL
 `
 
-func (q *Queries) GetUnusedMFARecoveryCodes(ctx context.Context, userAccountID uuid.UUID) ([]UserAccountMfaRecoveryCode, error) {
+func (q *Queries) GetUnusedMFARecoveryCodes(ctx context.Context, userAccountID uuid.UUID) ([]UserAccountMfaRecoveryCodeProjection, error) {
 	rows, err := q.db.Query(ctx, getUnusedMFARecoveryCodes, userAccountID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []UserAccountMfaRecoveryCode
+	var items []UserAccountMfaRecoveryCodeProjection
 	for rows.Next() {
-		var i UserAccountMfaRecoveryCode
+		var i UserAccountMfaRecoveryCodeProjection
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserAccountID,
@@ -152,14 +152,14 @@ func (q *Queries) GetUnusedMFARecoveryCodes(ctx context.Context, userAccountID u
 }
 
 const getUserAccountByEmail = `-- name: GetUserAccountByEmail :one
-SELECT ua.id, ua.name, ua.password_hash, ua.password_salt, ua.mfa_secret, ua.mfa_enabled, ua.mfa_enabled_at, ua.archived_at, ua.last_logged_in_at, ua.created_at, ua.updated_at FROM user_account ua
-JOIN user_account_email ue ON ue.user_account_id = ua.id
+SELECT ua.id, ua.name, ua.password_hash, ua.password_salt, ua.mfa_secret, ua.mfa_enabled, ua.mfa_enabled_at, ua.archived_at, ua.last_logged_in_at, ua.created_at, ua.updated_at FROM user_account_projection ua
+JOIN user_account_email_projection ue ON ue.user_account_id = ua.id
 WHERE ue.email = $1 AND ua.archived_at IS NULL
 `
 
-func (q *Queries) GetUserAccountByEmail(ctx context.Context, email string) (UserAccount, error) {
+func (q *Queries) GetUserAccountByEmail(ctx context.Context, email string) (UserAccountProjection, error) {
 	row := q.db.QueryRow(ctx, getUserAccountByEmail, email)
-	var i UserAccount
+	var i UserAccountProjection
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
@@ -178,15 +178,15 @@ func (q *Queries) GetUserAccountByEmail(ctx context.Context, email string) (User
 
 const getUserAccountByID = `-- name: GetUserAccountByID :one
 
-SELECT id, name, password_hash, password_salt, mfa_secret, mfa_enabled, mfa_enabled_at, archived_at, last_logged_in_at, created_at, updated_at FROM user_account WHERE id = $1
+SELECT id, name, password_hash, password_salt, mfa_secret, mfa_enabled, mfa_enabled_at, archived_at, last_logged_in_at, created_at, updated_at FROM user_account_projection WHERE id = $1
 `
 
 // ============================================================================
 // Read Queries (for handlers, outside TX)
 // ============================================================================
-func (q *Queries) GetUserAccountByID(ctx context.Context, id uuid.UUID) (UserAccount, error) {
+func (q *Queries) GetUserAccountByID(ctx context.Context, id uuid.UUID) (UserAccountProjection, error) {
 	row := q.db.QueryRow(ctx, getUserAccountByID, id)
-	var i UserAccount
+	var i UserAccountProjection
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
@@ -205,7 +205,7 @@ func (q *Queries) GetUserAccountByID(ctx context.Context, id uuid.UUID) (UserAcc
 
 const insertMFARecoveryCodeProjection = `-- name: InsertMFARecoveryCodeProjection :exec
 
-INSERT INTO user_account_mfa_recovery_code (id, user_account_id, code_hash, code_salt)
+INSERT INTO user_account_mfa_recovery_code_projection (id, user_account_id, code_hash, code_salt)
 VALUES ($1, $2, $3, $4)
 `
 
@@ -231,7 +231,7 @@ func (q *Queries) InsertMFARecoveryCodeProjection(ctx context.Context, arg Inser
 
 const insertUserAccountEmailProjection = `-- name: InsertUserAccountEmailProjection :exec
 
-INSERT INTO user_account_email (id, user_account_id, email, is_primary, created_at)
+INSERT INTO user_account_email_projection (id, user_account_id, email, is_primary, created_at)
 VALUES ($1, $2, $3, $4, $5)
 `
 
@@ -259,7 +259,7 @@ func (q *Queries) InsertUserAccountEmailProjection(ctx context.Context, arg Inse
 
 const insertUserAccountProjection = `-- name: InsertUserAccountProjection :exec
 
-INSERT INTO user_account (id, name, password_hash, password_salt, created_at, updated_at)
+INSERT INTO user_account_projection (id, name, password_hash, password_salt, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $5)
 `
 
@@ -286,7 +286,7 @@ func (q *Queries) InsertUserAccountProjection(ctx context.Context, arg InsertUse
 }
 
 const markMFARecoveryCodeUsedProjection = `-- name: MarkMFARecoveryCodeUsedProjection :exec
-UPDATE user_account_mfa_recovery_code SET used_at = now()
+UPDATE user_account_mfa_recovery_code_projection SET used_at = now()
 WHERE id = $1
 `
 
@@ -296,7 +296,7 @@ func (q *Queries) MarkMFARecoveryCodeUsedProjection(ctx context.Context, id uuid
 }
 
 const setUserAccountEmailPrimaryProjection = `-- name: SetUserAccountEmailPrimaryProjection :exec
-UPDATE user_account_email SET is_primary = (id = $1)
+UPDATE user_account_email_projection SET is_primary = (id = $1)
 WHERE user_account_id = $2
 `
 
@@ -311,7 +311,7 @@ func (q *Queries) SetUserAccountEmailPrimaryProjection(ctx context.Context, arg 
 }
 
 const updateUserAccountEmailProjectionEmail = `-- name: UpdateUserAccountEmailProjectionEmail :exec
-UPDATE user_account_email SET email = $1, verified_at = NULL
+UPDATE user_account_email_projection SET email = $1, verified_at = NULL
 WHERE user_account_id = $2 AND is_primary = true
 `
 
@@ -326,7 +326,7 @@ func (q *Queries) UpdateUserAccountEmailProjectionEmail(ctx context.Context, arg
 }
 
 const updateUserAccountEmailProjectionVerified = `-- name: UpdateUserAccountEmailProjectionVerified :exec
-UPDATE user_account_email SET verified_at = $1
+UPDATE user_account_email_projection SET verified_at = $1
 WHERE user_account_id = $2 AND is_primary = true
 `
 
@@ -341,7 +341,7 @@ func (q *Queries) UpdateUserAccountEmailProjectionVerified(ctx context.Context, 
 }
 
 const updateUserAccountProjectionArchived = `-- name: UpdateUserAccountProjectionArchived :exec
-UPDATE user_account SET archived_at = $1, updated_at = $1 WHERE id = $2
+UPDATE user_account_projection SET archived_at = $1, updated_at = $1 WHERE id = $2
 `
 
 type UpdateUserAccountProjectionArchivedParams struct {
@@ -355,7 +355,7 @@ func (q *Queries) UpdateUserAccountProjectionArchived(ctx context.Context, arg U
 }
 
 const updateUserAccountProjectionLoggedIn = `-- name: UpdateUserAccountProjectionLoggedIn :exec
-UPDATE user_account SET last_logged_in_at = $1 WHERE id = $2
+UPDATE user_account_projection SET last_logged_in_at = $1 WHERE id = $2
 `
 
 type UpdateUserAccountProjectionLoggedInParams struct {
@@ -369,7 +369,7 @@ func (q *Queries) UpdateUserAccountProjectionLoggedIn(ctx context.Context, arg U
 }
 
 const updateUserAccountProjectionMFADisabled = `-- name: UpdateUserAccountProjectionMFADisabled :exec
-UPDATE user_account SET mfa_enabled = false, mfa_secret = NULL, mfa_enabled_at = NULL, updated_at = $1 WHERE id = $2
+UPDATE user_account_projection SET mfa_enabled = false, mfa_secret = NULL, mfa_enabled_at = NULL, updated_at = $1 WHERE id = $2
 `
 
 type UpdateUserAccountProjectionMFADisabledParams struct {
@@ -383,7 +383,7 @@ func (q *Queries) UpdateUserAccountProjectionMFADisabled(ctx context.Context, ar
 }
 
 const updateUserAccountProjectionMFAEnabled = `-- name: UpdateUserAccountProjectionMFAEnabled :exec
-UPDATE user_account SET mfa_enabled = true, mfa_enabled_at = $1, updated_at = $1 WHERE id = $2
+UPDATE user_account_projection SET mfa_enabled = true, mfa_enabled_at = $1, updated_at = $1 WHERE id = $2
 `
 
 type UpdateUserAccountProjectionMFAEnabledParams struct {
@@ -397,7 +397,7 @@ func (q *Queries) UpdateUserAccountProjectionMFAEnabled(ctx context.Context, arg
 }
 
 const updateUserAccountProjectionMFASecret = `-- name: UpdateUserAccountProjectionMFASecret :exec
-UPDATE user_account SET mfa_secret = $1, updated_at = $2 WHERE id = $3
+UPDATE user_account_projection SET mfa_secret = $1, updated_at = $2 WHERE id = $3
 `
 
 type UpdateUserAccountProjectionMFASecretParams struct {
@@ -412,7 +412,7 @@ func (q *Queries) UpdateUserAccountProjectionMFASecret(ctx context.Context, arg 
 }
 
 const updateUserAccountProjectionName = `-- name: UpdateUserAccountProjectionName :exec
-UPDATE user_account SET name = $1, updated_at = $2 WHERE id = $3
+UPDATE user_account_projection SET name = $1, updated_at = $2 WHERE id = $3
 `
 
 type UpdateUserAccountProjectionNameParams struct {
@@ -427,7 +427,7 @@ func (q *Queries) UpdateUserAccountProjectionName(ctx context.Context, arg Updat
 }
 
 const updateUserAccountProjectionPassword = `-- name: UpdateUserAccountProjectionPassword :exec
-UPDATE user_account SET password_hash = $1, password_salt = $2, updated_at = $3 WHERE id = $4
+UPDATE user_account_projection SET password_hash = $1, password_salt = $2, updated_at = $3 WHERE id = $4
 `
 
 type UpdateUserAccountProjectionPasswordParams struct {

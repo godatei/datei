@@ -233,21 +233,7 @@ type PublicLinkDatei struct {
 	DateiID      uuid.UUID `db:"datei_id"`
 }
 
-type UserAccount struct {
-	ID             uuid.UUID  `db:"id"`
-	Name           string     `db:"name"`
-	PasswordHash   []byte     `db:"password_hash"`
-	PasswordSalt   []byte     `db:"password_salt"`
-	MfaSecret      *string    `db:"mfa_secret"`
-	MfaEnabled     bool       `db:"mfa_enabled"`
-	MfaEnabledAt   *time.Time `db:"mfa_enabled_at"`
-	ArchivedAt     *time.Time `db:"archived_at"`
-	LastLoggedInAt *time.Time `db:"last_logged_in_at"`
-	CreatedAt      time.Time  `db:"created_at"`
-	UpdatedAt      time.Time  `db:"updated_at"`
-}
-
-type UserAccountEmail struct {
+type UserAccountEmailProjection struct {
 	ID            uuid.UUID  `db:"id"`
 	UserAccountID uuid.UUID  `db:"user_account_id"`
 	Email         string     `db:"email"`
@@ -265,13 +251,27 @@ type UserAccountEvent struct {
 	CreatedAt     time.Time `db:"created_at"`
 }
 
-type UserAccountMfaRecoveryCode struct {
+type UserAccountMfaRecoveryCodeProjection struct {
 	ID            uuid.UUID  `db:"id"`
 	UserAccountID uuid.UUID  `db:"user_account_id"`
 	CodeHash      []byte     `db:"code_hash"`
 	CodeSalt      []byte     `db:"code_salt"`
 	UsedAt        *time.Time `db:"used_at"`
 	CreatedAt     time.Time  `db:"created_at"`
+}
+
+type UserAccountProjection struct {
+	ID             uuid.UUID  `db:"id"`
+	Name           string     `db:"name"`
+	PasswordHash   []byte     `db:"password_hash"`
+	PasswordSalt   []byte     `db:"password_salt"`
+	MfaSecret      *string    `db:"mfa_secret"`
+	MfaEnabled     bool       `db:"mfa_enabled"`
+	MfaEnabledAt   *time.Time `db:"mfa_enabled_at"`
+	ArchivedAt     *time.Time `db:"archived_at"`
+	LastLoggedInAt *time.Time `db:"last_logged_in_at"`
+	CreatedAt      time.Time  `db:"created_at"`
+	UpdatedAt      time.Time  `db:"updated_at"`
 }
 
 type UserGroup struct {
