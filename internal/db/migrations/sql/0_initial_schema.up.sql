@@ -4,7 +4,7 @@
 -- User & Group Tables
 -- ============================================================================
 
-CREATE TABLE user_account (
+CREATE TABLE user_account_projection (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
   name TEXT NOT NULL,
   password_hash BYTEA NOT NULL,
@@ -16,40 +16,40 @@ CREATE TABLE user_account (
   last_logged_in_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT ck_user_account_mfa CHECK (
+  CONSTRAINT ck_user_account_projection_mfa CHECK (
     mfa_enabled = false OR mfa_secret IS NOT NULL
   )
 );
 
-CREATE INDEX idx_user_account_archived_at ON user_account(archived_at) WHERE archived_at IS NOT NULL;
+CREATE INDEX idx_user_account_projection_archived_at ON user_account_projection(archived_at) WHERE archived_at IS NOT NULL;
 
-CREATE TABLE user_account_mfa_recovery_code (
+CREATE TABLE user_account_mfa_recovery_code_projection (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
-  user_account_id UUID NOT NULL REFERENCES user_account(id) ON DELETE CASCADE,
+  user_account_id UUID NOT NULL REFERENCES user_account_projection(id) ON DELETE CASCADE,
   code_hash BYTEA NOT NULL,
   code_salt BYTEA NOT NULL,
   used_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_user_account_mfa_recovery_code_user_account_id ON user_account_mfa_recovery_code(user_account_id, used_at);
+CREATE INDEX idx_user_account_mfa_recovery_code_projection_user_account_id ON user_account_mfa_recovery_code_projection(user_account_id, used_at);
 
-CREATE TABLE user_account_email (
+CREATE TABLE user_account_email_projection (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
-  user_account_id UUID NOT NULL REFERENCES user_account(id) ON DELETE CASCADE,
+  user_account_id UUID NOT NULL REFERENCES user_account_projection(id) ON DELETE CASCADE,
   email TEXT NOT NULL UNIQUE,
   verified_at TIMESTAMPTZ,
   is_primary BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_user_account_email_user_account_id ON user_account_email(user_account_id);
-CREATE UNIQUE INDEX uq_user_account_email_primary ON user_account_email(user_account_id) WHERE is_primary = true;
+CREATE INDEX idx_user_account_email_projection_user_account_id ON user_account_email_projection(user_account_id);
+CREATE UNIQUE INDEX uq_user_account_email_projection_primary ON user_account_email_projection(user_account_id) WHERE is_primary = true;
 
 CREATE TABLE user_group (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
   name TEXT NOT NULL UNIQUE,
-  created_by UUID NOT NULL REFERENCES user_account(id) ON DELETE RESTRICT,
+  created_by UUID NOT NULL REFERENCES user_account_projection(id) ON DELETE RESTRICT,
   archived_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -60,7 +60,7 @@ CREATE INDEX idx_user_group_archived_at ON user_group(archived_at) WHERE archive
 CREATE TYPE user_group_role AS ENUM ('admin', 'member');
 
 CREATE TABLE user_group_member (
-  user_account_id UUID NOT NULL REFERENCES user_account(id) ON DELETE RESTRICT,
+  user_account_id UUID NOT NULL REFERENCES user_account_projection(id) ON DELETE RESTRICT,
   user_group_id UUID NOT NULL REFERENCES user_group(id) ON DELETE RESTRICT,
   role user_group_role NOT NULL DEFAULT 'member',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -144,9 +144,9 @@ CREATE TABLE datei_projection (
   created_at TIMESTAMPTZ NOT NULL,
   updated_at TIMESTAMPTZ NOT NULL,
   trashed_at TIMESTAMPTZ,
-  created_by UUID REFERENCES user_account(id) ON DELETE RESTRICT,
-  updated_by UUID REFERENCES user_account(id) ON DELETE RESTRICT,
-  trashed_by UUID REFERENCES user_account(id) ON DELETE RESTRICT
+  created_by UUID REFERENCES user_account_projection(id) ON DELETE RESTRICT,
+  updated_by UUID REFERENCES user_account_projection(id) ON DELETE RESTRICT,
+  trashed_by UUID REFERENCES user_account_projection(id) ON DELETE RESTRICT
 );
 
 CREATE INDEX idx_datei_projection_parent_id ON datei_projection(parent_id);
@@ -160,7 +160,7 @@ CREATE INDEX idx_datei_projection_content_search ON datei_projection USING GIN(c
 CREATE TABLE datei_permission_projection (
   id UUID PRIMARY KEY,
   datei_id UUID NOT NULL REFERENCES datei_projection(id) ON DELETE CASCADE,
-  user_account_id UUID REFERENCES user_account(id) ON DELETE RESTRICT,
+  user_account_id UUID REFERENCES user_account_projection(id) ON DELETE RESTRICT,
   user_group_id UUID REFERENCES user_group(id) ON DELETE RESTRICT,
   permission_type datei_permission_type NOT NULL,
   is_favorite BOOLEAN NOT NULL DEFAULT false,
@@ -213,7 +213,7 @@ CREATE INDEX idx_datei_annotation_datei_id ON datei_annotation(datei_id);
 CREATE TABLE datei_permission (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
   datei_id UUID NOT NULL REFERENCES datei_projection(id) ON DELETE CASCADE,
-  user_account_id UUID REFERENCES user_account(id) ON DELETE RESTRICT,
+  user_account_id UUID REFERENCES user_account_projection(id) ON DELETE RESTRICT,
   user_group_id UUID REFERENCES user_group(id) ON DELETE RESTRICT,
   permission_type datei_permission_type NOT NULL,
   is_favorite BOOLEAN NOT NULL DEFAULT false,
@@ -240,7 +240,7 @@ CREATE TYPE public_link_permission_type AS ENUM ('read_only', 'read_write');
 CREATE TABLE public_link (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
   token TEXT NOT NULL UNIQUE,
-  created_by UUID NOT NULL REFERENCES user_account(id) ON DELETE RESTRICT,
+  created_by UUID NOT NULL REFERENCES user_account_projection(id) ON DELETE RESTRICT,
   permission_type public_link_permission_type NOT NULL DEFAULT 'read_only',
   expires_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -268,7 +268,7 @@ CREATE INDEX idx_public_link_datei_datei_id ON public_link_datei(datei_id);
 CREATE TABLE datei_comment (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
   datei_id UUID NOT NULL REFERENCES datei_projection(id) ON DELETE CASCADE,
-  user_account_id UUID NOT NULL REFERENCES user_account(id) ON DELETE RESTRICT,
+  user_account_id UUID NOT NULL REFERENCES user_account_projection(id) ON DELETE RESTRICT,
   content TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
