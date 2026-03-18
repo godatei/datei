@@ -35,11 +35,14 @@ export interface JWTClaims {
 export class AuthService {
   private readonly httpClient = inject(HttpClient);
   private readonly _token = signal<string | null>(localStorage.getItem(tokenStorageKey));
+  private readonly _nameOverride = signal<string | null>(null);
 
   readonly isAuthenticated = computed(() => {
     const claims = this.getClaims();
     return claims !== undefined && claims.exp * 1000 > Date.now();
   });
+
+  readonly userName = computed(() => this._nameOverride() ?? this.getClaims()?.name);
 
   private get token(): string | null {
     return this._token();
@@ -128,9 +131,14 @@ export class AuthService {
     return this.getSessionTokenAndClaims();
   }
 
+  updateName(name: string): void {
+    this._nameOverride.set(name);
+  }
+
   logout(): void {
     this.token = null;
     this.actionToken = null;
+    this._nameOverride.set(null);
   }
 }
 

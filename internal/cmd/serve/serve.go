@@ -158,6 +158,7 @@ func run(ctx context.Context, options Options) error {
 		r.Use(commonMiddleware...)
 		r.Use(authn.Middleware)
 		r.Use(authn.RequireSessionTokenMiddleware)
+		r.Get("/api/v1/settings/user", wrapper.GetCurrentUser)
 		r.Patch("/api/v1/settings/user/email", wrapper.UpdateUserEmail)
 		r.Post("/api/v1/settings/verify/request", wrapper.RequestEmailVerification)
 		r.Post("/api/v1/settings/mfa/setup", wrapper.SetupMFA)

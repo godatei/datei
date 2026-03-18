@@ -2,6 +2,7 @@ import { HttpClient, HttpContext } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import {
+  getCurrentUser as getCurrentUserFn,
   updateUser as updateUserFn,
   updateUserEmail as updateUserEmailFn,
   requestEmailVerification as requestEmailVerificationFn,
@@ -20,6 +21,7 @@ import type { SetupMfaResponse } from '~/api/models/setup-mfa-response';
 import type { EnableMfaResponse } from '~/api/models/enable-mfa-response';
 import type { RegenerateMfaRecoveryCodesResponse } from '~/api/models/regenerate-mfa-recovery-codes-response';
 import type { MfaRecoveryCodesStatusResponse } from '~/api/models/mfa-recovery-codes-status-response';
+import type { UserResponse } from '~/api/models/user-response';
 import type { UserEmail } from '~/api/models/user-email';
 import { USE_ACTION_TOKEN } from './auth.service';
 
@@ -27,12 +29,16 @@ import { USE_ACTION_TOKEN } from './auth.service';
 export class SettingsService {
   private readonly httpClient = inject(HttpClient);
 
+  getCurrentUser(): Observable<UserResponse> {
+    return getCurrentUserFn(this.httpClient, '').pipe(map((r) => r.body));
+  }
+
   updateUser(
     request: { name?: string; password?: string; currentPassword?: string },
     useActionToken = false,
-  ): Observable<void> {
+  ): Observable<UserResponse> {
     const context = useActionToken ? new HttpContext().set(USE_ACTION_TOKEN, true) : undefined;
-    return updateUserFn(this.httpClient, '', { body: request }, context).pipe(map(() => undefined));
+    return updateUserFn(this.httpClient, '', { body: request }, context).pipe(map((r) => r.body));
   }
 
   updatePrimaryEmail(email: string): Observable<void> {

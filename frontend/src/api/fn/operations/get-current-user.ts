@@ -7,17 +7,14 @@ import { filter, map } from 'rxjs/operators';
 import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
-import { UpdateUserRequest } from '../../models/update-user-request';
 import { UserResponse } from '../../models/user-response';
 
-export interface UpdateUser$Params {
-      body: UpdateUserRequest
+export interface GetCurrentUser$Params {
 }
 
-export function updateUser(http: HttpClient, rootUrl: string, params: UpdateUser$Params, context?: HttpContext): Observable<StrictHttpResponse<UserResponse>> {
-  const rb = new RequestBuilder(rootUrl, updateUser.PATH, 'post');
+export function getCurrentUser(http: HttpClient, rootUrl: string, params?: GetCurrentUser$Params, context?: HttpContext): Observable<StrictHttpResponse<UserResponse>> {
+  const rb = new RequestBuilder(rootUrl, getCurrentUser.PATH, 'get');
   if (params) {
-    rb.body(params.body, 'application/json');
   }
 
   return http.request(
@@ -30,4 +27,4 @@ export function updateUser(http: HttpClient, rootUrl: string, params: UpdateUser
   );
 }
 
-updateUser.PATH = '/api/v1/settings/user';
+getCurrentUser.PATH = '/api/v1/settings/user';
