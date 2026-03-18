@@ -60,7 +60,7 @@ export class UserSettingsComponent {
   readonly recoveryCodes = signal<string[] | undefined>(undefined);
 
   readonly profileForm = this.fb.nonNullable.group({
-    name: [this.auth.getClaims()?.name ?? '', Validators.required],
+    name: ['', Validators.required],
   });
 
   readonly passwordForm = this.fb.nonNullable.group(
@@ -85,7 +85,14 @@ export class UserSettingsComponent {
   });
 
   constructor() {
+    this.loadProfile();
     this.loadEmails();
+  }
+
+  private loadProfile() {
+    this.settings.getCurrentUser().subscribe({
+      next: (user) => this.profileForm.patchValue({ name: user.name }),
+    });
   }
 
   private loadEmails() {
@@ -145,8 +152,9 @@ export class UserSettingsComponent {
   updateProfile() {
     this.profileLoading.set(true);
     this.settings.updateUser({ name: this.profileForm.getRawValue().name }).subscribe({
-      next: () => {
+      next: (res) => {
         this.profileLoading.set(false);
+        this.auth.updateName(res.name);
         this.snackBar.open('Profile updated', 'OK', { duration: 3000 });
       },
       error: () => this.profileLoading.set(false),

@@ -9,6 +9,8 @@ export type { Register$Params as Register$Params } from './fn/operations/registe
 export { register as register } from './fn/operations/register';
 export type { ResetPassword$Params as ResetPassword$Params } from './fn/operations/reset-password';
 export { resetPassword as resetPassword } from './fn/operations/reset-password';
+export type { GetCurrentUser$Params as GetCurrentUser$Params } from './fn/operations/get-current-user';
+export { getCurrentUser as getCurrentUser } from './fn/operations/get-current-user';
 export type { UpdateUser$Params as UpdateUser$Params } from './fn/operations/update-user';
 export { updateUser as updateUser } from './fn/operations/update-user';
 export type { UpdateUserEmail$Params as UpdateUserEmail$Params } from './fn/operations/update-user-email';

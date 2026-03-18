@@ -23,3 +23,4 @@ export type { UpdateDateiWithFileRequest } from './models/update-datei-with-file
 export type { UpdateUserEmailRequest } from './models/update-user-email-request';
 export type { UpdateUserRequest } from './models/update-user-request';
 export type { UserEmail } from './models/user-email';
+export type { UserResponse } from './models/user-response';

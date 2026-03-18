@@ -191,6 +191,11 @@ type UserEmail struct {
 	Verified  bool                `json:"verified"`
 }
 
+// UserResponse defines model for UserResponse.
+type UserResponse struct {
+	Name string `json:"name"`
+}
+
 // ListDateiParams defines parameters for ListDatei.
 type ListDateiParams struct {
 	// Limit Maximum number of results

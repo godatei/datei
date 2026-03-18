@@ -11,6 +11,21 @@ import (
 	"github.com/godatei/datei/pkg/api"
 )
 
+// GetCurrentUser implements [StrictServerInterface].
+func (s *server) GetCurrentUser(
+	ctx context.Context, _ GetCurrentUserRequestObject,
+) (GetCurrentUserResponseObject, error) {
+	authInfo := authn.RequireContext(ctx)
+
+	user, err := s.userService.GetUser(ctx, authInfo.UserID)
+	if err != nil {
+		slog.Error("get current user error", "error", err)
+		return nil, err
+	}
+
+	return GetCurrentUser200JSONResponse(api.UserResponse{Name: user.Name}), nil
+}
+
 // UpdateUser implements [StrictServerInterface].
 func (s *server) UpdateUser(ctx context.Context, request UpdateUserRequestObject) (UpdateUserResponseObject, error) {
 	authInfo := authn.RequireContext(ctx)
@@ -39,7 +54,13 @@ func (s *server) UpdateUser(ctx context.Context, request UpdateUserRequestObject
 		return nil, err
 	}
 
-	return UpdateUser204Response{}, nil
+	user, err := s.userService.GetUser(ctx, authInfo.UserID)
+	if err != nil {
+		slog.Error("failed to get updated user", "error", err)
+		return nil, err
+	}
+
+	return UpdateUser200JSONResponse(api.UserResponse{Name: user.Name}), nil
 }
 
 // UpdateUserEmail implements [StrictServerInterface].

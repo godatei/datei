@@ -1,3 +1,15 @@
+get:
+  operationId: GetCurrentUser
+  summary: Get the current user's profile
+  security:
+    - bearerHttpAuthentication: []
+  responses:
+    '200':
+      description: Current user profile
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/UserResponse.yaml'
 post:
   operationId: UpdateUser
   summary: Update user name or password
@@ -10,8 +22,12 @@ post:
         schema:
           $ref: '../components/schemas/UpdateUserRequest.yaml'
   responses:
-    '204':
+    '200':
       description: User updated
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/UserResponse.yaml'
     '400':
       description: Invalid input
     '401':

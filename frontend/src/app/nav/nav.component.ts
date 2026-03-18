@@ -34,7 +34,7 @@ export class NavComponent {
 
   private readonly handsetObserver = toSignal(this.breakpointObserver.observe(Breakpoints.Handset));
   protected readonly isHandset = computed(() => this.handsetObserver()?.matches ?? false);
-  protected readonly userName = computed(() => this.auth.getClaims()?.name ?? 'User');
+  protected readonly userName = computed(() => this.auth.userName() ?? 'User');
 
   logout() {
     this.auth.logout();
