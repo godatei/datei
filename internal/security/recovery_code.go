@@ -1,8 +1,8 @@
 package security
 
 import (
-	"bytes"
 	"crypto/rand"
+	"crypto/subtle"
 	"encoding/hex"
 	"strings"
 
@@ -64,5 +64,5 @@ func HashRecoveryCode(code string) (hash []byte, salt []byte, err error) {
 func VerifyRecoveryCode(code string, storedHash, storedSalt []byte) bool {
 	normalized := NormalizeRecoveryCode(code)
 	computed := argon2.IDKey([]byte(normalized), storedSalt, argonTime, argonMemory, argonThreads, argonKeyLen)
-	return bytes.Equal(computed, storedHash)
+	return subtle.ConstantTimeCompare(computed, storedHash) == 1
 }
