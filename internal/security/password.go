@@ -1,8 +1,8 @@
 package security
 
 import (
-	"bytes"
 	"crypto/rand"
+	"crypto/subtle"
 	"errors"
 
 	"golang.org/x/crypto/argon2"
@@ -30,7 +30,7 @@ func HashPassword(password string) (hash []byte, salt []byte, err error) {
 // VerifyPassword checks a plaintext password against stored hash and salt.
 func VerifyPassword(password string, storedHash, storedSalt []byte) error {
 	computed := argon2.IDKey([]byte(password), storedSalt, argonTime, argonMemory, argonThreads, argonKeyLen)
-	if !bytes.Equal(computed, storedHash) {
+	if subtle.ConstantTimeCompare(computed, storedHash) != 1 {
 		return ErrInvalidPassword
 	}
 	return nil
