@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -51,6 +52,53 @@ func NewCommand() *cobra.Command {
 	}
 	opts.Bind(cmd)
 	return cmd
+}
+
+// authRoutes are public endpoints that do not require authentication.
+var authRoutes = map[string]bool{
+	"/api/v1/auth/login":        true,
+	"/api/v1/auth/login/config": true,
+	"/api/v1/auth/register":     true,
+	"/api/v1/auth/reset":        true,
+}
+
+// actionTokenRoutes accept both session tokens and action tokens (password reset, email verification).
+// All other authenticated routes require session tokens only.
+var actionTokenRoutes = map[string]bool{
+	"/api/v1/settings/user":           true,
+	"/api/v1/settings/verify/confirm": true,
+}
+
+// routeAwareAuthMiddleware applies JWT auth + session-token checks
+// based on route classification. Public auth routes are passed through,
+// action-token routes get JWT auth only, all others also require session tokens.
+func routeAwareAuthMiddleware(next http.Handler) http.Handler {
+	jwtMiddleware := authn.Middleware
+	sessionMiddleware := authn.RequireSessionTokenMiddleware
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := strings.TrimSuffix(r.URL.Path, "/")
+
+		// Public auth routes — no authentication required
+		if authRoutes[path] {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// All other API routes require JWT authentication
+		authenticated := jwtMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Action-token routes accept any valid JWT
+			if actionTokenRoutes[path] {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			// Everything else requires a session token (not action/reset tokens)
+			sessionMiddleware(next).ServeHTTP(w, r)
+		}))
+
+		authenticated.ServeHTTP(w, r)
+	})
 }
 
 func run(ctx context.Context, options Options) error {
@@ -115,76 +163,27 @@ func run(ctx context.Context, options Options) error {
 	srv := server.NewServer(db, store, dateiRepository, userRepository, m)
 	strictHandler := server.NewStrictHandler(srv, nil)
 
-	// Build a wrapper for per-route registration with different middleware groups
-	wrapper := server.ServerInterfaceWrapper{
-		Handler: strictHandler,
-		ErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-		},
-	}
-
-	commonMiddleware := chi.Chain(
-		chimiddleware.RequestID,
-		chimiddleware.RealIP,
-		slogchi.New(slog.Default()),
-	)
-
 	rootMux := chi.NewRouter()
 	rootMux.Use(chimiddleware.Recoverer)
+	rootMux.Use(chimiddleware.RequestID)
+	rootMux.Use(chimiddleware.RealIP)
+	rootMux.Use(slogchi.New(slog.Default()))
 
-	// Auth routes (public, rate-limited)
-	rootMux.Group(func(r chi.Router) {
-		r.Use(commonMiddleware...)
-		r.Use(httprate.Limit(
-			10, 1*time.Minute,
-			httprate.WithKeyFuncs(httprate.KeyByRealIP, httprate.KeyByEndpoint),
-		))
-		r.Post("/api/v1/auth/login", wrapper.Login)
-		r.Get("/api/v1/auth/login/config", wrapper.GetLoginConfig)
-		r.Post("/api/v1/auth/register", wrapper.Register)
-		r.Post("/api/v1/auth/reset", wrapper.ResetPassword)
+	// API sub-router: OpenAPI validation + auth middleware for all API routes
+	apiRouter := chi.NewRouter()
+	apiRouter.Use(oapimiddleware.OapiRequestValidator(swagger))
+	apiRouter.Use(routeAwareAuthMiddleware)
+	apiRouter.Use(httprate.Limit(
+		10, 1*time.Minute,
+		httprate.WithKeyFuncs(httprate.KeyByRealIP, httprate.KeyByEndpoint),
+	))
+
+	// Let the generated code register all routes
+	server.HandlerWithOptions(strictHandler, server.ChiServerOptions{
+		BaseRouter: apiRouter,
 	})
 
-	// Settings routes that accept action tokens (password reset, email verification)
-	rootMux.Group(func(r chi.Router) {
-		r.Use(commonMiddleware...)
-		r.Use(authn.Middleware)
-		r.Post("/api/v1/settings/user", wrapper.UpdateUser)
-		r.Post("/api/v1/settings/verify/confirm", wrapper.ConfirmEmailVerification)
-	})
-
-	// Settings routes requiring session tokens only
-	rootMux.Group(func(r chi.Router) {
-		r.Use(commonMiddleware...)
-		r.Use(authn.Middleware)
-		r.Use(authn.RequireSessionTokenMiddleware)
-		r.Get("/api/v1/settings/user", wrapper.GetCurrentUser)
-		r.Patch("/api/v1/settings/user/email", wrapper.UpdateUserEmail)
-		r.Post("/api/v1/settings/verify/request", wrapper.RequestEmailVerification)
-		r.Post("/api/v1/settings/mfa/setup", wrapper.SetupMFA)
-		r.Post("/api/v1/settings/mfa/enable", wrapper.EnableMFA)
-		r.Post("/api/v1/settings/mfa/disable", wrapper.DisableMFA)
-		r.Post("/api/v1/settings/mfa/recovery-codes/regenerate", wrapper.RegenerateMFARecoveryCodes)
-		r.Get("/api/v1/settings/mfa/recovery-codes/status", wrapper.GetMFARecoveryCodesStatus)
-		r.Get("/api/v1/settings/emails", wrapper.ListEmails)
-		r.Post("/api/v1/settings/emails", wrapper.AddEmail)
-		r.Delete("/api/v1/settings/emails/{emailId}", wrapper.RemoveEmail)
-		r.Patch("/api/v1/settings/emails/{emailId}/primary", wrapper.SetPrimaryEmail)
-	})
-
-	// Datei routes (session token required + OpenAPI request validation)
-	rootMux.Group(func(r chi.Router) {
-		r.Use(commonMiddleware...)
-		r.Use(authn.Middleware)
-		r.Use(authn.RequireSessionTokenMiddleware)
-		r.Use(oapimiddleware.OapiRequestValidator(swagger))
-		r.Get("/api/v1/datei", wrapper.ListDatei)
-		r.Post("/api/v1/datei", wrapper.CreateDatei)
-		r.Delete("/api/v1/datei/{id}", wrapper.DeleteDatei)
-		r.Patch("/api/v1/datei/{id}", wrapper.UpdateDatei)
-		r.Get("/api/v1/datei/{id}/download", wrapper.DownloadDatei)
-	})
-
+	rootMux.Mount("/", apiRouter)
 	rootMux.Handle("/*", frontend.NewHandler())
 
 	httpServer := &http.Server{Handler: rootMux, Addr: config.ServerAddr()}
