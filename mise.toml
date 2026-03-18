@@ -37,6 +37,8 @@ outputs = ["dist/openapi.yaml"]
 [tasks."generate:backend"]
 run = 'go generate ./...'
 depends = ["deps:backend", "generate:openapi"]
+sources = ["dist/openapi.yaml", "internal/server/oapi-config.yaml", "pkg/api/oapi-config.yaml", "internal/db/sqlc.yaml", "internal/db/*.sql", "internal/db/zz_generated_schema.sql"]
+outputs = ["internal/server/zz_generated.server.go", "pkg/api/zz_generated.models.go", "internal/db/zz_generated.*.go"]
 
 
 [tasks."generate:frontend"]
@@ -100,7 +102,7 @@ run = { tasks = ["format:frontend", "format:backend"] }
 alias = "serve"
 run = 'go run -ldflags="{{vars.ldflags}}" . serve'
 depends = ["generate:backend", "build:frontend:dev"]
-sources = ["api/**/*.go", "cmd/**/*.go", "internal/**/*.go"]
+sources = ["internal/**/*.go", "!internal/**/zz_generated*", "!pkg/**/zz_generated*"]
 
 [tasks."run:datei:migrate"]
 run = 'go run -ldflags="{{vars.ldflags}}" . migrate'
