@@ -193,7 +193,8 @@ type UserEmail struct {
 
 // UserResponse defines model for UserResponse.
 type UserResponse struct {
-	Name string `json:"name"`
+	MfaEnabled bool   `json:"mfaEnabled"`
+	Name       string `json:"name"`
 }
 
 // ListDateiParams defines parameters for ListDatei.

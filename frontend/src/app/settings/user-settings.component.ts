@@ -55,6 +55,7 @@ export class UserSettingsComponent {
   readonly emailsLoading = signal(false);
   readonly profileLoading = signal(false);
   readonly passwordLoading = signal(false);
+  readonly mfaEnabled = signal(false);
   readonly mfaLoading = signal(false);
   readonly mfaSetupData = signal<{ secret: string; qrCodeUrl: string } | undefined>(undefined);
   readonly recoveryCodes = signal<string[] | undefined>(undefined);
@@ -91,7 +92,10 @@ export class UserSettingsComponent {
 
   private loadProfile() {
     this.settings.getCurrentUser().subscribe({
-      next: (user) => this.profileForm.patchValue({ name: user.name }),
+      next: (user) => {
+        this.profileForm.patchValue({ name: user.name });
+        this.mfaEnabled.set(user.mfaEnabled);
+      },
     });
   }
 
@@ -190,6 +194,7 @@ export class UserSettingsComponent {
     this.settings.enableMFA(this.mfaEnableForm.getRawValue().code).subscribe({
       next: (data) => {
         this.mfaLoading.set(false);
+        this.mfaEnabled.set(true);
         this.mfaSetupData.set(undefined);
         this.recoveryCodes.set(data.recoveryCodes);
         this.snackBar.open('MFA enabled', 'OK', { duration: 3000 });
@@ -203,6 +208,7 @@ export class UserSettingsComponent {
     this.settings.disableMFA(this.mfaDisableForm.getRawValue().password).subscribe({
       next: () => {
         this.mfaLoading.set(false);
+        this.mfaEnabled.set(false);
         this.mfaDisableForm.reset();
         this.snackBar.open('MFA disabled', 'OK', { duration: 3000 });
       },

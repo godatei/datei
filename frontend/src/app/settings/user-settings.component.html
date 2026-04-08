@@ -166,11 +166,12 @@
           </button>
         </div>
         <button mat-flat-button (click)="recoveryCodes.set(undefined)">Done</button>
-      } @else {
+      } @else if (!mfaEnabled()) {
         <button mat-flat-button (click)="setupMFA()" [disabled]="mfaLoading()" class="action-btn">
           Set up MFA
         </button>
-
+      } @else {
+        <p>Two-factor authentication is enabled.</p>
         <div class="danger-zone">
           <p class="danger-label">Disable two-factor authentication</p>
           <form [formGroup]="mfaDisableForm" (ngSubmit)="disableMFA()">
