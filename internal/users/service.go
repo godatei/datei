@@ -37,7 +37,8 @@ func (s *UserService) queries() *db.Queries {
 }
 
 type UserProfile struct {
-	Name string
+	Name       string
+	MfaEnabled bool
 }
 
 // GetUser returns the current user profile from the projection.
@@ -47,7 +48,7 @@ func (s *UserService) GetUser(ctx context.Context, userID uuid.UUID) (*UserProfi
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
-	return &UserProfile{Name: user.Name}, nil
+	return &UserProfile{Name: user.Name, MfaEnabled: user.MfaEnabled}, nil
 }
 
 func (s *UserService) sendVerificationEmail(ctx context.Context, userID uuid.UUID, email string) {

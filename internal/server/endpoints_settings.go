@@ -23,7 +23,7 @@ func (s *server) GetCurrentUser(
 		return nil, err
 	}
 
-	return GetCurrentUser200JSONResponse(api.UserResponse{Name: user.Name}), nil
+	return GetCurrentUser200JSONResponse(api.UserResponse{Name: user.Name, MfaEnabled: user.MfaEnabled}), nil
 }
 
 // UpdateUser implements [StrictServerInterface].
@@ -60,7 +60,7 @@ func (s *server) UpdateUser(ctx context.Context, request UpdateUserRequestObject
 		return nil, err
 	}
 
-	return UpdateUser200JSONResponse(api.UserResponse{Name: user.Name}), nil
+	return UpdateUser200JSONResponse(api.UserResponse{Name: user.Name, MfaEnabled: user.MfaEnabled}), nil
 }
 
 // UpdateUserEmail implements [StrictServerInterface].
