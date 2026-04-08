@@ -3,8 +3,11 @@ package authn
 import (
 	"context"
 	"errors"
-	"net/http"
+	"fmt"
+	"log/slog"
+	"strings"
 
+	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/godatei/datei/internal/authjwt"
 	"github.com/google/uuid"
@@ -24,46 +27,50 @@ type AuthInfo struct {
 	PasswordReset bool
 }
 
-// Middleware validates the JWT Bearer token and injects AuthInfo into context.
-func Middleware(next http.Handler) http.Handler {
-	verifier := jwtauth.Verifier(authjwt.JWTAuth())
-	return verifier(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token, _, err := jwtauth.FromContext(r.Context())
-		if err != nil || token == nil {
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-			return
+// OpenAPIAuthFunc returns an openapi3filter.AuthenticationFunc that validates
+// Bearer JWTs and injects AuthInfo into the request context.
+// The OapiRequestValidator only calls this for routes with a security requirement;
+// routes with `security: []` in the spec are skipped automatically.
+func OpenAPIAuthFunc() openapi3filter.AuthenticationFunc {
+	return func(ctx context.Context, input *openapi3filter.AuthenticationInput) error {
+		if input.SecurityScheme.Type != "http" || input.SecurityScheme.Scheme != "Bearer" {
+			return fmt.Errorf("unsupported security scheme: %s/%s",
+				input.SecurityScheme.Type, input.SecurityScheme.Scheme)
 		}
-		if jwt.Validate(token) != nil {
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-			return
+
+		r := input.RequestValidationInput.Request
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			return errors.New("missing Authorization header")
+		}
+
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		if tokenString == authHeader {
+			return errors.New("invalid Authorization header format")
+		}
+
+		token, err := jwtauth.VerifyToken(authjwt.JWTAuth(), tokenString)
+		if err != nil {
+			slog.Debug("auth: token verification failed", "path", r.URL.Path, "error", err)
+			return fmt.Errorf("invalid token: %w", err)
+		}
+
+		if err := jwt.Validate(token); err != nil {
+			slog.Debug("auth: token validation failed", "path", r.URL.Path, "error", err)
+			return fmt.Errorf("token validation failed: %w", err)
 		}
 
 		info, err := extractAuthInfo(token)
 		if err != nil {
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-			return
+			slog.Debug("auth: failed to extract claims", "path", r.URL.Path, "error", err)
+			return fmt.Errorf("failed to extract claims: %w", err)
 		}
 
-		ctx := context.WithValue(r.Context(), contextKey{}, info)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	}))
-}
+		newCtx := context.WithValue(r.Context(), contextKey{}, info)
+		*r = *r.WithContext(newCtx)
 
-// RequireSessionTokenMiddleware rejects action tokens (password reset, email verification).
-// Use this for routes that should only be accessible with a regular session token.
-func RequireSessionTokenMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		info, err := FromContext(r.Context())
-		if err != nil {
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-			return
-		}
-		if info.PasswordReset || (info.EmailVerified && info.Name == "") {
-			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
+		return nil
+	}
 }
 
 // FromContext retrieves AuthInfo from the request context.

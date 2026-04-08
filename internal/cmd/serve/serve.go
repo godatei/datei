@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
+	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/httprate"
@@ -52,53 +52,6 @@ func NewCommand() *cobra.Command {
 	}
 	opts.Bind(cmd)
 	return cmd
-}
-
-// authRoutes are public endpoints that do not require authentication.
-var authRoutes = map[string]bool{
-	"/api/v1/auth/login":        true,
-	"/api/v1/auth/login/config": true,
-	"/api/v1/auth/register":     true,
-	"/api/v1/auth/reset":        true,
-}
-
-// actionTokenRoutes accept both session tokens and action tokens (password reset, email verification).
-// All other authenticated routes require session tokens only.
-var actionTokenRoutes = map[string]bool{
-	"/api/v1/settings/user":           true,
-	"/api/v1/settings/verify/confirm": true,
-}
-
-// routeAwareAuthMiddleware applies JWT auth + session-token checks
-// based on route classification. Public auth routes are passed through,
-// action-token routes get JWT auth only, all others also require session tokens.
-func routeAwareAuthMiddleware(next http.Handler) http.Handler {
-	jwtMiddleware := authn.Middleware
-	sessionMiddleware := authn.RequireSessionTokenMiddleware
-
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		path := strings.TrimSuffix(r.URL.Path, "/")
-
-		// Public auth routes — no authentication required
-		if authRoutes[path] {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		// All other API routes require JWT authentication
-		authenticated := jwtMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Action-token routes accept any valid JWT
-			if actionTokenRoutes[path] {
-				next.ServeHTTP(w, r)
-				return
-			}
-
-			// Everything else requires a session token (not action/reset tokens)
-			sessionMiddleware(next).ServeHTTP(w, r)
-		}))
-
-		authenticated.ServeHTTP(w, r)
-	})
 }
 
 func run(ctx context.Context, options Options) error {
@@ -169,21 +122,23 @@ func run(ctx context.Context, options Options) error {
 	rootMux.Use(chimiddleware.RealIP)
 	rootMux.Use(slogchi.New(slog.Default()))
 
-	// API sub-router: OpenAPI validation + auth middleware for all API routes
-	apiRouter := chi.NewRouter()
-	apiRouter.Use(oapimiddleware.OapiRequestValidator(swagger))
-	apiRouter.Use(routeAwareAuthMiddleware)
-	apiRouter.Use(httprate.Limit(
-		10, 1*time.Minute,
-		httprate.WithKeyFuncs(httprate.KeyByRealIP, httprate.KeyByEndpoint),
-	))
-
-	// Let the generated code register all routes
-	server.HandlerWithOptions(strictHandler, server.ChiServerOptions{
-		BaseRouter: apiRouter,
+	// API routes: OpenAPI validator handles auth via security schemes in the spec
+	rootMux.Group(func(r chi.Router) {
+		r.Use(oapimiddleware.OapiRequestValidatorWithOptions(swagger, &oapimiddleware.Options{
+			SilenceServersWarning: true,
+			Options: openapi3filter.Options{
+				AuthenticationFunc: authn.OpenAPIAuthFunc(),
+			},
+		}))
+		r.Use(httprate.Limit(
+			10, 1*time.Minute,
+			httprate.WithKeyFuncs(httprate.KeyByRealIP, httprate.KeyByEndpoint),
+		))
+		server.HandlerWithOptions(strictHandler, server.ChiServerOptions{
+			BaseRouter: r,
+		})
 	})
 
-	rootMux.Mount("/", apiRouter)
 	rootMux.Handle("/*", frontend.NewHandler())
 
 	httpServer := &http.Server{Handler: rootMux, Addr: config.ServerAddr()}

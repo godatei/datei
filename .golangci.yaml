@@ -58,6 +58,8 @@ linters:
         path: internal/events/(eventstore|user_eventstore)\.go
       - linters: [gocyclo]
         path: internal/events/serialization\.go
+      - linters: [contextcheck]
+        path: internal/authn/middleware\.go
   settings:
     gocritic:
       disabled-checks:
