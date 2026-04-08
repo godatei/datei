@@ -1,11 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import {
-  AbstractControl,
-  FormBuilder,
-  ReactiveFormsModule,
-  ValidationErrors,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgOptimizedImage } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -15,12 +9,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '~/frontend/services/auth.service';
-
-function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
-  const password = control.get('password')?.value;
-  const confirm = control.get('confirmPassword')?.value;
-  return password === confirm ? null : { passwordMismatch: true };
-}
+import {
+  PasswordConfirmComponent,
+  passwordConfirmControls,
+  passwordMatchValidator,
+} from '../password-confirm/password-confirm.component';
 
 @Component({
   selector: 'app-register',
@@ -34,6 +27,7 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    PasswordConfirmComponent,
     RouterLink,
   ],
   templateUrl: './register.component.html',
@@ -51,8 +45,7 @@ export class RegisterComponent {
     {
       name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(8)]],
-      confirmPassword: ['', Validators.required],
+      ...passwordConfirmControls(),
     },
     { validators: passwordMatchValidator },
   );

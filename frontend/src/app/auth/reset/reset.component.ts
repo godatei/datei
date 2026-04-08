@@ -1,26 +1,17 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import {
-  AbstractControl,
-  FormBuilder,
-  ReactiveFormsModule,
-  ValidationErrors,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 import { AuthService } from '~/frontend/services/auth.service';
 import { SettingsService } from '~/frontend/services/settings.service';
-
-function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
-  const password = control.get('password')?.value;
-  const confirm = control.get('confirmPassword')?.value;
-  return password === confirm ? null : { passwordMismatch: true };
-}
+import {
+  PasswordConfirmComponent,
+  passwordConfirmControls,
+  passwordMatchValidator,
+} from '../password-confirm/password-confirm.component';
 
 @Component({
   selector: 'app-reset',
@@ -28,11 +19,10 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
   imports: [
     ReactiveFormsModule,
     MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    PasswordConfirmComponent,
   ],
   templateUrl: './reset.component.html',
   styleUrls: ['../auth-shared.css'],
@@ -47,10 +37,7 @@ export class ResetComponent {
   readonly errorMessage = signal('');
 
   readonly form = this.fb.nonNullable.group(
-    {
-      password: ['', [Validators.required, Validators.minLength(8)]],
-      confirmPassword: ['', Validators.required],
-    },
+    { ...passwordConfirmControls() },
     { validators: passwordMatchValidator },
   );
 

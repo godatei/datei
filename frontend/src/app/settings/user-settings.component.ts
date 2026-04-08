@@ -1,12 +1,6 @@
 import { Clipboard } from '@angular/cdk/clipboard';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import {
-  AbstractControl,
-  FormBuilder,
-  ReactiveFormsModule,
-  ValidationErrors,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
@@ -17,14 +11,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import type { UserEmail } from '~/api/models/user-email';
+import {
+  PasswordConfirmComponent,
+  passwordConfirmControls,
+  passwordMatchValidator,
+} from '~/frontend/auth/password-confirm/password-confirm.component';
 import { AuthService } from '~/frontend/services/auth.service';
 import { SettingsService } from '~/frontend/services/settings.service';
-
-function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
-  const password = control.get('password')?.value;
-  const confirm = control.get('confirmPassword')?.value;
-  return password === confirm ? null : { passwordMismatch: true };
-}
 
 @Component({
   selector: 'app-user-settings',
@@ -40,6 +33,7 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
     MatIconModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
+    PasswordConfirmComponent,
   ],
   templateUrl: './user-settings.component.html',
   styleUrl: './user-settings.component.css',
@@ -67,8 +61,7 @@ export class UserSettingsComponent {
   readonly passwordForm = this.fb.nonNullable.group(
     {
       currentPassword: ['', Validators.required],
-      password: ['', [Validators.required, Validators.minLength(8)]],
-      confirmPassword: ['', Validators.required],
+      ...passwordConfirmControls(),
     },
     { validators: passwordMatchValidator },
   );
