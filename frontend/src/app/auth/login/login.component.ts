@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { email, form, FormField, minLength, required } from '@angular/forms/signals';
 import { NgOptimizedImage } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -15,7 +15,7 @@ import { AuthService } from '~/frontend/services/auth.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     NgOptimizedImage,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
@@ -31,34 +31,38 @@ export class LoginComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  private readonly fb = inject(FormBuilder);
 
   readonly loading = signal(false);
   readonly errorMessage = signal('');
   readonly mfaRequired = signal(false);
 
-  readonly loginForm = this.fb.nonNullable.group({
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', Validators.required],
+  readonly loginModel = signal({ email: '', password: '' });
+  readonly loginForm = form(this.loginModel, (p) => {
+    required(p.email);
+    email(p.email);
+    required(p.password);
   });
 
-  readonly mfaForm = this.fb.nonNullable.group({
-    code: ['', [Validators.required, Validators.minLength(6)]],
+  readonly mfaModel = signal({ code: '' });
+  readonly mfaForm = form(this.mfaModel, (p) => {
+    required(p.code);
+    minLength(p.code, 6);
   });
 
   constructor() {
-    const email = this.route.snapshot.queryParamMap.get('email');
-    if (email) {
-      this.loginForm.patchValue({ email });
+    const emailParam = this.route.snapshot.queryParamMap.get('email');
+    if (emailParam) {
+      this.loginModel.update((m) => ({ ...m, email: emailParam }));
     }
   }
 
-  onSubmit() {
-    if (this.loginForm.invalid) return;
+  onSubmit(event: Event) {
+    event.preventDefault();
+    if (this.loginForm().invalid()) return;
     this.loading.set(true);
     this.errorMessage.set('');
 
-    const { email, password } = this.loginForm.getRawValue();
+    const { email, password } = this.loginModel();
     this.auth.login(email, password).subscribe({
       next: (result) => {
         this.loading.set(false);
@@ -75,13 +79,14 @@ export class LoginComponent {
     });
   }
 
-  onMFASubmit() {
-    if (this.mfaForm.invalid) return;
+  onMFASubmit(event: Event) {
+    event.preventDefault();
+    if (this.mfaForm().invalid()) return;
     this.loading.set(true);
     this.errorMessage.set('');
 
-    const { email, password } = this.loginForm.getRawValue();
-    const { code } = this.mfaForm.getRawValue();
+    const { email, password } = this.loginModel();
+    const { code } = this.mfaModel();
     this.auth.login(email, password, code).subscribe({
       next: () => {
         this.loading.set(false);

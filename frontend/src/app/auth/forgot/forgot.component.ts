@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { email, form, FormField, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -13,7 +13,7 @@ import { AuthService } from '~/frontend/services/auth.service';
   selector: 'app-forgot',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
@@ -27,20 +27,22 @@ import { AuthService } from '~/frontend/services/auth.service';
 })
 export class ForgotComponent {
   private readonly auth = inject(AuthService);
-  private readonly fb = inject(FormBuilder);
 
   readonly loading = signal(false);
   readonly success = signal(false);
 
-  readonly form = this.fb.nonNullable.group({
-    email: ['', [Validators.required, Validators.email]],
+  readonly model = signal({ email: '' });
+  readonly form = form(this.model, (p) => {
+    required(p.email);
+    email(p.email);
   });
 
-  onSubmit() {
-    if (this.form.invalid) return;
+  onSubmit(event: Event) {
+    event.preventDefault();
+    if (this.form().invalid()) return;
     this.loading.set(true);
 
-    this.auth.resetPassword(this.form.getRawValue().email).subscribe({
+    this.auth.resetPassword(this.model().email).subscribe({
       next: () => {
         this.loading.set(false);
         this.success.set(true);

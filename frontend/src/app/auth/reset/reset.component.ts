@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { form } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,15 +9,13 @@ import { AuthService } from '~/frontend/services/auth.service';
 import { SettingsService } from '~/frontend/services/settings.service';
 import {
   PasswordConfirmComponent,
-  passwordConfirmControls,
-  passwordMatchValidator,
+  passwordConfirmSchema,
 } from '../password-confirm/password-confirm.component';
 
 @Component({
   selector: 'app-reset',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    ReactiveFormsModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
@@ -31,22 +29,22 @@ export class ResetComponent {
   private readonly settings = inject(SettingsService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
-  private readonly fb = inject(FormBuilder);
 
   readonly loading = signal(false);
   readonly errorMessage = signal('');
 
-  readonly form = this.fb.nonNullable.group(
-    { ...passwordConfirmControls() },
-    { validators: passwordMatchValidator },
-  );
+  readonly model = signal({ password: '', confirmPassword: '' });
+  readonly form = form(this.model, (p) => {
+    passwordConfirmSchema(p.password, p.confirmPassword);
+  });
 
-  onSubmit() {
-    if (this.form.invalid) return;
+  onSubmit(event: Event) {
+    event.preventDefault();
+    if (this.form().invalid()) return;
     this.loading.set(true);
     this.errorMessage.set('');
 
-    this.settings.updateUser({ password: this.form.getRawValue().password }, true).subscribe({
+    this.settings.updateUser({ password: this.model().password }, true).subscribe({
       next: () => {
         this.loading.set(false);
         this.auth.logout();

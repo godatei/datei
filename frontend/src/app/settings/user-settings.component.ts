@@ -1,6 +1,6 @@
 import { Clipboard } from '@angular/cdk/clipboard';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { email, form, FormField, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
@@ -13,8 +13,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import type { UserEmail } from '~/api/models/user-email';
 import {
   PasswordConfirmComponent,
-  passwordConfirmControls,
-  passwordMatchValidator,
+  passwordConfirmSchema,
 } from '~/frontend/auth/password-confirm/password-confirm.component';
 import { AuthService } from '~/frontend/services/auth.service';
 import { SettingsService } from '~/frontend/services/settings.service';
@@ -23,7 +22,7 @@ import { SettingsService } from '~/frontend/services/settings.service';
   selector: 'app-user-settings',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
@@ -43,7 +42,6 @@ export class UserSettingsComponent {
   private readonly auth = inject(AuthService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly clipboard = inject(Clipboard);
-  private readonly fb = inject(FormBuilder);
 
   readonly emails = signal<UserEmail[]>([]);
   readonly emailsLoading = signal(false);
@@ -54,28 +52,32 @@ export class UserSettingsComponent {
   readonly mfaSetupData = signal<{ secret: string; qrCodeUrl: string } | undefined>(undefined);
   readonly recoveryCodes = signal<string[] | undefined>(undefined);
 
-  readonly profileForm = this.fb.nonNullable.group({
-    name: ['', Validators.required],
+  readonly profileModel = signal({ name: '' });
+  readonly profileForm = form(this.profileModel, (p) => {
+    required(p.name);
   });
 
-  readonly passwordForm = this.fb.nonNullable.group(
-    {
-      currentPassword: ['', Validators.required],
-      ...passwordConfirmControls(),
-    },
-    { validators: passwordMatchValidator },
-  );
-
-  readonly mfaEnableForm = this.fb.nonNullable.group({
-    code: ['', [Validators.required, Validators.minLength(6)]],
+  readonly passwordModel = signal({ currentPassword: '', password: '', confirmPassword: '' });
+  readonly passwordForm = form(this.passwordModel, (p) => {
+    required(p.currentPassword);
+    passwordConfirmSchema(p.password, p.confirmPassword);
   });
 
-  readonly addEmailForm = this.fb.nonNullable.group({
-    email: ['', [Validators.required, Validators.email]],
+  readonly mfaEnableModel = signal({ code: '' });
+  readonly mfaEnableForm = form(this.mfaEnableModel, (p) => {
+    required(p.code);
+    minLength(p.code, 6);
   });
 
-  readonly mfaDisableForm = this.fb.nonNullable.group({
-    password: ['', Validators.required],
+  readonly addEmailModel = signal({ email: '' });
+  readonly addEmailForm = form(this.addEmailModel, (p) => {
+    required(p.email);
+    email(p.email);
+  });
+
+  readonly mfaDisableModel = signal({ password: '' });
+  readonly mfaDisableForm = form(this.mfaDisableModel, (p) => {
+    required(p.password);
   });
 
   constructor() {
@@ -86,7 +88,7 @@ export class UserSettingsComponent {
   private loadProfile() {
     this.settings.getCurrentUser().subscribe({
       next: (user) => {
-        this.profileForm.patchValue({ name: user.name });
+        this.profileModel.set({ name: user.name });
         this.mfaEnabled.set(user.mfaEnabled);
       },
     });
@@ -103,11 +105,12 @@ export class UserSettingsComponent {
     });
   }
 
-  addNewEmail() {
+  addNewEmail(event: Event) {
+    event.preventDefault();
     this.emailsLoading.set(true);
-    this.settings.addEmail(this.addEmailForm.getRawValue().email).subscribe({
+    this.settings.addEmail(this.addEmailModel().email).subscribe({
       next: () => {
-        this.addEmailForm.reset();
+        this.addEmailModel.set({ email: '' });
         this.snackBar.open('Email added', 'OK', { duration: 3000 });
         this.loadEmails();
       },
@@ -146,9 +149,10 @@ export class UserSettingsComponent {
     });
   }
 
-  updateProfile() {
+  updateProfile(event: Event) {
+    event.preventDefault();
     this.profileLoading.set(true);
-    this.settings.updateUser({ name: this.profileForm.getRawValue().name }).subscribe({
+    this.settings.updateUser({ name: this.profileModel().name }).subscribe({
       next: (res) => {
         this.profileLoading.set(false);
         this.auth.updateName(res.name);
@@ -158,13 +162,14 @@ export class UserSettingsComponent {
     });
   }
 
-  changePassword() {
+  changePassword(event: Event) {
+    event.preventDefault();
     this.passwordLoading.set(true);
-    const { currentPassword, password } = this.passwordForm.getRawValue();
+    const { currentPassword, password } = this.passwordModel();
     this.settings.updateUser({ currentPassword, password }).subscribe({
       next: () => {
         this.passwordLoading.set(false);
-        this.passwordForm.reset();
+        this.passwordModel.set({ currentPassword: '', password: '', confirmPassword: '' });
         this.snackBar.open('Password changed', 'OK', { duration: 3000 });
       },
       error: () => this.passwordLoading.set(false),
@@ -182,9 +187,10 @@ export class UserSettingsComponent {
     });
   }
 
-  enableMFA() {
+  enableMFA(event: Event) {
+    event.preventDefault();
     this.mfaLoading.set(true);
-    this.settings.enableMFA(this.mfaEnableForm.getRawValue().code).subscribe({
+    this.settings.enableMFA(this.mfaEnableModel().code).subscribe({
       next: (data) => {
         this.mfaLoading.set(false);
         this.mfaEnabled.set(true);
@@ -196,13 +202,14 @@ export class UserSettingsComponent {
     });
   }
 
-  disableMFA() {
+  disableMFA(event: Event) {
+    event.preventDefault();
     this.mfaLoading.set(true);
-    this.settings.disableMFA(this.mfaDisableForm.getRawValue().password).subscribe({
+    this.settings.disableMFA(this.mfaDisableModel().password).subscribe({
       next: () => {
         this.mfaLoading.set(false);
         this.mfaEnabled.set(false);
-        this.mfaDisableForm.reset();
+        this.mfaDisableModel.set({ password: '' });
         this.snackBar.open('MFA disabled', 'OK', { duration: 3000 });
       },
       error: () => this.mfaLoading.set(false),

@@ -6,10 +6,10 @@
     <mat-card-header><mat-card-title>Profile</mat-card-title></mat-card-header>
     <mat-card-content>
       <p class="section-description">Manage your display name</p>
-      <form [formGroup]="profileForm" (ngSubmit)="updateProfile()">
+      <form (submit)="updateProfile($event)">
         <mat-form-field appearance="outline">
           <mat-label>Name</mat-label>
-          <input matInput formControlName="name" />
+          <input matInput [formField]="profileForm.name" />
         </mat-form-field>
         <button mat-flat-button type="submit" [disabled]="profileLoading()" class="action-btn">
           Save
@@ -65,12 +65,16 @@
           <mat-divider></mat-divider>
         }
       }
-      <form [formGroup]="addEmailForm" (ngSubmit)="addNewEmail()" class="add-email-form">
+      <form (submit)="addNewEmail($event)" class="add-email-form">
         <mat-form-field appearance="outline">
           <mat-label>Add email address</mat-label>
-          <input matInput formControlName="email" type="email" />
+          <input matInput [formField]="addEmailForm.email" type="email" />
         </mat-form-field>
-        <button mat-flat-button type="submit" [disabled]="emailsLoading() || addEmailForm.invalid">
+        <button
+          mat-flat-button
+          type="submit"
+          [disabled]="emailsLoading() || addEmailForm().invalid()"
+        >
           Add email
         </button>
       </form>
@@ -82,25 +86,26 @@
     <mat-card-header><mat-card-title>Change Password</mat-card-title></mat-card-header>
     <mat-card-content>
       <p class="section-description">Update your password</p>
-      <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+      <form (submit)="changePassword($event)">
         <mat-form-field appearance="outline">
           <mat-label>Current password</mat-label>
           <input
             matInput
-            formControlName="currentPassword"
+            [formField]="passwordForm.currentPassword"
             type="password"
             autocomplete="current-password"
           />
         </mat-form-field>
         <app-password-confirm
-          [group]="passwordForm"
+          [password]="passwordForm.password"
+          [confirmPassword]="passwordForm.confirmPassword"
           passwordLabel="New password"
           confirmLabel="Confirm new password"
-        ></app-password-confirm>
+        />
         <button
           mat-flat-button
           type="submit"
-          [disabled]="passwordLoading() || passwordForm.invalid"
+          [disabled]="passwordLoading() || passwordForm().invalid()"
         >
           Change password
         </button>
@@ -126,15 +131,15 @@
               <mat-icon>content_copy</mat-icon>
             </button>
           </div>
-          <form [formGroup]="mfaEnableForm" (ngSubmit)="enableMFA()">
+          <form (submit)="enableMFA($event)">
             <mat-form-field appearance="outline">
               <mat-label>Verification code</mat-label>
-              <input matInput formControlName="code" autocomplete="one-time-code" />
+              <input matInput [formField]="mfaEnableForm.code" autocomplete="one-time-code" />
             </mat-form-field>
             <button
               mat-flat-button
               type="submit"
-              [disabled]="mfaLoading() || mfaEnableForm.invalid"
+              [disabled]="mfaLoading() || mfaEnableForm().invalid()"
             >
               Enable MFA
             </button>
@@ -162,16 +167,16 @@
         <p>Two-factor authentication is enabled.</p>
         <div class="danger-zone">
           <p class="danger-label">Disable two-factor authentication</p>
-          <form [formGroup]="mfaDisableForm" (ngSubmit)="disableMFA()">
+          <form (submit)="disableMFA($event)">
             <mat-form-field appearance="outline">
               <mat-label>Password</mat-label>
-              <input matInput formControlName="password" type="password" />
+              <input matInput [formField]="mfaDisableForm.password" type="password" />
             </mat-form-field>
             <button
               mat-button
               color="warn"
               type="submit"
-              [disabled]="mfaLoading() || mfaDisableForm.invalid"
+              [disabled]="mfaLoading() || mfaDisableForm().invalid()"
             >
               Disable MFA
             </button>
