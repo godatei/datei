@@ -11,19 +11,19 @@
         <div class="error-banner">{{ errorMessage() }}</div>
       }
 
-      <form class="auth-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+      <form class="auth-form" (submit)="onSubmit($event)">
         <app-password-confirm
-          [group]="form"
+          [password]="form.password"
+          [confirmPassword]="form.confirmPassword"
           passwordLabel="New password"
           confirmLabel="Confirm new password"
-          fieldClass="form-field"
-        ></app-password-confirm>
+        />
 
         <button
           class="submit-btn"
           mat-flat-button
           type="submit"
-          [disabled]="loading() || form.invalid"
+          [disabled]="loading() || form().invalid()"
         >
           @if (loading()) {
             <mat-spinner diameter="20"></mat-spinner>

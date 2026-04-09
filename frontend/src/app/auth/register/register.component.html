@@ -11,24 +11,24 @@
         <div class="error-banner">{{ errorMessage() }}</div>
       }
 
-      <form class="auth-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+      <form class="auth-form" (submit)="onSubmit($event)">
         <mat-form-field class="form-field" appearance="outline">
           <mat-label>Name</mat-label>
-          <input matInput formControlName="name" autocomplete="name" />
+          <input matInput [formField]="form.name" autocomplete="name" />
         </mat-form-field>
 
         <mat-form-field class="form-field" appearance="outline">
           <mat-label>Email</mat-label>
-          <input matInput formControlName="email" type="email" autocomplete="email" />
+          <input matInput [formField]="form.email" type="email" autocomplete="email" />
         </mat-form-field>
 
-        <app-password-confirm [group]="form" fieldClass="form-field"></app-password-confirm>
+        <app-password-confirm [password]="form.password" [confirmPassword]="form.confirmPassword" />
 
         <button
           class="submit-btn"
           mat-flat-button
           type="submit"
-          [disabled]="loading() || form.invalid"
+          [disabled]="loading() || form().invalid()"
         >
           @if (loading()) {
             <mat-spinner diameter="20"></mat-spinner>

@@ -12,17 +12,17 @@
       }
 
       @if (!mfaRequired()) {
-        <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+        <form class="auth-form" (submit)="onSubmit($event)">
           <mat-form-field class="form-field" appearance="outline">
             <mat-label>Email</mat-label>
-            <input matInput formControlName="email" type="email" autocomplete="email" />
+            <input matInput [formField]="loginForm.email" type="email" autocomplete="email" />
           </mat-form-field>
 
           <mat-form-field class="form-field" appearance="outline">
             <mat-label>Password</mat-label>
             <input
               matInput
-              formControlName="password"
+              [formField]="loginForm.password"
               type="password"
               autocomplete="current-password"
             />
@@ -32,7 +32,7 @@
             class="submit-btn"
             mat-flat-button
             type="submit"
-            [disabled]="loading() || loginForm.invalid"
+            [disabled]="loading() || loginForm().invalid()"
           >
             @if (loading()) {
               <mat-spinner diameter="20"></mat-spinner>
@@ -47,10 +47,10 @@
           <a routerLink="/register">Create an account</a>
         </div>
       } @else {
-        <form class="auth-form" [formGroup]="mfaForm" (ngSubmit)="onMFASubmit()">
+        <form class="auth-form" (submit)="onMFASubmit($event)">
           <mat-form-field class="form-field" appearance="outline">
             <mat-label>MFA Code</mat-label>
-            <input matInput formControlName="code" autocomplete="one-time-code" />
+            <input matInput [formField]="mfaForm.code" autocomplete="one-time-code" />
             <mat-hint>Enter your 6-digit code or a recovery code</mat-hint>
           </mat-form-field>
 
@@ -58,7 +58,7 @@
             class="submit-btn"
             mat-flat-button
             type="submit"
-            [disabled]="loading() || mfaForm.invalid"
+            [disabled]="loading() || mfaForm().invalid()"
           >
             @if (loading()) {
               <mat-spinner diameter="20"></mat-spinner>

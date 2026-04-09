@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { email, form, FormField, required } from '@angular/forms/signals';
 import { NgOptimizedImage } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -11,8 +11,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '~/frontend/services/auth.service';
 import {
   PasswordConfirmComponent,
-  passwordConfirmControls,
-  passwordMatchValidator,
+  passwordConfirmSchema,
 } from '../password-confirm/password-confirm.component';
 
 @Component({
@@ -20,7 +19,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     NgOptimizedImage,
-    ReactiveFormsModule,
+    FormField,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
@@ -36,26 +35,25 @@ import {
 export class RegisterComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
-  private readonly fb = inject(FormBuilder);
 
   readonly loading = signal(false);
   readonly errorMessage = signal('');
 
-  readonly form = this.fb.nonNullable.group(
-    {
-      name: ['', Validators.required],
-      email: ['', [Validators.required, Validators.email]],
-      ...passwordConfirmControls(),
-    },
-    { validators: passwordMatchValidator },
-  );
+  readonly model = signal({ name: '', email: '', password: '', confirmPassword: '' });
+  readonly form = form(this.model, (p) => {
+    required(p.name);
+    required(p.email);
+    email(p.email);
+    passwordConfirmSchema(p.password, p.confirmPassword);
+  });
 
-  onSubmit() {
-    if (this.form.invalid) return;
+  onSubmit(event: Event) {
+    event.preventDefault();
+    if (this.form().invalid()) return;
     this.loading.set(true);
     this.errorMessage.set('');
 
-    const { email, name, password } = this.form.getRawValue();
+    const { email, name, password } = this.model();
     this.auth.register(email, name, password).subscribe({
       next: () => {
         this.loading.set(false);
