@@ -67,7 +67,7 @@ func OpenAPIAuthFunc() openapi3filter.AuthenticationFunc {
 		}
 
 		newCtx := context.WithValue(r.Context(), contextKey{}, info)
-		*r = *r.WithContext(newCtx)
+		*r = *r.WithContext(newCtx) //nolint:contextcheck // must use r.Context(), not func ctx
 
 		return nil
 	}

@@ -1,3 +1,4 @@
+//nolint:dupl // mirrors user_eventstore.go by design (event store pattern)
 package events
 
 import (
