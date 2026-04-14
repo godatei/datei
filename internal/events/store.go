@@ -1,4 +1,3 @@
-//nolint:dupl // mirrors user_eventstore.go by design (event store pattern)
 package events
 
 import (
@@ -12,6 +11,12 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// EventRow holds the fields needed to deserialize a stored event.
+type EventRow struct {
+	EventType string
+	EventData []byte
+}
+
 // EventStore defines the interface for event persistence
 type EventStore interface {
 	// AppendToStream persists events to a stream within a transaction
@@ -21,14 +26,32 @@ type EventStore interface {
 	GetEvents(ctx context.Context, streamID uuid.UUID, fromVersion int) ([]DomainEvent, error)
 }
 
-// PostgresEventStore implements EventStore using PostgreSQL
-type PostgresEventStore struct {
-	db *pgxpool.Pool
+// InsertParams groups the parameters for inserting a single event row.
+type InsertParams struct {
+	StreamID      uuid.UUID
+	StreamVersion int32
+	EventType     string
+	EventData     []byte
 }
 
-// NewPostgresEventStore creates a new event store
-func NewPostgresEventStore(db *pgxpool.Pool) *PostgresEventStore {
-	return &PostgresEventStore{db: db}
+// storeQueries abstracts the sqlc query functions so a single store
+// implementation can target different event tables.
+type storeQueries struct {
+	getVersion func(ctx context.Context, q *db.Queries, id uuid.UUID) (int32, error)
+	insert     func(ctx context.Context, q *db.Queries, p InsertParams) error
+	getEvents  func(ctx context.Context, q *db.Queries, id uuid.UUID, from int32) ([]EventRow, error)
+}
+
+// PostgresEventStore implements EventStore using PostgreSQL.
+// It is parameterised with query callbacks so the same logic can serve
+// any event table (datei_event, user_account_event, …).
+type PostgresEventStore struct {
+	db *pgxpool.Pool
+	sq storeQueries
+}
+
+func newStore(pool *pgxpool.Pool, sq storeQueries) *PostgresEventStore {
+	return &PostgresEventStore{db: pool, sq: sq}
 }
 
 // AppendToStream persists events with optimistic locking
@@ -45,8 +68,7 @@ func (es *PostgresEventStore) AppendToStream(
 
 	q := db.New(tx)
 
-	// Verify expected version matches actual version (optimistic locking)
-	actualVersion, err := q.GetStreamVersion(ctx, streamID)
+	actualVersion, err := es.sq.getVersion(ctx, q, streamID)
 	if err != nil {
 		return fmt.Errorf("failed to get current stream version: %w", err)
 	}
@@ -55,22 +77,18 @@ func (es *PostgresEventStore) AppendToStream(
 		return fmt.Errorf("optimistic lock failed: expected version %d, got %d", expectedVersion, actualVersion)
 	}
 
-	// Insert all events in batch
 	for i, event := range domainEvents {
 		eventData, err := Serialize(event)
 		if err != nil {
 			return fmt.Errorf("failed to serialize event: %w", err)
 		}
 
-		version := expectedVersion + i + 1
-
-		err = q.InsertDateiEvent(ctx, db.InsertDateiEventParams{
+		if err := es.sq.insert(ctx, q, InsertParams{
 			StreamID:      streamID,
-			StreamVersion: int32(version),
+			StreamVersion: int32(expectedVersion + i + 1),
 			EventType:     event.EventType(),
 			EventData:     eventData,
-		})
-		if err != nil {
+		}); err != nil {
 			return fmt.Errorf("failed to insert event %s: %w", event.EventType(), err)
 		}
 	}
@@ -86,15 +104,12 @@ func (es *PostgresEventStore) GetEvents(
 ) ([]DomainEvent, error) {
 	q := db.New(es.db)
 
-	rows, err := q.GetDateiEventsByStreamID(ctx, db.GetDateiEventsByStreamIDParams{
-		StreamID:      streamID,
-		StreamVersion: int32(fromVersion),
-	})
+	rows, err := es.sq.getEvents(ctx, q, streamID, int32(fromVersion))
 	if err != nil {
 		return nil, fmt.Errorf("failed to query events: %w", err)
 	}
 
-	var events []DomainEvent
+	events := make([]DomainEvent, 0, len(rows))
 	for _, row := range rows {
 		event, err := Deserialize(row.EventType, row.EventData)
 		if err != nil {
