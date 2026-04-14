@@ -172,6 +172,11 @@ HTTP Request → Server Endpoint → Service → db.Queries (read from projectio
 - After adding migrations, run `mise import-db-schema` to update `internal/db/zz_generated_schema.sql` for sqlc
 - Run manually: `mise run:datei:migrate`
 
+## Linting
+
+- Never add exclusion `rules` in `.golangci.yaml` to suppress lint warnings for specific files
+- If a suppression is absolutely needed, use a `//nolint:<linter>` directive on the affected line or function with a short justification comment
+
 ## Error Handling
 
 - Define sentinel errors in `internal/dateierrors/`
