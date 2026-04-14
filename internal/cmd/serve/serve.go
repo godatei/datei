@@ -91,10 +91,10 @@ func run(ctx context.Context, options Options) error {
 		return err
 	}
 
-	dateiEventStore := events.NewPostgresEventStore(db)
+	dateiEventStore := events.NewDateiEventStore(db)
 	dateiRepository := aggregate.NewPostgresDateiRepository(db, dateiEventStore)
 
-	userEventStore := events.NewUserAccountEventStore(db)
+	userEventStore := events.NewUserEventStore(db)
 	userRepository := aggregate.NewPostgresUserRepository(db, userEventStore)
 
 	// Create mailer
