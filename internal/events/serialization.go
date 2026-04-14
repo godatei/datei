@@ -6,6 +6,8 @@ import (
 )
 
 // Deserialize unmarshals event data from JSON using the event type
+//
+//nolint:gocyclo // large switch is inherent to event type registry
 func Deserialize(eventType string, data []byte) (DomainEvent, error) {
 	switch eventType {
 	case "DateiCreated":

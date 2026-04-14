@@ -1,3 +1,4 @@
+//nolint:dupl // mirrors user_repository.go by design (event-sourcing repository pattern)
 package aggregate
 
 import (
