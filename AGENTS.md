@@ -9,26 +9,21 @@
 ```
 api/                  # OpenAPI specification (YAML, source of truth)
 internal/
-├── cmd/              # CLI commands (serve, migrate)
+├── cmd/              # CLI entry points
 ├── aggregate/        # Domain aggregates and repositories
 ├── events/           # Domain events, event store, serialization
 ├── projections/      # Read model projection handlers
-├── datei/            # Domain services (business logic orchestration)
+├── <domain>/         # Domain services (business logic orchestration)
 ├── db/               # sqlc config, SQL queries, generated code, migrations
-├── server/           # HTTP endpoints (oapi-codegen generated + handlers: endpoints_auth, endpoints_settings, endpoints_emails, endpoints_datei)
-├── storage/          # File storage abstraction (S3)
-├── mapping/          # DTO conversions (aggregate/projection → API)
-├── config/           # Viper-based configuration
-├── dateierrors/      # Domain sentinel errors
-├── frontend/         # Static frontend serving
-└── buildconfig/      # Build metadata
+├── server/           # HTTP endpoints (oapi-codegen generated + handlers)
+├── ...               # Infrastructure packages (auth, config, storage, mailer, etc.)
 pkg/api/              # Generated API models from OpenAPI spec
-frontend/
-├── src/
-│   ├── api/          # Generated TypeScript client from OpenAPI
-│   ├── app/          # Angular application
-│   └── ...
+frontend/src/
+├── api/              # Generated TypeScript client from OpenAPI
+├── app/              # Angular application
 ```
+
+The domain layer packages (`aggregate/`, `events/`, `projections/`) use a consistent one-file-per-domain convention (e.g., `datei.go`, `user.go`). Domain service packages live at `internal/<domain>/`.
 
 ## Development Workflow
 
@@ -80,48 +75,47 @@ When implementing a new feature, follow these steps **in order**. Steps are anno
 
 #### Phase 2: Event Sourcing (domain logic) _(skip entirely if frontend-only)_
 
-5. **Define the event** in `internal/events/domain.go`
+Each layer package uses a consistent naming convention: one file per domain (e.g., `datei.go`, `user.go`). Follow the existing files as examples when adding a new domain.
+
+5. **Define the event** in `internal/events/<domain>.go`
    - Create a struct implementing `DomainEvent` (with `EventType()` and `StreamID()` methods)
    - Use JSON tags for serialization
    - Include all data needed to reconstruct state AND update projections
    - `EventType()` returns a PascalCase string (e.g., `"DateiRenamed"`)
+   - Register the event in the file's `init()` via `RegisterEvent("EventName", func() DomainEvent { return &EventStruct{} })`
 
-6. **Add serialization** in `internal/events/serialization.go`
-   - Add a case to `Deserialize()` for the new event type string
-   - `Serialize()` uses `json.Marshal` and works automatically via the JSON tags
-
-7. **Add the command** to the aggregate in `internal/aggregate/aggregate.go`
+6. **Add the command** to the aggregate in `internal/aggregate/<domain>.go`
    - Validate preconditions (aggregate state, input values)
    - Create the event struct and call `a.recordEvent(event)`
    - `recordEvent` increments version, appends to uncommitted list, and calls `ApplyEvent`
 
-8. **Add state application** in `ApplyEvent()` in `internal/aggregate/aggregate.go`
+7. **Add state application** in `ApplyEvent()` in the same aggregate file
    - Add a `case` in the type switch to update aggregate fields from event data
    - This must be a pure function of current state + event (no side effects)
 
-9. **Add the projection handler** in `internal/projections/handlers.go`
+8. **Add the projection handler** in `internal/projections/<domain>.go`
    - Create `UpdateProjectionFor<EventName>()` using generated sqlc `Queries`
    - Projections run synchronously inside the same transaction as event append
 
-10. **Wire the projection** in `internal/aggregate/repository.go`
-    - Add a case in `updateProjection()` to dispatch to the new handler
+9. **Wire the projection** in `internal/aggregate/<domain>_repository.go`
+   - Add a case in `updateProjection()` to dispatch to the new handler
 
 #### Phase 3: Service and HTTP layer _(skip if frontend-only)_
 
-11. **Add the service method** in `internal/datei/datei.go` (or new service file)
+10. **Add the service method** in `internal/<domain>/` (domain-specific service file)
     - Define `Input`/`Output` structs for the operation
     - Load aggregate via `repository.LoadByID()`, call command, call `repository.Save()`
     - For read operations, query projections directly via `db.New(pool)`
 
-12. **Add the HTTP endpoint** in `internal/server/endpoints_<domain>.go`
+11. **Add the HTTP endpoint** in `internal/server/endpoints_<domain>.go`
     - Implement the generated `StrictServerInterface` method
     - Map HTTP request → service input, call service, map output → HTTP response
 
-13. **Add DTO mapping** in `internal/mapping/` if needed
+12. **Add DTO mapping** in `internal/mapping/` if needed
 
 #### Phase 4: Frontend _(skip if backend-only)_
 
-14. **Implement the UI** using the generated API client from `frontend/src/api/`
+13. **Implement the UI** using the generated API client from `frontend/src/api/`
     - The TypeScript client was already regenerated in step 4
     - Follow the conventions in the Frontend Conventions section below
 
@@ -132,12 +126,16 @@ This project uses Event Sourcing with synchronous projections.
 ### Write Path (Command Side)
 
 ```
-HTTP Request → Server Endpoint → Service → Aggregate Command → Event(s)
-                                         → Repository.Save():
-                                            1. Begin TX
-                                            2. EventStore.AppendToStream (optimistic locking)
-                                            3. Update projections (same TX)
-                                            4. Commit TX
+HTTP Request
+    → Server Endpoint
+        → Service
+            → Aggregate Command
+                → Event(s)
+                      → Repository.Save():
+                        1. Begin TX
+                        2. EventStore.AppendToStream (optimistic locking)
+                        3. Update projections (same TX)
+                        4. Commit TX
 ```
 
 ### Read Path (Query Side)
@@ -154,7 +152,9 @@ HTTP Request → Server Endpoint → Service → db.Queries (read from projectio
 - **Immutable events**: Events are append-only; never update or delete from `event_store`
 - **Projection = read model**: Query projections for reads, never reconstruct aggregates for read-only operations
 
-## sqlc
+## Backend Conventions
+
+### sqlc
 
 - Config: `internal/db/sqlc.yaml`
 - Queries go in `internal/db/*.sql` files using the `-- name: QueryName :verb` format
@@ -163,7 +163,7 @@ HTTP Request → Server Endpoint → Service → db.Queries (read from projectio
 - Uses pgx/v5 driver with `google/uuid` UUID type overrides
 - Nullable columns generate pointer types
 
-## Database Migrations
+### Database Migrations
 
 - Tool: golang-migrate
 - Location: `internal/db/migrations/sql/`
@@ -172,27 +172,27 @@ HTTP Request → Server Endpoint → Service → db.Queries (read from projectio
 - After adding migrations, run `mise import-db-schema` to update `internal/db/zz_generated_schema.sql` for sqlc
 - Run manually: `mise run:datei:migrate`
 
-## Linting
+### Linting
 
 - Never add exclusion `rules` in `.golangci.yaml` to suppress lint warnings for specific files
 - If a suppression is absolutely needed, use a `//nolint:<linter>` directive on the affected line or function with a short justification comment
 
-## Error Handling
+### Error Handling
 
 - Define sentinel errors in `internal/dateierrors/`
 - Wrap errors with context: `fmt.Errorf("failed to do X: %w", err)`
 - Check with `errors.Is()`
 - Map domain errors to HTTP status codes in endpoint handlers
 
-# Frontend Conventions
+## Frontend Conventions
 
-## TypeScript Best Practices
+### TypeScript Best Practices
 
 - Use strict type checking
 - Prefer type inference when the type is obvious
 - Avoid the `any` type; use `unknown` when type is uncertain
 
-## Angular Material (Material 3 Expressive)
+### Angular Material (Material 3 Expressive)
 
 This project uses Angular Material 21 with Material 3 theming. All UI must follow M3 Expressive conventions.
 
@@ -204,7 +204,7 @@ This project uses Angular Material 21 with Material 3 theming. All UI must follo
 - The theme is defined in `frontend/src/material-theme.scss` using `@include mat.theme()` with `mat.$azure-palette` (primary) and `mat.$blue-palette` (tertiary)
 - Use `@angular/cdk` utilities (e.g., `BreakpointObserver`) for responsive behavior instead of manual `window.matchMedia`
 
-## Angular Best Practices
+### Angular Best Practices
 
 - Always use standalone components over NgModules
 - Must NOT set `standalone: true` inside Angular decorators. It's the default in Angular v20+.
@@ -215,12 +215,12 @@ This project uses Angular Material 21 with Material 3 theming. All UI must follo
   - `NgOptimizedImage` does not work for inline base64 images.
 - Do NOT use `@angular/animations` (`provideAnimationsAsync`, animation triggers, `[@name]` bindings). Use Angular's built-in animation directives (`animate.enter`, `animate.leave`) instead.
 
-## Accessibility Requirements
+### Accessibility Requirements
 
 - It MUST pass all AXE checks.
 - It MUST follow all WCAG AA minimums, including focus management, color contrast, and ARIA attributes.
 
-### Components
+#### Components
 
 - Keep components small and focused on a single responsibility
 - Use `input()` and `output()` functions instead of decorators
@@ -232,14 +232,14 @@ This project uses Angular Material 21 with Material 3 theming. All UI must follo
 - Do NOT use `ngStyle`, use `style` bindings instead
 - When using external templates/styles, use paths relative to the component TS file.
 
-## State Management
+### State Management
 
 - Use signals for local component state
 - Use `computed()` for derived state
 - Keep state transformations pure and predictable
 - Do NOT use `mutate` on signals, use `update` or `set` instead
 
-## Templates
+### Templates
 
 - Keep templates simple and avoid complex logic
 - Use native control flow (`@if`, `@for`, `@switch`) instead of `*ngIf`, `*ngFor`, `*ngSwitch`
@@ -247,13 +247,13 @@ This project uses Angular Material 21 with Material 3 theming. All UI must follo
 - Do not assume globals like (`new Date()`) are available.
 - Do not write arrow functions in templates (they are not supported).
 
-## Services
+### Services
 
 - Design services around a single responsibility
 - Use the `providedIn: 'root'` option for singleton services
 - Use the `inject()` function instead of constructor injection
 
-# Maintaining This File
+## Maintaining This File
 
 This file is the primary source of truth for how the AI agent works with this codebase. It MUST be kept up to date as the project evolves.
 
