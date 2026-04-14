@@ -28,7 +28,7 @@ The domain layer packages (`aggregate/`, `events/`, `projections/`) use a consis
 ## Development Workflow
 
 - Start dev services: `podman compose up -d` (PostgreSQL, Rustfs S3, Mailpit)
-- Run server: `mise serve` (alias for `mise run:datei:serve`)
+- Run server: `mise run serve` (alias for `mise run:datei:serve`)
 - Run tests: `mise run test`
 - Lint: `mise run lint`
 - Always run `mise run build:datei` and `mise run format` after making changes
