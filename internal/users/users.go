@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/godatei/datei/internal/aggregate"
 	"github.com/godatei/datei/internal/authjwt"
 	"github.com/godatei/datei/internal/config"
 	"github.com/godatei/datei/internal/db"
@@ -16,13 +15,13 @@ import (
 
 type UserService struct {
 	db         *pgxpool.Pool
-	repository aggregate.UserRepository
+	repository Repository
 	mailer     mailer.Mailer
 }
 
 func NewUserService(
 	db *pgxpool.Pool,
-	repository aggregate.UserRepository,
+	repository Repository,
 	m mailer.Mailer,
 ) *UserService {
 	return &UserService{

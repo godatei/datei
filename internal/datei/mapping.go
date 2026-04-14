@@ -1,14 +1,13 @@
-package mapping
+package datei
 
 import (
-	"github.com/godatei/datei/internal/aggregate"
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/pkg/api"
 	"github.com/google/uuid"
 )
 
-// MapDateiProjectionToAPI converts a db.DateiProjection to an api.Datei.
-func MapDateiProjectionToAPI(p *db.DateiProjection) *api.Datei {
+// MapProjectionToAPI converts a db.DateiProjection to an api.Datei.
+func MapProjectionToAPI(p *db.DateiProjection) *api.Datei {
 	if p == nil {
 		return nil
 	}
@@ -28,23 +27,18 @@ func MapDateiProjectionToAPI(p *db.DateiProjection) *api.Datei {
 	if p.ParentID != nil {
 		result.ParentId = p.ParentID
 	}
-
 	if p.LinkedDateiID != nil {
 		result.LinkedDateiId = p.LinkedDateiID
 	}
-
 	if p.CreatedBy != nil {
 		result.CreatedBy = p.CreatedBy
 	}
-
 	if p.TrashedAt != nil {
 		result.TrashedAt = p.TrashedAt
 	}
-
 	if p.TrashedBy != nil {
 		result.TrashedBy = p.TrashedBy
 	}
-
 	if p.UpdatedBy != nil {
 		result.UpdatedBy = p.UpdatedBy
 	}
@@ -52,19 +46,19 @@ func MapDateiProjectionToAPI(p *db.DateiProjection) *api.Datei {
 	return result
 }
 
-// MapDateiProjectionSliceToAPI converts a slice of db.DateiProjection to a slice of api.Datei.
-func MapDateiProjectionSliceToAPI(projections []db.DateiProjection) []api.Datei {
+// MapProjectionSliceToAPI converts a slice of db.DateiProjection to a slice of api.Datei.
+func MapProjectionSliceToAPI(projections []db.DateiProjection) []api.Datei {
 	result := make([]api.Datei, 0, len(projections))
 	for i := range projections {
-		if mapped := MapDateiProjectionToAPI(&projections[i]); mapped != nil {
+		if mapped := MapProjectionToAPI(&projections[i]); mapped != nil {
 			result = append(result, *mapped)
 		}
 	}
 	return result
 }
 
-// MapAggregateToAPI converts a DateiAggregate to an api.Datei.
-func MapAggregateToAPI(a *aggregate.DateiAggregate) *api.Datei {
+// MapAggregateToAPI converts an Aggregate to an api.Datei.
+func MapAggregateToAPI(a *Aggregate) *api.Datei {
 	if a == nil {
 		return nil
 	}
@@ -84,23 +78,18 @@ func MapAggregateToAPI(a *aggregate.DateiAggregate) *api.Datei {
 	if a.ParentID != nil {
 		result.ParentId = a.ParentID
 	}
-
 	if a.LinkedDateiID != nil {
 		result.LinkedDateiId = a.LinkedDateiID
 	}
-
 	if a.CreatedBy != uuid.Nil {
 		result.CreatedBy = &a.CreatedBy
 	}
-
 	if a.TrashedAt != nil {
 		result.TrashedAt = a.TrashedAt
 	}
-
 	if a.TrashedBy != nil {
 		result.TrashedBy = a.TrashedBy
 	}
-
 	if a.UpdatedBy != uuid.Nil {
 		result.UpdatedBy = &a.UpdatedBy
 	}
