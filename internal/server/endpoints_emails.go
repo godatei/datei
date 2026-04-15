@@ -32,10 +32,6 @@ func (s *server) AddEmail(
 ) (AddEmailResponseObject, error) {
 	authInfo := authn.RequireContext(ctx)
 
-	if request.Body == nil || request.Body.Email == "" {
-		return AddEmail400Response{}, nil
-	}
-
 	err := s.userService.AddEmail(ctx, users.AddEmailInput{
 		UserID: authInfo.UserID,
 		Email:  string(request.Body.Email),

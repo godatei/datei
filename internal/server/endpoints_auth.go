@@ -12,19 +12,10 @@ import (
 
 // Login implements [StrictServerInterface].
 func (s *server) Login(ctx context.Context, request LoginRequestObject) (LoginResponseObject, error) {
-	if request.Body == nil {
-		return Login400Response{}, nil
-	}
-
-	var mfaCode *string
-	if request.Body.MfaCode != nil {
-		mfaCode = request.Body.MfaCode
-	}
-
 	result, err := s.userService.Login(ctx, users.LoginInput{
 		Email:    string(request.Body.Email),
 		Password: request.Body.Password,
-		MfaCode:  mfaCode,
+		MfaCode:  request.Body.MfaCode,
 	})
 	if err != nil {
 		if errors.Is(err, dateierrors.ErrInvalidCredentials) {
@@ -56,10 +47,6 @@ func (s *server) GetLoginConfig(
 
 // Register implements [StrictServerInterface].
 func (s *server) Register(ctx context.Context, request RegisterRequestObject) (RegisterResponseObject, error) {
-	if request.Body == nil {
-		return Register400Response{}, nil
-	}
-
 	err := s.userService.Register(ctx, users.RegisterInput{
 		Email:    string(request.Body.Email),
 		Name:     request.Body.Name,
@@ -83,11 +70,9 @@ func (s *server) Register(ctx context.Context, request RegisterRequestObject) (R
 func (s *server) ResetPassword(
 	ctx context.Context, request ResetPasswordRequestObject,
 ) (ResetPasswordResponseObject, error) {
-	if request.Body != nil {
-		s.userService.ResetPassword(ctx, users.ResetPasswordInput{
-			Email: string(request.Body.Email),
-		})
-	}
+	s.userService.ResetPassword(ctx, users.ResetPasswordInput{
+		Email: string(request.Body.Email),
+	})
 	return ResetPassword204Response{}, nil
 }
 

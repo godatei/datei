@@ -15,7 +15,5 @@ post:
         application/json:
           schema:
             $ref: '../components/schemas/LoginResponse.yaml'
-    '400':
-      description: Invalid credentials
     '401':
-      description: Invalid MFA code
+      description: Invalid credentials or MFA code

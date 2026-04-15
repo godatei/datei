@@ -30,10 +30,6 @@ func (s *server) GetCurrentUser(
 func (s *server) UpdateUser(ctx context.Context, request UpdateUserRequestObject) (UpdateUserResponseObject, error) {
 	authInfo := authn.RequireContext(ctx)
 
-	if request.Body == nil {
-		return UpdateUser400Response{}, nil
-	}
-
 	err := s.userService.UpdateUser(ctx, users.UpdateUserInput{
 		UserID:          authInfo.UserID,
 		Name:            request.Body.Name,
@@ -68,10 +64,6 @@ func (s *server) UpdateUserEmail(
 	ctx context.Context, request UpdateUserEmailRequestObject,
 ) (UpdateUserEmailResponseObject, error) {
 	authInfo := authn.RequireContext(ctx)
-
-	if request.Body == nil {
-		return UpdateUserEmail400Response{}, nil
-	}
 
 	err := s.userService.UpdateUserEmail(ctx, users.UpdateUserEmailInput{
 		UserID:   authInfo.UserID,
@@ -150,10 +142,6 @@ func (s *server) SetupMFA(ctx context.Context, _ SetupMFARequestObject) (SetupMF
 func (s *server) EnableMFA(ctx context.Context, request EnableMFARequestObject) (EnableMFAResponseObject, error) {
 	authInfo := authn.RequireContext(ctx)
 
-	if request.Body == nil {
-		return EnableMFA400Response{}, nil
-	}
-
 	result, err := s.userService.EnableMFA(ctx, users.EnableMFAInput{
 		UserID: authInfo.UserID,
 		Code:   request.Body.Code,
@@ -175,10 +163,6 @@ func (s *server) EnableMFA(ctx context.Context, request EnableMFARequestObject) 
 // DisableMFA implements [StrictServerInterface].
 func (s *server) DisableMFA(ctx context.Context, request DisableMFARequestObject) (DisableMFAResponseObject, error) {
 	authInfo := authn.RequireContext(ctx)
-
-	if request.Body == nil {
-		return DisableMFA400Response{}, nil
-	}
 
 	err := s.userService.DisableMFA(ctx, users.DisableMFAInput{
 		UserID:   authInfo.UserID,
@@ -203,10 +187,6 @@ func (s *server) RegenerateMFARecoveryCodes(
 	ctx context.Context, request RegenerateMFARecoveryCodesRequestObject,
 ) (RegenerateMFARecoveryCodesResponseObject, error) {
 	authInfo := authn.RequireContext(ctx)
-
-	if request.Body == nil {
-		return RegenerateMFARecoveryCodes400Response{}, nil
-	}
 
 	codes, err := s.userService.RegenerateMFARecoveryCodes(ctx, users.RegenerateRecoveryCodesInput{
 		UserID:   authInfo.UserID,

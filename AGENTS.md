@@ -45,7 +45,7 @@ This project relies heavily on code generation. NEVER edit files prefixed with `
 4. **Database code** (`internal/db/*.sql` + `zz_generated_schema.sql`) → `internal/db/zz_generated.*.go` via sqlc
 5. **Frontend client** (`dist/openapi.yaml`) → `frontend/src/api/` via ng-openapi-gen
 
-Run `mise generate` to regenerate everything (backend + frontend).
+Run `mise run generate` to regenerate everything (backend + frontend).
 
 ## Feature Development Checklist
 
@@ -67,7 +67,7 @@ When implementing a new feature, follow these steps **in order**. Steps are anno
    - Add projection queries in `internal/db/datei.sql` (or a new `.sql` file)
    - Use sqlc comment format: `-- name: QueryName :exec` or `:one` or `:many`
 
-4. **Run code generation**: `mise generate`
+4. **Run code generation**: `mise run generate`
    - This regenerates backend models, server interface, sqlc Go code, AND the frontend TypeScript client
    - Always run this after changing OpenAPI specs, SQL queries, or the database schema
 
@@ -149,7 +149,7 @@ HTTP Request → Server Endpoint → Service → db.Queries (read from projectio
 - Config: `internal/db/sqlc.yaml`
 - Queries go in `internal/db/*.sql` files using the `-- name: QueryName :verb` format
 - Schema: `internal/db/zz_generated_schema.sql` (exported from live DB via `mise import-db-schema`)
-- Run `mise generate:backend` after editing `.sql` files
+- Run `mise run generate:backend` after editing `.sql` files
 - Uses pgx/v5 driver with `google/uuid` UUID type overrides
 - Nullable columns generate pointer types
 
