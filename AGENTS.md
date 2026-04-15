@@ -10,10 +10,8 @@
 api/                  # OpenAPI specification (YAML, source of truth)
 internal/
 ├── cmd/              # CLI entry points
-├── aggregate/        # Domain aggregates and repositories
-├── events/           # Domain events, event store, serialization
-├── projections/      # Read model projection handlers
-├── <domain>/         # Domain services (business logic orchestration)
+├── events/           # Shared event infrastructure (DomainEvent interface, EventStore, serialization)
+├── <domain>/         # Self-contained domain packages (aggregate, events, repository, projections, service, mapping)
 ├── db/               # sqlc config, SQL queries, generated code, migrations
 ├── server/           # HTTP endpoints (oapi-codegen generated + handlers)
 ├── ...               # Infrastructure packages (auth, config, storage, mailer, etc.)
@@ -23,7 +21,7 @@ frontend/src/
 ├── app/              # Angular application
 ```
 
-The domain layer packages (`aggregate/`, `events/`, `projections/`) use a consistent one-file-per-domain convention (e.g., `datei.go`, `user.go`). Domain service packages live at `internal/<domain>/`.
+Each domain package (e.g., `internal/datei/`, `internal/users/`) is self-contained with: `events.go` (event structs, `ApplyTo`, registration, store constructor), `aggregate.go`, `repository.go`, `projections.go`, `mapping.go`, and service files. The shared `internal/events/` package provides only the `DomainEvent` interface, generic `EventStore`, and serialization registry.
 
 ## Development Workflow
 
@@ -75,47 +73,39 @@ When implementing a new feature, follow these steps **in order**. Steps are anno
 
 #### Phase 2: Event Sourcing (domain logic) _(skip entirely if frontend-only)_
 
-Each layer package uses a consistent naming convention: one file per domain (e.g., `datei.go`, `user.go`). Follow the existing files as examples when adding a new domain.
+All event sourcing code lives in the domain package (`internal/<domain>/`). Follow existing domain packages as examples.
 
-5. **Define the event** in `internal/events/<domain>.go`
-   - Create a struct implementing `DomainEvent` (with `EventType()` and `StreamID()` methods)
-   - Use JSON tags for serialization
-   - Include all data needed to reconstruct state AND update projections
-   - `EventType()` returns a PascalCase string (e.g., `"DateiRenamed"`)
-   - Register the event in the file's `init()` via `RegisterEvent("EventName", func() DomainEvent { return &EventStruct{} })`
+5. **Define the event** in `internal/<domain>/events.go`
+   - Create a struct implementing the domain's `Event` interface (`DomainEvent` + `ApplyTo(*Aggregate)`)
+   - Use JSON tags for serialization; `EventType()` returns a PascalCase string (e.g., `"DateiRenamed"`)
+   - Implement `ApplyTo(*Aggregate)` to update aggregate state from the event
+   - Register the event in `init()` via `events.RegisterEvent("EventName", func() events.DomainEvent { return &EventStruct{} })`
 
-6. **Add the command** to the aggregate in `internal/aggregate/<domain>.go`
-   - Validate preconditions (aggregate state, input values)
-   - Create the event struct and call `a.recordEvent(event)`
-   - `recordEvent` increments version, appends to uncommitted list, and calls `ApplyEvent`
+6. **Add the command** to the aggregate in `internal/<domain>/aggregate.go`
+   - Validate preconditions, create the event struct, and call `a.recordEvent(event)`
 
-7. **Add state application** in `ApplyEvent()` in the same aggregate file
-   - Add a `case` in the type switch to update aggregate fields from event data
-   - This must be a pure function of current state + event (no side effects)
+7. **Add the projection handler** in `internal/<domain>/projections.go`
+   - Create an unexported handler function using generated sqlc `Queries`
 
-8. **Add the projection handler** in `internal/projections/<domain>.go`
-   - Create `UpdateProjectionFor<EventName>()` using generated sqlc `Queries`
-   - Projections run synchronously inside the same transaction as event append
-
-9. **Wire the projection** in `internal/aggregate/<domain>_repository.go`
+8. **Wire the projection** in `internal/<domain>/repository.go`
    - Add a case in `updateProjection()` to dispatch to the new handler
 
 #### Phase 3: Service and HTTP layer _(skip if frontend-only)_
 
-10. **Add the service method** in `internal/<domain>/` (domain-specific service file)
-    - Define `Input`/`Output` structs for the operation
-    - Load aggregate via `repository.LoadByID()`, call command, call `repository.Save()`
-    - For read operations, query projections directly via `db.New(pool)`
+9. **Add the service method** in `internal/<domain>/service.go`
+   - Define `Input`/`Output` structs for the operation
+   - Load aggregate via `repository.LoadByID()`, call command, call `repository.Save()`
+   - For read operations, query projections directly via `db.New(pool)`
 
-11. **Add the HTTP endpoint** in `internal/server/endpoints_<domain>.go`
+10. **Add the HTTP endpoint** in `internal/server/endpoints_<domain>.go`
     - Implement the generated `StrictServerInterface` method
     - Map HTTP request → service input, call service, map output → HTTP response
 
-12. **Add DTO mapping** in `internal/mapping/` if needed
+11. **Add DTO mapping** in `internal/<domain>/mapping.go` if needed
 
 #### Phase 4: Frontend _(skip if backend-only)_
 
-13. **Implement the UI** using the generated API client from `frontend/src/api/`
+12. **Implement the UI** using the generated API client from `frontend/src/api/`
     - The TypeScript client was already regenerated in step 4
     - Follow the conventions in the Frontend Conventions section below
 

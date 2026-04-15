@@ -6,11 +6,9 @@ import (
 	"io"
 	"time"
 
-	"github.com/godatei/datei/internal/aggregate"
 	"github.com/godatei/datei/internal/authn"
 	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/db"
-	"github.com/godatei/datei/internal/mapping"
 	"github.com/godatei/datei/internal/storage"
 	"github.com/godatei/datei/pkg/api"
 	"github.com/google/uuid"
@@ -18,18 +16,18 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type DateiService struct {
+type Service struct {
 	db         *pgxpool.Pool
 	store      storage.Store
-	repository aggregate.DateiRepository
+	repository Repository
 }
 
-func NewDateiService(
+func NewService(
 	db *pgxpool.Pool,
 	store storage.Store,
-	repository aggregate.DateiRepository,
-) *DateiService {
-	return &DateiService{
+	repository Repository,
+) *Service {
+	return &Service{
 		db:         db,
 		store:      store,
 		repository: repository,
@@ -49,7 +47,7 @@ type ListDateiOutput struct {
 }
 
 // ListDatei retrieves all datei records with pagination
-func (s *DateiService) ListDatei(ctx context.Context, input ListDateiInput) (*ListDateiOutput, error) {
+func (s *Service) ListDatei(ctx context.Context, input ListDateiInput) (*ListDateiOutput, error) {
 	queries := db.New(s.db)
 
 	allProjections, err := queries.ListDateiProjections(ctx)
@@ -70,7 +68,7 @@ func (s *DateiService) ListDatei(ctx context.Context, input ListDateiInput) (*Li
 	start := min(offset, len(allProjections))
 	end := min(offset+limit, len(allProjections))
 
-	items := mapping.MapDateiProjectionSliceToAPI(allProjections[start:end])
+	items := MapProjectionSliceToAPI(allProjections[start:end])
 
 	return &ListDateiOutput{
 		Items: items,
@@ -87,14 +85,14 @@ type CreateDateiInput struct {
 }
 
 // CreateDatei creates a new datei record with optional file upload
-func (s *DateiService) CreateDatei(ctx context.Context, input CreateDateiInput) (*api.Datei, error) {
+func (s *Service) CreateDatei(ctx context.Context, input CreateDateiInput) (*api.Datei, error) {
 	isDirectory := input.Reader == nil
 	id := uuid.New()
 	now := time.Now()
 
 	userID := userIDFromContext(ctx)
 
-	agg := &aggregate.DateiAggregate{}
+	agg := &Aggregate{}
 	if err := agg.Create(id, nil, isDirectory, input.Name, userID, now); err != nil {
 		return nil, err
 	}
@@ -116,7 +114,7 @@ func (s *DateiService) CreateDatei(ctx context.Context, input CreateDateiInput) 
 		return nil, err
 	}
 
-	return mapping.MapAggregateToAPI(agg), nil
+	return MapAggregateToAPI(agg), nil
 }
 
 // DownloadDateiOutput contains the response for downloading a datei
@@ -128,7 +126,7 @@ type DownloadDateiOutput struct {
 }
 
 // DownloadDatei retrieves a file for download
-func (s *DateiService) DownloadDatei(ctx context.Context, dateiID uuid.UUID) (*DownloadDateiOutput, error) {
+func (s *Service) DownloadDatei(ctx context.Context, dateiID uuid.UUID) (*DownloadDateiOutput, error) {
 	queries := db.New(s.db)
 
 	projection, err := queries.GetDateiProjectionByID(ctx, dateiID)
@@ -169,7 +167,7 @@ type UpdateDateiInput struct {
 }
 
 // UpdateDatei updates a datei record with optional name and/or file
-func (s *DateiService) UpdateDatei(ctx context.Context, input UpdateDateiInput) (*api.Datei, error) {
+func (s *Service) UpdateDatei(ctx context.Context, input UpdateDateiInput) (*api.Datei, error) {
 	agg, err := s.repository.LoadByID(ctx, input.ID)
 	if err != nil {
 		return nil, err
@@ -202,11 +200,11 @@ func (s *DateiService) UpdateDatei(ctx context.Context, input UpdateDateiInput) 
 		return nil, err
 	}
 
-	return mapping.MapAggregateToAPI(agg), nil
+	return MapAggregateToAPI(agg), nil
 }
 
 // DeleteDatei soft-deletes a datei record
-func (s *DateiService) DeleteDatei(ctx context.Context, dateiID uuid.UUID) error {
+func (s *Service) DeleteDatei(ctx context.Context, dateiID uuid.UUID) error {
 	agg, err := s.repository.LoadByID(ctx, dateiID)
 	if err != nil {
 		return err

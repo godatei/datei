@@ -34,12 +34,12 @@ type InsertParams struct {
 	EventData     []byte
 }
 
-// storeQueries abstracts the sqlc query functions so a single store
+// StoreQueries abstracts the sqlc query functions so a single store
 // implementation can target different event tables.
-type storeQueries struct {
-	getVersion func(ctx context.Context, q *db.Queries, id uuid.UUID) (int32, error)
-	insert     func(ctx context.Context, q *db.Queries, p InsertParams) error
-	getEvents  func(ctx context.Context, q *db.Queries, id uuid.UUID, from int32) ([]EventRow, error)
+type StoreQueries struct {
+	GetVersion func(ctx context.Context, q *db.Queries, id uuid.UUID) (int32, error)
+	Insert     func(ctx context.Context, q *db.Queries, p InsertParams) error
+	GetEvents  func(ctx context.Context, q *db.Queries, id uuid.UUID, from int32) ([]EventRow, error)
 }
 
 // PostgresEventStore implements EventStore using PostgreSQL.
@@ -47,10 +47,12 @@ type storeQueries struct {
 // any event table (datei_event, user_account_event, …).
 type PostgresEventStore struct {
 	db *pgxpool.Pool
-	sq storeQueries
+	sq StoreQueries
 }
 
-func newStore(pool *pgxpool.Pool, sq storeQueries) *PostgresEventStore {
+// NewStore creates a PostgresEventStore with the given query callbacks.
+// Domain packages call this to wire their specific sqlc queries.
+func NewStore(pool *pgxpool.Pool, sq StoreQueries) *PostgresEventStore {
 	return &PostgresEventStore{db: pool, sq: sq}
 }
 
@@ -68,7 +70,7 @@ func (es *PostgresEventStore) AppendToStream(
 
 	q := db.New(tx)
 
-	actualVersion, err := es.sq.getVersion(ctx, q, streamID)
+	actualVersion, err := es.sq.GetVersion(ctx, q, streamID)
 	if err != nil {
 		return fmt.Errorf("failed to get current stream version: %w", err)
 	}
@@ -83,7 +85,7 @@ func (es *PostgresEventStore) AppendToStream(
 			return fmt.Errorf("failed to serialize event: %w", err)
 		}
 
-		if err := es.sq.insert(ctx, q, InsertParams{
+		if err := es.sq.Insert(ctx, q, InsertParams{
 			StreamID:      streamID,
 			StreamVersion: int32(expectedVersion + i + 1),
 			EventType:     event.EventType(),
@@ -104,7 +106,7 @@ func (es *PostgresEventStore) GetEvents(
 ) ([]DomainEvent, error) {
 	q := db.New(es.db)
 
-	rows, err := es.sq.getEvents(ctx, q, streamID, int32(fromVersion))
+	rows, err := es.sq.GetEvents(ctx, q, streamID, int32(fromVersion))
 	if err != nil {
 		return nil, fmt.Errorf("failed to query events: %w", err)
 	}

@@ -14,17 +14,17 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/httprate"
-	"github.com/godatei/datei/internal/aggregate"
 	"github.com/godatei/datei/internal/authn"
 	"github.com/godatei/datei/internal/buildconfig"
 	"github.com/godatei/datei/internal/config"
+	"github.com/godatei/datei/internal/datei"
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/db/migrations"
-	"github.com/godatei/datei/internal/events"
 	"github.com/godatei/datei/internal/frontend"
 	"github.com/godatei/datei/internal/mailer"
 	"github.com/godatei/datei/internal/server"
 	"github.com/godatei/datei/internal/storage"
+	"github.com/godatei/datei/internal/users"
 	oapimiddleware "github.com/oapi-codegen/nethttp-middleware"
 	slogchi "github.com/samber/slog-chi"
 	"github.com/spf13/cobra"
@@ -91,11 +91,11 @@ func run(ctx context.Context, options Options) error {
 		return err
 	}
 
-	dateiEventStore := events.NewDateiEventStore(db)
-	dateiRepository := aggregate.NewPostgresDateiRepository(db, dateiEventStore)
+	dateiEventStore := datei.NewEventStore(db)
+	dateiRepository := datei.NewRepository(db, dateiEventStore)
 
-	userEventStore := events.NewUserEventStore(db)
-	userRepository := aggregate.NewPostgresUserRepository(db, userEventStore)
+	userEventStore := users.NewEventStore(db)
+	userRepository := users.NewRepository(db, userEventStore)
 
 	// Create mailer
 	var m mailer.Mailer

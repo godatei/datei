@@ -1,16 +1,13 @@
-package projections
+package users
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/godatei/datei/internal/db"
-	"github.com/godatei/datei/internal/events"
 )
 
-func UpdateProjectionForUserRegistered(
-	ctx context.Context, q *db.Queries, event *events.UserRegisteredEvent,
-) error {
+func updateProjectionForUserRegistered(ctx context.Context, q *db.Queries, event *UserRegisteredEvent) error {
 	if err := q.InsertUserAccountProjection(ctx, db.InsertUserAccountProjectionParams{
 		ID:           event.ID,
 		Name:         event.Name,
@@ -34,7 +31,7 @@ func UpdateProjectionForUserRegistered(
 	return nil
 }
 
-func UpdateProjectionForUserNameChanged(ctx context.Context, q *db.Queries, event *events.UserNameChangedEvent) error {
+func updateProjectionForUserNameChanged(ctx context.Context, q *db.Queries, event *UserNameChangedEvent) error {
 	return q.UpdateUserAccountProjectionName(ctx, db.UpdateUserAccountProjectionNameParams{
 		Name:      event.NewName,
 		UpdatedAt: event.ChangedAt,
@@ -42,9 +39,7 @@ func UpdateProjectionForUserNameChanged(ctx context.Context, q *db.Queries, even
 	})
 }
 
-func UpdateProjectionForUserPasswordChanged(
-	ctx context.Context, q *db.Queries, event *events.UserPasswordChangedEvent,
-) error {
+func updateProjectionForUserPasswordChanged(ctx context.Context, q *db.Queries, event *UserPasswordChangedEvent) error {
 	return q.UpdateUserAccountProjectionPassword(ctx, db.UpdateUserAccountProjectionPasswordParams{
 		PasswordHash: event.PasswordHash,
 		PasswordSalt: event.PasswordSalt,
@@ -53,27 +48,21 @@ func UpdateProjectionForUserPasswordChanged(
 	})
 }
 
-func UpdateProjectionForUserEmailChanged(
-	ctx context.Context, q *db.Queries, event *events.UserEmailChangedEvent,
-) error {
+func updateProjectionForUserEmailChanged(ctx context.Context, q *db.Queries, event *UserEmailChangedEvent) error {
 	return q.UpdateUserAccountEmailProjectionEmail(ctx, db.UpdateUserAccountEmailProjectionEmailParams{
 		Email:         event.NewEmail,
 		UserAccountID: event.ID,
 	})
 }
 
-func UpdateProjectionForUserEmailVerified(
-	ctx context.Context, q *db.Queries, event *events.UserEmailVerifiedEvent,
-) error {
+func updateProjectionForUserEmailVerified(ctx context.Context, q *db.Queries, event *UserEmailVerifiedEvent) error {
 	return q.UpdateUserAccountEmailProjectionVerified(ctx, db.UpdateUserAccountEmailProjectionVerifiedParams{
 		VerifiedAt:    &event.VerifiedAt,
 		UserAccountID: event.ID,
 	})
 }
 
-func UpdateProjectionForUserEmailAdded(
-	ctx context.Context, q *db.Queries, event *events.UserEmailAddedEvent,
-) error {
+func updateProjectionForUserEmailAdded(ctx context.Context, q *db.Queries, event *UserEmailAddedEvent) error {
 	return q.InsertUserAccountEmailProjection(ctx, db.InsertUserAccountEmailProjectionParams{
 		ID:            event.EmailID,
 		UserAccountID: event.ID,
@@ -83,23 +72,19 @@ func UpdateProjectionForUserEmailAdded(
 	})
 }
 
-func UpdateProjectionForUserEmailRemoved(
-	ctx context.Context, q *db.Queries, event *events.UserEmailRemovedEvent,
-) error {
+func updateProjectionForUserEmailRemoved(ctx context.Context, q *db.Queries, event *UserEmailRemovedEvent) error {
 	return q.DeleteUserAccountEmailProjection(ctx, event.EmailID)
 }
 
-func UpdateProjectionForUserEmailSetPrimary(
-	ctx context.Context, q *db.Queries, event *events.UserEmailSetPrimaryEvent,
-) error {
+func updateProjectionForUserEmailSetPrimary(ctx context.Context, q *db.Queries, event *UserEmailSetPrimaryEvent) error {
 	return q.SetUserAccountEmailPrimaryProjection(ctx, db.SetUserAccountEmailPrimaryProjectionParams{
 		ID:            event.NewPrimaryEmailID,
 		UserAccountID: event.ID,
 	})
 }
 
-func UpdateProjectionForUserMFASetupInitiated(
-	ctx context.Context, q *db.Queries, event *events.UserMFASetupInitiatedEvent,
+func updateProjectionForUserMFASetupInitiated(
+	ctx context.Context, q *db.Queries, event *UserMFASetupInitiatedEvent,
 ) error {
 	return q.UpdateUserAccountProjectionMFASecret(ctx, db.UpdateUserAccountProjectionMFASecretParams{
 		MfaSecret: &event.MFASecret,
@@ -108,7 +93,7 @@ func UpdateProjectionForUserMFASetupInitiated(
 	})
 }
 
-func UpdateProjectionForUserMFAEnabled(ctx context.Context, q *db.Queries, event *events.UserMFAEnabledEvent) error {
+func updateProjectionForUserMFAEnabled(ctx context.Context, q *db.Queries, event *UserMFAEnabledEvent) error {
 	if err := q.UpdateUserAccountProjectionMFAEnabled(ctx, db.UpdateUserAccountProjectionMFAEnabledParams{
 		MfaEnabledAt: &event.EnabledAt,
 		ID:           event.ID,
@@ -130,7 +115,7 @@ func UpdateProjectionForUserMFAEnabled(ctx context.Context, q *db.Queries, event
 	return nil
 }
 
-func UpdateProjectionForUserMFADisabled(ctx context.Context, q *db.Queries, event *events.UserMFADisabledEvent) error {
+func updateProjectionForUserMFADisabled(ctx context.Context, q *db.Queries, event *UserMFADisabledEvent) error {
 	if err := q.UpdateUserAccountProjectionMFADisabled(ctx, db.UpdateUserAccountProjectionMFADisabledParams{
 		UpdatedAt: event.DisabledAt,
 		ID:        event.ID,
@@ -140,14 +125,14 @@ func UpdateProjectionForUserMFADisabled(ctx context.Context, q *db.Queries, even
 	return q.DeleteAllMFARecoveryCodesProjection(ctx, event.ID)
 }
 
-func UpdateProjectionForUserMFARecoveryCodeUsed(
-	ctx context.Context, q *db.Queries, event *events.UserMFARecoveryCodeUsedEvent,
+func updateProjectionForUserMFARecoveryCodeUsed(
+	ctx context.Context, q *db.Queries, event *UserMFARecoveryCodeUsedEvent,
 ) error {
 	return q.MarkMFARecoveryCodeUsedProjection(ctx, event.RecoveryCodeID)
 }
 
-func UpdateProjectionForUserMFARecoveryCodesRegenerated(
-	ctx context.Context, q *db.Queries, event *events.UserMFARecoveryCodesRegeneratedEvent,
+func updateProjectionForUserMFARecoveryCodesRegenerated(
+	ctx context.Context, q *db.Queries, event *UserMFARecoveryCodesRegeneratedEvent,
 ) error {
 	if err := q.DeleteAllMFARecoveryCodesProjection(ctx, event.ID); err != nil {
 		return err
@@ -167,14 +152,14 @@ func UpdateProjectionForUserMFARecoveryCodesRegenerated(
 	return nil
 }
 
-func UpdateProjectionForUserArchived(ctx context.Context, q *db.Queries, event *events.UserArchivedEvent) error {
+func updateProjectionForUserArchived(ctx context.Context, q *db.Queries, event *UserArchivedEvent) error {
 	return q.UpdateUserAccountProjectionArchived(ctx, db.UpdateUserAccountProjectionArchivedParams{
 		ArchivedAt: &event.ArchivedAt,
 		ID:         event.ID,
 	})
 }
 
-func UpdateProjectionForUserLoggedIn(ctx context.Context, q *db.Queries, event *events.UserLoggedInEvent) error {
+func updateProjectionForUserLoggedIn(ctx context.Context, q *db.Queries, event *UserLoggedInEvent) error {
 	return q.UpdateUserAccountProjectionLoggedIn(ctx, db.UpdateUserAccountProjectionLoggedInParams{
 		LastLoggedInAt: &event.LoggedInAt,
 		ID:             event.ID,

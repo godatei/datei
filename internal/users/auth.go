@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/godatei/datei/internal/aggregate"
 	"github.com/godatei/datei/internal/authjwt"
 	"github.com/godatei/datei/internal/config"
 	"github.com/godatei/datei/internal/dateierrors"
@@ -146,7 +145,7 @@ func (s *UserService) Register(ctx context.Context, input RegisterInput) error {
 
 	userID := uuid.New()
 	emailID := uuid.New()
-	agg := &aggregate.UserAggregate{}
+	agg := &Aggregate{}
 	if err := agg.Register(userID, input.Name, input.Email, emailID, passwordHash, passwordSalt, time.Now()); err != nil {
 		return fmt.Errorf("failed to register: %w", err)
 	}

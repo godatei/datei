@@ -1,4 +1,4 @@
-package aggregate
+package users
 
 import (
 	"errors"
@@ -8,8 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// UserAggregate represents a user account domain entity
-type UserAggregate struct {
+// Aggregate represents a user account domain entity
+type Aggregate struct {
 	ID   uuid.UUID
 	Name string
 
@@ -31,29 +31,42 @@ type UserAggregate struct {
 	version           int
 }
 
-func (a *UserAggregate) GetUncommittedEvents() []events.DomainEvent {
+func (a *Aggregate) GetUncommittedEvents() []events.DomainEvent {
 	return a.uncommittedEvents
 }
 
-func (a *UserAggregate) MarkEventsAsCommitted() {
+func (a *Aggregate) MarkEventsAsCommitted() {
 	a.uncommittedEvents = []events.DomainEvent{}
 }
 
-func (a *UserAggregate) Version() int {
+func (a *Aggregate) Version() int {
 	return a.version
 }
 
-func (a *UserAggregate) recordEvent(event events.DomainEvent) {
+func (a *Aggregate) recordEvent(event events.DomainEvent) {
 	a.uncommittedEvents = append(a.uncommittedEvents, event)
 	a.version++
 	a.ApplyEvent(event)
+}
+
+// ApplyEvent updates aggregate state by delegating to the event's ApplyTo method.
+func (a *Aggregate) ApplyEvent(event events.DomainEvent) {
+	event.(Event).ApplyTo(a)
+}
+
+// ReplayEvents reconstructs aggregate state from event history
+func (a *Aggregate) ReplayEvents(domainEvents []events.DomainEvent) error {
+	for _, event := range domainEvents {
+		a.ApplyEvent(event)
+	}
+	return nil
 }
 
 // ============================================================================
 // Commands
 // ============================================================================
 
-func (a *UserAggregate) Register(
+func (a *Aggregate) Register(
 	id uuid.UUID, name, email string, emailID uuid.UUID,
 	passwordHash, passwordSalt []byte, now time.Time,
 ) error {
@@ -67,7 +80,7 @@ func (a *UserAggregate) Register(
 		return errors.New("email cannot be empty")
 	}
 
-	a.recordEvent(events.UserRegisteredEvent{
+	a.recordEvent(UserRegisteredEvent{
 		ID:           id,
 		Name:         name,
 		Email:        email,
@@ -79,7 +92,7 @@ func (a *UserAggregate) Register(
 	return nil
 }
 
-func (a *UserAggregate) ChangeName(newName string, now time.Time) error {
+func (a *Aggregate) ChangeName(newName string, now time.Time) error {
 	if a.ID == uuid.Nil {
 		return errors.New("user not created")
 	}
@@ -90,7 +103,7 @@ func (a *UserAggregate) ChangeName(newName string, now time.Time) error {
 		return nil
 	}
 
-	a.recordEvent(events.UserNameChangedEvent{
+	a.recordEvent(UserNameChangedEvent{
 		ID:        a.ID,
 		NewName:   newName,
 		ChangedAt: now,
@@ -98,12 +111,12 @@ func (a *UserAggregate) ChangeName(newName string, now time.Time) error {
 	return nil
 }
 
-func (a *UserAggregate) ChangePassword(passwordHash, passwordSalt []byte, now time.Time) error {
+func (a *Aggregate) ChangePassword(passwordHash, passwordSalt []byte, now time.Time) error {
 	if a.ID == uuid.Nil {
 		return errors.New("user not created")
 	}
 
-	a.recordEvent(events.UserPasswordChangedEvent{
+	a.recordEvent(UserPasswordChangedEvent{
 		ID:           a.ID,
 		PasswordHash: passwordHash,
 		PasswordSalt: passwordSalt,
@@ -112,7 +125,7 @@ func (a *UserAggregate) ChangePassword(passwordHash, passwordSalt []byte, now ti
 	return nil
 }
 
-func (a *UserAggregate) ChangeEmail(oldEmail, newEmail string, now time.Time) error {
+func (a *Aggregate) ChangeEmail(oldEmail, newEmail string, now time.Time) error {
 	if a.ID == uuid.Nil {
 		return errors.New("user not created")
 	}
@@ -120,7 +133,7 @@ func (a *UserAggregate) ChangeEmail(oldEmail, newEmail string, now time.Time) er
 		return errors.New("email cannot be empty")
 	}
 
-	a.recordEvent(events.UserEmailChangedEvent{
+	a.recordEvent(UserEmailChangedEvent{
 		ID:        a.ID,
 		OldEmail:  oldEmail,
 		NewEmail:  newEmail,
@@ -129,7 +142,7 @@ func (a *UserAggregate) ChangeEmail(oldEmail, newEmail string, now time.Time) er
 	return nil
 }
 
-func (a *UserAggregate) VerifyEmail(now time.Time) error {
+func (a *Aggregate) VerifyEmail(now time.Time) error {
 	if a.ID == uuid.Nil {
 		return errors.New("user not created")
 	}
@@ -137,14 +150,14 @@ func (a *UserAggregate) VerifyEmail(now time.Time) error {
 		return errors.New("email already verified")
 	}
 
-	a.recordEvent(events.UserEmailVerifiedEvent{
+	a.recordEvent(UserEmailVerifiedEvent{
 		ID:         a.ID,
 		VerifiedAt: now,
 	})
 	return nil
 }
 
-func (a *UserAggregate) AddEmail(emailID uuid.UUID, email string, now time.Time) error {
+func (a *Aggregate) AddEmail(emailID uuid.UUID, email string, now time.Time) error {
 	if a.ID == uuid.Nil {
 		return errors.New("user not created")
 	}
@@ -152,7 +165,7 @@ func (a *UserAggregate) AddEmail(emailID uuid.UUID, email string, now time.Time)
 		return errors.New("email cannot be empty")
 	}
 
-	a.recordEvent(events.UserEmailAddedEvent{
+	a.recordEvent(UserEmailAddedEvent{
 		ID:      a.ID,
 		EmailID: emailID,
 		Email:   email,
@@ -161,12 +174,12 @@ func (a *UserAggregate) AddEmail(emailID uuid.UUID, email string, now time.Time)
 	return nil
 }
 
-func (a *UserAggregate) RemoveEmail(emailID uuid.UUID, now time.Time) error {
+func (a *Aggregate) RemoveEmail(emailID uuid.UUID, now time.Time) error {
 	if a.ID == uuid.Nil {
 		return errors.New("user not created")
 	}
 
-	a.recordEvent(events.UserEmailRemovedEvent{
+	a.recordEvent(UserEmailRemovedEvent{
 		ID:        a.ID,
 		EmailID:   emailID,
 		RemovedAt: now,
@@ -174,14 +187,14 @@ func (a *UserAggregate) RemoveEmail(emailID uuid.UUID, now time.Time) error {
 	return nil
 }
 
-func (a *UserAggregate) SetPrimaryEmail(
+func (a *Aggregate) SetPrimaryEmail(
 	oldPrimaryEmailID, newPrimaryEmailID uuid.UUID, now time.Time,
 ) error {
 	if a.ID == uuid.Nil {
 		return errors.New("user not created")
 	}
 
-	a.recordEvent(events.UserEmailSetPrimaryEvent{
+	a.recordEvent(UserEmailSetPrimaryEvent{
 		ID:                a.ID,
 		OldPrimaryEmailID: oldPrimaryEmailID,
 		NewPrimaryEmailID: newPrimaryEmailID,
@@ -190,7 +203,7 @@ func (a *UserAggregate) SetPrimaryEmail(
 	return nil
 }
 
-func (a *UserAggregate) InitiateMFASetup(secret string, now time.Time) error {
+func (a *Aggregate) InitiateMFASetup(secret string, now time.Time) error {
 	if a.ID == uuid.Nil {
 		return errors.New("user not created")
 	}
@@ -198,7 +211,7 @@ func (a *UserAggregate) InitiateMFASetup(secret string, now time.Time) error {
 		return errors.New("MFA is already enabled")
 	}
 
-	a.recordEvent(events.UserMFASetupInitiatedEvent{
+	a.recordEvent(UserMFASetupInitiatedEvent{
 		ID:          a.ID,
 		MFASecret:   secret,
 		InitiatedAt: now,
@@ -206,7 +219,7 @@ func (a *UserAggregate) InitiateMFASetup(secret string, now time.Time) error {
 	return nil
 }
 
-func (a *UserAggregate) EnableMFA(codes []events.HashedRecoveryCode, now time.Time) error {
+func (a *Aggregate) EnableMFA(codes []HashedRecoveryCode, now time.Time) error {
 	if a.ID == uuid.Nil {
 		return errors.New("user not created")
 	}
@@ -217,7 +230,7 @@ func (a *UserAggregate) EnableMFA(codes []events.HashedRecoveryCode, now time.Ti
 		return errors.New("MFA not set up")
 	}
 
-	a.recordEvent(events.UserMFAEnabledEvent{
+	a.recordEvent(UserMFAEnabledEvent{
 		ID:            a.ID,
 		RecoveryCodes: codes,
 		EnabledAt:     now,
@@ -225,7 +238,7 @@ func (a *UserAggregate) EnableMFA(codes []events.HashedRecoveryCode, now time.Ti
 	return nil
 }
 
-func (a *UserAggregate) DisableMFA(now time.Time) error {
+func (a *Aggregate) DisableMFA(now time.Time) error {
 	if a.ID == uuid.Nil {
 		return errors.New("user not created")
 	}
@@ -233,19 +246,19 @@ func (a *UserAggregate) DisableMFA(now time.Time) error {
 		return errors.New("MFA is not enabled")
 	}
 
-	a.recordEvent(events.UserMFADisabledEvent{
+	a.recordEvent(UserMFADisabledEvent{
 		ID:         a.ID,
 		DisabledAt: now,
 	})
 	return nil
 }
 
-func (a *UserAggregate) UseRecoveryCode(codeID uuid.UUID, now time.Time) error {
+func (a *Aggregate) UseRecoveryCode(codeID uuid.UUID, now time.Time) error {
 	if a.ID == uuid.Nil {
 		return errors.New("user not created")
 	}
 
-	a.recordEvent(events.UserMFARecoveryCodeUsedEvent{
+	a.recordEvent(UserMFARecoveryCodeUsedEvent{
 		ID:             a.ID,
 		RecoveryCodeID: codeID,
 		UsedAt:         now,
@@ -253,7 +266,7 @@ func (a *UserAggregate) UseRecoveryCode(codeID uuid.UUID, now time.Time) error {
 	return nil
 }
 
-func (a *UserAggregate) RegenerateRecoveryCodes(codes []events.HashedRecoveryCode, now time.Time) error {
+func (a *Aggregate) RegenerateRecoveryCodes(codes []HashedRecoveryCode, now time.Time) error {
 	if a.ID == uuid.Nil {
 		return errors.New("user not created")
 	}
@@ -261,7 +274,7 @@ func (a *UserAggregate) RegenerateRecoveryCodes(codes []events.HashedRecoveryCod
 		return errors.New("MFA is not enabled")
 	}
 
-	a.recordEvent(events.UserMFARecoveryCodesRegeneratedEvent{
+	a.recordEvent(UserMFARecoveryCodesRegeneratedEvent{
 		ID:            a.ID,
 		RecoveryCodes: codes,
 		RegeneratedAt: now,
@@ -269,7 +282,7 @@ func (a *UserAggregate) RegenerateRecoveryCodes(codes []events.HashedRecoveryCod
 	return nil
 }
 
-func (a *UserAggregate) Archive(now time.Time) error {
+func (a *Aggregate) Archive(now time.Time) error {
 	if a.ID == uuid.Nil {
 		return errors.New("user not created")
 	}
@@ -277,100 +290,21 @@ func (a *UserAggregate) Archive(now time.Time) error {
 		return errors.New("user already archived")
 	}
 
-	a.recordEvent(events.UserArchivedEvent{
+	a.recordEvent(UserArchivedEvent{
 		ID:         a.ID,
 		ArchivedAt: now,
 	})
 	return nil
 }
 
-func (a *UserAggregate) RecordLogin(now time.Time) error {
+func (a *Aggregate) RecordLogin(now time.Time) error {
 	if a.ID == uuid.Nil {
 		return errors.New("user not created")
 	}
 
-	a.recordEvent(events.UserLoggedInEvent{
+	a.recordEvent(UserLoggedInEvent{
 		ID:         a.ID,
 		LoggedInAt: now,
 	})
-	return nil
-}
-
-// ============================================================================
-// Event Application
-// ============================================================================
-
-func (a *UserAggregate) ApplyEvent(event events.DomainEvent) {
-	switch e := event.(type) {
-	case events.UserRegisteredEvent:
-		a.ID = e.ID
-		a.Name = e.Name
-		a.Email = e.Email
-		a.EmailID = e.EmailID
-		a.PasswordHash = e.PasswordHash
-		a.PasswordSalt = e.PasswordSalt
-		a.CreatedAt = e.CreatedAt
-		a.UpdatedAt = e.CreatedAt
-
-	case events.UserNameChangedEvent:
-		a.Name = e.NewName
-		a.UpdatedAt = e.ChangedAt
-
-	case events.UserPasswordChangedEvent:
-		a.PasswordHash = e.PasswordHash
-		a.PasswordSalt = e.PasswordSalt
-		a.UpdatedAt = e.ChangedAt
-
-	case events.UserEmailChangedEvent:
-		a.Email = e.NewEmail
-		a.EmailVerified = false
-		a.UpdatedAt = e.ChangedAt
-
-	case events.UserEmailVerifiedEvent:
-		a.EmailVerified = true
-		a.UpdatedAt = e.VerifiedAt
-
-	case events.UserEmailAddedEvent:
-		a.UpdatedAt = e.AddedAt
-
-	case events.UserEmailRemovedEvent:
-		a.UpdatedAt = e.RemovedAt
-
-	case events.UserEmailSetPrimaryEvent:
-		a.EmailID = e.NewPrimaryEmailID
-		a.UpdatedAt = e.ChangedAt
-
-	case events.UserMFASetupInitiatedEvent:
-		a.MFASecret = &e.MFASecret
-		a.UpdatedAt = e.InitiatedAt
-
-	case events.UserMFAEnabledEvent:
-		a.MFAEnabled = true
-		a.UpdatedAt = e.EnabledAt
-
-	case events.UserMFADisabledEvent:
-		a.MFAEnabled = false
-		a.MFASecret = nil
-		a.UpdatedAt = e.DisabledAt
-
-	case events.UserMFARecoveryCodeUsedEvent:
-		a.UpdatedAt = e.UsedAt
-
-	case events.UserMFARecoveryCodesRegeneratedEvent:
-		a.UpdatedAt = e.RegeneratedAt
-
-	case events.UserArchivedEvent:
-		a.ArchivedAt = &e.ArchivedAt
-		a.UpdatedAt = e.ArchivedAt
-
-	case events.UserLoggedInEvent:
-		a.LastLoggedInAt = &e.LoggedInAt
-	}
-}
-
-func (a *UserAggregate) ReplayEvents(domainEvents []events.DomainEvent) error {
-	for _, event := range domainEvents {
-		a.ApplyEvent(event)
-	}
 	return nil
 }

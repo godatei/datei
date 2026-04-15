@@ -1,19 +1,13 @@
-package projections
+package datei
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/godatei/datei/internal/db"
-	"github.com/godatei/datei/internal/events"
 )
 
-// ============================================================================
-// Datei Projection Handlers
-// ============================================================================
-
-// UpdateProjectionForDateiCreated updates projections after a datei is created
-func UpdateProjectionForDateiCreated(ctx context.Context, q *db.Queries, event *events.DateiCreatedEvent) error {
+func updateProjectionForDateiCreated(ctx context.Context, q *db.Queries, event *DateiCreatedEvent) error {
 	err := q.InsertDateiProjection(ctx, db.InsertDateiProjectionParams{
 		ID:          event.ID,
 		ParentID:    event.ParentID,
@@ -29,8 +23,7 @@ func UpdateProjectionForDateiCreated(ctx context.Context, q *db.Queries, event *
 	return nil
 }
 
-// UpdateProjectionForDateiRenamed updates projections after a datei is renamed
-func UpdateProjectionForDateiRenamed(ctx context.Context, q *db.Queries, event *events.DateiRenamedEvent) error {
+func updateProjectionForDateiRenamed(ctx context.Context, q *db.Queries, event *DateiRenamedEvent) error {
 	err := q.UpdateDateiProjectionName(ctx, db.UpdateDateiProjectionNameParams{
 		Name:      event.NewName,
 		UpdatedAt: event.RenamedAt,
@@ -43,11 +36,10 @@ func UpdateProjectionForDateiRenamed(ctx context.Context, q *db.Queries, event *
 	return nil
 }
 
-// UpdateProjectionForDateiVersionUploaded updates projections after a new version is uploaded
-func UpdateProjectionForDateiVersionUploaded(
+func updateProjectionForDateiVersionUploaded(
 	ctx context.Context,
 	q *db.Queries,
-	event *events.DateiVersionUploadedEvent,
+	event *DateiVersionUploadedEvent,
 ) error {
 	err := q.UpdateDateiProjectionVersion(ctx, db.UpdateDateiProjectionVersionParams{
 		S3Key:     &event.S3Key,
@@ -65,8 +57,7 @@ func UpdateProjectionForDateiVersionUploaded(
 	return nil
 }
 
-// UpdateProjectionForDateiMoved updates projections after a datei is moved
-func UpdateProjectionForDateiMoved(ctx context.Context, q *db.Queries, event *events.DateiMovedEvent) error {
+func updateProjectionForDateiMoved(ctx context.Context, q *db.Queries, event *DateiMovedEvent) error {
 	err := q.UpdateDateiProjectionParent(ctx, db.UpdateDateiProjectionParentParams{
 		ParentID:  event.NewParentID,
 		UpdatedAt: event.MovedAt,
@@ -79,8 +70,7 @@ func UpdateProjectionForDateiMoved(ctx context.Context, q *db.Queries, event *ev
 	return nil
 }
 
-// UpdateProjectionForDateiTrashed updates projections after a datei is trashed
-func UpdateProjectionForDateiTrashed(ctx context.Context, q *db.Queries, event *events.DateiTrashedEvent) error {
+func updateProjectionForDateiTrashed(ctx context.Context, q *db.Queries, event *DateiTrashedEvent) error {
 	err := q.UpdateDateiProjectionTrashed(ctx, db.UpdateDateiProjectionTrashedParams{
 		TrashedAt: &event.TrashedAt,
 		UpdatedAt: event.TrashedAt,
@@ -93,8 +83,7 @@ func UpdateProjectionForDateiTrashed(ctx context.Context, q *db.Queries, event *
 	return nil
 }
 
-// UpdateProjectionForDateiRestored updates projections after a datei is restored
-func UpdateProjectionForDateiRestored(ctx context.Context, q *db.Queries, event *events.DateiRestoredEvent) error {
+func updateProjectionForDateiRestored(ctx context.Context, q *db.Queries, event *DateiRestoredEvent) error {
 	err := q.UpdateDateiProjectionRestored(ctx, db.UpdateDateiProjectionRestoredParams{
 		UpdatedAt: event.RestoredAt,
 		ID:        event.ID,
@@ -106,8 +95,7 @@ func UpdateProjectionForDateiRestored(ctx context.Context, q *db.Queries, event 
 	return nil
 }
 
-// UpdateProjectionForDateiLinked updates projections after a datei is linked
-func UpdateProjectionForDateiLinked(ctx context.Context, q *db.Queries, event *events.DateiLinkedEvent) error {
+func updateProjectionForDateiLinked(ctx context.Context, q *db.Queries, event *DateiLinkedEvent) error {
 	err := q.UpdateDateiProjectionLinked(ctx, db.UpdateDateiProjectionLinkedParams{
 		LinkedDateiID: &event.LinkedDateiID,
 		UpdatedAt:     event.LinkedAt,
@@ -120,8 +108,7 @@ func UpdateProjectionForDateiLinked(ctx context.Context, q *db.Queries, event *e
 	return nil
 }
 
-// UpdateProjectionForDateiUnlinked updates projections after a datei is unlinked
-func UpdateProjectionForDateiUnlinked(ctx context.Context, q *db.Queries, event *events.DateiUnlinkedEvent) error {
+func updateProjectionForDateiUnlinked(ctx context.Context, q *db.Queries, event *DateiUnlinkedEvent) error {
 	err := q.UpdateDateiProjectionUnlinked(ctx, db.UpdateDateiProjectionUnlinkedParams{
 		UpdatedAt: event.UnlinkedAt,
 		ID:        event.ID,
@@ -133,15 +120,10 @@ func UpdateProjectionForDateiUnlinked(ctx context.Context, q *db.Queries, event 
 	return nil
 }
 
-// ============================================================================
-// Permission Projection Handlers
-// ============================================================================
-
-// UpdateProjectionForDateiPermissionGranted updates projections after a permission is granted
-func UpdateProjectionForDateiPermissionGranted(
+func updateProjectionForDateiPermissionGranted(
 	ctx context.Context,
 	q *db.Queries,
-	event *events.DateiPermissionGrantedEvent,
+	event *DateiPermissionGrantedEvent,
 ) error {
 	err := q.InsertDateiPermissionProjection(ctx, db.InsertDateiPermissionProjectionParams{
 		ID:             event.ID,
@@ -158,11 +140,10 @@ func UpdateProjectionForDateiPermissionGranted(
 	return nil
 }
 
-// UpdateProjectionForDateiPermissionRevoked updates projections after a permission is revoked
-func UpdateProjectionForDateiPermissionRevoked(
+func updateProjectionForDateiPermissionRevoked(
 	ctx context.Context,
 	q *db.Queries,
-	event *events.DateiPermissionRevokedEvent,
+	event *DateiPermissionRevokedEvent,
 ) error {
 	err := q.DeleteDateiPermissionProjection(ctx, event.ID)
 	if err != nil {

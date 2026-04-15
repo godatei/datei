@@ -8,7 +8,6 @@ import (
 
 	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/db"
-	"github.com/godatei/datei/internal/mapping"
 	"github.com/godatei/datei/pkg/api"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -21,7 +20,7 @@ func (s *UserService) ListEmails(ctx context.Context, userID uuid.UUID) ([]api.U
 		return nil, fmt.Errorf("failed to list emails: %w", err)
 	}
 
-	return mapping.MapEmailProjectionSliceToAPI(rows), nil
+	return MapEmailProjectionSliceToAPI(rows), nil
 }
 
 func (s *UserService) RemoveEmail(ctx context.Context, userID uuid.UUID, emailID uuid.UUID) error {

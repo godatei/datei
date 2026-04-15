@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/godatei/datei/internal/dateierrors"
-	"github.com/godatei/datei/internal/events"
 	"github.com/godatei/datei/internal/security"
 	"github.com/google/uuid"
 	"github.com/pquerna/otp"
@@ -208,19 +207,19 @@ func (s *UserService) GetMFARecoveryCodesStatus(ctx context.Context, userID uuid
 	return int(count), nil
 }
 
-func generateAndHashRecoveryCodes() ([]string, []events.HashedRecoveryCode, error) {
+func generateAndHashRecoveryCodes() ([]string, []HashedRecoveryCode, error) {
 	codes, err := security.GenerateRecoveryCodes()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to generate recovery codes: %w", err)
 	}
 
-	hashedCodes := make([]events.HashedRecoveryCode, len(codes))
+	hashedCodes := make([]HashedRecoveryCode, len(codes))
 	for i, code := range codes {
 		hash, salt, err := security.HashRecoveryCode(code)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to hash recovery code: %w", err)
 		}
-		hashedCodes[i] = events.HashedRecoveryCode{
+		hashedCodes[i] = HashedRecoveryCode{
 			ID:       uuid.New(),
 			CodeHash: hash,
 			CodeSalt: salt,

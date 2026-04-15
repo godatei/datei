@@ -1,36 +1,45 @@
-package events
+package datei
 
 import (
 	"context"
 	"time"
 
 	"github.com/godatei/datei/internal/db"
+	"github.com/godatei/datei/internal/events"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// Event extends DomainEvent with the ability to apply itself to an Aggregate.
+type Event interface {
+	events.DomainEvent
+	ApplyTo(a *Aggregate)
+}
+
+// NewEventStore creates an event store for the datei_event table.
+//
 //nolint:dupl // each domain wires its own sqlc queries into the generic store
-func NewDateiEventStore(pool *pgxpool.Pool) *PostgresEventStore {
-	return newStore(pool, storeQueries{
-		getVersion: func(ctx context.Context, q *db.Queries, id uuid.UUID) (int32, error) {
+func NewEventStore(pool *pgxpool.Pool) *events.PostgresEventStore {
+	return events.NewStore(pool, events.StoreQueries{
+		GetVersion: func(ctx context.Context, q *db.Queries, id uuid.UUID) (int32, error) {
 			return q.GetStreamVersion(ctx, id)
 		},
-		insert: func(ctx context.Context, q *db.Queries, p InsertParams) error {
+		Insert: func(ctx context.Context, q *db.Queries, p events.InsertParams) error {
 			return q.InsertDateiEvent(ctx, db.InsertDateiEventParams{
 				StreamID: p.StreamID, StreamVersion: p.StreamVersion,
 				EventType: p.EventType, EventData: p.EventData,
 			})
 		},
-		getEvents: func(ctx context.Context, q *db.Queries, id uuid.UUID, from int32) ([]EventRow, error) {
+		GetEvents: func(ctx context.Context, q *db.Queries, id uuid.UUID, from int32) ([]events.EventRow, error) {
 			rows, err := q.GetDateiEventsByStreamID(ctx, db.GetDateiEventsByStreamIDParams{
 				StreamID: id, StreamVersion: from,
 			})
 			if err != nil {
 				return nil, err
 			}
-			out := make([]EventRow, len(rows))
+			out := make([]events.EventRow, len(rows))
 			for i, r := range rows {
-				out[i] = EventRow{EventType: r.EventType, EventData: r.EventData}
+				out[i] = events.EventRow{EventType: r.EventType, EventData: r.EventData}
 			}
 			return out, nil
 		},
@@ -38,19 +47,22 @@ func NewDateiEventStore(pool *pgxpool.Pool) *PostgresEventStore {
 }
 
 func init() {
-	RegisterEvent("DateiCreated", func() DomainEvent { return &DateiCreatedEvent{} })
-	RegisterEvent("DateiRenamed", func() DomainEvent { return &DateiRenamedEvent{} })
-	RegisterEvent("DateiVersionUploaded", func() DomainEvent { return &DateiVersionUploadedEvent{} })
-	RegisterEvent("DateiMoved", func() DomainEvent { return &DateiMovedEvent{} })
-	RegisterEvent("DateiTrashed", func() DomainEvent { return &DateiTrashedEvent{} })
-	RegisterEvent("DateiRestored", func() DomainEvent { return &DateiRestoredEvent{} })
-	RegisterEvent("DateiLinked", func() DomainEvent { return &DateiLinkedEvent{} })
-	RegisterEvent("DateiUnlinked", func() DomainEvent { return &DateiUnlinkedEvent{} })
-	RegisterEvent("DateiPermissionGranted", func() DomainEvent { return &DateiPermissionGrantedEvent{} })
-	RegisterEvent("DateiPermissionRevoked", func() DomainEvent { return &DateiPermissionRevokedEvent{} })
+	events.RegisterEvent("DateiCreated", func() events.DomainEvent { return &DateiCreatedEvent{} })
+	events.RegisterEvent("DateiRenamed", func() events.DomainEvent { return &DateiRenamedEvent{} })
+	events.RegisterEvent("DateiVersionUploaded", func() events.DomainEvent { return &DateiVersionUploadedEvent{} })
+	events.RegisterEvent("DateiMoved", func() events.DomainEvent { return &DateiMovedEvent{} })
+	events.RegisterEvent("DateiTrashed", func() events.DomainEvent { return &DateiTrashedEvent{} })
+	events.RegisterEvent("DateiRestored", func() events.DomainEvent { return &DateiRestoredEvent{} })
+	events.RegisterEvent("DateiLinked", func() events.DomainEvent { return &DateiLinkedEvent{} })
+	events.RegisterEvent("DateiUnlinked", func() events.DomainEvent { return &DateiUnlinkedEvent{} })
+	events.RegisterEvent("DateiPermissionGranted", func() events.DomainEvent { return &DateiPermissionGrantedEvent{} })
+	events.RegisterEvent("DateiPermissionRevoked", func() events.DomainEvent { return &DateiPermissionRevokedEvent{} })
 }
 
-// DateiCreatedEvent fired when a new datei (file or directory) is created
+// ============================================================================
+// Datei Events
+// ============================================================================
+
 type DateiCreatedEvent struct {
 	ID          uuid.UUID  `json:"id"`
 	ParentID    *uuid.UUID `json:"parent_id,omitempty"`
@@ -62,8 +74,17 @@ type DateiCreatedEvent struct {
 
 func (e DateiCreatedEvent) EventType() string   { return "DateiCreated" }
 func (e DateiCreatedEvent) StreamID() uuid.UUID { return e.ID }
+func (e DateiCreatedEvent) ApplyTo(a *Aggregate) {
+	a.ID = e.ID
+	a.ParentID = e.ParentID
+	a.IsDirectory = e.IsDirectory
+	a.Name = e.Name
+	a.CreatedBy = e.CreatedBy
+	a.CreatedAt = e.CreatedAt
+	a.UpdatedAt = e.CreatedAt
+	a.UpdatedBy = e.CreatedBy
+}
 
-// DateiRenamedEvent fired when a datei name is changed
 type DateiRenamedEvent struct {
 	ID        uuid.UUID `json:"id"`
 	OldName   string    `json:"old_name"`
@@ -74,8 +95,12 @@ type DateiRenamedEvent struct {
 
 func (e DateiRenamedEvent) EventType() string   { return "DateiRenamed" }
 func (e DateiRenamedEvent) StreamID() uuid.UUID { return e.ID }
+func (e DateiRenamedEvent) ApplyTo(a *Aggregate) {
+	a.Name = e.NewName
+	a.UpdatedAt = e.RenamedAt
+	a.UpdatedBy = e.RenamedBy
+}
 
-// DateiVersionUploadedEvent fired when a new file version is uploaded
 type DateiVersionUploadedEvent struct {
 	ID         uuid.UUID `json:"id"`
 	S3Key      string    `json:"s3_key"`
@@ -89,8 +114,16 @@ type DateiVersionUploadedEvent struct {
 
 func (e DateiVersionUploadedEvent) EventType() string   { return "DateiVersionUploaded" }
 func (e DateiVersionUploadedEvent) StreamID() uuid.UUID { return e.ID }
+func (e DateiVersionUploadedEvent) ApplyTo(a *Aggregate) {
+	a.S3Key = &e.S3Key
+	a.Size = &e.FileSize
+	a.Checksum = &e.Checksum
+	a.MimeType = &e.MimeType
+	a.ContentMD = e.ContentMD
+	a.UpdatedAt = e.UploadedAt
+	a.UpdatedBy = e.UploadedBy
+}
 
-// DateiMovedEvent fired when a datei is moved to a different parent directory
 type DateiMovedEvent struct {
 	ID          uuid.UUID  `json:"id"`
 	OldParentID *uuid.UUID `json:"old_parent_id,omitempty"`
@@ -101,8 +134,12 @@ type DateiMovedEvent struct {
 
 func (e DateiMovedEvent) EventType() string   { return "DateiMoved" }
 func (e DateiMovedEvent) StreamID() uuid.UUID { return e.ID }
+func (e DateiMovedEvent) ApplyTo(a *Aggregate) {
+	a.ParentID = e.NewParentID
+	a.UpdatedAt = e.MovedAt
+	a.UpdatedBy = e.MovedBy
+}
 
-// DateiTrashedEvent fired when a datei is moved to trash
 type DateiTrashedEvent struct {
 	ID        uuid.UUID `json:"id"`
 	TrashedBy uuid.UUID `json:"trashed_by"`
@@ -111,8 +148,13 @@ type DateiTrashedEvent struct {
 
 func (e DateiTrashedEvent) EventType() string   { return "DateiTrashed" }
 func (e DateiTrashedEvent) StreamID() uuid.UUID { return e.ID }
+func (e DateiTrashedEvent) ApplyTo(a *Aggregate) {
+	a.TrashedAt = &e.TrashedAt
+	a.TrashedBy = &e.TrashedBy
+	a.UpdatedAt = e.TrashedAt
+	a.UpdatedBy = e.TrashedBy
+}
 
-// DateiRestoredEvent fired when a datei is restored from trash
 type DateiRestoredEvent struct {
 	ID         uuid.UUID `json:"id"`
 	RestoredBy uuid.UUID `json:"restored_by"`
@@ -121,8 +163,13 @@ type DateiRestoredEvent struct {
 
 func (e DateiRestoredEvent) EventType() string   { return "DateiRestored" }
 func (e DateiRestoredEvent) StreamID() uuid.UUID { return e.ID }
+func (e DateiRestoredEvent) ApplyTo(a *Aggregate) {
+	a.TrashedAt = nil
+	a.TrashedBy = nil
+	a.UpdatedAt = e.RestoredAt
+	a.UpdatedBy = e.RestoredBy
+}
 
-// DateiLinkedEvent fired when a datei is linked as a symlink
 type DateiLinkedEvent struct {
 	ID            uuid.UUID `json:"id"`
 	LinkedDateiID uuid.UUID `json:"linked_datei_id"`
@@ -132,8 +179,12 @@ type DateiLinkedEvent struct {
 
 func (e DateiLinkedEvent) EventType() string   { return "DateiLinked" }
 func (e DateiLinkedEvent) StreamID() uuid.UUID { return e.ID }
+func (e DateiLinkedEvent) ApplyTo(a *Aggregate) {
+	a.LinkedDateiID = &e.LinkedDateiID
+	a.UpdatedAt = e.LinkedAt
+	a.UpdatedBy = e.LinkedBy
+}
 
-// DateiUnlinkedEvent fired when a datei is unlinked from a target
 type DateiUnlinkedEvent struct {
 	ID         uuid.UUID `json:"id"`
 	UnlinkedBy uuid.UUID `json:"unlinked_by"`
@@ -142,8 +193,16 @@ type DateiUnlinkedEvent struct {
 
 func (e DateiUnlinkedEvent) EventType() string   { return "DateiUnlinked" }
 func (e DateiUnlinkedEvent) StreamID() uuid.UUID { return e.ID }
+func (e DateiUnlinkedEvent) ApplyTo(a *Aggregate) {
+	a.LinkedDateiID = nil
+	a.UpdatedAt = e.UnlinkedAt
+	a.UpdatedBy = e.UnlinkedBy
+}
 
-// DateiPermissionGrantedEvent fired when access is granted
+// ============================================================================
+// Permission Events
+// ============================================================================
+
 type DateiPermissionGrantedEvent struct {
 	ID             uuid.UUID  `json:"id"`
 	DateiID        uuid.UUID  `json:"datei_id"`
@@ -154,10 +213,10 @@ type DateiPermissionGrantedEvent struct {
 	GrantedAt      time.Time  `json:"granted_at"`
 }
 
-func (e DateiPermissionGrantedEvent) EventType() string   { return "DateiPermissionGranted" }
-func (e DateiPermissionGrantedEvent) StreamID() uuid.UUID { return e.DateiID }
+func (e DateiPermissionGrantedEvent) EventType() string    { return "DateiPermissionGranted" }
+func (e DateiPermissionGrantedEvent) StreamID() uuid.UUID  { return e.DateiID }
+func (e DateiPermissionGrantedEvent) ApplyTo(_ *Aggregate) {}
 
-// DateiPermissionRevokedEvent fired when access is revoked
 type DateiPermissionRevokedEvent struct {
 	ID            uuid.UUID  `json:"id"`
 	DateiID       uuid.UUID  `json:"datei_id"`
@@ -167,5 +226,6 @@ type DateiPermissionRevokedEvent struct {
 	RevokedAt     time.Time  `json:"revoked_at"`
 }
 
-func (e DateiPermissionRevokedEvent) EventType() string   { return "DateiPermissionRevoked" }
-func (e DateiPermissionRevokedEvent) StreamID() uuid.UUID { return e.DateiID }
+func (e DateiPermissionRevokedEvent) EventType() string    { return "DateiPermissionRevoked" }
+func (e DateiPermissionRevokedEvent) StreamID() uuid.UUID  { return e.DateiID }
+func (e DateiPermissionRevokedEvent) ApplyTo(_ *Aggregate) {}

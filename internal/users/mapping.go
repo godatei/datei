@@ -1,4 +1,4 @@
-package mapping
+package users
 
 import (
 	"github.com/godatei/datei/internal/db"
