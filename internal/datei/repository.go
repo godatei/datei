@@ -114,6 +114,6 @@ func updateProjection(ctx context.Context, q *db.Queries, event events.DomainEve
 	case DateiPermissionRevokedEvent:
 		return updateProjectionForDateiPermissionRevoked(ctx, q, &e)
 	default:
-		return errors.New("unknown event type")
+		return fmt.Errorf("unknown datei event type: %s", event.EventType())
 	}
 }
