@@ -80,6 +80,15 @@ type UpdateUserEmailInput struct {
 
 func (s *UserService) UpdateUserEmail(ctx context.Context, input UpdateUserEmailInput) error {
 	q := s.queries()
+
+	_, err := q.GetUserAccountByEmail(ctx, input.NewEmail)
+	if err == nil {
+		return dateierrors.ErrEmailAlreadyInUse
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return fmt.Errorf("failed to check existing email: %w", err)
+	}
+
 	primaryEmail, err := q.GetPrimaryEmailForUser(ctx, input.UserID)
 	if err != nil {
 		return fmt.Errorf("failed to get primary email: %w", err)
