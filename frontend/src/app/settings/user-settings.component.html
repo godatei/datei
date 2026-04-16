@@ -27,20 +27,16 @@
         <div class="email-row">
           <span class="email-address">{{ email.email }}</span>
           <span class="email-badges">
-            @if (email.isPrimary) {
-              <mat-chip-set>
+            <mat-chip-set>
+              @if (email.isPrimary) {
                 <mat-chip highlighted>Primary</mat-chip>
-              </mat-chip-set>
-            }
-            @if (email.verified) {
-              <mat-chip-set>
+              }
+              @if (email.verified) {
                 <mat-chip>Verified</mat-chip>
-              </mat-chip-set>
-            } @else {
-              <mat-chip-set>
+              } @else {
                 <mat-chip class="chip-unverified">Unverified</mat-chip>
-              </mat-chip-set>
-            }
+              }
+            </mat-chip-set>
           </span>
           <span class="email-actions">
             @if (!email.isPrimary && email.verified) {
