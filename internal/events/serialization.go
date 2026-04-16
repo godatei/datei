@@ -3,7 +3,6 @@ package events
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 )
 
 var eventFactories = map[string]func() DomainEvent{}
@@ -26,9 +25,7 @@ func Deserialize(eventType string, data []byte) (DomainEvent, error) {
 		return nil, fmt.Errorf("failed to unmarshal %s: %w", eventType, err)
 	}
 
-	// Dereference the pointer to return a value type, preserving
-	// compatibility with existing type switches (e.g. case DateiCreatedEvent:).
-	return reflect.ValueOf(ptr).Elem().Interface().(DomainEvent), nil
+	return ptr, nil
 }
 
 // Serialize marshals an event to JSON
