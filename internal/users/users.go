@@ -35,19 +35,14 @@ func (s *UserService) queries() *db.Queries {
 	return db.New(s.db)
 }
 
-type UserProfile struct {
-	Name       string
-	MfaEnabled bool
-}
-
 // GetUser returns the current user profile from the projection.
-func (s *UserService) GetUser(ctx context.Context, userID uuid.UUID) (*UserProfile, error) {
+func (s *UserService) GetUser(ctx context.Context, userID uuid.UUID) (db.UserAccountProjection, error) {
 	q := s.queries()
 	user, err := q.GetUserAccountByID(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user: %w", err)
+		return db.UserAccountProjection{}, fmt.Errorf("failed to get user: %w", err)
 	}
-	return &UserProfile{Name: user.Name, MfaEnabled: user.MfaEnabled}, nil
+	return user, nil
 }
 
 func (s *UserService) sendVerificationEmail(ctx context.Context, userID uuid.UUID, email string) {
