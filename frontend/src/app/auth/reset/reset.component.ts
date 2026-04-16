@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { form } from '@angular/forms/signals';
+import { form, FormRoot } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from '~/frontend/services/auth.service';
 import { SettingsService } from '~/frontend/services/settings.service';
 import {
@@ -16,6 +17,7 @@ import {
   selector: 'app-reset',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    FormRoot,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
@@ -30,30 +32,29 @@ export class ResetComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
-  readonly loading = signal(false);
   readonly errorMessage = signal('');
 
   readonly model = signal({ password: '', confirmPassword: '' });
-  readonly form = form(this.model, (p) => {
-    passwordConfirmSchema(p.password, p.confirmPassword);
-  });
-
-  onSubmit(event: Event) {
-    event.preventDefault();
-    if (this.form().invalid()) return;
-    this.loading.set(true);
-    this.errorMessage.set('');
-
-    this.settings.updateUser({ password: this.model().password }, true).subscribe({
-      next: () => {
-        this.loading.set(false);
-        this.auth.logout();
-        this.router.navigate(['/login']);
+  readonly form = form(
+    this.model,
+    (p) => {
+      passwordConfirmSchema(p.password, p.confirmPassword);
+    },
+    {
+      submission: {
+        action: async () => {
+          this.errorMessage.set('');
+          try {
+            await firstValueFrom(
+              this.settings.updateUser({ password: this.model().password }, true),
+            );
+            this.auth.logout();
+            this.router.navigate(['/login']);
+          } catch {
+            this.errorMessage.set('Password reset failed');
+          }
+        },
       },
-      error: () => {
-        this.loading.set(false);
-        this.errorMessage.set('Password reset failed');
-      },
-    });
-  }
+    },
+  );
 }

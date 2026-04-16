@@ -13,7 +13,7 @@
         </p>
         <a class="submit-btn" routerLink="/login" mat-flat-button>Back to sign in</a>
       } @else {
-        <form class="auth-form" (submit)="onSubmit($event)">
+        <form class="auth-form" [formRoot]="form">
           <mat-form-field class="form-field" appearance="outline">
             <mat-label>Email</mat-label>
             <input matInput [formField]="form.email" type="email" autocomplete="email" />
@@ -23,9 +23,9 @@
             class="submit-btn"
             mat-flat-button
             type="submit"
-            [disabled]="loading() || form().invalid()"
+            [disabled]="form().submitting() || form().invalid()"
           >
-            @if (loading()) {
+            @if (form().submitting()) {
               <mat-spinner diameter="20"></mat-spinner>
             } @else {
               Send reset link

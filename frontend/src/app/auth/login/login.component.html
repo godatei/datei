@@ -12,7 +12,7 @@
       }
 
       @if (!mfaRequired()) {
-        <form class="auth-form" (submit)="onSubmit($event)">
+        <form class="auth-form" [formRoot]="loginForm">
           <mat-form-field class="form-field" appearance="outline">
             <mat-label>Email</mat-label>
             <input matInput [formField]="loginForm.email" type="email" autocomplete="email" />
@@ -32,9 +32,9 @@
             class="submit-btn"
             mat-flat-button
             type="submit"
-            [disabled]="loading() || loginForm().invalid()"
+            [disabled]="loginForm().submitting() || loginForm().invalid()"
           >
-            @if (loading()) {
+            @if (loginForm().submitting()) {
               <mat-spinner diameter="20"></mat-spinner>
             } @else {
               Sign in
@@ -47,7 +47,7 @@
           <a routerLink="/register">Create an account</a>
         </div>
       } @else {
-        <form class="auth-form" (submit)="onMFASubmit($event)">
+        <form class="auth-form" [formRoot]="mfaForm">
           <mat-form-field class="form-field" appearance="outline">
             <mat-label>MFA Code</mat-label>
             <input matInput [formField]="mfaForm.code" autocomplete="one-time-code" />
@@ -58,9 +58,9 @@
             class="submit-btn"
             mat-flat-button
             type="submit"
-            [disabled]="loading() || mfaForm().invalid()"
+            [disabled]="mfaForm().submitting() || mfaForm().invalid()"
           >
-            @if (loading()) {
+            @if (mfaForm().submitting()) {
               <mat-spinner diameter="20"></mat-spinner>
             } @else {
               Verify

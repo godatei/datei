@@ -6,12 +6,17 @@
     <mat-card-header><mat-card-title>Profile</mat-card-title></mat-card-header>
     <mat-card-content>
       <p class="section-description">Manage your display name</p>
-      <form (submit)="updateProfile($event)">
+      <form [formRoot]="profileForm">
         <mat-form-field appearance="outline">
           <mat-label>Name</mat-label>
           <input matInput [formField]="profileForm.name" />
         </mat-form-field>
-        <button mat-flat-button type="submit" [disabled]="profileLoading()" class="action-btn">
+        <button
+          mat-flat-button
+          type="submit"
+          [disabled]="profileForm().submitting()"
+          class="action-btn"
+        >
           Save
         </button>
       </form>
@@ -61,7 +66,7 @@
           <mat-divider></mat-divider>
         }
       }
-      <form (submit)="addNewEmail($event)" class="add-email-form">
+      <form [formRoot]="addEmailForm" class="add-email-form">
         <mat-form-field appearance="outline">
           <mat-label>Add email address</mat-label>
           <input matInput [formField]="addEmailForm.email" type="email" />
@@ -69,7 +74,7 @@
         <button
           mat-flat-button
           type="submit"
-          [disabled]="emailsLoading() || addEmailForm().invalid()"
+          [disabled]="addEmailForm().submitting() || addEmailForm().invalid()"
         >
           Add email
         </button>
@@ -82,7 +87,7 @@
     <mat-card-header><mat-card-title>Change Password</mat-card-title></mat-card-header>
     <mat-card-content>
       <p class="section-description">Update your password</p>
-      <form (submit)="changePassword($event)">
+      <form [formRoot]="passwordForm">
         <mat-form-field appearance="outline">
           <mat-label>Current password</mat-label>
           <input
@@ -101,7 +106,7 @@
         <button
           mat-flat-button
           type="submit"
-          [disabled]="passwordLoading() || passwordForm().invalid()"
+          [disabled]="passwordForm().submitting() || passwordForm().invalid()"
         >
           Change password
         </button>
@@ -127,7 +132,7 @@
               <mat-icon>content_copy</mat-icon>
             </button>
           </div>
-          <form (submit)="enableMFA($event)">
+          <form [formRoot]="mfaEnableForm">
             <mat-form-field appearance="outline">
               <mat-label>Verification code</mat-label>
               <input matInput [formField]="mfaEnableForm.code" autocomplete="one-time-code" />
@@ -135,7 +140,7 @@
             <button
               mat-flat-button
               type="submit"
-              [disabled]="mfaLoading() || mfaEnableForm().invalid()"
+              [disabled]="mfaEnableForm().submitting() || mfaEnableForm().invalid()"
             >
               Enable MFA
             </button>
@@ -163,7 +168,7 @@
         <p>Two-factor authentication is enabled.</p>
         <div class="danger-zone">
           <p class="danger-label">Disable two-factor authentication</p>
-          <form (submit)="disableMFA($event)">
+          <form [formRoot]="mfaDisableForm">
             <mat-form-field appearance="outline">
               <mat-label>Password</mat-label>
               <input matInput [formField]="mfaDisableForm.password" type="password" />
@@ -172,7 +177,7 @@
               mat-button
               color="warn"
               type="submit"
-              [disabled]="mfaLoading() || mfaDisableForm().invalid()"
+              [disabled]="mfaDisableForm().submitting() || mfaDisableForm().invalid()"
             >
               Disable MFA
             </button>

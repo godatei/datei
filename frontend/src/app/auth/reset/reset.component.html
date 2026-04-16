@@ -11,7 +11,7 @@
         <div class="error-banner">{{ errorMessage() }}</div>
       }
 
-      <form class="auth-form" (submit)="onSubmit($event)">
+      <form class="auth-form" [formRoot]="form">
         <app-password-confirm
           [password]="form.password"
           [confirmPassword]="form.confirmPassword"
@@ -23,9 +23,9 @@
           class="submit-btn"
           mat-flat-button
           type="submit"
-          [disabled]="loading() || form().invalid()"
+          [disabled]="form().submitting() || form().invalid()"
         >
-          @if (loading()) {
+          @if (form().submitting()) {
             <mat-spinner diameter="20"></mat-spinner>
           } @else {
             Reset password
