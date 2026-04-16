@@ -55,11 +55,6 @@ func OpenAPIAuthFunc() openapi3filter.AuthenticationFunc {
 			return fmt.Errorf("invalid token: %w", err)
 		}
 
-		if err := jwt.Validate(token); err != nil {
-			slog.Debug("auth: token validation failed", "path", r.URL.Path, "error", err)
-			return fmt.Errorf("token validation failed: %w", err)
-		}
-
 		info, err := extractAuthInfo(token)
 		if err != nil {
 			slog.Debug("auth: failed to extract claims", "path", r.URL.Path, "error", err)
