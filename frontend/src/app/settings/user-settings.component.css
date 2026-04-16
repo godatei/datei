@@ -76,6 +76,7 @@ mat-form-field {
   background: var(--mat-sys-surface-container);
   border-radius: 8px;
   padding: 1rem;
+  margin-bottom: 1rem;
 }
 .recovery-codes {
   font-family: monospace;
