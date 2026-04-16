@@ -90,7 +90,7 @@ func (s *Service) CreateDatei(ctx context.Context, input CreateDateiInput) (*api
 	id := uuid.New()
 	now := time.Now()
 
-	userID := userIDFromContext(ctx)
+	userID := authn.RequireContext(ctx).UserID
 
 	agg := &Aggregate{}
 	if err := agg.Create(id, nil, isDirectory, input.Name, userID, now); err != nil {
@@ -175,7 +175,7 @@ func (s *Service) UpdateDatei(ctx context.Context, input UpdateDateiInput) (*api
 
 	now := time.Now()
 
-	userID := userIDFromContext(ctx)
+	userID := authn.RequireContext(ctx).UserID
 
 	if input.Name != nil {
 		if err := agg.Rename(*input.Name, userID, now); err != nil {
@@ -210,18 +210,10 @@ func (s *Service) DeleteDatei(ctx context.Context, dateiID uuid.UUID) error {
 		return err
 	}
 
-	userID := userIDFromContext(ctx)
+	userID := authn.RequireContext(ctx).UserID
 	if err := agg.Trash(userID, time.Now()); err != nil {
 		return err
 	}
 
 	return s.repository.Save(ctx, agg)
-}
-
-func userIDFromContext(ctx context.Context) uuid.UUID {
-	info, err := authn.FromContext(ctx)
-	if err != nil {
-		return uuid.Nil
-	}
-	return info.UserID
 }
