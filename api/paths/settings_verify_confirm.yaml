@@ -6,5 +6,5 @@ post:
   responses:
     '204':
       description: Email verified
-    '400':
-      description: Invalid verification
+    '403':
+      description: Invalid or expired verification token

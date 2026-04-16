@@ -174,7 +174,10 @@ HTTP Request → Server Endpoint → Service → db.Queries (read from projectio
 - Define sentinel errors in `internal/dateierrors/`
 - Wrap errors with context: `fmt.Errorf("failed to do X: %w", err)`
 - Check with `errors.Is()`
-- Map domain errors to HTTP status codes in endpoint handlers
+- Map domain errors to HTTP status codes in endpoint handlers:
+  - **400** — malformed request: invalid JSON, missing required fields, input validation failures (`ErrInvalidInput`)
+  - **403** — request not allowed in current state: wrong password, invalid code, MFA already enabled, MFA not set up, etc. (logic/state errors)
+  - **401** — reserved for authentication failures (missing/expired JWT). Never use 401 for wrong-password in authenticated endpoints — use 403 instead
 
 ### Go Idioms
 
@@ -210,6 +213,14 @@ This project uses Angular Material 21 with Material 3 theming. All UI must follo
 - Use `NgOptimizedImage` for all static images.
   - `NgOptimizedImage` does not work for inline base64 images.
 - Do NOT use `@angular/animations` (`provideAnimationsAsync`, animation triggers, `[@name]` bindings). Use Angular's built-in animation directives (`animate.enter`, `animate.leave`) instead.
+
+### Error Handling
+
+- Every form submission and HTTP call MUST have error handling (try/catch or error callback)
+- Auth pages (login, register, reset): show errors in an `errorMessage` signal rendered as an error banner
+- Settings pages: show errors via `MatSnackBar`
+- Distinguish error codes when different statuses produce different user-facing messages (e.g., 403 = "registration disabled" vs 400 = "email already in use")
+- Use `HttpErrorResponse` and check `e.status` when status-specific messages are needed
 
 ### Accessibility Requirements
 

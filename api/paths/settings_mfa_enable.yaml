@@ -16,5 +16,5 @@ post:
         application/json:
           schema:
             $ref: '../components/schemas/EnableMFAResponse.yaml'
-    '400':
-      description: Invalid code or MFA already enabled
+    '403':
+      description: Invalid code, MFA already enabled, or MFA not set up

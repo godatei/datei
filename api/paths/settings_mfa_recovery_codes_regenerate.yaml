@@ -16,7 +16,5 @@ post:
         application/json:
           schema:
             $ref: '../components/schemas/RegenerateMFARecoveryCodesResponse.yaml'
-    '400':
-      description: MFA not enabled
     '403':
-      description: Invalid password
+      description: Invalid password or MFA not enabled

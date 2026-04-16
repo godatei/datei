@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { email, form, FormField, FormRoot, required } from '@angular/forms/signals';
 import { NgOptimizedImage } from '@angular/common';
@@ -57,8 +58,12 @@ export class RegisterComponent {
           try {
             await firstValueFrom(this.auth.register(email, name, password));
             this.router.navigate(['/login'], { queryParams: { email } });
-          } catch {
-            this.errorMessage.set('Registration failed. Email may already be in use.');
+          } catch (e) {
+            if (e instanceof HttpErrorResponse && e.status === 403) {
+              this.errorMessage.set('Registration is currently disabled.');
+            } else {
+              this.errorMessage.set('Registration failed. Email may already be in use.');
+            }
           }
         },
       },

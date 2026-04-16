@@ -41,9 +41,11 @@ func (s *server) UpdateUser(ctx context.Context, request UpdateUserRequestObject
 		if errors.Is(err, dateierrors.ErrInvalidCredentials) {
 			return UpdateUser403Response{}, nil
 		}
-		if errors.Is(err, dateierrors.ErrInvalidInput) ||
-			errors.Is(err, dateierrors.ErrPasswordResetOnly) ||
+		if errors.Is(err, dateierrors.ErrPasswordResetOnly) ||
 			errors.Is(err, dateierrors.ErrCurrentPasswordRequired) {
+			return UpdateUser403Response{}, nil
+		}
+		if errors.Is(err, dateierrors.ErrInvalidInput) {
 			return UpdateUser400Response{}, nil
 		}
 		slog.Error("update user error", "error", err)
@@ -108,9 +110,8 @@ func (s *server) ConfirmEmailVerification(
 	})
 	if err != nil {
 		if errors.Is(err, dateierrors.ErrInvalidToken) ||
-			errors.Is(err, dateierrors.ErrEmailMismatch) ||
-			errors.Is(err, dateierrors.ErrInvalidInput) {
-			return ConfirmEmailVerification400Response{}, nil
+			errors.Is(err, dateierrors.ErrEmailMismatch) {
+			return ConfirmEmailVerification403Response{}, nil
 		}
 		slog.Error("confirm email verification error", "error", err)
 		return nil, err
@@ -125,8 +126,8 @@ func (s *server) SetupMFA(ctx context.Context, _ SetupMFARequestObject) (SetupMF
 
 	result, err := s.userService.SetupMFA(ctx, authInfo.UserID)
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrMFAAlreadyEnabled) || errors.Is(err, dateierrors.ErrInvalidInput) {
-			return SetupMFA400Response{}, nil
+		if errors.Is(err, dateierrors.ErrMFAAlreadyEnabled) {
+			return SetupMFA403Response{}, nil
 		}
 		slog.Error("setup MFA error", "error", err)
 		return nil, err
@@ -147,11 +148,10 @@ func (s *server) EnableMFA(ctx context.Context, request EnableMFARequestObject) 
 		Code:   request.Body.Code,
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrMFAAlreadyEnabled) ||
-			errors.Is(err, dateierrors.ErrMFANotSetUp) ||
-			errors.Is(err, dateierrors.ErrMFAInvalidCode) ||
-			errors.Is(err, dateierrors.ErrInvalidInput) {
-			return EnableMFA400Response{}, nil
+		if errors.Is(err, dateierrors.ErrMFAInvalidCode) ||
+			errors.Is(err, dateierrors.ErrMFAAlreadyEnabled) ||
+			errors.Is(err, dateierrors.ErrMFANotSetUp) {
+			return EnableMFA403Response{}, nil
 		}
 		slog.Error("enable MFA error", "error", err)
 		return nil, err
@@ -169,11 +169,9 @@ func (s *server) DisableMFA(ctx context.Context, request DisableMFARequestObject
 		Password: request.Body.Password,
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrInvalidCredentials) {
+		if errors.Is(err, dateierrors.ErrInvalidCredentials) ||
+			errors.Is(err, dateierrors.ErrMFANotEnabled) {
 			return DisableMFA403Response{}, nil
-		}
-		if errors.Is(err, dateierrors.ErrMFANotEnabled) || errors.Is(err, dateierrors.ErrInvalidInput) {
-			return DisableMFA400Response{}, nil
 		}
 		slog.Error("disable MFA error", "error", err)
 		return nil, err
@@ -193,11 +191,9 @@ func (s *server) RegenerateMFARecoveryCodes(
 		Password: request.Body.Password,
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrInvalidCredentials) {
+		if errors.Is(err, dateierrors.ErrInvalidCredentials) ||
+			errors.Is(err, dateierrors.ErrMFANotEnabled) {
 			return RegenerateMFARecoveryCodes403Response{}, nil
-		}
-		if errors.Is(err, dateierrors.ErrMFANotEnabled) || errors.Is(err, dateierrors.ErrInvalidInput) {
-			return RegenerateMFARecoveryCodes400Response{}, nil
 		}
 		slog.Error("regenerate recovery codes error", "error", err)
 		return nil, err

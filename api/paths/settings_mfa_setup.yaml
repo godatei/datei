@@ -10,5 +10,5 @@ post:
         application/json:
           schema:
             $ref: '../components/schemas/SetupMFAResponse.yaml'
-    '400':
+    '403':
       description: MFA already enabled

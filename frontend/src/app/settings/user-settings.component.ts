@@ -61,11 +61,15 @@ export class UserSettingsComponent {
     {
       submission: {
         action: async () => {
-          const res = await firstValueFrom(
-            this.settings.updateUser({ name: this.profileModel().name }),
-          );
-          this.auth.updateName(res.name);
-          this.snackBar.open('Profile updated', 'OK', { duration: 3000 });
+          try {
+            const res = await firstValueFrom(
+              this.settings.updateUser({ name: this.profileModel().name }),
+            );
+            this.auth.updateName(res.name);
+            this.snackBar.open('Profile updated', 'OK', { duration: 3000 });
+          } catch {
+            this.snackBar.open('Failed to update profile', 'OK', { duration: 3000 });
+          }
         },
       },
     },
@@ -81,11 +85,17 @@ export class UserSettingsComponent {
     {
       submission: {
         action: async () => {
-          const { currentPassword, password } = this.passwordModel();
-          await firstValueFrom(this.settings.updateUser({ currentPassword, password }));
-          this.passwordModel.set({ currentPassword: '', password: '', confirmPassword: '' });
-          this.passwordForm().reset();
-          this.snackBar.open('Password changed', 'OK', { duration: 3000 });
+          try {
+            const { currentPassword, password } = this.passwordModel();
+            await firstValueFrom(this.settings.updateUser({ currentPassword, password }));
+            this.passwordModel.set({ currentPassword: '', password: '', confirmPassword: '' });
+            this.passwordForm().reset();
+            this.snackBar.open('Password changed', 'OK', { duration: 3000 });
+          } catch {
+            this.snackBar.open('Failed to change password. Check your current password.', 'OK', {
+              duration: 3000,
+            });
+          }
         },
       },
     },
@@ -101,13 +111,17 @@ export class UserSettingsComponent {
     {
       submission: {
         action: async () => {
-          const data = await firstValueFrom(this.settings.enableMFA(this.mfaEnableModel().code));
-          this.mfaEnabled.set(true);
-          this.mfaSetupData.set(undefined);
-          this.recoveryCodes.set(data.recoveryCodes);
-          this.mfaEnableModel.set({ code: '' });
-          this.mfaEnableForm().reset();
-          this.snackBar.open('MFA enabled', 'OK', { duration: 3000 });
+          try {
+            const data = await firstValueFrom(this.settings.enableMFA(this.mfaEnableModel().code));
+            this.mfaEnabled.set(true);
+            this.mfaSetupData.set(undefined);
+            this.recoveryCodes.set(data.recoveryCodes);
+            this.mfaEnableModel.set({ code: '' });
+            this.mfaEnableForm().reset();
+            this.snackBar.open('MFA enabled', 'OK', { duration: 3000 });
+          } catch {
+            this.snackBar.open('Invalid verification code', 'OK', { duration: 3000 });
+          }
         },
       },
     },
@@ -146,11 +160,15 @@ export class UserSettingsComponent {
     {
       submission: {
         action: async () => {
-          await firstValueFrom(this.settings.disableMFA(this.mfaDisableModel().password));
-          this.mfaEnabled.set(false);
-          this.mfaDisableModel.set({ password: '' });
-          this.mfaDisableForm().reset();
-          this.snackBar.open('MFA disabled', 'OK', { duration: 3000 });
+          try {
+            await firstValueFrom(this.settings.disableMFA(this.mfaDisableModel().password));
+            this.mfaEnabled.set(false);
+            this.mfaDisableModel.set({ password: '' });
+            this.mfaDisableForm().reset();
+            this.snackBar.open('MFA disabled', 'OK', { duration: 3000 });
+          } catch {
+            this.snackBar.open('Invalid password', 'OK', { duration: 3000 });
+          }
         },
       },
     },
@@ -216,7 +234,10 @@ export class UserSettingsComponent {
         this.mfaLoading.set(false);
         this.mfaSetupData.set(data);
       },
-      error: () => this.mfaLoading.set(false),
+      error: () => {
+        this.mfaLoading.set(false);
+        this.snackBar.open('Failed to set up MFA', 'OK', { duration: 3000 });
+      },
     });
   }
 

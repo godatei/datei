@@ -12,7 +12,5 @@ post:
   responses:
     '204':
       description: MFA disabled
-    '400':
-      description: MFA not enabled
     '403':
-      description: Invalid password
+      description: Invalid password or MFA not enabled
