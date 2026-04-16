@@ -18,5 +18,5 @@ post:
             $ref: '../components/schemas/RegenerateMFARecoveryCodesResponse.yaml'
     '400':
       description: MFA not enabled
-    '401':
+    '403':
       description: Invalid password

@@ -39,7 +39,7 @@ func (s *server) UpdateUser(ctx context.Context, request UpdateUserRequestObject
 	})
 	if err != nil {
 		if errors.Is(err, dateierrors.ErrInvalidCredentials) {
-			return UpdateUser401Response{}, nil
+			return UpdateUser403Response{}, nil
 		}
 		if errors.Is(err, dateierrors.ErrInvalidInput) ||
 			errors.Is(err, dateierrors.ErrPasswordResetOnly) ||
@@ -170,7 +170,7 @@ func (s *server) DisableMFA(ctx context.Context, request DisableMFARequestObject
 	})
 	if err != nil {
 		if errors.Is(err, dateierrors.ErrInvalidCredentials) {
-			return DisableMFA401Response{}, nil
+			return DisableMFA403Response{}, nil
 		}
 		if errors.Is(err, dateierrors.ErrMFANotEnabled) || errors.Is(err, dateierrors.ErrInvalidInput) {
 			return DisableMFA400Response{}, nil
@@ -194,7 +194,7 @@ func (s *server) RegenerateMFARecoveryCodes(
 	})
 	if err != nil {
 		if errors.Is(err, dateierrors.ErrInvalidCredentials) {
-			return RegenerateMFARecoveryCodes401Response{}, nil
+			return RegenerateMFARecoveryCodes403Response{}, nil
 		}
 		if errors.Is(err, dateierrors.ErrMFANotEnabled) || errors.Is(err, dateierrors.ErrInvalidInput) {
 			return RegenerateMFARecoveryCodes400Response{}, nil
