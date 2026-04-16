@@ -10,6 +10,8 @@ import (
 
 // Aggregate represents a user account domain entity
 type Aggregate struct {
+	events.Base[Aggregate, UserEvent]
+
 	ID   uuid.UUID
 	Name string
 
@@ -26,40 +28,17 @@ type Aggregate struct {
 	LastLoggedInAt *time.Time
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
-
-	uncommittedEvents []events.DomainEvent
-	version           int
 }
 
-func (a *Aggregate) GetUncommittedEvents() []events.DomainEvent {
-	return a.uncommittedEvents
+func (a *Aggregate) AggregateID() uuid.UUID { return a.ID }
+
+func (a *Aggregate) recordEvent(event UserEvent) {
+	a.RecordEvent(a, event)
 }
 
-func (a *Aggregate) MarkEventsAsCommitted() {
-	a.uncommittedEvents = []events.DomainEvent{}
-}
-
-func (a *Aggregate) Version() int {
-	return a.version
-}
-
-func (a *Aggregate) recordEvent(event events.DomainEvent) {
-	a.uncommittedEvents = append(a.uncommittedEvents, event)
-	a.version++
-	a.ApplyEvent(event)
-}
-
-// ApplyEvent updates aggregate state by delegating to the event's ApplyTo method.
-func (a *Aggregate) ApplyEvent(event events.DomainEvent) {
-	event.(Event).ApplyTo(a)
-}
-
-// ReplayEvents reconstructs aggregate state from event history
-func (a *Aggregate) ReplayEvents(domainEvents []events.DomainEvent) error {
-	for _, event := range domainEvents {
-		a.ApplyEvent(event)
-	}
-	return nil
+// Replay reconstructs aggregate state from event history.
+func (a *Aggregate) Replay(domainEvents []events.DomainEvent) {
+	a.ReplayEvents(a, domainEvents)
 }
 
 // ============================================================================

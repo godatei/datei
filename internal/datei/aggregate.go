@@ -10,6 +10,8 @@ import (
 
 // Aggregate represents the domain entity for a file or directory
 type Aggregate struct {
+	events.Base[Aggregate, DateiEvent]
+
 	// Identity
 	ID            uuid.UUID
 	ParentID      *uuid.UUID
@@ -29,37 +31,17 @@ type Aggregate struct {
 	TrashedBy *uuid.UUID
 	UpdatedAt time.Time
 	UpdatedBy uuid.UUID
-
-	// Event tracking
-	uncommittedEvents []events.DomainEvent
-	version           int
 }
 
-func (a *Aggregate) GetUncommittedEvents() []events.DomainEvent {
-	return a.uncommittedEvents
+func (a *Aggregate) AggregateID() uuid.UUID { return a.ID }
+
+func (a *Aggregate) recordEvent(event DateiEvent) {
+	a.RecordEvent(a, event)
 }
 
-func (a *Aggregate) MarkEventsAsCommitted() {
-	a.uncommittedEvents = []events.DomainEvent{}
-}
-
-func (a *Aggregate) recordEvent(event events.DomainEvent) {
-	a.uncommittedEvents = append(a.uncommittedEvents, event)
-	a.version++
-	a.ApplyEvent(event)
-}
-
-// ApplyEvent updates aggregate state by delegating to the event's ApplyTo method.
-func (a *Aggregate) ApplyEvent(event events.DomainEvent) {
-	event.(Event).ApplyTo(a)
-}
-
-// ReplayEvents reconstructs aggregate state from event history
-func (a *Aggregate) ReplayEvents(domainEvents []events.DomainEvent) error {
-	for _, event := range domainEvents {
-		a.ApplyEvent(event)
-	}
-	return nil
+// Replay reconstructs aggregate state from event history.
+func (a *Aggregate) Replay(domainEvents []events.DomainEvent) {
+	a.ReplayEvents(a, domainEvents)
 }
 
 // ============================================================================

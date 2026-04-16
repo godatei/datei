@@ -21,7 +21,7 @@ frontend/src/
 ├── app/              # Angular application
 ```
 
-Each domain package (e.g., `internal/datei/`, `internal/users/`) is self-contained with: `events.go` (event structs, `ApplyTo`, registration, store constructor), `aggregate.go`, `repository.go`, `projections.go`, `mapping.go`, and service files. The shared `internal/events/` package provides only the `DomainEvent` interface, generic `EventStore`, and serialization registry.
+Each domain package (e.g., `internal/datei/`, `internal/users/`) is self-contained with: `events.go` (event structs, `ApplyTo`, registration, store constructor), `aggregate.go`, `repository.go`, `projections.go`, `mapping.go`, and service files. The shared `internal/events/` package provides the `DomainEvent` interface, generic `EventStore`, generic `Base[A, E]` aggregate, and serialization registry.
 
 ## Development Workflow
 
@@ -82,6 +82,7 @@ All event sourcing code lives in the domain package (`internal/<domain>/`). Foll
    - Register the event in `init()` via `events.RegisterEvent("EventName", func() events.DomainEvent { return &EventStruct{} })`
 
 6. **Add the command** to the aggregate in `internal/<domain>/aggregate.go`
+   - Embed `events.Base[Aggregate, Event]` and add `recordEvent`/`Replay` wrappers (see existing domains for examples)
    - Validate preconditions, create the event struct, and call `a.recordEvent(event)`
 
 7. **Add the projection handler** in `internal/<domain>/projections.go`
@@ -138,9 +139,10 @@ HTTP Request → Server Endpoint → Service → db.Queries (read from projectio
 
 - **Optimistic locking**: `AppendToStream` checks `expectedVersion` matches the current stream version before inserting
 - **Transactional consistency**: Events and projection updates happen in a single PostgreSQL transaction
-- **Aggregate reconstruction**: `LoadByID` fetches all events and replays them via `ApplyEvent()`
+- **Aggregate reconstruction**: `LoadByID` fetches all events and replays them via `agg.Replay()`
 - **Immutable events**: Events are append-only; never update or delete from `event_store`
 - **Projection = read model**: Query projections for reads, never reconstruct aggregates for read-only operations
+- **Generic aggregate base**: All domain aggregates embed `events.Base[Aggregate, Event]` from `internal/events/aggregate.go`. This provides `GetUncommittedEvents()`, `MarkEventsAsCommitted()`, `Version()`, `SetVersion()`, `RecordEvent()`, and `ReplayEvents()`. Each domain aggregate adds a thin `recordEvent(event Event)` wrapper and a `Replay(domainEvents)` convenience method. Do NOT duplicate event-tracking fields or methods in domain aggregates.
 
 ## Backend Conventions
 

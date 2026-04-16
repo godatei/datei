@@ -10,8 +10,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Event extends DomainEvent with the ability to apply itself to an Aggregate.
-type Event interface {
+// DateiEvent extends DomainEvent with the ability to apply itself to an Aggregate.
+type DateiEvent interface {
 	events.DomainEvent
 	ApplyTo(a *Aggregate)
 }
