@@ -29,7 +29,7 @@ func (s *server) Login(ctx context.Context, request LoginRequestObject) (LoginRe
 	}
 
 	if result.RequiresMFA {
-		return Login200JSONResponse(api.LoginResponse{RequiresMfa: boolPtr(true)}), nil
+		return Login200JSONResponse(api.LoginResponse{RequiresMfa: new(true)}), nil
 	}
 
 	return Login200JSONResponse(api.LoginResponse{Token: &result.Token}), nil
@@ -75,5 +75,3 @@ func (s *server) ResetPassword(
 	})
 	return ResetPassword204Response{}, nil
 }
-
-func boolPtr(b bool) *bool { return &b }

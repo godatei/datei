@@ -174,6 +174,10 @@ HTTP Request → Server Endpoint → Service → db.Queries (read from projectio
 - Check with `errors.Is()`
 - Map domain errors to HTTP status codes in endpoint handlers
 
+### Go Idioms
+
+- Use `new(value)` (e.g., `new(true)`, `new("foo")`) to create pointers to literals — do NOT write `xxxPtr` helper functions
+
 ## Frontend Conventions
 
 ### TypeScript Best Practices
