@@ -127,13 +127,10 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 
 	if len(ocrFiles) > 1 {
 		slices.SortFunc(ocrFiles, func(a, b string) int {
-			aa, err := strconv.Atoi(strings.TrimSuffix(strings.TrimPrefix(path.Base(a), "page-"), ".jpg"))
-			if err != nil {
-				return -1
-			}
-			bb, err := strconv.Atoi(strings.TrimSuffix(strings.TrimPrefix(path.Base(b), "page-"), ".jpg"))
-			if err != nil {
-				return 1
+			aa, errA := strconv.Atoi(strings.TrimSuffix(strings.TrimPrefix(path.Base(a), "page-"), ".jpg"))
+			bb, errB := strconv.Atoi(strings.TrimSuffix(strings.TrimPrefix(path.Base(b), "page-"), ".jpg"))
+			if errA != nil || errB != nil {
+				return strings.Compare(path.Base(a), path.Base(b))
 			}
 			return aa - bb
 		})
