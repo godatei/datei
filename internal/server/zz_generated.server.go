@@ -27,6 +27,18 @@ import (
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Log in with email and password
+	// (POST /api/v1/auth/login)
+	Login(w http.ResponseWriter, r *http.Request)
+	// Get login configuration
+	// (GET /api/v1/auth/login/config)
+	GetLoginConfig(w http.ResponseWriter, r *http.Request)
+	// Register a new user account
+	// (POST /api/v1/auth/register)
+	Register(w http.ResponseWriter, r *http.Request)
+	// Request a password reset email
+	// (POST /api/v1/auth/reset)
+	ResetPassword(w http.ResponseWriter, r *http.Request)
 	// List all Datei
 	// (GET /api/v1/datei)
 	ListDatei(w http.ResponseWriter, r *http.Request, params ListDateiParams)
@@ -42,11 +54,77 @@ type ServerInterface interface {
 	// Download a Datei
 	// (GET /api/v1/datei/{id}/download)
 	DownloadDatei(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// List user emails
+	// (GET /api/v1/settings/emails)
+	ListEmails(w http.ResponseWriter, r *http.Request)
+	// Add a new email
+	// (POST /api/v1/settings/emails)
+	AddEmail(w http.ResponseWriter, r *http.Request)
+	// Remove a non-primary email
+	// (DELETE /api/v1/settings/emails/{emailId})
+	RemoveEmail(w http.ResponseWriter, r *http.Request, emailId openapi_types.UUID)
+	// Set an email as primary
+	// (PATCH /api/v1/settings/emails/{emailId}/primary)
+	SetPrimaryEmail(w http.ResponseWriter, r *http.Request, emailId openapi_types.UUID)
+	// Disable MFA
+	// (POST /api/v1/settings/mfa/disable)
+	DisableMFA(w http.ResponseWriter, r *http.Request)
+	// Enable MFA with TOTP code
+	// (POST /api/v1/settings/mfa/enable)
+	EnableMFA(w http.ResponseWriter, r *http.Request)
+	// Regenerate MFA recovery codes
+	// (POST /api/v1/settings/mfa/recovery-codes/regenerate)
+	RegenerateMFARecoveryCodes(w http.ResponseWriter, r *http.Request)
+	// Get MFA recovery codes status
+	// (GET /api/v1/settings/mfa/recovery-codes/status)
+	GetMFARecoveryCodesStatus(w http.ResponseWriter, r *http.Request)
+	// Initiate MFA setup
+	// (POST /api/v1/settings/mfa/setup)
+	SetupMFA(w http.ResponseWriter, r *http.Request)
+	// Get the current user's profile
+	// (GET /api/v1/settings/user)
+	GetCurrentUser(w http.ResponseWriter, r *http.Request)
+	// Update user name or password
+	// (POST /api/v1/settings/user)
+	UpdateUser(w http.ResponseWriter, r *http.Request)
+	// Change user primary email
+	// (PATCH /api/v1/settings/user/email)
+	UpdateUserEmail(w http.ResponseWriter, r *http.Request)
+	// Confirm email verification
+	// (POST /api/v1/settings/verify/confirm)
+	ConfirmEmailVerification(w http.ResponseWriter, r *http.Request)
+	// Request an email verification link
+	// (POST /api/v1/settings/verify/request)
+	RequestEmailVerification(w http.ResponseWriter, r *http.Request)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
 
 type Unimplemented struct{}
+
+// Log in with email and password
+// (POST /api/v1/auth/login)
+func (_ Unimplemented) Login(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get login configuration
+// (GET /api/v1/auth/login/config)
+func (_ Unimplemented) GetLoginConfig(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Register a new user account
+// (POST /api/v1/auth/register)
+func (_ Unimplemented) Register(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Request a password reset email
+// (POST /api/v1/auth/reset)
+func (_ Unimplemented) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
 
 // List all Datei
 // (GET /api/v1/datei)
@@ -78,6 +156,90 @@ func (_ Unimplemented) DownloadDatei(w http.ResponseWriter, r *http.Request, id 
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// List user emails
+// (GET /api/v1/settings/emails)
+func (_ Unimplemented) ListEmails(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Add a new email
+// (POST /api/v1/settings/emails)
+func (_ Unimplemented) AddEmail(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Remove a non-primary email
+// (DELETE /api/v1/settings/emails/{emailId})
+func (_ Unimplemented) RemoveEmail(w http.ResponseWriter, r *http.Request, emailId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Set an email as primary
+// (PATCH /api/v1/settings/emails/{emailId}/primary)
+func (_ Unimplemented) SetPrimaryEmail(w http.ResponseWriter, r *http.Request, emailId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Disable MFA
+// (POST /api/v1/settings/mfa/disable)
+func (_ Unimplemented) DisableMFA(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Enable MFA with TOTP code
+// (POST /api/v1/settings/mfa/enable)
+func (_ Unimplemented) EnableMFA(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Regenerate MFA recovery codes
+// (POST /api/v1/settings/mfa/recovery-codes/regenerate)
+func (_ Unimplemented) RegenerateMFARecoveryCodes(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get MFA recovery codes status
+// (GET /api/v1/settings/mfa/recovery-codes/status)
+func (_ Unimplemented) GetMFARecoveryCodesStatus(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Initiate MFA setup
+// (POST /api/v1/settings/mfa/setup)
+func (_ Unimplemented) SetupMFA(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get the current user's profile
+// (GET /api/v1/settings/user)
+func (_ Unimplemented) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update user name or password
+// (POST /api/v1/settings/user)
+func (_ Unimplemented) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Change user primary email
+// (PATCH /api/v1/settings/user/email)
+func (_ Unimplemented) UpdateUserEmail(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Confirm email verification
+// (POST /api/v1/settings/verify/confirm)
+func (_ Unimplemented) ConfirmEmailVerification(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Request an email verification link
+// (POST /api/v1/settings/verify/request)
+func (_ Unimplemented) RequestEmailVerification(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler            ServerInterface
@@ -87,10 +249,72 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
+// Login operation middleware
+func (siw *ServerInterfaceWrapper) Login(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.Login(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetLoginConfig operation middleware
+func (siw *ServerInterfaceWrapper) GetLoginConfig(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetLoginConfig(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// Register operation middleware
+func (siw *ServerInterfaceWrapper) Register(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.Register(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ResetPassword operation middleware
+func (siw *ServerInterfaceWrapper) ResetPassword(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ResetPassword(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListDatei operation middleware
 func (siw *ServerInterfaceWrapper) ListDatei(w http.ResponseWriter, r *http.Request) {
 
 	var err error
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params ListDateiParams
@@ -125,6 +349,12 @@ func (siw *ServerInterfaceWrapper) ListDatei(w http.ResponseWriter, r *http.Requ
 // CreateDatei operation middleware
 func (siw *ServerInterfaceWrapper) CreateDatei(w http.ResponseWriter, r *http.Request) {
 
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateDatei(w, r)
 	}))
@@ -149,6 +379,12 @@ func (siw *ServerInterfaceWrapper) DeleteDatei(w http.ResponseWriter, r *http.Re
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return
 	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DeleteDatei(w, r, id)
@@ -175,6 +411,12 @@ func (siw *ServerInterfaceWrapper) UpdateDatei(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateDatei(w, r, id)
 	}))
@@ -200,8 +442,316 @@ func (siw *ServerInterfaceWrapper) DownloadDatei(w http.ResponseWriter, r *http.
 		return
 	}
 
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DownloadDatei(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListEmails operation middleware
+func (siw *ServerInterfaceWrapper) ListEmails(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListEmails(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AddEmail operation middleware
+func (siw *ServerInterfaceWrapper) AddEmail(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AddEmail(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RemoveEmail operation middleware
+func (siw *ServerInterfaceWrapper) RemoveEmail(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "emailId" -------------
+	var emailId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "emailId", chi.URLParam(r, "emailId"), &emailId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "emailId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemoveEmail(w, r, emailId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetPrimaryEmail operation middleware
+func (siw *ServerInterfaceWrapper) SetPrimaryEmail(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "emailId" -------------
+	var emailId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "emailId", chi.URLParam(r, "emailId"), &emailId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "emailId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetPrimaryEmail(w, r, emailId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DisableMFA operation middleware
+func (siw *ServerInterfaceWrapper) DisableMFA(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DisableMFA(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// EnableMFA operation middleware
+func (siw *ServerInterfaceWrapper) EnableMFA(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EnableMFA(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RegenerateMFARecoveryCodes operation middleware
+func (siw *ServerInterfaceWrapper) RegenerateMFARecoveryCodes(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RegenerateMFARecoveryCodes(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetMFARecoveryCodesStatus operation middleware
+func (siw *ServerInterfaceWrapper) GetMFARecoveryCodesStatus(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMFARecoveryCodesStatus(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetupMFA operation middleware
+func (siw *ServerInterfaceWrapper) SetupMFA(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetupMFA(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetCurrentUser operation middleware
+func (siw *ServerInterfaceWrapper) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCurrentUser(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateUser operation middleware
+func (siw *ServerInterfaceWrapper) UpdateUser(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateUser(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateUserEmail operation middleware
+func (siw *ServerInterfaceWrapper) UpdateUserEmail(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateUserEmail(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ConfirmEmailVerification operation middleware
+func (siw *ServerInterfaceWrapper) ConfirmEmailVerification(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ConfirmEmailVerification(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RequestEmailVerification operation middleware
+func (siw *ServerInterfaceWrapper) RequestEmailVerification(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RequestEmailVerification(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -325,6 +875,18 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/auth/login", wrapper.Login)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/auth/login/config", wrapper.GetLoginConfig)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/auth/register", wrapper.Register)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/auth/reset", wrapper.ResetPassword)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v1/datei", wrapper.ListDatei)
 	})
 	r.Group(func(r chi.Router) {
@@ -339,8 +901,139 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v1/datei/{id}/download", wrapper.DownloadDatei)
 	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/settings/emails", wrapper.ListEmails)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/settings/emails", wrapper.AddEmail)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v1/settings/emails/{emailId}", wrapper.RemoveEmail)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v1/settings/emails/{emailId}/primary", wrapper.SetPrimaryEmail)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/settings/mfa/disable", wrapper.DisableMFA)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/settings/mfa/enable", wrapper.EnableMFA)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/settings/mfa/recovery-codes/regenerate", wrapper.RegenerateMFARecoveryCodes)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/settings/mfa/recovery-codes/status", wrapper.GetMFARecoveryCodesStatus)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/settings/mfa/setup", wrapper.SetupMFA)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/settings/user", wrapper.GetCurrentUser)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/settings/user", wrapper.UpdateUser)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v1/settings/user/email", wrapper.UpdateUserEmail)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/settings/verify/confirm", wrapper.ConfirmEmailVerification)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/settings/verify/request", wrapper.RequestEmailVerification)
+	})
 
 	return r
+}
+
+type LoginRequestObject struct {
+	Body *LoginJSONRequestBody
+}
+
+type LoginResponseObject interface {
+	VisitLoginResponse(w http.ResponseWriter) error
+}
+
+type Login200JSONResponse LoginResponse
+
+func (response Login200JSONResponse) VisitLoginResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type Login401Response struct {
+}
+
+func (response Login401Response) VisitLoginResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type GetLoginConfigRequestObject struct {
+}
+
+type GetLoginConfigResponseObject interface {
+	VisitGetLoginConfigResponse(w http.ResponseWriter) error
+}
+
+type GetLoginConfig200JSONResponse LoginConfigResponse
+
+func (response GetLoginConfig200JSONResponse) VisitGetLoginConfigResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RegisterRequestObject struct {
+	Body *RegisterJSONRequestBody
+}
+
+type RegisterResponseObject interface {
+	VisitRegisterResponse(w http.ResponseWriter) error
+}
+
+type Register204Response struct {
+}
+
+func (response Register204Response) VisitRegisterResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type Register400Response struct {
+}
+
+func (response Register400Response) VisitRegisterResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type Register403Response struct {
+}
+
+func (response Register403Response) VisitRegisterResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type ResetPasswordRequestObject struct {
+	Body *ResetPasswordJSONRequestBody
+}
+
+type ResetPasswordResponseObject interface {
+	VisitResetPasswordResponse(w http.ResponseWriter) error
+}
+
+type ResetPassword204Response struct {
+}
+
+func (response ResetPassword204Response) VisitResetPasswordResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
 }
 
 type ListDateiRequestObject struct {
@@ -519,8 +1212,349 @@ func (response DownloadDatei409Response) VisitDownloadDateiResponse(w http.Respo
 	return nil
 }
 
+type ListEmailsRequestObject struct {
+}
+
+type ListEmailsResponseObject interface {
+	VisitListEmailsResponse(w http.ResponseWriter) error
+}
+
+type ListEmails200JSONResponse ListEmailsResponse
+
+func (response ListEmails200JSONResponse) VisitListEmailsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AddEmailRequestObject struct {
+	Body *AddEmailJSONRequestBody
+}
+
+type AddEmailResponseObject interface {
+	VisitAddEmailResponse(w http.ResponseWriter) error
+}
+
+type AddEmail204Response struct {
+}
+
+func (response AddEmail204Response) VisitAddEmailResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type AddEmail400Response struct {
+}
+
+func (response AddEmail400Response) VisitAddEmailResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type RemoveEmailRequestObject struct {
+	EmailId openapi_types.UUID `json:"emailId"`
+}
+
+type RemoveEmailResponseObject interface {
+	VisitRemoveEmailResponse(w http.ResponseWriter) error
+}
+
+type RemoveEmail204Response struct {
+}
+
+func (response RemoveEmail204Response) VisitRemoveEmailResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RemoveEmail400Response struct {
+}
+
+func (response RemoveEmail400Response) VisitRemoveEmailResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type RemoveEmail404Response struct {
+}
+
+func (response RemoveEmail404Response) VisitRemoveEmailResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type SetPrimaryEmailRequestObject struct {
+	EmailId openapi_types.UUID `json:"emailId"`
+}
+
+type SetPrimaryEmailResponseObject interface {
+	VisitSetPrimaryEmailResponse(w http.ResponseWriter) error
+}
+
+type SetPrimaryEmail204Response struct {
+}
+
+func (response SetPrimaryEmail204Response) VisitSetPrimaryEmailResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type SetPrimaryEmail400Response struct {
+}
+
+func (response SetPrimaryEmail400Response) VisitSetPrimaryEmailResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type SetPrimaryEmail404Response struct {
+}
+
+func (response SetPrimaryEmail404Response) VisitSetPrimaryEmailResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type DisableMFARequestObject struct {
+	Body *DisableMFAJSONRequestBody
+}
+
+type DisableMFAResponseObject interface {
+	VisitDisableMFAResponse(w http.ResponseWriter) error
+}
+
+type DisableMFA204Response struct {
+}
+
+func (response DisableMFA204Response) VisitDisableMFAResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DisableMFA403Response struct {
+}
+
+func (response DisableMFA403Response) VisitDisableMFAResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type EnableMFARequestObject struct {
+	Body *EnableMFAJSONRequestBody
+}
+
+type EnableMFAResponseObject interface {
+	VisitEnableMFAResponse(w http.ResponseWriter) error
+}
+
+type EnableMFA200JSONResponse EnableMFAResponse
+
+func (response EnableMFA200JSONResponse) VisitEnableMFAResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type EnableMFA403Response struct {
+}
+
+func (response EnableMFA403Response) VisitEnableMFAResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type RegenerateMFARecoveryCodesRequestObject struct {
+	Body *RegenerateMFARecoveryCodesJSONRequestBody
+}
+
+type RegenerateMFARecoveryCodesResponseObject interface {
+	VisitRegenerateMFARecoveryCodesResponse(w http.ResponseWriter) error
+}
+
+type RegenerateMFARecoveryCodes200JSONResponse RegenerateMFARecoveryCodesResponse
+
+func (response RegenerateMFARecoveryCodes200JSONResponse) VisitRegenerateMFARecoveryCodesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RegenerateMFARecoveryCodes403Response struct {
+}
+
+func (response RegenerateMFARecoveryCodes403Response) VisitRegenerateMFARecoveryCodesResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type GetMFARecoveryCodesStatusRequestObject struct {
+}
+
+type GetMFARecoveryCodesStatusResponseObject interface {
+	VisitGetMFARecoveryCodesStatusResponse(w http.ResponseWriter) error
+}
+
+type GetMFARecoveryCodesStatus200JSONResponse MFARecoveryCodesStatusResponse
+
+func (response GetMFARecoveryCodesStatus200JSONResponse) VisitGetMFARecoveryCodesStatusResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type SetupMFARequestObject struct {
+}
+
+type SetupMFAResponseObject interface {
+	VisitSetupMFAResponse(w http.ResponseWriter) error
+}
+
+type SetupMFA200JSONResponse SetupMFAResponse
+
+func (response SetupMFA200JSONResponse) VisitSetupMFAResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type SetupMFA403Response struct {
+}
+
+func (response SetupMFA403Response) VisitSetupMFAResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type GetCurrentUserRequestObject struct {
+}
+
+type GetCurrentUserResponseObject interface {
+	VisitGetCurrentUserResponse(w http.ResponseWriter) error
+}
+
+type GetCurrentUser200JSONResponse UserResponse
+
+func (response GetCurrentUser200JSONResponse) VisitGetCurrentUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateUserRequestObject struct {
+	Body *UpdateUserJSONRequestBody
+}
+
+type UpdateUserResponseObject interface {
+	VisitUpdateUserResponse(w http.ResponseWriter) error
+}
+
+type UpdateUser200JSONResponse UserResponse
+
+func (response UpdateUser200JSONResponse) VisitUpdateUserResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateUser400Response struct {
+}
+
+func (response UpdateUser400Response) VisitUpdateUserResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type UpdateUser403Response struct {
+}
+
+func (response UpdateUser403Response) VisitUpdateUserResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type UpdateUserEmailRequestObject struct {
+	Body *UpdateUserEmailJSONRequestBody
+}
+
+type UpdateUserEmailResponseObject interface {
+	VisitUpdateUserEmailResponse(w http.ResponseWriter) error
+}
+
+type UpdateUserEmail204Response struct {
+}
+
+func (response UpdateUserEmail204Response) VisitUpdateUserEmailResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type UpdateUserEmail400Response struct {
+}
+
+func (response UpdateUserEmail400Response) VisitUpdateUserEmailResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type ConfirmEmailVerificationRequestObject struct {
+}
+
+type ConfirmEmailVerificationResponseObject interface {
+	VisitConfirmEmailVerificationResponse(w http.ResponseWriter) error
+}
+
+type ConfirmEmailVerification204Response struct {
+}
+
+func (response ConfirmEmailVerification204Response) VisitConfirmEmailVerificationResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type ConfirmEmailVerification403Response struct {
+}
+
+func (response ConfirmEmailVerification403Response) VisitConfirmEmailVerificationResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type RequestEmailVerificationRequestObject struct {
+}
+
+type RequestEmailVerificationResponseObject interface {
+	VisitRequestEmailVerificationResponse(w http.ResponseWriter) error
+}
+
+type RequestEmailVerification204Response struct {
+}
+
+func (response RequestEmailVerification204Response) VisitRequestEmailVerificationResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// Log in with email and password
+	// (POST /api/v1/auth/login)
+	Login(ctx context.Context, request LoginRequestObject) (LoginResponseObject, error)
+	// Get login configuration
+	// (GET /api/v1/auth/login/config)
+	GetLoginConfig(ctx context.Context, request GetLoginConfigRequestObject) (GetLoginConfigResponseObject, error)
+	// Register a new user account
+	// (POST /api/v1/auth/register)
+	Register(ctx context.Context, request RegisterRequestObject) (RegisterResponseObject, error)
+	// Request a password reset email
+	// (POST /api/v1/auth/reset)
+	ResetPassword(ctx context.Context, request ResetPasswordRequestObject) (ResetPasswordResponseObject, error)
 	// List all Datei
 	// (GET /api/v1/datei)
 	ListDatei(ctx context.Context, request ListDateiRequestObject) (ListDateiResponseObject, error)
@@ -536,6 +1570,48 @@ type StrictServerInterface interface {
 	// Download a Datei
 	// (GET /api/v1/datei/{id}/download)
 	DownloadDatei(ctx context.Context, request DownloadDateiRequestObject) (DownloadDateiResponseObject, error)
+	// List user emails
+	// (GET /api/v1/settings/emails)
+	ListEmails(ctx context.Context, request ListEmailsRequestObject) (ListEmailsResponseObject, error)
+	// Add a new email
+	// (POST /api/v1/settings/emails)
+	AddEmail(ctx context.Context, request AddEmailRequestObject) (AddEmailResponseObject, error)
+	// Remove a non-primary email
+	// (DELETE /api/v1/settings/emails/{emailId})
+	RemoveEmail(ctx context.Context, request RemoveEmailRequestObject) (RemoveEmailResponseObject, error)
+	// Set an email as primary
+	// (PATCH /api/v1/settings/emails/{emailId}/primary)
+	SetPrimaryEmail(ctx context.Context, request SetPrimaryEmailRequestObject) (SetPrimaryEmailResponseObject, error)
+	// Disable MFA
+	// (POST /api/v1/settings/mfa/disable)
+	DisableMFA(ctx context.Context, request DisableMFARequestObject) (DisableMFAResponseObject, error)
+	// Enable MFA with TOTP code
+	// (POST /api/v1/settings/mfa/enable)
+	EnableMFA(ctx context.Context, request EnableMFARequestObject) (EnableMFAResponseObject, error)
+	// Regenerate MFA recovery codes
+	// (POST /api/v1/settings/mfa/recovery-codes/regenerate)
+	RegenerateMFARecoveryCodes(ctx context.Context, request RegenerateMFARecoveryCodesRequestObject) (RegenerateMFARecoveryCodesResponseObject, error)
+	// Get MFA recovery codes status
+	// (GET /api/v1/settings/mfa/recovery-codes/status)
+	GetMFARecoveryCodesStatus(ctx context.Context, request GetMFARecoveryCodesStatusRequestObject) (GetMFARecoveryCodesStatusResponseObject, error)
+	// Initiate MFA setup
+	// (POST /api/v1/settings/mfa/setup)
+	SetupMFA(ctx context.Context, request SetupMFARequestObject) (SetupMFAResponseObject, error)
+	// Get the current user's profile
+	// (GET /api/v1/settings/user)
+	GetCurrentUser(ctx context.Context, request GetCurrentUserRequestObject) (GetCurrentUserResponseObject, error)
+	// Update user name or password
+	// (POST /api/v1/settings/user)
+	UpdateUser(ctx context.Context, request UpdateUserRequestObject) (UpdateUserResponseObject, error)
+	// Change user primary email
+	// (PATCH /api/v1/settings/user/email)
+	UpdateUserEmail(ctx context.Context, request UpdateUserEmailRequestObject) (UpdateUserEmailResponseObject, error)
+	// Confirm email verification
+	// (POST /api/v1/settings/verify/confirm)
+	ConfirmEmailVerification(ctx context.Context, request ConfirmEmailVerificationRequestObject) (ConfirmEmailVerificationResponseObject, error)
+	// Request an email verification link
+	// (POST /api/v1/settings/verify/request)
+	RequestEmailVerification(ctx context.Context, request RequestEmailVerificationRequestObject) (RequestEmailVerificationResponseObject, error)
 }
 
 type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
@@ -565,6 +1641,123 @@ type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
 	options     StrictHTTPServerOptions
+}
+
+// Login operation middleware
+func (sh *strictHandler) Login(w http.ResponseWriter, r *http.Request) {
+	var request LoginRequestObject
+
+	var body LoginJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.Login(ctx, request.(LoginRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "Login")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(LoginResponseObject); ok {
+		if err := validResponse.VisitLoginResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetLoginConfig operation middleware
+func (sh *strictHandler) GetLoginConfig(w http.ResponseWriter, r *http.Request) {
+	var request GetLoginConfigRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetLoginConfig(ctx, request.(GetLoginConfigRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetLoginConfig")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetLoginConfigResponseObject); ok {
+		if err := validResponse.VisitGetLoginConfigResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// Register operation middleware
+func (sh *strictHandler) Register(w http.ResponseWriter, r *http.Request) {
+	var request RegisterRequestObject
+
+	var body RegisterJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.Register(ctx, request.(RegisterRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "Register")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RegisterResponseObject); ok {
+		if err := validResponse.VisitRegisterResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ResetPassword operation middleware
+func (sh *strictHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	var request ResetPasswordRequestObject
+
+	var body ResetPasswordJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ResetPassword(ctx, request.(ResetPasswordRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ResetPassword")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ResetPasswordResponseObject); ok {
+		if err := validResponse.VisitResetPasswordResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
 }
 
 // ListDatei operation middleware
@@ -722,31 +1915,434 @@ func (sh *strictHandler) DownloadDatei(w http.ResponseWriter, r *http.Request, i
 	}
 }
 
+// ListEmails operation middleware
+func (sh *strictHandler) ListEmails(w http.ResponseWriter, r *http.Request) {
+	var request ListEmailsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListEmails(ctx, request.(ListEmailsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListEmails")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListEmailsResponseObject); ok {
+		if err := validResponse.VisitListEmailsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AddEmail operation middleware
+func (sh *strictHandler) AddEmail(w http.ResponseWriter, r *http.Request) {
+	var request AddEmailRequestObject
+
+	var body AddEmailJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AddEmail(ctx, request.(AddEmailRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AddEmail")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AddEmailResponseObject); ok {
+		if err := validResponse.VisitAddEmailResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RemoveEmail operation middleware
+func (sh *strictHandler) RemoveEmail(w http.ResponseWriter, r *http.Request, emailId openapi_types.UUID) {
+	var request RemoveEmailRequestObject
+
+	request.EmailId = emailId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RemoveEmail(ctx, request.(RemoveEmailRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RemoveEmail")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RemoveEmailResponseObject); ok {
+		if err := validResponse.VisitRemoveEmailResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetPrimaryEmail operation middleware
+func (sh *strictHandler) SetPrimaryEmail(w http.ResponseWriter, r *http.Request, emailId openapi_types.UUID) {
+	var request SetPrimaryEmailRequestObject
+
+	request.EmailId = emailId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetPrimaryEmail(ctx, request.(SetPrimaryEmailRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetPrimaryEmail")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetPrimaryEmailResponseObject); ok {
+		if err := validResponse.VisitSetPrimaryEmailResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DisableMFA operation middleware
+func (sh *strictHandler) DisableMFA(w http.ResponseWriter, r *http.Request) {
+	var request DisableMFARequestObject
+
+	var body DisableMFAJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DisableMFA(ctx, request.(DisableMFARequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DisableMFA")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DisableMFAResponseObject); ok {
+		if err := validResponse.VisitDisableMFAResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// EnableMFA operation middleware
+func (sh *strictHandler) EnableMFA(w http.ResponseWriter, r *http.Request) {
+	var request EnableMFARequestObject
+
+	var body EnableMFAJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.EnableMFA(ctx, request.(EnableMFARequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "EnableMFA")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(EnableMFAResponseObject); ok {
+		if err := validResponse.VisitEnableMFAResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RegenerateMFARecoveryCodes operation middleware
+func (sh *strictHandler) RegenerateMFARecoveryCodes(w http.ResponseWriter, r *http.Request) {
+	var request RegenerateMFARecoveryCodesRequestObject
+
+	var body RegenerateMFARecoveryCodesJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RegenerateMFARecoveryCodes(ctx, request.(RegenerateMFARecoveryCodesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RegenerateMFARecoveryCodes")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RegenerateMFARecoveryCodesResponseObject); ok {
+		if err := validResponse.VisitRegenerateMFARecoveryCodesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetMFARecoveryCodesStatus operation middleware
+func (sh *strictHandler) GetMFARecoveryCodesStatus(w http.ResponseWriter, r *http.Request) {
+	var request GetMFARecoveryCodesStatusRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetMFARecoveryCodesStatus(ctx, request.(GetMFARecoveryCodesStatusRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetMFARecoveryCodesStatus")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetMFARecoveryCodesStatusResponseObject); ok {
+		if err := validResponse.VisitGetMFARecoveryCodesStatusResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetupMFA operation middleware
+func (sh *strictHandler) SetupMFA(w http.ResponseWriter, r *http.Request) {
+	var request SetupMFARequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetupMFA(ctx, request.(SetupMFARequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetupMFA")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetupMFAResponseObject); ok {
+		if err := validResponse.VisitSetupMFAResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetCurrentUser operation middleware
+func (sh *strictHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
+	var request GetCurrentUserRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetCurrentUser(ctx, request.(GetCurrentUserRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetCurrentUser")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetCurrentUserResponseObject); ok {
+		if err := validResponse.VisitGetCurrentUserResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateUser operation middleware
+func (sh *strictHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	var request UpdateUserRequestObject
+
+	var body UpdateUserJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateUser(ctx, request.(UpdateUserRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateUser")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateUserResponseObject); ok {
+		if err := validResponse.VisitUpdateUserResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateUserEmail operation middleware
+func (sh *strictHandler) UpdateUserEmail(w http.ResponseWriter, r *http.Request) {
+	var request UpdateUserEmailRequestObject
+
+	var body UpdateUserEmailJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateUserEmail(ctx, request.(UpdateUserEmailRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateUserEmail")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateUserEmailResponseObject); ok {
+		if err := validResponse.VisitUpdateUserEmailResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ConfirmEmailVerification operation middleware
+func (sh *strictHandler) ConfirmEmailVerification(w http.ResponseWriter, r *http.Request) {
+	var request ConfirmEmailVerificationRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ConfirmEmailVerification(ctx, request.(ConfirmEmailVerificationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ConfirmEmailVerification")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ConfirmEmailVerificationResponseObject); ok {
+		if err := validResponse.VisitConfirmEmailVerificationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RequestEmailVerification operation middleware
+func (sh *strictHandler) RequestEmailVerification(w http.ResponseWriter, r *http.Request) {
+	var request RequestEmailVerificationRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RequestEmailVerification(ctx, request.(RequestEmailVerificationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RequestEmailVerification")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RequestEmailVerificationResponseObject); ok {
+		if err := validResponse.VisitRequestEmailVerificationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"3cfzwFbNf4aZtun/AwAA//9OBcYf4zkAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

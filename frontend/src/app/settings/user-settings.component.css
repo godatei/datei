@@ -1,0 +1,100 @@
+.settings-container {
+  max-width: 600px;
+  margin: 2rem auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 0 1rem;
+}
+.page-title {
+  font: var(--mat-sys-headline-small);
+  margin: 0;
+}
+.section-description {
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+  margin: 0 0 1rem;
+}
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+mat-form-field {
+  width: 100%;
+}
+.action-btn {
+  align-self: flex-end;
+}
+.email-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 0;
+}
+.email-address {
+  flex: 1;
+  word-break: break-all;
+}
+.email-badges {
+  display: flex;
+  gap: 0.25rem;
+}
+.email-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+.chip-unverified {
+  opacity: 0.7;
+}
+.add-email-form {
+  margin-top: 1rem;
+}
+.mfa-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.qr-container {
+  display: flex;
+  justify-content: center;
+  background: var(--mat-sys-surface-container);
+  border-radius: 12px;
+  padding: 1rem;
+}
+.secret-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.mfa-secret {
+  font-family: monospace;
+  word-break: break-all;
+  flex: 1;
+}
+.recovery-codes-container {
+  background: var(--mat-sys-surface-container);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.recovery-codes {
+  font-family: monospace;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.25rem;
+}
+.danger-zone {
+  border: 1px solid var(--mat-sys-error);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+.danger-label {
+  font: var(--mat-sys-label-large);
+  color: var(--mat-sys-error);
+  margin: 0 0 0.75rem;
+}

@@ -1,0 +1,189 @@
+<div class="settings-container">
+  <h2 class="page-title">Settings</h2>
+
+  <!-- Profile -->
+  <mat-card>
+    <mat-card-header><mat-card-title>Profile</mat-card-title></mat-card-header>
+    <mat-card-content>
+      <p class="section-description">Manage your display name</p>
+      <form [formRoot]="profileForm">
+        <mat-form-field appearance="outline">
+          <mat-label>Name</mat-label>
+          <input matInput [formField]="profileForm.name" />
+        </mat-form-field>
+        <button
+          mat-flat-button
+          type="submit"
+          [disabled]="profileForm().submitting()"
+          class="action-btn"
+        >
+          Save
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Emails -->
+  <mat-card>
+    <mat-card-header><mat-card-title>Email Addresses</mat-card-title></mat-card-header>
+    <mat-card-content>
+      <p class="section-description">Control your email addresses and verification status</p>
+      @for (email of emails(); track email.id; let last = $last) {
+        <div class="email-row">
+          <span class="email-address">{{ email.email }}</span>
+          <span class="email-badges">
+            <mat-chip-set>
+              @if (email.isPrimary) {
+                <mat-chip highlighted>Primary</mat-chip>
+              }
+              @if (email.verified) {
+                <mat-chip>Verified</mat-chip>
+              } @else {
+                <mat-chip class="chip-unverified">Unverified</mat-chip>
+              }
+            </mat-chip-set>
+          </span>
+          <span class="email-actions">
+            @if (!email.isPrimary && email.verified) {
+              <button mat-button (click)="setPrimary(email.id)" [disabled]="emailsLoading()">
+                Set primary
+              </button>
+            }
+            @if (!email.isPrimary) {
+              <button
+                mat-icon-button
+                color="warn"
+                (click)="removeEmailAddress(email.id)"
+                [disabled]="emailsLoading()"
+                [attr.aria-label]="'Remove ' + email.email"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            }
+          </span>
+        </div>
+        @if (!last) {
+          <mat-divider></mat-divider>
+        }
+      }
+      <form [formRoot]="addEmailForm" class="add-email-form">
+        <mat-form-field appearance="outline">
+          <mat-label>Add email address</mat-label>
+          <input matInput [formField]="addEmailForm.email" type="email" />
+        </mat-form-field>
+        <button
+          mat-flat-button
+          type="submit"
+          [disabled]="addEmailForm().submitting() || addEmailForm().invalid()"
+        >
+          Add email
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Change Password -->
+  <mat-card>
+    <mat-card-header><mat-card-title>Change Password</mat-card-title></mat-card-header>
+    <mat-card-content>
+      <p class="section-description">Update your password</p>
+      <form [formRoot]="passwordForm">
+        <mat-form-field appearance="outline">
+          <mat-label>Current password</mat-label>
+          <input
+            matInput
+            [formField]="passwordForm.currentPassword"
+            type="password"
+            autocomplete="current-password"
+          />
+        </mat-form-field>
+        <app-password-confirm
+          [password]="passwordForm.password"
+          [confirmPassword]="passwordForm.confirmPassword"
+          passwordLabel="New password"
+          confirmLabel="Confirm new password"
+        />
+        <button
+          mat-flat-button
+          type="submit"
+          [disabled]="passwordForm().submitting() || passwordForm().invalid()"
+        >
+          Change password
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- MFA -->
+  <mat-card>
+    <mat-card-header><mat-card-title>Two-Factor Authentication</mat-card-title></mat-card-header>
+    <mat-card-content>
+      <p class="section-description">Add an extra layer of security to your account</p>
+
+      @if (mfaSetupData()) {
+        <div class="mfa-setup">
+          <p>Scan this QR code with your authenticator app:</p>
+          <div class="qr-container">
+            <img [src]="mfaSetupData()!.qrCodeUrl" alt="MFA QR Code" width="200" height="200" />
+          </div>
+          <div class="secret-row">
+            <span class="mfa-secret">{{ mfaSetupData()!.secret }}</span>
+            <button mat-icon-button (click)="copySecret()" aria-label="Copy secret to clipboard">
+              <mat-icon>content_copy</mat-icon>
+            </button>
+          </div>
+          <form [formRoot]="mfaEnableForm">
+            <mat-form-field appearance="outline">
+              <mat-label>Verification code</mat-label>
+              <input matInput [formField]="mfaEnableForm.code" autocomplete="one-time-code" />
+            </mat-form-field>
+            <button
+              mat-flat-button
+              type="submit"
+              [disabled]="mfaEnableForm().submitting() || mfaEnableForm().invalid()"
+            >
+              Enable MFA
+            </button>
+          </form>
+        </div>
+      } @else if (recoveryCodes()) {
+        <p>Save these recovery codes in a safe place:</p>
+        <div class="recovery-codes-container">
+          <ul class="recovery-codes" role="list" aria-label="Recovery codes">
+            @for (code of recoveryCodes()!; track code) {
+              <li>{{ code }}</li>
+            }
+          </ul>
+          <button mat-button (click)="copyRecoveryCodes()">
+            <mat-icon>content_copy</mat-icon>
+            Copy all
+          </button>
+        </div>
+        <button mat-flat-button (click)="recoveryCodes.set(undefined)">Done</button>
+      } @else if (!mfaEnabled()) {
+        <button mat-flat-button (click)="setupMFA()" [disabled]="mfaLoading()" class="action-btn">
+          Set up MFA
+        </button>
+      } @else {
+        <p>Two-factor authentication is enabled.</p>
+        <div class="danger-zone">
+          <p class="danger-label">Disable two-factor authentication</p>
+          <form [formRoot]="mfaDisableForm">
+            <mat-form-field appearance="outline">
+              <mat-label>Password</mat-label>
+              <input matInput [formField]="mfaDisableForm.password" type="password" />
+            </mat-form-field>
+            <button
+              mat-button
+              color="warn"
+              type="submit"
+              [disabled]="mfaDisableForm().submitting() || mfaDisableForm().invalid()"
+            >
+              Disable MFA
+            </button>
+          </form>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

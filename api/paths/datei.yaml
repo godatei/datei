@@ -1,6 +1,8 @@
 post:
   operationId: CreateDatei
   summary: Create a new Datei
+  security:
+    - bearerHttpAuthentication: []
   requestBody:
     required: true
     content:
@@ -22,6 +24,8 @@ post:
 get:
   operationId: ListDatei
   summary: List all Datei
+  security:
+    - bearerHttpAuthentication: []
   parameters:
     - name: limit
       in: query

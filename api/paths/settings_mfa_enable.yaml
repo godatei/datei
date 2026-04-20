@@ -1,0 +1,20 @@
+post:
+  operationId: EnableMFA
+  summary: Enable MFA with TOTP code
+  security:
+    - bearerHttpAuthentication: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/EnableMFARequest.yaml'
+  responses:
+    '200':
+      description: MFA enabled
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/EnableMFAResponse.yaml'
+    '403':
+      description: Invalid code, MFA already enabled, or MFA not set up

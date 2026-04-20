@@ -1,0 +1,8 @@
+type: object
+required:
+  - recoveryCodes
+properties:
+  recoveryCodes:
+    type: array
+    items:
+      type: string

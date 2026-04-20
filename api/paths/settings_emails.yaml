@@ -1,0 +1,28 @@
+get:
+  operationId: ListEmails
+  summary: List user emails
+  security:
+    - bearerHttpAuthentication: []
+  responses:
+    '200':
+      description: List of emails
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ListEmailsResponse.yaml'
+post:
+  operationId: AddEmail
+  summary: Add a new email
+  security:
+    - bearerHttpAuthentication: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/AddEmailRequest.yaml'
+  responses:
+    '204':
+      description: Email added
+    '400':
+      description: Invalid email or already in use

@@ -1,0 +1,20 @@
+post:
+  operationId: RegenerateMFARecoveryCodes
+  summary: Regenerate MFA recovery codes
+  security:
+    - bearerHttpAuthentication: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/RegenerateMFARecoveryCodesRequest.yaml'
+  responses:
+    '200':
+      description: Recovery codes regenerated
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/RegenerateMFARecoveryCodesResponse.yaml'
+    '403':
+      description: Invalid password or MFA not enabled

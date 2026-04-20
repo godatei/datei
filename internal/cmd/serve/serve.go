@@ -10,18 +10,22 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
-	"github.com/godatei/datei/internal/aggregate"
+	"github.com/go-chi/httprate"
+	"github.com/godatei/datei/internal/authn"
 	"github.com/godatei/datei/internal/buildconfig"
 	"github.com/godatei/datei/internal/config"
+	"github.com/godatei/datei/internal/datei"
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/db/migrations"
-	"github.com/godatei/datei/internal/events"
 	"github.com/godatei/datei/internal/frontend"
+	"github.com/godatei/datei/internal/mailer"
 	"github.com/godatei/datei/internal/ocr"
 	"github.com/godatei/datei/internal/server"
 	"github.com/godatei/datei/internal/storage"
+	"github.com/godatei/datei/internal/users"
 	oapimiddleware "github.com/oapi-codegen/nethttp-middleware"
 	slogchi "github.com/samber/slog-chi"
 	"github.com/spf13/cobra"
@@ -88,8 +92,20 @@ func run(ctx context.Context, options Options) error {
 		return err
 	}
 
-	eventStore := events.NewPostgresEventStore(db)
-	repository := aggregate.NewPostgresDateiRepository(db, eventStore)
+	dateiEventStore := datei.NewEventStore(db)
+	dateiRepository := datei.NewRepository(db, dateiEventStore)
+
+	userEventStore := users.NewEventStore(db)
+	userRepository := users.NewRepository(db, userEventStore)
+
+	// Create mailer
+	var m mailer.Mailer
+	mc := config.Mailer()
+	if mc.Enabled {
+		m = mailer.NewSMTPMailer(mc.SMTP.Host, mc.SMTP.Port, mc.SMTP.Username, mc.SMTP.Password, mc.SMTP.From)
+	} else {
+		m = mailer.NewNoopMailer()
+	}
 
 	var ocrClient *ocr.Client
 	if uri := config.OCRServerURI(); uri != "" {
@@ -103,20 +119,34 @@ func run(ctx context.Context, options Options) error {
 		return err
 	}
 
-	apiMux := chi.NewRouter()
-	apiMux.Use(
-		chimiddleware.RequestID,
-		chimiddleware.RealIP,
-		slogchi.New(slog.Default()),
-		oapimiddleware.OapiRequestValidator(swagger),
-	)
-	strictHandler := server.NewStrictHandler(server.NewServer(db, store, repository, ocrClient), nil)
-	server.HandlerFromMux(strictHandler, apiMux)
+	// Create the unified server implementing StrictServerInterface
+	srv := server.NewServer(db, store, dateiRepository, userRepository, m, ocrClient)
+	strictHandler := server.NewStrictHandler(srv, nil)
 
 	rootMux := chi.NewRouter()
 	rootMux.Use(chimiddleware.Recoverer)
+	rootMux.Use(chimiddleware.RequestID)
+	rootMux.Use(chimiddleware.RealIP)
+	rootMux.Use(slogchi.New(slog.Default()))
+
+	// API routes: OpenAPI validator handles auth via security schemes in the spec
+	rootMux.Group(func(r chi.Router) {
+		r.Use(oapimiddleware.OapiRequestValidatorWithOptions(swagger, &oapimiddleware.Options{
+			SilenceServersWarning: true,
+			Options: openapi3filter.Options{
+				AuthenticationFunc: authn.OpenAPIAuthFunc(),
+			},
+		}))
+		r.Use(httprate.Limit(
+			10, 1*time.Minute,
+			httprate.WithKeyFuncs(httprate.KeyByRealIP, httprate.KeyByEndpoint),
+		))
+		server.HandlerWithOptions(strictHandler, server.ChiServerOptions{
+			BaseRouter: r,
+		})
+	})
+
 	rootMux.Handle("/*", frontend.NewHandler())
-	rootMux.Handle("/api/*", apiMux)
 
 	httpServer := &http.Server{Handler: rootMux, Addr: config.ServerAddr()}
 
