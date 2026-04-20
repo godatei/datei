@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"strings"
 
 	"github.com/godatei/datei/internal/datei"
 	"github.com/godatei/datei/internal/dateierrors"
@@ -64,11 +65,11 @@ func (s *server) CreateDatei(
 
 		switch part.FormName() {
 		case nameFormField:
-			fileNameData, err := io.ReadAll(part)
+			fileNameData, err := io.ReadAll(io.LimitReader(part, 1024))
 			if err != nil {
 				return CreateDatei400JSONResponse{Message: err.Error()}, nil
 			}
-			fileName = string(fileNameData)
+			fileName = strings.TrimSpace(string(fileNameData))
 		case fileFormField:
 			if fileName == "" {
 				fileName = part.FileName()
@@ -156,7 +157,7 @@ func (s *server) UpdateDatei(
 				buf := make([]byte, 256)
 				n, _ := part.Read(buf)
 				if n > 0 {
-					nameStr := string(buf[:n])
+					nameStr := strings.TrimSpace(string(buf[:n]))
 					name = &nameStr
 				}
 			case fileFormField:
