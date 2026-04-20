@@ -93,9 +93,7 @@ func (s *s3Store) PutObject(
 	checksum := hex.EncodeToString(digest)
 	checksumB64 := base64.StdEncoding.EncodeToString(digest)
 
-	if _, err := rs.Seek(0, io.SeekStart); err != nil {
-		return nil, fmt.Errorf("reset reader: %w", err)
-	}
+	name = path.Base(strings.TrimSpace(name))
 
 	var s3Key string
 	s3Prefix := path.Join("data", time.Now().UTC().Format("2006/01/02"))
@@ -126,6 +124,10 @@ func (s *s3Store) PutObject(
 		}
 
 		slog.Debug("creating object", "key", s3Key)
+
+		if _, err := rs.Seek(0, io.SeekStart); err != nil {
+			return nil, fmt.Errorf("reset reader before put: %w", err)
+		}
 
 		_, err := s.client.PutObject(ctx, &s3.PutObjectInput{
 			Bucket:         &s.config.Bucket,
