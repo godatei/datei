@@ -64,6 +64,8 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
+	} else {
+		lang = []string{"eng"}
 	}
 
 	file, fileHeader, err := r.FormFile("file")
@@ -141,7 +143,7 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 	out := new(strings.Builder)
 	for i, file := range ocrFiles {
 		slog.Debug("running ocr", "file", file)
-		out1, err := ocr(file, []string{"eng"}, "")
+		out1, err := ocr(file, lang, "")
 		if err != nil {
 			slog.Error("ocr error", "error", err)
 			w.WriteHeader(http.StatusInternalServerError)
