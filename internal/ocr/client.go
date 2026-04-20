@@ -1,7 +1,6 @@
 package ocr
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -34,25 +33,27 @@ type ocrResponse struct {
 // ExtractText sends a file to the OCR server and returns the extracted text.
 // contentType must be an image MIME type or "application/pdf".
 func (c *Client) ExtractText(ctx context.Context, r io.Reader, contentType string) (string, error) {
-	var buf bytes.Buffer
-	w := multipart.NewWriter(&buf)
+	pr, pw := io.Pipe()
+	w := multipart.NewWriter(pw)
 
-	h := make(textproto.MIMEHeader)
-	h.Set("Content-Disposition", `form-data; name="file"; filename="file"`)
-	h.Set("Content-Type", contentType)
-	fw, err := w.CreatePart(h)
-	if err != nil {
-		return "", fmt.Errorf("ocr: create form file: %w", err)
-	}
-	if _, err := io.Copy(fw, r); err != nil {
-		return "", fmt.Errorf("ocr: copy file: %w", err)
-	}
+	go func() {
+		defer func() { pw.CloseWithError(w.Close()) }()
 
-	if err := w.Close(); err != nil {
-		return "", fmt.Errorf("ocr: close writer: %w", err)
-	}
+		h := make(textproto.MIMEHeader)
+		h.Set("Content-Disposition", `form-data; name="file"; filename="file"`)
+		h.Set("Content-Type", contentType)
+		fw, err := w.CreatePart(h)
+		if err != nil {
+			pw.CloseWithError(fmt.Errorf("ocr: create form file: %w", err))
+			return
+		}
+		if _, err := io.Copy(fw, r); err != nil {
+			pw.CloseWithError(fmt.Errorf("ocr: copy file: %w", err))
+			return
+		}
+	}()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.serverURI, &buf)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.serverURI, pr)
 	if err != nil {
 		return "", fmt.Errorf("ocr: create request: %w", err)
 	}
