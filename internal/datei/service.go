@@ -156,10 +156,6 @@ func (s *Service) CreateDatei(ctx context.Context, input CreateDateiInput) (*api
 		s.startOCR(ctx, agg.ID, *agg.S3Key, *agg.Checksum, input.ContentType)
 	}
 
-	if input.Reader != nil && input.FileName != "" && agg.S3Key != nil && agg.Checksum != nil {
-		s.startOCR(ctx, agg.ID, *agg.S3Key, *agg.Checksum, input.ContentType)
-	}
-
 	return MapAggregateToAPI(agg), nil
 }
 
@@ -244,10 +240,6 @@ func (s *Service) UpdateDatei(ctx context.Context, input UpdateDateiInput) (*api
 
 	if err := s.repository.Save(ctx, agg); err != nil {
 		return nil, err
-	}
-
-	if input.Reader != nil && input.FileName != "" && agg.S3Key != nil && agg.Checksum != nil {
-		s.startOCR(ctx, agg.ID, *agg.S3Key, *agg.Checksum, input.ContentType)
 	}
 
 	if input.Reader != nil && input.FileName != "" && agg.S3Key != nil && agg.Checksum != nil {
