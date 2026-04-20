@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -88,7 +89,9 @@ func (s *s3Store) PutObject(
 		size = s
 	}
 
-	checksum := hex.EncodeToString(h.Sum(nil))
+	digest := h.Sum(nil)
+	checksum := hex.EncodeToString(digest)
+	checksumB64 := base64.StdEncoding.EncodeToString(digest)
 
 	if _, err := rs.Seek(0, io.SeekStart); err != nil {
 		return nil, fmt.Errorf("reset reader: %w", err)
@@ -129,7 +132,7 @@ func (s *s3Store) PutObject(
 			Key:            &s3Key,
 			Body:           rs,
 			ContentType:    &contentType,
-			ChecksumSHA256: &checksum,
+			ChecksumSHA256: &checksumB64,
 			// Prevent object overwrites
 			// Reference: https://docs.aws.amazon.com/AmazonS3/latest/userguide/conditional-writes.html
 			IfNoneMatch: new("*"),
