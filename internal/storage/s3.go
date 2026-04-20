@@ -95,7 +95,7 @@ func (s *s3Store) PutObject(
 	}
 
 	var s3Key string
-	s3Prefix := path.Join("data", time.Now().Format("2006/01/02"))
+	s3Prefix := path.Join("data", time.Now().UTC().Format("2006/01/02"))
 
 	for {
 		for i := 0; ; i++ {
