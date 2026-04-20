@@ -142,6 +142,7 @@ jobs:
           pkill -SIGTERM datei &&
           dist/datei migrate --down
         env:
+          DATEI_AUTH_JWT_SECRET: H4V7z6mEpe8/k5H/KyogT/iATJhNpEIUMd5cHF6mqF8=
           DATEI_DATABASE_URI: postgres://test-user:test-password@localhost:5432/datei
           DATEI_SERVER_ADDR: 0.0.0.0:8080
           DATEI_STORAGE_S3_BUCKET: datei

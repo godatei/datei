@@ -1,0 +1,9 @@
+type: object
+properties:
+  name:
+    type: string
+  password:
+    type: string
+    minLength: 8
+  currentPassword:
+    type: string

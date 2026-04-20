@@ -16,7 +16,8 @@
     "module": "preserve",
     "baseUrl": ".",
     "paths": {
-      "~/frontend/*": ["frontend/src/app/*"]
+      "~/frontend/*": ["frontend/src/app/*"],
+      "~/api/*": ["frontend/src/api/*"]
     }
   },
   "angularCompilerOptions": {

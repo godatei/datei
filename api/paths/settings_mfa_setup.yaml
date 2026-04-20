@@ -1,0 +1,14 @@
+post:
+  operationId: SetupMFA
+  summary: Initiate MFA setup
+  security:
+    - bearerHttpAuthentication: []
+  responses:
+    '200':
+      description: MFA setup initiated
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/SetupMFAResponse.yaml'
+    '403':
+      description: MFA already enabled

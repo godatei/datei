@@ -1,0 +1,9 @@
+type: object
+required:
+  - name
+  - mfaEnabled
+properties:
+  name:
+    type: string
+  mfaEnabled:
+    type: boolean

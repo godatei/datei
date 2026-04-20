@@ -1,6 +1,8 @@
 patch:
   operationId: UpdateDatei
   summary: Update a Datei
+  security:
+    - bearerHttpAuthentication: []
   parameters:
     - name: id
       in: path
@@ -33,6 +35,8 @@ patch:
 delete:
   operationId: DeleteDatei
   summary: Delete a Datei
+  security:
+    - bearerHttpAuthentication: []
   parameters:
     - name: id
       in: path

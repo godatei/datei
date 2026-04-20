@@ -1,0 +1,14 @@
+type: object
+required:
+  - email
+  - name
+  - password
+properties:
+  email:
+    type: string
+    format: email
+  name:
+    type: string
+  password:
+    type: string
+    minLength: 8
