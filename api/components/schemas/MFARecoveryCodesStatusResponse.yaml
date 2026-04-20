@@ -1,0 +1,6 @@
+type: object
+required:
+  - remainingCodes
+properties:
+  remainingCodes:
+    type: integer

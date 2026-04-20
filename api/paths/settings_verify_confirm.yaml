@@ -1,0 +1,10 @@
+post:
+  operationId: ConfirmEmailVerification
+  summary: Confirm email verification
+  security:
+    - bearerHttpAuthentication: []
+  responses:
+    '204':
+      description: Email verified
+    '403':
+      description: Invalid or expired verification token

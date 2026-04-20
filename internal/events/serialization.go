@@ -5,82 +5,27 @@ import (
 	"fmt"
 )
 
+var eventFactories = map[string]func() DomainEvent{}
+
+// RegisterEvent adds an event type to the deserialization registry.
+// Call this from init() in each domain's event file.
+func RegisterEvent(eventType string, factory func() DomainEvent) {
+	eventFactories[eventType] = factory
+}
+
 // Deserialize unmarshals event data from JSON using the event type
 func Deserialize(eventType string, data []byte) (DomainEvent, error) {
-	switch eventType {
-	case "DateiCreated":
-		var event DateiCreatedEvent
-		if err := json.Unmarshal(data, &event); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal DateiCreatedEvent: %w", err)
-		}
-		return event, nil
-
-	case "DateiRenamed":
-		var event DateiRenamedEvent
-		if err := json.Unmarshal(data, &event); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal DateiRenamedEvent: %w", err)
-		}
-		return event, nil
-
-	case "DateiVersionUploaded":
-		var event DateiVersionUploadedEvent
-		if err := json.Unmarshal(data, &event); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal DateiVersionUploadedEvent: %w", err)
-		}
-		return event, nil
-
-	case "DateiMoved":
-		var event DateiMovedEvent
-		if err := json.Unmarshal(data, &event); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal DateiMovedEvent: %w", err)
-		}
-		return event, nil
-
-	case "DateiTrashed":
-		var event DateiTrashedEvent
-		if err := json.Unmarshal(data, &event); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal DateiTrashedEvent: %w", err)
-		}
-		return event, nil
-
-	case "DateiRestored":
-		var event DateiRestoredEvent
-		if err := json.Unmarshal(data, &event); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal DateiRestoredEvent: %w", err)
-		}
-		return event, nil
-
-	case "DateiLinked":
-		var event DateiLinkedEvent
-		if err := json.Unmarshal(data, &event); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal DateiLinkedEvent: %w", err)
-		}
-		return event, nil
-
-	case "DateiUnlinked":
-		var event DateiUnlinkedEvent
-		if err := json.Unmarshal(data, &event); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal DateiUnlinkedEvent: %w", err)
-		}
-		return event, nil
-
-	case "DateiPermissionGranted":
-		var event DateiPermissionGrantedEvent
-		if err := json.Unmarshal(data, &event); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal DateiPermissionGrantedEvent: %w", err)
-		}
-		return event, nil
-
-	case "DateiPermissionRevoked":
-		var event DateiPermissionRevokedEvent
-		if err := json.Unmarshal(data, &event); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal DateiPermissionRevokedEvent: %w", err)
-		}
-		return event, nil
-
-	default:
+	factory, ok := eventFactories[eventType]
+	if !ok {
 		return nil, fmt.Errorf("unknown event type: %s", eventType)
 	}
+
+	ptr := factory()
+	if err := json.Unmarshal(data, ptr); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal %s: %w", eventType, err)
+	}
+
+	return ptr, nil
 }
 
 // Serialize marshals an event to JSON

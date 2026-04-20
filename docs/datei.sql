@@ -34,7 +34,7 @@ CREATE TABLE UserAccount_MFARecoveryCode (
 
 CREATE INDEX idx_UserAccount_MFARecoveryCode_user_account_id ON UserAccount_MFARecoveryCode(user_account_id, used_at);
 
-CREATE TABLE UserEmail (
+CREATE TABLE UserAccountEmail (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
   user_account_id UUID NOT NULL REFERENCES UserAccount(id) ON DELETE CASCADE,
   email TEXT NOT NULL UNIQUE,
@@ -43,8 +43,8 @@ CREATE TABLE UserEmail (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_UserEmail_user_account_id ON UserEmail(user_account_id);
-CREATE UNIQUE INDEX uq_UserEmail_primary ON UserEmail(user_account_id) WHERE is_primary = true;
+CREATE INDEX idx_UserAccountEmail_user_account_id ON UserAccountEmail(user_account_id);
+CREATE UNIQUE INDEX uq_UserAccountEmail_primary ON UserAccountEmail(user_account_id) WHERE is_primary = true;
 
 CREATE TABLE UserGroup (
   id UUID PRIMARY KEY DEFAULT uuidv7(),

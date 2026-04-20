@@ -1,0 +1,46 @@
+<div class="auth-container">
+  <mat-card class="auth-card">
+    <mat-card-content>
+      <div class="auth-header">
+        <img ngSrc="datei-logo.svg" class="brand-logo" alt="Datei" width="48" height="48" />
+        <h1>Create your account</h1>
+        <p class="subtitle">to get started with Datei</p>
+      </div>
+
+      @if (errorMessage()) {
+        <div class="error-banner">{{ errorMessage() }}</div>
+      }
+
+      <form class="auth-form" [formRoot]="form">
+        <mat-form-field class="form-field" appearance="outline">
+          <mat-label>Name</mat-label>
+          <input matInput [formField]="form.name" autocomplete="name" />
+        </mat-form-field>
+
+        <mat-form-field class="form-field" appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput [formField]="form.email" type="email" autocomplete="email" />
+        </mat-form-field>
+
+        <app-password-confirm [password]="form.password" [confirmPassword]="form.confirmPassword" />
+
+        <button
+          class="submit-btn"
+          mat-flat-button
+          type="submit"
+          [disabled]="form().submitting() || form().invalid()"
+        >
+          @if (form().submitting()) {
+            <mat-spinner diameter="20"></mat-spinner>
+          } @else {
+            Create account
+          }
+        </button>
+      </form>
+
+      <div class="auth-links">
+        <a routerLink="/login">Already have an account? Sign in</a>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

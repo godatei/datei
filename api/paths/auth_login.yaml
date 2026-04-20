@@ -1,0 +1,19 @@
+post:
+  operationId: Login
+  summary: Log in with email and password
+  security: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/LoginRequest.yaml'
+  responses:
+    '200':
+      description: Login successful or MFA required
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/LoginResponse.yaml'
+    '401':
+      description: Invalid credentials or MFA code
