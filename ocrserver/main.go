@@ -75,6 +75,8 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	defer file.Close()
+
 	tmpDir, err := os.MkdirTemp("", "")
 	if err != nil {
 		slog.Error("failed to create temp dir", "error", err)
