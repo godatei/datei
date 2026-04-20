@@ -9,6 +9,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
+	"time"
 )
 
 // Client calls an OCR server to extract text from images and PDFs.
@@ -19,8 +20,10 @@ type Client struct {
 
 func NewClient(serverURI string) *Client {
 	return &Client{
-		serverURI:  serverURI,
-		httpClient: &http.Client{},
+		serverURI: serverURI,
+		httpClient: &http.Client{
+			Timeout: 5 * time.Minute,
+		},
 	}
 }
 
