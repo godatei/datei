@@ -18,8 +18,8 @@ docker compose up -d
 mise watch serve -r
 ```
 
-Open your browser and navigate to [`http://localhost:8080`](http://localhost:8080).
-You can use Mailpit on [`http://localhost:8025`](http://localhost:8025) to receive E-Mail verification links.
+Open your browser and navigate to [`http://localhost:8081`](http://localhost:8081).
+You can use Mailpit on [`http://localhost:8026`](http://localhost:8026) to receive E-Mail verification links.
 
 ## Backporting bugfixes
 
