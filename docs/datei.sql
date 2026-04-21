@@ -1,5 +1,13 @@
--- Datei: Initial Database Schema
--- High performance self-hosted document management solution
+-- Datei: Target schema (pre-event-sourcing design).
+-- High performance self-hosted document management solution.
+--
+-- Status (2026-04-21): design does not yet include event sourcing.
+-- This file is kept for reference only. The live migration
+-- (internal/db/migrations/sql/0_initial_schema.up.sql) provisions a reduced
+-- subset consisting of event stores and projections for event-sourced
+-- domains. Non-ES tables below (user_group*, label, datei_label,
+-- datei_annotation, datei_permission write model, public_link*, datei_comment)
+-- will be reintroduced via per-domain event sourcing as those domains land.
 
 -- ============================================================================
 -- User & Group Tables
