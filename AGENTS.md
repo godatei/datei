@@ -197,9 +197,9 @@ This project uses Angular Material 21 with Material 3 theming. All UI must follo
 
 - Always use Angular Material components (`mat-button`, `mat-card`, `mat-table`, etc.) over custom elements when a Material equivalent exists
 - Import Material modules individually per component: `import { MatButtonModule } from '@angular/material/button'`
-- Use M3 system-level CSS variables (`--mat-sys-surface`, `--mat-sys-on-surface`, etc.) for colors — do NOT hardcode color values
-- Use Material elevation classes (`mat-elevation-z*`) instead of custom `box-shadow`
-- Use Material typography classes (`mat-h1`, `mat-body-medium`, etc.) for text styling
+- Use these patterns for styles in order of preference (first is most preferred):
+  - Angular Material utility classes (text/background color, typography, border radius/shape, elevation/border)
+  - Tailwind CSS utility classes (layout, spacing)
 - The theme is defined in `frontend/src/material-theme.scss` using `@include mat.theme()` with `mat.$azure-palette` (primary) and `mat.$blue-palette` (tertiary)
 - Use `@angular/cdk` utilities (e.g., `BreakpointObserver`) for responsive behavior instead of manual `window.matchMedia`
 
