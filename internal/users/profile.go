@@ -18,7 +18,6 @@ type UpdateUserInput struct {
 	Name            *string
 	Password        *string
 	CurrentPassword *string
-	IsPasswordReset bool
 }
 
 func (s *UserService) UpdateUser(ctx context.Context, input UpdateUserInput) error {
@@ -30,9 +29,6 @@ func (s *UserService) UpdateUser(ctx context.Context, input UpdateUserInput) err
 	now := time.Now()
 
 	if input.Name != nil {
-		if input.IsPasswordReset {
-			return dateierrors.ErrPasswordResetOnly
-		}
 		if err := agg.ChangeName(*input.Name, now); err != nil {
 			return dateierrors.ErrInvalidInput
 		}
@@ -43,18 +39,16 @@ func (s *UserService) UpdateUser(ctx context.Context, input UpdateUserInput) err
 			return dateierrors.ErrInvalidInput
 		}
 
-		if !input.IsPasswordReset {
-			if input.CurrentPassword == nil || *input.CurrentPassword == "" {
-				return dateierrors.ErrCurrentPasswordRequired
-			}
-			q := s.queries()
-			user, err := q.GetUserAccountByID(ctx, input.UserID)
-			if err != nil {
-				return fmt.Errorf("failed to get user: %w", err)
-			}
-			if err := security.VerifyPassword(*input.CurrentPassword, user.PasswordHash, user.PasswordSalt); err != nil {
-				return dateierrors.ErrInvalidCredentials
-			}
+		if input.CurrentPassword == nil || *input.CurrentPassword == "" {
+			return dateierrors.ErrCurrentPasswordRequired
+		}
+		q := s.queries()
+		user, err := q.GetUserAccountByID(ctx, input.UserID)
+		if err != nil {
+			return fmt.Errorf("failed to get user: %w", err)
+		}
+		if err := security.VerifyPassword(*input.CurrentPassword, user.PasswordHash, user.PasswordSalt); err != nil {
+			return dateierrors.ErrInvalidCredentials
 		}
 
 		hash, salt, err := security.HashPassword(*input.Password)
@@ -126,17 +120,11 @@ func (s *UserService) RequestEmailVerification(ctx context.Context, userID uuid.
 }
 
 type ConfirmEmailVerificationInput struct {
-	UserID        uuid.UUID
-	EmailVerified bool
-	PasswordReset bool
-	TokenEmail    string
+	UserID     uuid.UUID
+	TokenEmail string
 }
 
 func (s *UserService) ConfirmEmailVerification(ctx context.Context, input ConfirmEmailVerificationInput) error {
-	if !input.EmailVerified || input.PasswordReset {
-		return dateierrors.ErrInvalidToken
-	}
-
 	q := s.queries()
 	email, err := q.GetPrimaryEmailForUser(ctx, input.UserID)
 	if err != nil {
@@ -194,6 +182,37 @@ func (s *UserService) AddEmail(ctx context.Context, input AddEmailInput) error {
 
 	if config.AuthEmailVerificationRequired() {
 		s.sendVerificationEmail(ctx, input.UserID, input.Email)
+	}
+
+	return nil
+}
+
+type ConfirmResetPasswordInput struct {
+	UserID   uuid.UUID
+	Password string
+}
+
+func (s *UserService) ConfirmResetPassword(ctx context.Context, input ConfirmResetPasswordInput) error {
+	if len(input.Password) < 8 {
+		return dateierrors.ErrInvalidInput
+	}
+
+	hash, salt, err := security.HashPassword(input.Password)
+	if err != nil {
+		return fmt.Errorf("failed to hash password: %w", err)
+	}
+
+	agg, err := s.repository.LoadByID(ctx, input.UserID)
+	if err != nil {
+		return fmt.Errorf("failed to load user: %w", err)
+	}
+
+	if err := agg.ChangePassword(hash, salt, time.Now()); err != nil {
+		return dateierrors.ErrInvalidInput
+	}
+
+	if err := s.repository.Save(ctx, agg); err != nil {
+		return fmt.Errorf("failed to save user: %w", err)
 	}
 
 	return nil

@@ -2,20 +2,21 @@ import { HttpClient, HttpContext } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import {
-  getCurrentUser as getCurrentUserFn,
-  updateUser as updateUserFn,
-  updateUserEmail as updateUserEmailFn,
-  requestEmailVerification as requestEmailVerificationFn,
-  confirmEmailVerification as confirmEmailVerificationFn,
-  setupMfa as setupMfaFn,
-  enableMfa as enableMfaFn,
-  disableMfa as disableMfaFn,
-  regenerateMfaRecoveryCodes as regenerateMfaRecoveryCodesFn,
-  getMfaRecoveryCodesStatus as getMfaRecoveryCodesStatusFn,
-  listEmails as listEmailsFn,
-  addEmail as addEmailFn,
-  removeEmail as removeEmailFn,
-  setPrimaryEmail as setPrimaryEmailFn,
+  confirmResetPassword,
+  getCurrentUser,
+  updateUser,
+  updateUserEmail,
+  requestEmailVerification,
+  confirmEmailVerification,
+  setupMfa,
+  enableMfa,
+  disableMfa,
+  regenerateMfaRecoveryCodes,
+  getMfaRecoveryCodesStatus,
+  listEmails,
+  addEmail,
+  removeEmail,
+  setPrimaryEmail,
 } from '~/api/functions';
 import type { SetupMfaResponse } from '~/api/models/setup-mfa-response';
 import type { EnableMfaResponse } from '~/api/models/enable-mfa-response';
@@ -29,68 +30,75 @@ import { USE_ACTION_TOKEN } from './auth.service';
 export class SettingsService {
   private readonly httpClient = inject(HttpClient);
 
-  getCurrentUser(): Observable<UserResponse> {
-    return getCurrentUserFn(this.httpClient, '').pipe(map((r) => r.body));
+  confirmResetPassword(password: string): Observable<void> {
+    const context = new HttpContext().set(USE_ACTION_TOKEN, true);
+    return confirmResetPassword(this.httpClient, '', { body: { password } }, context).pipe(
+      map(() => undefined),
+    );
   }
 
-  updateUser(
-    request: { name?: string; password?: string; currentPassword?: string },
-    useActionToken = false,
-  ): Observable<UserResponse> {
-    const context = useActionToken ? new HttpContext().set(USE_ACTION_TOKEN, true) : undefined;
-    return updateUserFn(this.httpClient, '', { body: request }, context).pipe(map((r) => r.body));
+  getCurrentUser(): Observable<UserResponse> {
+    return getCurrentUser(this.httpClient, '').pipe(map((r) => r.body));
+  }
+
+  updateUser(request: {
+    name?: string;
+    password?: string;
+    currentPassword?: string;
+  }): Observable<UserResponse> {
+    return updateUser(this.httpClient, '', { body: request }).pipe(map((r) => r.body));
   }
 
   updatePrimaryEmail(email: string): Observable<void> {
-    return updateUserEmailFn(this.httpClient, '', { body: { email } }).pipe(map(() => undefined));
+    return updateUserEmail(this.httpClient, '', { body: { email } }).pipe(map(() => undefined));
   }
 
   requestEmailVerification(): Observable<void> {
-    return requestEmailVerificationFn(this.httpClient, '').pipe(map(() => undefined));
+    return requestEmailVerification(this.httpClient, '').pipe(map(() => undefined));
   }
 
   confirmEmailVerification(): Observable<void> {
     const context = new HttpContext().set(USE_ACTION_TOKEN, true);
-    return confirmEmailVerificationFn(this.httpClient, '', undefined, context).pipe(
+    return confirmEmailVerification(this.httpClient, '', undefined, context).pipe(
       map(() => undefined),
     );
   }
 
   startMFASetup(): Observable<SetupMfaResponse> {
-    return setupMfaFn(this.httpClient, '').pipe(map((r) => r.body));
+    return setupMfa(this.httpClient, '').pipe(map((r) => r.body));
   }
 
   enableMFA(code: string): Observable<EnableMfaResponse> {
-    return enableMfaFn(this.httpClient, '', { body: { code } }).pipe(map((r) => r.body));
+    return enableMfa(this.httpClient, '', { body: { code } }).pipe(map((r) => r.body));
   }
 
   disableMFA(password: string): Observable<void> {
-    return disableMfaFn(this.httpClient, '', { body: { password } }).pipe(map(() => undefined));
+    return disableMfa(this.httpClient, '', { body: { password } }).pipe(map(() => undefined));
   }
 
   regenerateRecoveryCodes(password: string): Observable<RegenerateMfaRecoveryCodesResponse> {
-    return regenerateMfaRecoveryCodesFn(this.httpClient, '', { body: { password } }).pipe(
+    return regenerateMfaRecoveryCodes(this.httpClient, '', { body: { password } }).pipe(
       map((r) => r.body),
     );
   }
 
   getMFARecoveryCodesStatus(): Observable<MfaRecoveryCodesStatusResponse> {
-    return getMfaRecoveryCodesStatusFn(this.httpClient, '').pipe(map((r) => r.body));
+    return getMfaRecoveryCodesStatus(this.httpClient, '').pipe(map((r) => r.body));
   }
 
   getEmails(): Observable<UserEmail[]> {
-    return listEmailsFn(this.httpClient, '').pipe(map((r) => r.body.emails));
+    return listEmails(this.httpClient, '').pipe(map((r) => r.body.emails));
   }
 
   addEmail(email: string): Observable<void> {
-    return addEmailFn(this.httpClient, '', { body: { email } }).pipe(map(() => undefined));
+    return addEmail(this.httpClient, '', { body: { email } }).pipe(map(() => undefined));
   }
 
   removeEmail(emailId: string): Observable<void> {
-    return removeEmailFn(this.httpClient, '', { emailId }).pipe(map(() => undefined));
+    return removeEmail(this.httpClient, '', { emailId }).pipe(map(() => undefined));
   }
 
   setPrimaryEmail(emailId: string): Observable<void> {
-    return setPrimaryEmailFn(this.httpClient, '', { emailId }).pipe(map(() => undefined));
+    return setPrimaryEmail(this.httpClient, '', { emailId }).pipe(map(() => undefined));
   }
 }

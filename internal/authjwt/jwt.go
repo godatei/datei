@@ -14,7 +14,7 @@ const (
 	UserNameKey          = "name"
 	UserEmailKey         = "email"
 	UserEmailVerifiedKey = "email_verified"
-	PasswordResetKey     = "password_reset"
+	ActionKey            = "action"
 )
 
 var secret = sync.OnceValue(config.AuthJWTSecret)
@@ -45,7 +45,7 @@ func GenerateResetToken(userID uuid.UUID, email string) (string, error) {
 		Subject(userID.String()).
 		Claim(UserEmailKey, email).
 		Claim(UserEmailVerifiedKey, true).
-		Claim(PasswordResetKey, true).
+		Claim(ActionKey, string(ActionResetPassword)).
 		Build()
 	if err != nil {
 		return "", err
@@ -62,6 +62,7 @@ func GenerateVerificationToken(userID uuid.UUID, email string) (string, error) {
 		Subject(userID.String()).
 		Claim(UserEmailKey, email).
 		Claim(UserEmailVerifiedKey, true).
+		Claim(ActionKey, string(ActionVerifyEmail)).
 		Build()
 	if err != nil {
 		return "", err
