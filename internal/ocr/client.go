@@ -55,12 +55,14 @@ func (c *Client) ExtractText(ctx context.Context, r io.Reader, contentType strin
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.serverURI, pr)
 	if err != nil {
+		pr.CloseWithError(err)
 		return "", fmt.Errorf("ocr: create request: %w", err)
 	}
 	req.Header.Set("Content-Type", w.FormDataContentType())
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
+		pr.CloseWithError(err)
 		return "", fmt.Errorf("ocr: request failed: %w", err)
 	}
 	defer resp.Body.Close()
