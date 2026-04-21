@@ -97,11 +97,8 @@ func (s *Service) ListDatei(ctx context.Context, input ListDateiInput) (*ListDat
 	if limit <= 0 {
 		limit = 100
 	}
-	offset := input.Offset
-	if offset < 0 {
-		offset = 0
-	}
 
+	offset := max(input.Offset, 0)
 	total := len(allProjections)
 	start := min(offset, len(allProjections))
 	end := min(offset+limit, len(allProjections))
@@ -116,7 +113,6 @@ func (s *Service) ListDatei(ctx context.Context, input ListDateiInput) (*ListDat
 
 // CreateDateiInput contains parameters for creating a datei
 type CreateDateiInput struct {
-	Name        string
 	Reader      io.Reader
 	FileName    string
 	ContentType string
@@ -131,18 +127,18 @@ func (s *Service) CreateDatei(ctx context.Context, input CreateDateiInput) (*api
 	userID := authn.RequireContext(ctx).UserID
 
 	agg := &Aggregate{}
-	if err := agg.Create(id, nil, isDirectory, input.Name, userID, now); err != nil {
+	if err := agg.Create(id, nil, isDirectory, input.FileName, userID, now); err != nil {
 		return nil, err
 	}
 
 	if input.Reader != nil && input.FileName != "" {
-		hash, fileSize, err := s.store.PutObject(ctx, input.Reader, input.ContentType)
+		putResult, err := s.store.PutObject(ctx, input.Reader, input.FileName, input.ContentType)
 		if err != nil {
 			return nil, err
 		}
 
 		if err = agg.UploadVersion(
-			hash, fileSize, hash, input.ContentType, nil, userID, now,
+			putResult.StorageKey, putResult.Size, putResult.Checksum, input.ContentType, nil, userID, now,
 		); err != nil {
 			return nil, err
 		}
@@ -226,13 +222,13 @@ func (s *Service) UpdateDatei(ctx context.Context, input UpdateDateiInput) (*api
 	}
 
 	if input.Reader != nil && input.FileName != "" {
-		hash, fileSize, err := s.store.PutObject(ctx, input.Reader, input.ContentType)
+		putResult, err := s.store.PutObject(ctx, input.Reader, input.FileName, input.ContentType)
 		if err != nil {
 			return nil, err
 		}
 
 		if err = agg.UploadVersion(
-			hash, fileSize, hash, input.ContentType, nil, userID, now,
+			putResult.StorageKey, putResult.Size, putResult.Checksum, input.ContentType, nil, userID, now,
 		); err != nil {
 			return nil, err
 		}

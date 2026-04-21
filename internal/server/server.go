@@ -9,7 +9,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-const fileFormField = "file"
+const (
+	fileFormField = "file"
+	nameFormField = "name"
+)
 
 type server struct {
 	dateiService *datei.Service
