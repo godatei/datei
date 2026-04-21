@@ -45,9 +45,7 @@ export class ResetComponent {
         action: async () => {
           this.errorMessage.set('');
           try {
-            await firstValueFrom(
-              this.settings.updateUser({ password: this.model().password }, true),
-            );
+            await firstValueFrom(this.settings.confirmResetPassword(this.model().password));
             this.auth.logout();
             this.router.navigate(['/login']);
           } catch {

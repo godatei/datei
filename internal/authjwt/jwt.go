@@ -4,9 +4,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-chi/jwtauth/v5"
 	"github.com/godatei/datei/internal/config"
 	"github.com/google/uuid"
+	"github.com/lestrrat-go/jwx/v3/jwa"
 	"github.com/lestrrat-go/jwx/v3/jwt"
 )
 
@@ -14,53 +14,70 @@ const (
 	UserNameKey          = "name"
 	UserEmailKey         = "email"
 	UserEmailVerifiedKey = "email_verified"
-	PasswordResetKey     = "password_reset"
+	ActionKey            = "action"
 )
 
-var JWTAuth = sync.OnceValue(func() *jwtauth.JWTAuth {
-	return jwtauth.New("HS256", config.AuthJWTSecret(), nil)
-})
+var secret = sync.OnceValue(config.AuthJWTSecret)
 
-// GenerateDefaultToken creates a standard login token.
-func GenerateDefaultToken(userID uuid.UUID, name, email string, emailVerified bool) (jwt.Token, string, error) {
+func GenerateDefaultToken(userID uuid.UUID, name, email string, emailVerified bool) (string, error) {
 	now := time.Now()
-	claims := map[string]any{
-		jwt.IssuedAtKey:      now,
-		jwt.NotBeforeKey:     now,
-		jwt.ExpirationKey:    now.Add(config.AuthTokenExpiration()),
-		jwt.SubjectKey:       userID.String(),
-		UserNameKey:          name,
-		UserEmailKey:         email,
-		UserEmailVerifiedKey: emailVerified,
+	token, err := jwt.NewBuilder().
+		IssuedAt(now).
+		NotBefore(now).
+		Expiration(now.Add(config.AuthTokenExpiration())).
+		Subject(userID.String()).
+		Claim(UserNameKey, name).
+		Claim(UserEmailKey, email).
+		Claim(UserEmailVerifiedKey, emailVerified).
+		Build()
+	if err != nil {
+		return "", err
 	}
-	return JWTAuth().Encode(claims)
+	return sign(token)
 }
 
-// GenerateResetToken creates a short-lived password-reset token.
-func GenerateResetToken(userID uuid.UUID, email string) (jwt.Token, string, error) {
+func GenerateResetToken(userID uuid.UUID, email string) (string, error) {
 	now := time.Now()
-	claims := map[string]any{
-		jwt.IssuedAtKey:      now,
-		jwt.NotBeforeKey:     now,
-		jwt.ExpirationKey:    now.Add(config.AuthResetTokenDuration()),
-		jwt.SubjectKey:       userID.String(),
-		UserEmailKey:         email,
-		UserEmailVerifiedKey: true,
-		PasswordResetKey:     true,
+	token, err := jwt.NewBuilder().
+		IssuedAt(now).
+		NotBefore(now).
+		Expiration(now.Add(config.AuthResetTokenDuration())).
+		Subject(userID.String()).
+		Claim(UserEmailKey, email).
+		Claim(UserEmailVerifiedKey, true).
+		Claim(ActionKey, string(ActionResetPassword)).
+		Build()
+	if err != nil {
+		return "", err
 	}
-	return JWTAuth().Encode(claims)
+	return sign(token)
 }
 
-// GenerateVerificationToken creates an email-verification token.
-func GenerateVerificationToken(userID uuid.UUID, email string) (jwt.Token, string, error) {
+func GenerateVerificationToken(userID uuid.UUID, email string) (string, error) {
 	now := time.Now()
-	claims := map[string]any{
-		jwt.IssuedAtKey:      now,
-		jwt.NotBeforeKey:     now,
-		jwt.ExpirationKey:    now.Add(config.AuthResetTokenDuration()),
-		jwt.SubjectKey:       userID.String(),
-		UserEmailKey:         email,
-		UserEmailVerifiedKey: true,
+	token, err := jwt.NewBuilder().
+		IssuedAt(now).
+		NotBefore(now).
+		Expiration(now.Add(config.AuthResetTokenDuration())).
+		Subject(userID.String()).
+		Claim(UserEmailKey, email).
+		Claim(UserEmailVerifiedKey, true).
+		Claim(ActionKey, string(ActionVerifyEmail)).
+		Build()
+	if err != nil {
+		return "", err
 	}
-	return JWTAuth().Encode(claims)
+	return sign(token)
+}
+
+func ParseToken(tokenString string) (jwt.Token, error) {
+	return jwt.Parse([]byte(tokenString), jwt.WithKey(jwa.HS256(), secret()), jwt.WithValidate(true))
+}
+
+func sign(token jwt.Token) (string, error) {
+	signed, err := jwt.Sign(token, jwt.WithKey(jwa.HS256(), secret()))
+	if err != nil {
+		return "", err
+	}
+	return string(signed), nil
 }

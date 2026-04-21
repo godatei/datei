@@ -18,6 +18,11 @@ type AddEmailRequest struct {
 	Email openapi_types.Email `json:"email"`
 }
 
+// ConfirmResetPasswordRequest defines model for ConfirmResetPasswordRequest.
+type ConfirmResetPasswordRequest struct {
+	Password string `json:"password"`
+}
+
 // CreateDateiRequest defines model for CreateDateiRequest.
 type CreateDateiRequest struct {
 	// File File data (optional, omit for directories)
@@ -235,6 +240,9 @@ type EnableMFAJSONRequestBody = EnableMFARequest
 
 // RegenerateMFARecoveryCodesJSONRequestBody defines body for RegenerateMFARecoveryCodes for application/json ContentType.
 type RegenerateMFARecoveryCodesJSONRequestBody = RegenerateMFARecoveryCodesRequest
+
+// ConfirmResetPasswordJSONRequestBody defines body for ConfirmResetPassword for application/json ContentType.
+type ConfirmResetPasswordJSONRequestBody = ConfirmResetPasswordRequest
 
 // UpdateUserJSONRequestBody defines body for UpdateUser for application/json ContentType.
 type UpdateUserJSONRequestBody = UpdateUserRequest

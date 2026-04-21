@@ -6,6 +6,7 @@ import {
   Router,
   RouterStateSnapshot,
 } from '@angular/router';
+import { never } from 'frontend/src/util/never';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '~/frontend/services/auth.service';
 import { SettingsService } from '~/frontend/services/settings.service';
@@ -31,13 +32,16 @@ export const authGuard: CanActivateFn = (_: ActivatedRouteSnapshot, state: Route
     auth.logout();
     return router.createUrlTree(['/login']);
   }
-  if (claims.password_reset) {
-    return state.url === '/reset' ? true : router.createUrlTree(['/reset']);
+  switch (claims.action) {
+    case undefined:
+      return true;
+    case 'reset-password':
+      return state.url === '/reset' ? true : router.createUrlTree(['/reset']);
+    case 'verify-email':
+      return state.url === '/verify' ? true : router.createUrlTree(['/verify']);
+    default:
+      return never(claims.action);
   }
-  if (!claims.email_verified) {
-    return state.url === '/verify' ? true : router.createUrlTree(['/verify']);
-  }
-  return true;
 };
 
 export const publicOnlyGuard: CanActivateFn = () => {
