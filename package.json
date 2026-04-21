@@ -38,6 +38,7 @@
     "@fontsource/roboto": "^5.2.10",
     "jwt-decode": "^4.0.0",
     "rxjs": "~7.8.0",
+    "tailwindcss": "^4.2.4",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
@@ -48,12 +49,14 @@
     "@angular/material": "21.2.7",
     "@eslint/js": "^10.0.0",
     "@redocly/cli": "^2.19.2",
+    "@tailwindcss/postcss": "^4.2.4",
     "angular-eslint": "21.3.1",
     "eslint": "^10.0.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "jsdom": "^29.0.0",
     "ng-openapi-gen": "^1.0.5",
+    "postcss": "^8.5.3",
     "prettier": "^3.8.1",
     "typescript": "~5.9.2",
     "typescript-eslint": "8.59.0",

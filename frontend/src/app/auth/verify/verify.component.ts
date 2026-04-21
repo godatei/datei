@@ -12,7 +12,7 @@ import { SettingsService } from '~/frontend/services/settings.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [MatCardModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule],
   templateUrl: './verify.component.html',
-  styleUrls: ['../auth-shared.css', './verify.component.css'],
+  host: { class: 'block' },
 })
 export class VerifyComponent {
   private readonly settings = inject(SettingsService);

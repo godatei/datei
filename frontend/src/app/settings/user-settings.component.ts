@@ -37,7 +37,6 @@ import { SettingsService } from '~/frontend/services/settings.service';
     PasswordConfirmComponent,
   ],
   templateUrl: './user-settings.component.html',
-  styleUrl: './user-settings.component.css',
 })
 export class UserSettingsComponent {
   private readonly settings = inject(SettingsService);

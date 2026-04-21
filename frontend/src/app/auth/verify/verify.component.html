@@ -1,19 +1,21 @@
-<div class="auth-container">
-  <mat-card class="auth-card">
+<div class="flex justify-center items-center min-h-screen p-4 mat-bg-surface-container-low">
+  <mat-card class="auth-card w-full max-w-md">
     <mat-card-content>
-      <div class="auth-header">
-        <mat-icon class="brand-icon">mark_email_unread</mat-icon>
-        <h1>Verify your email</h1>
-        <p class="subtitle">Check your inbox for a verification link</p>
+      <div class="flex flex-col items-center mb-6 text-center">
+        <mat-icon class="mb-3 mat-text-primary text-5xl w-12 h-12">mark_email_unread</mat-icon>
+        <h1 class="mat-font-title-lg m-0">Verify your email</h1>
+        <p class="mat-font-body-md mat-text-on-surface-variant mt-1">
+          Check your inbox for a verification link
+        </p>
       </div>
 
-      <p class="success-message">
+      <p class="text-center mat-font-body-md mat-text-on-surface-variant">
         We sent a verification email to your address. Click the link in the email to verify your
         account.
       </p>
 
-      <div class="verify-actions">
-        <button class="submit-btn" mat-flat-button (click)="resend()" [disabled]="loading()">
+      <div class="flex flex-col gap-2">
+        <button class="w-full mt-2" mat-flat-button (click)="resend()" [disabled]="loading()">
           @if (loading()) {
             <mat-spinner diameter="20"></mat-spinner>
           } @else {
@@ -21,7 +23,7 @@
           }
         </button>
 
-        <button class="submit-btn" mat-button (click)="logout()">Logout</button>
+        <button class="w-full mt-2" mat-button (click)="logout()">Logout</button>
       </div>
     </mat-card-content>
   </mat-card>

@@ -5,6 +5,8 @@
 // custom components at https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
 
+@include mat.system-classes();
+
 html {
   height: 100%;
   @include mat.theme(
@@ -15,6 +17,12 @@ html {
       ),
       typography: Roboto,
       density: 0,
+    )
+  );
+
+  @include mat.sidenav-overrides(
+    (
+      container-width: calc(50 * var(--spacing, 0.25rem)),
     )
   );
 }
