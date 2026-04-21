@@ -35,13 +35,9 @@ func (s *server) UpdateUser(ctx context.Context, request UpdateUserRequestObject
 		Name:            request.Body.Name,
 		Password:        request.Body.Password,
 		CurrentPassword: request.Body.CurrentPassword,
-		IsPasswordReset: authInfo.PasswordReset,
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrInvalidCredentials) {
-			return UpdateUser403Response{}, nil
-		}
-		if errors.Is(err, dateierrors.ErrPasswordResetOnly) ||
+		if errors.Is(err, dateierrors.ErrInvalidCredentials) ||
 			errors.Is(err, dateierrors.ErrCurrentPasswordRequired) {
 			return UpdateUser403Response{}, nil
 		}
@@ -103,14 +99,11 @@ func (s *server) ConfirmEmailVerification(
 	authInfo := authn.RequireContext(ctx)
 
 	err := s.userService.ConfirmEmailVerification(ctx, users.ConfirmEmailVerificationInput{
-		UserID:        authInfo.UserID,
-		EmailVerified: authInfo.EmailVerified,
-		PasswordReset: authInfo.PasswordReset,
-		TokenEmail:    authInfo.Email,
+		UserID:     authInfo.UserID,
+		TokenEmail: authInfo.Email,
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrInvalidToken) ||
-			errors.Is(err, dateierrors.ErrEmailMismatch) {
+		if errors.Is(err, dateierrors.ErrEmailMismatch) {
 			return ConfirmEmailVerification403Response{}, nil
 		}
 		slog.Error("confirm email verification error", "error", err)
@@ -219,4 +212,25 @@ func (s *server) GetMFARecoveryCodesStatus(
 	return GetMFARecoveryCodesStatus200JSONResponse(api.MFARecoveryCodesStatusResponse{
 		RemainingCodes: count,
 	}), nil
+}
+
+// ConfirmResetPassword implements [StrictServerInterface].
+func (s *server) ConfirmResetPassword(
+	ctx context.Context, request ConfirmResetPasswordRequestObject,
+) (ConfirmResetPasswordResponseObject, error) {
+	authInfo := authn.RequireContext(ctx)
+
+	err := s.userService.ConfirmResetPassword(ctx, users.ConfirmResetPasswordInput{
+		UserID:   authInfo.UserID,
+		Password: request.Body.Password,
+	})
+	if err != nil {
+		if errors.Is(err, dateierrors.ErrInvalidInput) {
+			return ConfirmResetPassword400Response{}, nil
+		}
+		slog.Error("confirm reset password error", "error", err)
+		return nil, err
+	}
+
+	return ConfirmResetPassword204Response{}, nil
 }

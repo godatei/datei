@@ -1,6 +1,7 @@
 post:
   operationId: ConfirmEmailVerification
   summary: Confirm email verification
+  x-required-action: verify-email
   security:
     - bearerHttpAuthentication: []
   responses:
