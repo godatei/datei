@@ -18,6 +18,15 @@ post:
             $ref: '../components/schemas/Datei.yaml'
     '400':
       description: Invalid request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+            required:
+              - message
     '409':
       description: Conflict (e.g., parent directory not found)
 
