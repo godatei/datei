@@ -189,30 +189,26 @@ func split(file string) ([]string, error) {
 	mw := imagick.NewMagickWand()
 	defer mw.Destroy()
 
+	if err := mw.SetResolution(300, 300); err != nil {
+		return nil, fmt.Errorf("SetResolution: %w", err)
+	}
+	if err := mw.ReadImage(file); err != nil {
+		return nil, fmt.Errorf("ReadImage: %w", err)
+	}
+
 	dir := path.Dir(file)
-
-	_, err := imagick.ConvertImageCommand([]string{
-		"convert",
-		"-density", "300",
-		file,
-		path.Join(dir, "page.jpg"),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("ConvertImageCommand: %w", err)
-	}
-
-	dirEntries, err := os.ReadDir(dir)
-	if err != nil {
-		return nil, fmt.Errorf("ReadDir: %w", err)
-	}
-
-	var result []string
-	for _, entry := range dirEntries {
-		if !entry.IsDir() && strings.HasPrefix(entry.Name(), "page") {
-			result = append(result, path.Join(dir, entry.Name()))
+	n := mw.GetNumberImages()
+	result := make([]string, 0, n)
+	for i := range n {
+		if !mw.SetIteratorIndex(int(i)) {
+			return nil, fmt.Errorf("SetIteratorIndex(%d) failed", i)
 		}
+		outFile := path.Join(dir, fmt.Sprintf("page-%d.jpg", i))
+		if err := mw.WriteImage(outFile); err != nil {
+			return nil, fmt.Errorf("WriteImage page %d: %w", i, err)
+		}
+		result = append(result, outFile)
 	}
-
 	return result, nil
 }
 
