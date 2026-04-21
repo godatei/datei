@@ -22,7 +22,7 @@ html {
 
   @include mat.sidenav-overrides(
     (
-      container-width: calc(50 * var(--spacing)),
+      container-width: calc(50 * var(--spacing, 0.25rem)),
     )
   );
 }
