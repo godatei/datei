@@ -25,7 +25,7 @@ import { AuthService } from '~/frontend/services/auth.service';
     RouterLink,
   ],
   templateUrl: './forgot.component.html',
-  styleUrls: ['../auth-shared.css'],
+  host: { class: 'block' },
 })
 export class ForgotComponent {
   private readonly auth = inject(AuthService);

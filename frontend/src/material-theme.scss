@@ -19,6 +19,12 @@ html {
       density: 0,
     )
   );
+
+  @include mat.sidenav-overrides(
+    (
+      container-width: calc(50 * var(--spacing)),
+    )
+  );
 }
 
 body {

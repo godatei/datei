@@ -23,3 +23,7 @@
 @import 'tailwindcss';
 
 /* You can add global styles to this file, and also import other style files */
+
+.auth-card {
+  --mat-card-content-padding: 2rem 2rem 1.5rem;
+}

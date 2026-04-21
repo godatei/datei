@@ -25,7 +25,7 @@ import {
     PasswordConfirmComponent,
   ],
   templateUrl: './reset.component.html',
-  styleUrls: ['../auth-shared.css'],
+  host: { class: 'block' },
 })
 export class ResetComponent {
   private readonly settings = inject(SettingsService);

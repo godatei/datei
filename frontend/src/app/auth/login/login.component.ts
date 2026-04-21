@@ -27,7 +27,7 @@ import { AuthService } from '~/frontend/services/auth.service';
     RouterLink,
   ],
   templateUrl: './login.component.html',
-  styleUrls: ['../auth-shared.css'],
+  host: { class: 'block' },
 })
 export class LoginComponent {
   private readonly auth = inject(AuthService);

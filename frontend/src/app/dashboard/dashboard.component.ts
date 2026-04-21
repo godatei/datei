@@ -15,7 +15,6 @@ import { Datei } from 'frontend/src/api/models';
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.css',
   imports: [
     MatGridListModule,
     MatMenuModule,
