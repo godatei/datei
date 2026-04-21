@@ -33,19 +33,17 @@
       @for (email of emails(); track email.id; let last = $last) {
         <div class="flex items-center gap-2 py-3">
           <span class="grow break-all">{{ email.email }}</span>
-          <span class="flex gap-1">
-            <mat-chip-set>
-              @if (email.isPrimary) {
-                <mat-chip highlighted>Primary</mat-chip>
-              }
-              @if (email.verified) {
-                <mat-chip>Verified</mat-chip>
-              } @else {
-                <mat-chip class="opacity-70">Unverified</mat-chip>
-              }
-            </mat-chip-set>
-          </span>
-          <span class="flex gap-1">
+          <mat-chip-set>
+            @if (email.isPrimary) {
+              <mat-chip highlighted>Primary</mat-chip>
+            }
+            @if (email.verified) {
+              <mat-chip>Verified</mat-chip>
+            } @else {
+              <mat-chip class="opacity-70">Unverified</mat-chip>
+            }
+          </mat-chip-set>
+          <div class="flex gap-1">
             @if (!email.isPrimary && email.verified) {
               <button mat-button (click)="setPrimary(email.id)" [disabled]="emailsLoading()">
                 Set primary
@@ -62,7 +60,7 @@
                 <mat-icon>delete</mat-icon>
               </button>
             }
-          </span>
+          </div>
         </div>
         @if (!last) {
           <mat-divider></mat-divider>
