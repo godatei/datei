@@ -75,4 +75,3 @@ func (s *server) ResetPassword(
 	})
 	return ResetPassword204Response{}, nil
 }
-
