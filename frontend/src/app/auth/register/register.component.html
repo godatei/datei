@@ -1,23 +1,27 @@
-<div class="auth-container">
-  <mat-card class="auth-card">
+<div class="flex justify-center items-center min-h-screen p-4 mat-bg-surface-container-low">
+  <mat-card class="auth-card w-full max-w-md">
     <mat-card-content>
-      <div class="auth-header">
-        <img ngSrc="datei-logo.svg" class="brand-logo" alt="Datei" width="48" height="48" />
-        <h1>Create your account</h1>
-        <p class="subtitle">to get started with Datei</p>
+      <div class="flex flex-col items-center mb-6 text-center">
+        <img ngSrc="datei-logo.svg" class="mb-3" alt="Datei" width="48" height="48" />
+        <h1 class="mat-font-title-lg m-0">Create your account</h1>
+        <p class="mat-font-body-md mat-text-on-surface-variant mt-1">to get started with Datei</p>
       </div>
 
       @if (errorMessage()) {
-        <div class="error-banner">{{ errorMessage() }}</div>
+        <div
+          class="mat-font-body-md mat-corner-sm mat-bg-error-container mat-text-on-error-container px-4 py-3 mb-4"
+        >
+          {{ errorMessage() }}
+        </div>
       }
 
-      <form class="auth-form" [formRoot]="form">
-        <mat-form-field class="form-field" appearance="outline">
+      <form class="flex flex-col gap-3" [formRoot]="form">
+        <mat-form-field class="w-full" appearance="outline">
           <mat-label>Name</mat-label>
           <input matInput [formField]="form.name" autocomplete="name" />
         </mat-form-field>
 
-        <mat-form-field class="form-field" appearance="outline">
+        <mat-form-field class="w-full" appearance="outline">
           <mat-label>Email</mat-label>
           <input matInput [formField]="form.email" type="email" autocomplete="email" />
         </mat-form-field>
@@ -25,7 +29,7 @@
         <app-password-confirm [password]="form.password" [confirmPassword]="form.confirmPassword" />
 
         <button
-          class="submit-btn"
+          class="w-full mt-2"
           mat-flat-button
           type="submit"
           [disabled]="form().submitting() || form().invalid()"
@@ -38,8 +42,12 @@
         </button>
       </form>
 
-      <div class="auth-links">
-        <a routerLink="/login">Already have an account? Sign in</a>
+      <div class="flex justify-center gap-2 mt-6">
+        <a
+          routerLink="/login"
+          class="mat-font-label-lg mat-text-primary no-underline hover:underline"
+          >Already have an account? Sign in</a
+        >
       </div>
     </mat-card-content>
   </mat-card>

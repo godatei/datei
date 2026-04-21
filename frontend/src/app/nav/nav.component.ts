@@ -14,7 +14,6 @@ import { AuthService } from '~/frontend/services/auth.service';
 @Component({
   selector: 'app-nav',
   templateUrl: './nav.component.html',
-  styleUrl: './nav.component.css',
   imports: [
     NgOptimizedImage,
     MatToolbarModule,

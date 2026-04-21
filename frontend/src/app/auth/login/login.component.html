@@ -1,24 +1,28 @@
-<div class="auth-container">
-  <mat-card class="auth-card">
+<div class="flex justify-center items-center min-h-screen p-4 mat-bg-surface-container-low">
+  <mat-card class="auth-card w-full max-w-md">
     <mat-card-content>
-      <div class="auth-header">
-        <img ngSrc="datei-logo.svg" class="brand-logo" alt="Datei" width="48" height="48" />
-        <h1>Sign in</h1>
-        <p class="subtitle">to continue to Datei</p>
+      <div class="flex flex-col items-center mb-6 text-center">
+        <img ngSrc="datei-logo.svg" class="mb-3" alt="Datei" width="48" height="48" />
+        <h1 class="mat-font-title-lg">Sign in</h1>
+        <p class="mat-font-body-md mat-text-on-surface-variant mt-1">to continue to Datei</p>
       </div>
 
       @if (errorMessage()) {
-        <div class="error-banner">{{ errorMessage() }}</div>
+        <div
+          class="mat-font-body-md mat-corner-sm mat-bg-error-container mat-text-on-error-container px-4 py-3 mb-4"
+        >
+          {{ errorMessage() }}
+        </div>
       }
 
       @if (!mfaRequired()) {
-        <form class="auth-form" [formRoot]="loginForm">
-          <mat-form-field class="form-field" appearance="outline">
+        <form class="flex flex-col gap-3" [formRoot]="loginForm">
+          <mat-form-field class="w-full" appearance="outline">
             <mat-label>Email</mat-label>
             <input matInput [formField]="loginForm.email" type="email" autocomplete="email" />
           </mat-form-field>
 
-          <mat-form-field class="form-field" appearance="outline">
+          <mat-form-field class="w-full" appearance="outline">
             <mat-label>Password</mat-label>
             <input
               matInput
@@ -29,7 +33,7 @@
           </mat-form-field>
 
           <button
-            class="submit-btn"
+            class="w-full mt-2"
             mat-flat-button
             type="submit"
             [disabled]="loginForm().submitting() || loginForm().invalid()"
@@ -42,20 +46,28 @@
           </button>
         </form>
 
-        <div class="auth-links">
-          <a routerLink="/forgot">Forgot password?</a>
-          <a routerLink="/register">Create an account</a>
+        <div class="flex justify-center gap-2 mt-6">
+          <a
+            routerLink="/forgot"
+            class="mat-font-label-lg mat-text-primary no-underline hover:underline"
+            >Forgot password?</a
+          >
+          <a
+            routerLink="/register"
+            class="mat-font-label-lg mat-text-primary no-underline hover:underline"
+            >Create an account</a
+          >
         </div>
       } @else {
-        <form class="auth-form" [formRoot]="mfaForm">
-          <mat-form-field class="form-field" appearance="outline">
+        <form class="flex flex-col gap-3" [formRoot]="mfaForm">
+          <mat-form-field class="w-full" appearance="outline">
             <mat-label>MFA Code</mat-label>
             <input matInput [formField]="mfaForm.code" autocomplete="one-time-code" />
             <mat-hint>Enter your 6-digit code or a recovery code</mat-hint>
           </mat-form-field>
 
           <button
-            class="submit-btn"
+            class="w-full mt-2"
             mat-flat-button
             type="submit"
             [disabled]="mfaForm().submitting() || mfaForm().invalid()"

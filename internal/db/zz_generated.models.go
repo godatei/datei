@@ -55,108 +55,6 @@ func (ns NullDateiPermissionType) Value() (driver.Value, error) {
 	return string(ns.DateiPermissionType), nil
 }
 
-type PublicLinkPermissionType string
-
-const (
-	PublicLinkPermissionTypeReadOnly  PublicLinkPermissionType = "read_only"
-	PublicLinkPermissionTypeReadWrite PublicLinkPermissionType = "read_write"
-)
-
-func (e *PublicLinkPermissionType) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = PublicLinkPermissionType(s)
-	case string:
-		*e = PublicLinkPermissionType(s)
-	default:
-		return fmt.Errorf("unsupported scan type for PublicLinkPermissionType: %T", src)
-	}
-	return nil
-}
-
-type NullPublicLinkPermissionType struct {
-	PublicLinkPermissionType PublicLinkPermissionType
-	Valid                    bool // Valid is true if PublicLinkPermissionType is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullPublicLinkPermissionType) Scan(value interface{}) error {
-	if value == nil {
-		ns.PublicLinkPermissionType, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.PublicLinkPermissionType.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullPublicLinkPermissionType) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.PublicLinkPermissionType), nil
-}
-
-type UserGroupRole string
-
-const (
-	UserGroupRoleAdmin  UserGroupRole = "admin"
-	UserGroupRoleMember UserGroupRole = "member"
-)
-
-func (e *UserGroupRole) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = UserGroupRole(s)
-	case string:
-		*e = UserGroupRole(s)
-	default:
-		return fmt.Errorf("unsupported scan type for UserGroupRole: %T", src)
-	}
-	return nil
-}
-
-type NullUserGroupRole struct {
-	UserGroupRole UserGroupRole
-	Valid         bool // Valid is true if UserGroupRole is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullUserGroupRole) Scan(value interface{}) error {
-	if value == nil {
-		ns.UserGroupRole, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.UserGroupRole.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullUserGroupRole) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.UserGroupRole), nil
-}
-
-type DateiAnnotation struct {
-	ID        uuid.UUID `db:"id"`
-	DateiID   uuid.UUID `db:"datei_id"`
-	Key       string    `db:"key"`
-	Value     string    `db:"value"`
-	CreatedAt time.Time `db:"created_at"`
-	UpdatedAt time.Time `db:"updated_at"`
-}
-
-type DateiComment struct {
-	ID            uuid.UUID `db:"id"`
-	DateiID       uuid.UUID `db:"datei_id"`
-	UserAccountID uuid.UUID `db:"user_account_id"`
-	Content       string    `db:"content"`
-	CreatedAt     time.Time `db:"created_at"`
-	UpdatedAt     time.Time `db:"updated_at"`
-}
-
 type DateiEvent struct {
 	ID            int64     `db:"id"`
 	StreamID      uuid.UUID `db:"stream_id"`
@@ -164,21 +62,6 @@ type DateiEvent struct {
 	EventType     string    `db:"event_type"`
 	EventData     []byte    `db:"event_data"`
 	CreatedAt     time.Time `db:"created_at"`
-}
-
-type DateiLabel struct {
-	DateiID uuid.UUID `db:"datei_id"`
-	LabelID uuid.UUID `db:"label_id"`
-}
-
-type DateiPermission struct {
-	ID             uuid.UUID           `db:"id"`
-	DateiID        uuid.UUID           `db:"datei_id"`
-	UserAccountID  *uuid.UUID          `db:"user_account_id"`
-	UserGroupID    *uuid.UUID          `db:"user_group_id"`
-	PermissionType DateiPermissionType `db:"permission_type"`
-	IsFavorite     bool                `db:"is_favorite"`
-	CreatedAt      time.Time           `db:"created_at"`
 }
 
 type DateiPermissionProjection struct {
@@ -209,28 +92,6 @@ type DateiProjection struct {
 	CreatedBy     *uuid.UUID  `db:"created_by"`
 	UpdatedBy     *uuid.UUID  `db:"updated_by"`
 	TrashedBy     *uuid.UUID  `db:"trashed_by"`
-}
-
-type Label struct {
-	ID              uuid.UUID `db:"id"`
-	Name            string    `db:"name"`
-	ForegroundColor string    `db:"foreground_color"`
-	BackgroundColor string    `db:"background_color"`
-	CreatedAt       time.Time `db:"created_at"`
-}
-
-type PublicLink struct {
-	ID             uuid.UUID                `db:"id"`
-	Token          string                   `db:"token"`
-	CreatedBy      uuid.UUID                `db:"created_by"`
-	PermissionType PublicLinkPermissionType `db:"permission_type"`
-	ExpiresAt      *time.Time               `db:"expires_at"`
-	CreatedAt      time.Time                `db:"created_at"`
-}
-
-type PublicLinkDatei struct {
-	PublicLinkID uuid.UUID `db:"public_link_id"`
-	DateiID      uuid.UUID `db:"datei_id"`
 }
 
 type UserAccountEmailProjection struct {
@@ -272,19 +133,4 @@ type UserAccountProjection struct {
 	LastLoggedInAt *time.Time `db:"last_logged_in_at"`
 	CreatedAt      time.Time  `db:"created_at"`
 	UpdatedAt      time.Time  `db:"updated_at"`
-}
-
-type UserGroup struct {
-	ID         uuid.UUID  `db:"id"`
-	Name       string     `db:"name"`
-	CreatedBy  uuid.UUID  `db:"created_by"`
-	ArchivedAt *time.Time `db:"archived_at"`
-	CreatedAt  time.Time  `db:"created_at"`
-}
-
-type UserGroupMember struct {
-	UserAccountID uuid.UUID     `db:"user_account_id"`
-	UserGroupID   uuid.UUID     `db:"user_group_id"`
-	Role          UserGroupRole `db:"role"`
-	CreatedAt     time.Time     `db:"created_at"`
 }

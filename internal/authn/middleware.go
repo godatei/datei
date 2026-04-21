@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3filter"
-	"github.com/go-chi/jwtauth/v5"
 	"github.com/godatei/datei/internal/authjwt"
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v3/jwt"
@@ -24,7 +23,7 @@ type AuthInfo struct {
 	Name          string
 	Email         string
 	EmailVerified bool
-	PasswordReset bool
+	Action        authjwt.Action
 }
 
 // OpenAPIAuthFunc returns an openapi3filter.AuthenticationFunc that validates
@@ -49,7 +48,7 @@ func OpenAPIAuthFunc() openapi3filter.AuthenticationFunc {
 			return errors.New("invalid Authorization header format")
 		}
 
-		token, err := jwtauth.VerifyToken(authjwt.JWTAuth(), tokenString)
+		token, err := authjwt.ParseToken(tokenString)
 		if err != nil {
 			slog.Debug("auth: token verification failed", "path", r.URL.Path, "error", err)
 			return fmt.Errorf("invalid token: %w", err)
@@ -59,6 +58,22 @@ func OpenAPIAuthFunc() openapi3filter.AuthenticationFunc {
 		if err != nil {
 			slog.Debug("auth: failed to extract claims", "path", r.URL.Path, "error", err)
 			return fmt.Errorf("failed to extract claims: %w", err)
+		}
+
+		if ext, ok := input.RequestValidationInput.Route.Operation.Extensions["x-required-action"]; ok {
+			extStr, ok := ext.(string)
+			if !ok {
+				return fmt.Errorf("x-required-action extension must be a string")
+			}
+			required, err := authjwt.ParseAction(extStr)
+			if err != nil {
+				return fmt.Errorf("invalid x-required-action extension: %w", err)
+			}
+			if info.Action != required {
+				return fmt.Errorf("token action %q not allowed for this endpoint", info.Action)
+			}
+		} else if info.Action != "" {
+			return fmt.Errorf("token action %q not allowed for this endpoint", info.Action)
 		}
 
 		newCtx := context.WithValue(r.Context(), contextKey{}, info)
@@ -109,9 +124,13 @@ func extractAuthInfo(token jwt.Token) (AuthInfo, error) {
 	if err := token.Get(authjwt.UserEmailVerifiedKey, &verified); err == nil {
 		info.EmailVerified = verified
 	}
-	var reset bool
-	if err := token.Get(authjwt.PasswordResetKey, &reset); err == nil {
-		info.PasswordReset = reset
+	var actionStr string
+	if err := token.Get(authjwt.ActionKey, &actionStr); err == nil {
+		action, err := authjwt.ParseAction(actionStr)
+		if err != nil {
+			return AuthInfo{}, err
+		}
+		info.Action = action
 	}
 
 	return info, nil

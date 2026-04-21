@@ -25,7 +25,7 @@ import {
     PasswordConfirmComponent,
   ],
   templateUrl: './reset.component.html',
-  styleUrls: ['../auth-shared.css'],
+  host: { class: 'block' },
 })
 export class ResetComponent {
   private readonly settings = inject(SettingsService);
@@ -45,9 +45,7 @@ export class ResetComponent {
         action: async () => {
           this.errorMessage.set('');
           try {
-            await firstValueFrom(
-              this.settings.updateUser({ password: this.model().password }, true),
-            );
+            await firstValueFrom(this.settings.confirmResetPassword(this.model().password));
             this.auth.logout();
             this.router.navigate(['/login']);
           } catch {

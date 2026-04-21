@@ -1,13 +1,13 @@
-<div class="settings-container">
-  <h2 class="page-title">Settings</h2>
+<div class="max-w-xl mx-auto flex flex-col gap-6 px-4 my-8">
+  <h2 class="mat-font-headline-sm m-0">Settings</h2>
 
   <!-- Profile -->
   <mat-card>
     <mat-card-header><mat-card-title>Profile</mat-card-title></mat-card-header>
     <mat-card-content>
-      <p class="section-description">Manage your display name</p>
-      <form [formRoot]="profileForm">
-        <mat-form-field appearance="outline">
+      <p class="mat-font-body-md mat-text-on-surface-variant mb-4">Manage your display name</p>
+      <form class="flex flex-col gap-2" [formRoot]="profileForm">
+        <mat-form-field class="w-full" appearance="outline">
           <mat-label>Name</mat-label>
           <input matInput [formField]="profileForm.name" />
         </mat-form-field>
@@ -15,7 +15,7 @@
           mat-flat-button
           type="submit"
           [disabled]="profileForm().submitting()"
-          class="action-btn"
+          class="self-end"
         >
           Save
         </button>
@@ -27,23 +27,23 @@
   <mat-card>
     <mat-card-header><mat-card-title>Email Addresses</mat-card-title></mat-card-header>
     <mat-card-content>
-      <p class="section-description">Control your email addresses and verification status</p>
+      <p class="mat-font-body-md mat-text-on-surface-variant mb-4">
+        Control your email addresses and verification status
+      </p>
       @for (email of emails(); track email.id; let last = $last) {
-        <div class="email-row">
-          <span class="email-address">{{ email.email }}</span>
-          <span class="email-badges">
-            <mat-chip-set>
-              @if (email.isPrimary) {
-                <mat-chip highlighted>Primary</mat-chip>
-              }
-              @if (email.verified) {
-                <mat-chip>Verified</mat-chip>
-              } @else {
-                <mat-chip class="chip-unverified">Unverified</mat-chip>
-              }
-            </mat-chip-set>
-          </span>
-          <span class="email-actions">
+        <div class="flex items-center gap-2 py-3">
+          <span class="grow break-all">{{ email.email }}</span>
+          <mat-chip-set>
+            @if (email.isPrimary) {
+              <mat-chip highlighted>Primary</mat-chip>
+            }
+            @if (email.verified) {
+              <mat-chip>Verified</mat-chip>
+            } @else {
+              <mat-chip class="opacity-70">Unverified</mat-chip>
+            }
+          </mat-chip-set>
+          <div class="flex gap-1">
             @if (!email.isPrimary && email.verified) {
               <button mat-button (click)="setPrimary(email.id)" [disabled]="emailsLoading()">
                 Set primary
@@ -60,14 +60,14 @@
                 <mat-icon>delete</mat-icon>
               </button>
             }
-          </span>
+          </div>
         </div>
         @if (!last) {
           <mat-divider></mat-divider>
         }
       }
-      <form [formRoot]="addEmailForm" class="add-email-form">
-        <mat-form-field appearance="outline">
+      <form class="flex flex-col gap-2 mt-4" [formRoot]="addEmailForm">
+        <mat-form-field class="w-full" appearance="outline">
           <mat-label>Add email address</mat-label>
           <input matInput [formField]="addEmailForm.email" type="email" />
         </mat-form-field>
@@ -86,9 +86,9 @@
   <mat-card>
     <mat-card-header><mat-card-title>Change Password</mat-card-title></mat-card-header>
     <mat-card-content>
-      <p class="section-description">Update your password</p>
-      <form [formRoot]="passwordForm">
-        <mat-form-field appearance="outline">
+      <p class="mat-font-body-md mat-text-on-surface-variant mb-4">Update your password</p>
+      <form class="flex flex-col gap-2" [formRoot]="passwordForm">
+        <mat-form-field class="w-full" appearance="outline">
           <mat-label>Current password</mat-label>
           <input
             matInput
@@ -118,22 +118,24 @@
   <mat-card>
     <mat-card-header><mat-card-title>Two-Factor Authentication</mat-card-title></mat-card-header>
     <mat-card-content>
-      <p class="section-description">Add an extra layer of security to your account</p>
+      <p class="mat-font-body-md mat-text-on-surface-variant mb-4">
+        Add an extra layer of security to your account
+      </p>
 
       @if (mfaSetupData()) {
-        <div class="mfa-setup">
+        <div class="flex flex-col gap-3">
           <p>Scan this QR code with your authenticator app:</p>
-          <div class="qr-container">
+          <div class="flex justify-center p-4 mat-corner-md mat-bg-surface-container">
             <img [src]="mfaSetupData()!.qrCodeUrl" alt="MFA QR Code" width="200" height="200" />
           </div>
-          <div class="secret-row">
-            <span class="mfa-secret">{{ mfaSetupData()!.secret }}</span>
+          <div class="flex items-center gap-2">
+            <span class="font-mono break-all grow">{{ mfaSetupData()!.secret }}</span>
             <button mat-icon-button (click)="copySecret()" aria-label="Copy secret to clipboard">
               <mat-icon>content_copy</mat-icon>
             </button>
           </div>
-          <form [formRoot]="mfaEnableForm">
-            <mat-form-field appearance="outline">
+          <form class="flex flex-col gap-2" [formRoot]="mfaEnableForm">
+            <mat-form-field class="w-full" appearance="outline">
               <mat-label>Verification code</mat-label>
               <input matInput [formField]="mfaEnableForm.code" autocomplete="one-time-code" />
             </mat-form-field>
@@ -148,8 +150,12 @@
         </div>
       } @else if (recoveryCodes()) {
         <p>Save these recovery codes in a safe place:</p>
-        <div class="recovery-codes-container">
-          <ul class="recovery-codes" role="list" aria-label="Recovery codes">
+        <div class="p-4 mb-4 mat-corner-sm mat-bg-surface-container">
+          <ul
+            class="font-mono list-none mb-2 grid grid-cols-2 gap-1"
+            role="list"
+            aria-label="Recovery codes"
+          >
             @for (code of recoveryCodes()!; track code) {
               <li>{{ code }}</li>
             }
@@ -161,15 +167,15 @@
         </div>
         <button mat-flat-button (click)="recoveryCodes.set(undefined)">Done</button>
       } @else if (!mfaEnabled()) {
-        <button mat-flat-button (click)="setupMFA()" [disabled]="mfaLoading()" class="action-btn">
+        <button mat-flat-button (click)="setupMFA()" [disabled]="mfaLoading()" class="self-end">
           Set up MFA
         </button>
       } @else {
         <p>Two-factor authentication is enabled.</p>
-        <div class="danger-zone">
-          <p class="danger-label">Disable two-factor authentication</p>
-          <form [formRoot]="mfaDisableForm">
-            <mat-form-field appearance="outline">
+        <div class="border p-4 mt-4 mat-corner-sm" style="border-color: var(--mat-sys-error)">
+          <p class="mat-font-label-lg mat-text-error mb-3">Disable two-factor authentication</p>
+          <form class="flex flex-col gap-2" [formRoot]="mfaDisableForm">
+            <mat-form-field class="w-full" appearance="outline">
               <mat-label>Password</mat-label>
               <input matInput [formField]="mfaDisableForm.password" type="password" />
             </mat-form-field>

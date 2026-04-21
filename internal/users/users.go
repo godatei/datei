@@ -46,7 +46,7 @@ func (s *UserService) GetUser(ctx context.Context, userID uuid.UUID) (db.UserAcc
 }
 
 func (s *UserService) sendVerificationEmail(ctx context.Context, userID uuid.UUID, email string) {
-	_, token, err := authjwt.GenerateVerificationToken(userID, email)
+	token, err := authjwt.GenerateVerificationToken(userID, email)
 	if err != nil {
 		slog.Error("failed to generate verification token", "error", err)
 		return

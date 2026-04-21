@@ -26,7 +26,7 @@ export interface JWTClaims {
   name: string;
   email: string;
   email_verified: boolean;
-  password_reset?: boolean;
+  action?: 'verify-email' | 'reset-password';
   exp: number;
   [claim: string]: unknown;
 }
