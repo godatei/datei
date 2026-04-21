@@ -92,7 +92,7 @@ func (s *UserService) Login(ctx context.Context, input LoginInput) (*LoginOutput
 
 	emailVerified := !config.AuthEmailVerificationRequired() || primaryEmail.VerifiedAt != nil
 
-	_, tokenString, err := authjwt.GenerateDefaultToken(user.ID, user.Name, primaryEmail.Email, emailVerified)
+	tokenString, err := authjwt.GenerateDefaultToken(user.ID, user.Name, primaryEmail.Email, emailVerified)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate token: %w", err)
 	}
@@ -183,7 +183,7 @@ func (s *UserService) ResetPassword(ctx context.Context, input ResetPasswordInpu
 		return
 	}
 
-	_, token, err := authjwt.GenerateResetToken(user.ID, primaryEmail.Email)
+	token, err := authjwt.GenerateResetToken(user.ID, primaryEmail.Email)
 	if err != nil {
 		slog.Error("failed to generate reset token", "error", err)
 		return

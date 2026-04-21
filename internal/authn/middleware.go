@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3filter"
-	"github.com/go-chi/jwtauth/v5"
 	"github.com/godatei/datei/internal/authjwt"
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v3/jwt"
@@ -49,7 +48,7 @@ func OpenAPIAuthFunc() openapi3filter.AuthenticationFunc {
 			return errors.New("invalid Authorization header format")
 		}
 
-		token, err := jwtauth.VerifyToken(authjwt.JWTAuth(), tokenString)
+		token, err := authjwt.ParseToken(tokenString)
 		if err != nil {
 			slog.Debug("auth: token verification failed", "path", r.URL.Path, "error", err)
 			return fmt.Errorf("invalid token: %w", err)
