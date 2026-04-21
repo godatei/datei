@@ -33,7 +33,7 @@ services:
     build:
       context: ocrserver
     ports:
-      - '127.0.0.1:8585:8585'
+      - '127.0.0.1:8082:8082'
     restart: unless-stopped
 
 volumes:

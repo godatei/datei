@@ -27,5 +27,5 @@ RUN apk add --no-cache \
 
 COPY --from=builder /app/ocrserver /usr/local/bin/ocrserver
 
-EXPOSE 8585
+EXPOSE 8082
 ENTRYPOINT ["/usr/local/bin/ocrserver"]

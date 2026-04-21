@@ -26,7 +26,7 @@ type Options struct {
 }
 
 func (opts *Options) Bind(flags *pflag.FlagSet) {
-	flags.StringVar(&opts.Addr, "addr", ":8585", "Serve address")
+	flags.StringVar(&opts.Addr, "addr", ":8082", "Serve address")
 }
 
 func main() {
