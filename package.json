@@ -46,7 +46,7 @@
     "@angular/build": "^21.1.4",
     "@angular/cli": "^21.1.4",
     "@angular/compiler-cli": "^21.1.0",
-    "@angular/material": "21.2.7",
+    "@angular/material": "21.2.8",
     "@eslint/js": "^10.0.0",
     "@redocly/cli": "^2.19.2",
     "@tailwindcss/postcss": "^4.2.4",
