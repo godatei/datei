@@ -6,7 +6,7 @@ go = "1.26.2"
 golangci-lint = "2.11.4"
 ko = "0.18.1"
 node = "24"
-pnpm = "10.33.0"
+pnpm = "10.33.1"
 github-cli = "2.91.0"
 watchexec = "2.3.2"
 
