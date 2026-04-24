@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -117,6 +118,21 @@ func (s *server) CreateDatei(
 	}
 
 	return CreateDatei201JSONResponse(*result), nil
+}
+
+// GetDateiPath implements [StrictServerInterface].
+func (s *server) GetDateiPath(
+	ctx context.Context,
+	request GetDateiPathRequestObject,
+) (GetDateiPathResponseObject, error) {
+	path, err := s.dateiService.GetDateiPath(ctx, request.Id)
+	if err != nil {
+		if errors.Is(err, dateierrors.ErrNotFound) {
+			return GetDateiPath404Response{}, nil
+		}
+		return nil, err
+	}
+	return GetDateiPath200JSONResponse(path), nil
 }
 
 // DownloadDatei implements [StrictServerInterface].

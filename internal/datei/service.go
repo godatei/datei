@@ -207,6 +207,25 @@ func (s *Service) UpdateDatei(ctx context.Context, input UpdateDateiInput) (*api
 	return MapAggregateToAPI(agg), nil
 }
 
+// GetDateiPath returns the ancestor chain from root to the given datei (inclusive), root-first.
+func (s *Service) GetDateiPath(ctx context.Context, dateiID uuid.UUID) ([]api.DateiPathItem, error) {
+	queries := db.New(s.db)
+
+	rows, err := queries.GetDateiPath(ctx, dateiID)
+	if err != nil {
+		return nil, err
+	}
+	if len(rows) == 0 {
+		return nil, dateierrors.ErrNotFound
+	}
+
+	path := make([]api.DateiPathItem, len(rows))
+	for i, row := range rows {
+		path[i] = api.DateiPathItem{Id: row.ID, Name: row.Name}
+	}
+	return path, nil
+}
+
 // DeleteDatei soft-deletes a datei record
 func (s *Service) DeleteDatei(ctx context.Context, dateiID uuid.UUID) error {
 	agg, err := s.repository.LoadByID(ctx, dateiID)

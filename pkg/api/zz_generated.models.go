@@ -83,6 +83,12 @@ type Datei struct {
 	UpdatedBy *openapi_types.UUID `json:"updatedBy,omitempty"`
 }
 
+// DateiPathItem defines model for DateiPathItem.
+type DateiPathItem struct {
+	Id   openapi_types.UUID `json:"id"`
+	Name string             `json:"name"`
+}
+
 // DisableMFARequest defines model for DisableMFARequest.
 type DisableMFARequest struct {
 	Password string `json:"password"`

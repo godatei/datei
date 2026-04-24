@@ -51,6 +51,16 @@ UPDATE datei_projection
  SET linked_datei_id = NULL, updated_at = $1, updated_by = NULL
  WHERE id = $2;
 
+-- name: GetDateiPath :many
+WITH RECURSIVE ancestors(id, parent_id, name, depth) AS (
+  SELECT d.id, d.parent_id, d.name, 0 FROM datei_projection d WHERE d.id = $1
+  UNION ALL
+  SELECT p.id, p.parent_id, p.name, a.depth + 1
+  FROM datei_projection p
+  INNER JOIN ancestors a ON p.id = a.parent_id
+)
+SELECT id, name FROM ancestors ORDER BY depth DESC;
+
 -- name: InsertDateiPermissionProjection :exec
 INSERT INTO datei_permission_projection
  (id, datei_id, user_account_id, user_group_id, permission_type, created_at)
