@@ -11,6 +11,7 @@ import (
 	"github.com/godatei/datei/internal/datei"
 	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/pkg/api"
+	"github.com/google/uuid"
 )
 
 // ListDatei implements [StrictServerInterface].
@@ -51,6 +52,7 @@ func (s *server) CreateDatei(
 ) (CreateDateiResponseObject, error) {
 	// Parse multipart request
 	reader := request.Body
+	var parentID *uuid.UUID
 	var fileData io.Reader
 	var fileName string
 	var contentType string
@@ -65,6 +67,18 @@ func (s *server) CreateDatei(
 		}
 
 		switch part.FormName() {
+		case "parentId":
+			raw, err := io.ReadAll(io.LimitReader(part, 64))
+			if err != nil {
+				return CreateDatei400JSONResponse{Message: err.Error()}, nil
+			}
+			if s := strings.TrimSpace(string(raw)); s != "" {
+				parsed, err := uuid.Parse(s)
+				if err != nil {
+					return CreateDatei400JSONResponse{Message: "invalid parentId"}, nil
+				}
+				parentID = &parsed
+			}
 		case nameFormField:
 			fileNameData, err := io.ReadAll(io.LimitReader(part, 1024))
 			if err != nil {
@@ -91,11 +105,8 @@ func (s *server) CreateDatei(
 		return CreateDatei400JSONResponse{Message: "filename is required"}, nil
 	}
 
-	if fileData == nil {
-		return CreateDatei400JSONResponse{Message: "file is required (directory creation is not implemented)"}, nil
-	}
-
 	result, err := s.dateiService.CreateDatei(ctx, datei.CreateDateiInput{
+		ParentID:    parentID,
 		Reader:      fileData,
 		FileName:    fileName,
 		ContentType: contentType,

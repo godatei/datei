@@ -71,7 +71,11 @@
 
 <input type="file" style="display: none" #uploadInput (change)="startUpload($event.target)" />
 
-<div class="fixed bottom-8 right-8">
+<div class="fixed bottom-8 right-8 flex flex-col items-end gap-3">
+  <button matFab extended (click)="openNewFolderDialog()">
+    <mat-icon>create_new_folder</mat-icon>
+    New folder
+  </button>
   <button matFab extended (click)="uploadInput.click()" [disabled]="uploading()">
     <mat-icon>upload</mat-icon>
     Upload

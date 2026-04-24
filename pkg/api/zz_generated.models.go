@@ -30,6 +30,9 @@ type CreateDateiRequest struct {
 
 	// Name Name for the new Datei
 	Name *string `json:"name,omitempty"`
+
+	// ParentId Parent directory ID (omit for root)
+	ParentId *openapi_types.UUID `json:"parentId,omitempty"`
 }
 
 // Datei defines model for Datei.

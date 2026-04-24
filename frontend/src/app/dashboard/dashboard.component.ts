@@ -3,6 +3,7 @@ import { Component, computed, effect, inject, resource, signal } from '@angular/
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatDialog } from '@angular/material/dialog';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -13,6 +14,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Api } from 'frontend/src/api/api';
 import { createDatei, listDatei } from 'frontend/src/api/functions';
 import { Datei } from 'frontend/src/api/models';
+import { NewFolderDialogComponent } from './new-folder-dialog.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -31,6 +33,7 @@ import { Datei } from 'frontend/src/api/models';
 export class DashboardComponent {
   private readonly api = inject(Api);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
@@ -70,6 +73,21 @@ export class DashboardComponent {
     this.location.back();
   }
 
+  protected openNewFolderDialog(): void {
+    const ref = this.dialog.open(NewFolderDialogComponent, { width: '360px' });
+    ref.afterClosed().subscribe(async (name: string | null) => {
+      if (!name) return;
+      try {
+        const parentId = this.parentId() ?? undefined;
+        await this.api.invoke(createDatei, { body: { name, parentId } });
+        this.refresh.update((v) => v + 1);
+      } catch (e) {
+        console.error(e);
+        this.snackBar.open('Failed to create folder', 'Dismiss', { duration: 4000 });
+      }
+    });
+  }
+
   protected async startUpload(el: HTMLInputElement) {
     if (el.files === null || el.files.length === 0) {
       return;
@@ -79,7 +97,8 @@ export class DashboardComponent {
     this.uploading.set(true);
     try {
       const file = el.files[0];
-      await this.api.invoke(createDatei, { body: { file } });
+      const parentId = this.parentId() ?? undefined;
+      await this.api.invoke(createDatei, { body: { file, parentId } });
       this.refresh.update((v) => v + 1);
     } catch (e) {
       console.error(e);

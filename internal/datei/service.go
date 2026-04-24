@@ -82,6 +82,7 @@ func (s *Service) ListDatei(ctx context.Context, input ListDateiInput) (*ListDat
 
 // CreateDateiInput contains parameters for creating a datei
 type CreateDateiInput struct {
+	ParentID    *uuid.UUID
 	Reader      io.Reader
 	FileName    string
 	ContentType string
@@ -96,7 +97,7 @@ func (s *Service) CreateDatei(ctx context.Context, input CreateDateiInput) (*api
 	userID := authn.RequireContext(ctx).UserID
 
 	agg := &Aggregate{}
-	if err := agg.Create(id, nil, isDirectory, input.FileName, userID, now); err != nil {
+	if err := agg.Create(id, input.ParentID, isDirectory, input.FileName, userID, now); err != nil {
 		return nil, err
 	}
 

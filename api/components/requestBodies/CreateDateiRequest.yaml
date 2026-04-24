@@ -1,5 +1,9 @@
 type: object
 properties:
+  parentId:
+    type: string
+    format: uuid
+    description: Parent directory ID (omit for root)
   name:
     type: string
     description: Name for the new Datei
