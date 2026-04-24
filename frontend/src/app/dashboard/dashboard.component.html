@@ -61,6 +61,26 @@
       <td mat-cell *matCellDef="let element">{{ element.mimeType }}</td>
     </ng-container>
 
+    <ng-container matColumnDef="actions" stickyEnd>
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let element" class="w-12 text-right">
+        <button
+          matIconButton
+          [matMenuTriggerFor]="rowMenu"
+          (click)="$event.stopPropagation()"
+          aria-label="More actions"
+        >
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        <mat-menu #rowMenu="matMenu">
+          <button mat-menu-item (click)="trashDatei(element.id, $event)">
+            <mat-icon>delete</mat-icon>
+            Move to trash
+          </button>
+        </mat-menu>
+      </td>
+    </ng-container>
+
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
     <tr
       mat-row

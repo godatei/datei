@@ -12,7 +12,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Api } from 'frontend/src/api/api';
-import { createDatei, listDatei } from 'frontend/src/api/functions';
+import { createDatei, deleteDatei, listDatei } from 'frontend/src/api/functions';
 import { Datei } from 'frontend/src/api/models';
 import { NewFolderDialogComponent } from './new-folder-dialog.component';
 
@@ -49,7 +49,7 @@ export class DashboardComponent {
       this.api.invoke(listDatei, params.parentId ? { parentId: params.parentId } : undefined),
   });
   protected readonly dataSource = new MatTableDataSource<Datei>([]);
-  protected readonly displayedColumns = ['name', 'createdAt', 'updatedAt', 'mimeType'];
+  protected readonly displayedColumns = ['name', 'createdAt', 'updatedAt', 'mimeType', 'actions'];
   protected readonly uploading = signal(false);
 
   constructor() {
@@ -86,6 +86,17 @@ export class DashboardComponent {
         this.snackBar.open('Failed to create folder', 'Dismiss', { duration: 4000 });
       }
     });
+  }
+
+  protected async trashDatei(id: string, event: Event): Promise<void> {
+    event.stopPropagation();
+    try {
+      await this.api.invoke(deleteDatei, { id });
+      this.refresh.update((v) => v + 1);
+    } catch (e) {
+      console.error(e);
+      this.snackBar.open('Failed to move to trash', 'Dismiss', { duration: 4000 });
+    }
   }
 
   protected async startUpload(el: HTMLInputElement) {
