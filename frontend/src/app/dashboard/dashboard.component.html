@@ -37,10 +37,12 @@
     <ng-container matColumnDef="name">
       <th mat-header-cell *matHeaderCellDef>Name</th>
       <td mat-cell *matCellDef="let element">
-        <mat-icon aria-hidden="true">{{
-          element.isDirectory ? 'folder' : 'insert_drive_file'
-        }}</mat-icon>
-        {{ element.name }}
+        <div class="flex items-center gap-2">
+          <mat-icon aria-hidden="true">{{
+            element.isDirectory ? 'folder' : 'insert_drive_file'
+          }}</mat-icon>
+          {{ element.name }}
+        </div>
       </td>
     </ng-container>
 
