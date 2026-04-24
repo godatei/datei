@@ -77,8 +77,8 @@ require (
 	github.com/lib/pq v1.12.3 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
-	github.com/ncruces/go-sqlite3 v0.33.3 // indirect
-	github.com/ncruces/go-sqlite3-wasm v1.1.1-0.20260409221933-87e4b35a38d0 // indirect
+	github.com/ncruces/go-sqlite3 v0.34.0 // indirect
+	github.com/ncruces/go-sqlite3-wasm/v2 v2.1.35300 // indirect
 	github.com/ncruces/julianday v1.0.0 // indirect
 	github.com/oapi-codegen/oapi-codegen/v2 v2.6.0 // indirect
 	github.com/oasdiff/yaml v0.0.0-20250309154309-f31be36b4037 // indirect
@@ -101,7 +101,7 @@ require (
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/sqlc-dev/doubleclick v1.0.0 // indirect
-	github.com/sqlc-dev/sqlc v1.31.0 // indirect
+	github.com/sqlc-dev/sqlc v1.31.1 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tetratelabs/wazero v1.11.0 // indirect
 	github.com/valyala/fastjson v1.6.10 // indirect
