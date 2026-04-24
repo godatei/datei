@@ -10,15 +10,19 @@
     }
   </nav>
 
-  @if (selection.hasValue()) {
-    <div class="flex items-center gap-4 px-4 py-2 mb-2 mat-bg-secondary-container mat-corner-sm">
+  <div
+    class="flex items-center gap-1 px-1 py-0.5 min-h-11 mat-corner-sm transition-all"
+    [class.mat-bg-secondary-container]="selection.hasValue()"
+  >
+    @if (selection.hasValue()) {
+      <button matIconButton (click)="selection.clear()" aria-label="Clear selection">
+        <mat-icon>close</mat-icon>
+      </button>
       <span class="mat-font-label-lg">{{ selection.selected.length }} selected</span>
-    </div>
-  } @else {
-    <div class="flex items-center gap-4 px-4 py-2 mb-2 min-h-9">
+    } @else {
       <!-- TODO: Filters go here -->
-    </div>
-  }
+    }
+  </div>
 
   <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
     <ng-container matColumnDef="name">
@@ -74,7 +78,7 @@
       *matRowDef="let row; columns: displayedColumns"
       (click)="onRowClick(row)"
       (dblclick)="onRowDblClick(row)"
-      class="datei-row cursor-pointer select-none"
+      class="datei-row cursor-pointer select-none transition-all"
       [class.selected]="selection.isSelected(row)"
     ></tr>
   </table>
