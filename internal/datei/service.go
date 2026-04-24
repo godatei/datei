@@ -36,8 +36,9 @@ func NewService(
 
 // ListDateiInput contains parameters for listing datei records
 type ListDateiInput struct {
-	Limit  int
-	Offset int
+	ParentID *uuid.UUID
+	Limit    int
+	Offset   int
 }
 
 // ListDateiOutput contains the response for listing datei records
@@ -50,7 +51,13 @@ type ListDateiOutput struct {
 func (s *Service) ListDatei(ctx context.Context, input ListDateiInput) (*ListDateiOutput, error) {
 	queries := db.New(s.db)
 
-	allProjections, err := queries.ListDateiProjections(ctx)
+	var allProjections []db.DateiProjection
+	var err error
+	if input.ParentID != nil {
+		allProjections, err = queries.ListDateiProjectionsByParent(ctx, input.ParentID)
+	} else {
+		allProjections, err = queries.ListRootDateiProjections(ctx)
+	}
 	if err != nil {
 		return nil, err
 	}

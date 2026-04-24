@@ -25,10 +25,23 @@
       </mat-grid-tile>
     }
   </mat-grid-list>
+
+  @if (parentId()) {
+    <button mat-button (click)="navigateUp()">
+      <mat-icon>arrow_back</mat-icon>
+      Back
+    </button>
+  }
+
   <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
     <ng-container matColumnDef="name">
       <th mat-header-cell *matHeaderCellDef>Name</th>
-      <td mat-cell *matCellDef="let element">{{ element.name }}</td>
+      <td mat-cell *matCellDef="let element">
+        <mat-icon aria-hidden="true">{{
+          element.isDirectory ? 'folder' : 'insert_drive_file'
+        }}</mat-icon>
+        {{ element.name }}
+      </td>
     </ng-container>
 
     <ng-container matColumnDef="createdAt">
@@ -47,7 +60,12 @@
     </ng-container>
 
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    <tr
+      mat-row
+      *matRowDef="let row; columns: displayedColumns"
+      [class.cursor-pointer]="row.isDirectory"
+      (click)="onRowClick(row)"
+    ></tr>
   </table>
 </div>
 

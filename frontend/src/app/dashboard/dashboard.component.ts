@@ -1,5 +1,6 @@
-import { DatePipe } from '@angular/common';
-import { Component, effect, inject, resource, signal } from '@angular/core';
+import { DatePipe, Location } from '@angular/common';
+import { Component, computed, effect, inject, resource, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatGridListModule } from '@angular/material/grid-list';
@@ -8,6 +9,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Api } from 'frontend/src/api/api';
 import { createDatei, listDatei } from 'frontend/src/api/functions';
 import { Datei } from 'frontend/src/api/models';
@@ -29,12 +31,19 @@ import { Datei } from 'frontend/src/api/models';
 export class DashboardComponent {
   private readonly api = inject(Api);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly location = inject(Location);
 
   private readonly refresh = signal(0);
+  private readonly queryParams = toSignal(this.route.queryParamMap);
+
+  protected readonly parentId = computed(() => this.queryParams()?.get('parentId') ?? null);
 
   protected readonly listDateiResource = resource({
-    params: () => ({ refresh: this.refresh() }),
-    loader: () => this.api.invoke(listDatei),
+    params: () => ({ parentId: this.parentId(), refresh: this.refresh() }),
+    loader: ({ params }) =>
+      this.api.invoke(listDatei, params.parentId ? { parentId: params.parentId } : undefined),
   });
   protected readonly dataSource = new MatTableDataSource<Datei>([]);
   protected readonly displayedColumns = ['name', 'createdAt', 'updatedAt', 'mimeType'];
@@ -51,6 +60,15 @@ export class DashboardComponent {
     { title: 'Card 3', cols: 1, rows: 1 },
     { title: 'Card 4', cols: 1, rows: 1 },
   ];
+
+  protected onRowClick(row: Datei): void {
+    if (!row.isDirectory) return;
+    this.router.navigate([], { relativeTo: this.route, queryParams: { parentId: row.id } });
+  }
+
+  protected navigateUp(): void {
+    this.location.back();
+  }
 
   protected async startUpload(el: HTMLInputElement) {
     if (el.files === null || el.files.length === 0) {

@@ -4,6 +4,12 @@ SELECT * FROM datei_projection WHERE id = $1;
 -- name: ListDateiProjections :many
 SELECT * FROM datei_projection ORDER BY created_at DESC;
 
+-- name: ListRootDateiProjections :many
+SELECT * FROM datei_projection WHERE parent_id IS NULL AND trashed_at IS NULL ORDER BY is_directory DESC, name ASC;
+
+-- name: ListDateiProjectionsByParent :many
+SELECT * FROM datei_projection WHERE parent_id = $1 AND trashed_at IS NULL ORDER BY is_directory DESC, name ASC;
+
 -- name: InsertDateiProjection :exec
 INSERT INTO datei_projection
  (id, parent_id, is_directory, name, created_at, updated_at)

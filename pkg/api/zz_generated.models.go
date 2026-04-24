@@ -204,6 +204,9 @@ type UserResponse struct {
 
 // ListDateiParams defines parameters for ListDatei.
 type ListDateiParams struct {
+	// ParentId Parent directory ID (omit for root)
+	ParentId *openapi_types.UUID `form:"parentId,omitempty" json:"parentId,omitempty"`
+
 	// Limit Maximum number of results
 	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 

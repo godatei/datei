@@ -28,8 +28,9 @@ func (s *server) ListDatei(
 	}
 
 	result, err := s.dateiService.ListDatei(ctx, datei.ListDateiInput{
-		Limit:  limit,
-		Offset: offset,
+		ParentID: request.Params.ParentId,
+		Limit:    limit,
+		Offset:   offset,
 	})
 	if err != nil {
 		return ListDatei400Response{}, err

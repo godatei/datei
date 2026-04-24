@@ -147,6 +147,90 @@ func (q *Queries) ListDateiProjections(ctx context.Context) ([]DateiProjection, 
 	return items, nil
 }
 
+const listDateiProjectionsByParent = `-- name: ListDateiProjectionsByParent :many
+SELECT id, parent_id, is_directory, linked_datei_id, name, s3_key, size, checksum, mime_type, content_md, content_search, created_at, updated_at, trashed_at, created_by, updated_by, trashed_by FROM datei_projection WHERE parent_id = $1 AND trashed_at IS NULL ORDER BY is_directory DESC, name ASC
+`
+
+func (q *Queries) ListDateiProjectionsByParent(ctx context.Context, parentID *uuid.UUID) ([]DateiProjection, error) {
+	rows, err := q.db.Query(ctx, listDateiProjectionsByParent, parentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DateiProjection
+	for rows.Next() {
+		var i DateiProjection
+		if err := rows.Scan(
+			&i.ID,
+			&i.ParentID,
+			&i.IsDirectory,
+			&i.LinkedDateiID,
+			&i.Name,
+			&i.S3Key,
+			&i.Size,
+			&i.Checksum,
+			&i.MimeType,
+			&i.ContentMd,
+			&i.ContentSearch,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.TrashedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
+			&i.TrashedBy,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listRootDateiProjections = `-- name: ListRootDateiProjections :many
+SELECT id, parent_id, is_directory, linked_datei_id, name, s3_key, size, checksum, mime_type, content_md, content_search, created_at, updated_at, trashed_at, created_by, updated_by, trashed_by FROM datei_projection WHERE parent_id IS NULL AND trashed_at IS NULL ORDER BY is_directory DESC, name ASC
+`
+
+func (q *Queries) ListRootDateiProjections(ctx context.Context) ([]DateiProjection, error) {
+	rows, err := q.db.Query(ctx, listRootDateiProjections)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DateiProjection
+	for rows.Next() {
+		var i DateiProjection
+		if err := rows.Scan(
+			&i.ID,
+			&i.ParentID,
+			&i.IsDirectory,
+			&i.LinkedDateiID,
+			&i.Name,
+			&i.S3Key,
+			&i.Size,
+			&i.Checksum,
+			&i.MimeType,
+			&i.ContentMd,
+			&i.ContentSearch,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.TrashedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
+			&i.TrashedBy,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateDateiProjectionLinked = `-- name: UpdateDateiProjectionLinked :exec
 UPDATE datei_projection
  SET linked_datei_id = $1, updated_at = $2, updated_by = NULL
