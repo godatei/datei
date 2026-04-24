@@ -33,6 +33,16 @@
     </button>
   }
 
+  @if (selection.hasValue()) {
+    <div class="flex items-center gap-4 px-4 py-2 mb-2 mat-bg-secondary-container mat-corner-sm">
+      <span class="mat-font-label-lg">{{ selection.selected.length }} selected</span>
+    </div>
+  } @else {
+    <div class="flex items-center gap-4 px-4 py-2 mb-2 min-h-9">
+      <!-- TODO: Filters go here -->
+    </div>
+  }
+
   <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
     <ng-container matColumnDef="name">
       <th mat-header-cell *matHeaderCellDef>Name</th>
@@ -85,13 +95,15 @@
     <tr
       mat-row
       *matRowDef="let row; columns: displayedColumns"
-      [class.cursor-pointer]="row.isDirectory"
       (click)="onRowClick(row)"
+      (dblclick)="onRowDblClick(row)"
+      class="datei-row cursor-pointer"
+      [class.selected]="selection.isSelected(row)"
     ></tr>
   </table>
 </div>
 
-<input type="file" style="display: none" #uploadInput (change)="startUpload($event.target)" />
+<input type="file" class="hidden" #uploadInput (change)="startUpload($event.target)" />
 
 <mat-menu #newMenu="matMenu" yPosition="above">
   <button mat-menu-item (click)="uploadInput.click()" [disabled]="uploading()">

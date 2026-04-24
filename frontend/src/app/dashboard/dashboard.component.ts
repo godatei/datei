@@ -1,4 +1,5 @@
 import { DatePipe, Location } from '@angular/common';
+import { SelectionModel } from '@angular/cdk/collections';
 import { Component, computed, effect, inject, resource, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -19,6 +20,7 @@ import { NewFolderDialogComponent } from './new-folder-dialog.component';
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
+  styleUrls: ['./dashboard.component.css'],
   imports: [
     MatGridListModule,
     MatMenuModule,
@@ -50,10 +52,14 @@ export class DashboardComponent {
   });
   protected readonly dataSource = new MatTableDataSource<Datei>([]);
   protected readonly displayedColumns = ['name', 'createdAt', 'updatedAt', 'mimeType', 'actions'];
+  protected readonly selection = new SelectionModel<Datei>(true, [], true, (a, b) => a.id === b.id);
   protected readonly uploading = signal(false);
 
   constructor() {
-    effect(() => (this.dataSource.data = this.listDateiResource.value()?.items ?? []));
+    effect(() => {
+      this.dataSource.data = this.listDateiResource.value()?.items ?? [];
+      this.selection.clear();
+    });
   }
 
   /** Based on the screen size, switch from standard to one column per row */
@@ -65,7 +71,12 @@ export class DashboardComponent {
   ];
 
   protected onRowClick(row: Datei): void {
+    this.selection.toggle(row);
+  }
+
+  protected onRowDblClick(row: Datei): void {
     if (!row.isDirectory) return;
+    this.selection.clear();
     this.router.navigate([], { relativeTo: this.route, queryParams: { parentId: row.id } });
   }
 
