@@ -113,8 +113,17 @@ func (s *server) CreateDatei(
 		ContentType: contentType,
 	})
 	if err != nil {
-		slog.Error("endpoint error", "error", err)
-		return CreateDatei400JSONResponse{Message: err.Error()}, nil
+		switch {
+		case errors.Is(err, dateierrors.ErrParentNotFound):
+			return CreateDatei400JSONResponse{Message: "parent directory not found"}, nil
+		case errors.Is(err, dateierrors.ErrParentNotDirectory):
+			return CreateDatei400JSONResponse{Message: "parent is not a directory"}, nil
+		case errors.Is(err, dateierrors.ErrParentTrashed):
+			return CreateDatei400JSONResponse{Message: "parent directory is trashed"}, nil
+		default:
+			slog.Error("endpoint error", "error", err)
+			return CreateDatei400JSONResponse{Message: err.Error()}, nil
+		}
 	}
 
 	return CreateDatei201JSONResponse(*result), nil

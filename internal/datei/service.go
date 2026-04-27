@@ -90,6 +90,22 @@ type CreateDateiInput struct {
 
 // CreateDatei creates a new datei record with optional file upload
 func (s *Service) CreateDatei(ctx context.Context, input CreateDateiInput) (*api.Datei, error) {
+	if input.ParentID != nil {
+		queries := db.New(s.db)
+		parent, err := queries.GetDateiProjectionByID(ctx, *input.ParentID)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, dateierrors.ErrParentNotFound
+		} else if err != nil {
+			return nil, err
+		}
+		if !parent.IsDirectory {
+			return nil, dateierrors.ErrParentNotDirectory
+		}
+		if parent.TrashedAt != nil {
+			return nil, dateierrors.ErrParentTrashed
+		}
+	}
+
 	isDirectory := input.Reader == nil
 	id := uuid.New()
 	now := time.Now()
