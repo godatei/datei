@@ -86,7 +86,9 @@ describe('DashboardComponent', () => {
 
   describe('listDatei params', () => {
     it('omits parentId query param at the root', () => {
-      const req = httpTesting.expectOne((r) => r.url === '/api/v1/datei' && !r.params.has('parentId'));
+      const req = httpTesting.expectOne(
+        (r) => r.url === '/api/v1/datei' && !r.params.has('parentId'),
+      );
       expect(req.request.method).toBe('GET');
       req.flush(EMPTY_LIST);
     });
@@ -97,7 +99,9 @@ describe('DashboardComponent', () => {
       queryParamMap$.next(convertToParamMap({ parentId: 'dir-456' }));
       fixture.detectChanges();
 
-      const req = httpTesting.expectOne((r) => r.url === '/api/v1/datei' && r.params.get('parentId') === 'dir-456');
+      const req = httpTesting.expectOne(
+        (r) => r.url === '/api/v1/datei' && r.params.get('parentId') === 'dir-456',
+      );
       expect(req.request.method).toBe('GET');
       req.flush(EMPTY_LIST);
       httpTesting.expectOne('/api/v1/datei/dir-456/path').flush([]);
@@ -110,7 +114,9 @@ describe('DashboardComponent', () => {
 
       queryParamMap$.next(convertToParamMap({ parentId: 'dir-789' }));
       fixture.detectChanges();
-      httpTesting.expectOne((r) => r.url === '/api/v1/datei' && r.params.get('parentId') === 'dir-789').flush(EMPTY_LIST);
+      httpTesting
+        .expectOne((r) => r.url === '/api/v1/datei' && r.params.get('parentId') === 'dir-789')
+        .flush(EMPTY_LIST);
       httpTesting.expectOne('/api/v1/datei/dir-789/path').flush([]);
 
       dialogOpen.mockReturnValue({ afterClosed: () => of('New Folder') });

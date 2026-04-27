@@ -61,21 +61,40 @@ export class DashboardComponent {
   protected readonly displayedColumns = ['name', 'createdAt', 'updatedAt', 'mimeType', 'actions'];
   protected readonly selection = new SelectionModel<Datei>(true, [], true, (a, b) => a.id === b.id);
   protected readonly uploading = signal(false);
+  private selectionAnchor: Datei | null = null;
 
   constructor() {
     effect(() => {
       this.dataSource.data = this.listDateiResource.value()?.items ?? [];
       this.selection.clear();
+      this.selectionAnchor = null;
     });
   }
 
-  protected onRowClick(row: Datei): void {
-    this.selection.toggle(row);
+  protected onRowClick(row: Datei, event: MouseEvent): void {
+    if (event.shiftKey && this.selectionAnchor !== null) {
+      const data = this.dataSource.data;
+      const anchorIdx = data.findIndex((d) => d.id === this.selectionAnchor!.id);
+      const rowIdx = data.findIndex((d) => d.id === row.id);
+      if (anchorIdx !== -1 && rowIdx !== -1) {
+        const [lo, hi] = anchorIdx <= rowIdx ? [anchorIdx, rowIdx] : [rowIdx, anchorIdx];
+        this.selection.clear();
+        data.slice(lo, hi + 1).forEach((d) => this.selection.select(d));
+      }
+    } else if (event.ctrlKey || event.metaKey) {
+      this.selection.toggle(row);
+      this.selectionAnchor = row;
+    } else {
+      this.selection.clear();
+      this.selection.select(row);
+      this.selectionAnchor = row;
+    }
   }
 
   protected onRowDblClick(row: Datei): void {
     if (!row.isDirectory) return;
     this.selection.clear();
+    this.selectionAnchor = null;
     this.router.navigate([], { relativeTo: this.route, queryParams: { parentId: row.id } });
   }
 
