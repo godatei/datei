@@ -69,14 +69,6 @@ export class DashboardComponent {
     });
   }
 
-  /** Based on the screen size, switch from standard to one column per row */
-  cards = [
-    { title: 'Card 1', cols: 1, rows: 1 },
-    { title: 'Card 2', cols: 1, rows: 1 },
-    { title: 'Card 3', cols: 1, rows: 1 },
-    { title: 'Card 4', cols: 1, rows: 1 },
-  ];
-
   protected onRowClick(row: Datei): void {
     this.selection.toggle(row);
   }
