@@ -3,7 +3,6 @@ package thumbnail
 import (
 	"bytes"
 	"image"
-	// Register additional decoders.
 	_ "image/gif"
 	"image/jpeg"
 	_ "image/png"
