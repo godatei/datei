@@ -69,9 +69,12 @@ func (s *server) CreateDatei(
 
 		switch part.FormName() {
 		case "parentId":
-			raw, err := io.ReadAll(io.LimitReader(part, 64))
+			raw, err := io.ReadAll(io.LimitReader(part, 65))
 			if err != nil {
 				return CreateDatei400JSONResponse{Message: err.Error()}, nil
+			}
+			if len(raw) > 64 {
+				return CreateDatei400JSONResponse{Message: "invalid parentId"}, nil
 			}
 			if s := strings.TrimSpace(string(raw)); s != "" {
 				parsed, err := uuid.Parse(s)
