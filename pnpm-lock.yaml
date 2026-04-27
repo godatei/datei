@@ -68,7 +68,7 @@ importers:
         version: 10.0.1(eslint@10.2.1(jiti@2.6.1))
       '@redocly/cli':
         specifier: ^2.19.2
-        version: 2.30.0(@opentelemetry/api@1.9.1)(core-js@3.48.0)
+        version: 2.30.1(@opentelemetry/api@1.9.1)(core-js@3.48.0)
       '@tailwindcss/postcss':
         specifier: ^4.2.4
         version: 4.2.4
@@ -1388,8 +1388,8 @@ packages:
   '@redocly/cli-otel@0.1.2':
     resolution: {integrity: sha512-Bg7BoO5t1x3lVK+KhA5aGPmeXpQmdf6WtTYHhelKJCsQ+tRMiJoFAQoKHoBHAoNxXrhlS3K9lKFLHGmtxsFQfA==}
 
-  '@redocly/cli@2.30.0':
-    resolution: {integrity: sha512-hpMyiJFfyTk+FE+ksoD7HClN6ALxETsWwbuE2bkpJLYXnhnBMuGe42cuBo12mEXooXghH6UltaKktrRRg/FUYA==}
+  '@redocly/cli@2.30.1':
+    resolution: {integrity: sha512-n5lRNAuA5Sz+pFn6VKhngUlj3E6bR0NtUF3eWzsuVWc3ffu5TyLhD12xRcASyi+aW7Z1z33/leGwIvKRKeG3xg==}
     engines: {node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10'}
     hasBin: true
 
@@ -1399,16 +1399,16 @@ packages:
   '@redocly/config@0.48.1':
     resolution: {integrity: sha512-vq8GM3e0KiglqkwE5Lb9XayrmZY4dHCs21BsvV92yAZN68f1N9cZUuwY1SwnztPbH06dn9uLzubBl/JNfImqfA==}
 
-  '@redocly/openapi-core@1.34.12':
-    resolution: {integrity: sha512-b32XWsz6enN6K4bx8xWsqUaXTJR/DnYT3lL1CzDYzIYKw243NNlz6fexmr71q/U4HrEcMoJGBvwAfcxOb8ymQw==}
+  '@redocly/openapi-core@1.34.13':
+    resolution: {integrity: sha512-4Tm4ysZkexx6ZTX7knqSZTqPlNgIvXc7Ha0pd30I694/GD0KtJE2xrElycfPds0vCLFAqoKyIzBtOF1xrLo8KA==}
     engines: {node: '>=18.17.0', npm: '>=9.5.0'}
 
-  '@redocly/openapi-core@2.30.0':
-    resolution: {integrity: sha512-ZwsTS/BHzfzmadf4qPcpBcYDQm78XoinmLTGQWzDKOpgnjNOV62YId79611ulHpYXndRG8vcVm5LJdvXqGp8Yw==}
+  '@redocly/openapi-core@2.30.1':
+    resolution: {integrity: sha512-ggv0nRy9Y7D1PxsmXE8MWU/x6EOVC/njZw1s7Z5TVt7OzHzLUiB2AroZzsU1dIMl2KRm4n3ygdo2VlNAAovyGQ==}
     engines: {node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10'}
 
-  '@redocly/respect-core@2.30.0':
-    resolution: {integrity: sha512-Qzo2r7ZzbfBhB/OYXdaRGkCGCLQpHaHuQ/0WGFLtqtIouIhF1c0heC2STlGacH+T0MFkl0SU5sTkxpzetPuI8w==}
+  '@redocly/respect-core@2.30.1':
+    resolution: {integrity: sha512-b3IiUa+oFcUppfUNcNubyKJ1/Gnt8brlU2+MrF0E+tpFJANMLXejQ0DcNN7t6lq2ZgCyp9DDK76tlJMmOIIcAQ==}
     engines: {node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10'}
 
   '@rolldown/binding-android-arm64@1.0.0-rc.4':
@@ -1891,10 +1891,6 @@ packages:
   abbrev@4.0.0:
     resolution: {integrity: sha512-a1wflyaL0tHtJSmLSOVybYhy22vRih4eduhhrkcjgrWGnRfrZtovJ2FRjxuTtkkj47O/baf0R86QU5OuYpz8fA==}
     engines: {node: ^20.17.0 || >=22.9.0}
-
-  abort-controller@3.0.0:
-    resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
-    engines: {node: '>=6.5'}
 
   accepts@2.0.0:
     resolution: {integrity: sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng==}
@@ -2381,10 +2377,6 @@ packages:
     resolution: {integrity: sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg==}
     engines: {node: '>= 0.6'}
 
-  event-target-shim@5.0.1:
-    resolution: {integrity: sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==}
-    engines: {node: '>=6'}
-
   eventemitter3@5.0.4:
     resolution: {integrity: sha512-mlsTRyGaPBjPedk6Bvw+aqbsXDtoAyAzm5MO7JgU+yVRyMQ5O8bD4Kcci7BS85f93veegeCPkL8R4GLClnjLFw==}
 
@@ -2434,8 +2426,8 @@ packages:
   fast-xml-builder@1.1.5:
     resolution: {integrity: sha512-4TJn/8FKLeslLAH3dnohXqE3QSoxkhvaMzepOIZytwJXZO69Bfz0HBdDHzOTOon6G59Zrk6VQ2bEiv1t61rfkA==}
 
-  fast-xml-parser@5.7.1:
-    resolution: {integrity: sha512-8Cc3f8GUGUULg34pBch/KGyPLglS+OFs05deyOlY7fL2MTagYPKrVQNmR1fLF/yJ9PH5ZSTd3YDF6pnmeZU+zA==}
+  fast-xml-parser@5.7.2:
+    resolution: {integrity: sha512-P7oW7tLbYnhOLQk/Gv7cZgzgMPP/XN03K02/Jy6Y/NHzyIAIpxuZIM/YqAkfiXFPxA2CTm7NtCijK9EDu09u2w==}
     hasBin: true
 
   fdir@6.5.0:
@@ -3573,8 +3565,8 @@ packages:
     resolution: {integrity: sha512-tsaTIkKW9b4N+AEj+SVA+WhJzV7/zMhcSu78mLKWSk7cXMOSHsBKFWUs0fWwq8QyK3MgJBQRX6Gbi4kYbdvGkQ==}
     engines: {node: '>=18'}
 
-  string-width@8.2.0:
-    resolution: {integrity: sha512-6hJPQ8N0V0P3SNmP6h2J99RLuzrWz2gvT7VnK5tKvrNqJoyS9W4/Fb8mo31UiPvy00z7DQXkP2hnKBVav76thw==}
+  string-width@8.2.1:
+    resolution: {integrity: sha512-IIaP0g3iy9Cyy18w3M9YcaDudujEAVHKt3a3QJg1+sr/oX96TbaGUubG0hJyCjCBThFH+tFpcIyoUHUn1ogaLA==}
     engines: {node: '>=20'}
 
   string_decoder@1.3.0:
@@ -5226,16 +5218,15 @@ snapshots:
     dependencies:
       ulid: 2.4.0
 
-  '@redocly/cli@2.30.0(@opentelemetry/api@1.9.1)(core-js@3.48.0)':
+  '@redocly/cli@2.30.1(@opentelemetry/api@1.9.1)(core-js@3.48.0)':
     dependencies:
       '@opentelemetry/exporter-trace-otlp-http': 0.214.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/resources': 2.6.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/sdk-trace-node': 2.6.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/semantic-conventions': 1.40.0
       '@redocly/cli-otel': 0.1.2
-      '@redocly/openapi-core': 2.30.0
-      '@redocly/respect-core': 2.30.0
-      abort-controller: 3.0.0
+      '@redocly/openapi-core': 2.30.1
+      '@redocly/respect-core': 2.30.1
       ajv: '@redocly/ajv@8.18.0'
       ajv-formats: 3.0.1(@redocly/ajv@8.18.0)
       colorette: 1.4.0
@@ -5272,7 +5263,7 @@ snapshots:
     dependencies:
       json-schema-to-ts: 2.7.2
 
-  '@redocly/openapi-core@1.34.12':
+  '@redocly/openapi-core@1.34.13':
     dependencies:
       '@redocly/ajv': 8.11.2
       '@redocly/config': 0.22.0
@@ -5286,7 +5277,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@redocly/openapi-core@2.30.0':
+  '@redocly/openapi-core@2.30.1':
     dependencies:
       '@redocly/ajv': 8.18.0
       '@redocly/config': 0.48.1
@@ -5299,12 +5290,12 @@ snapshots:
       pluralize: 8.0.0
       yaml-ast-parser: 0.0.43
 
-  '@redocly/respect-core@2.30.0':
+  '@redocly/respect-core@2.30.1':
     dependencies:
       '@faker-js/faker': 7.6.0
       '@noble/hashes': 1.8.0
       '@redocly/ajv': 8.18.0
-      '@redocly/openapi-core': 2.30.0
+      '@redocly/openapi-core': 2.30.1
       ajv: '@redocly/ajv@8.18.0'
       better-ajv-errors: 1.2.0(@redocly/ajv@8.18.0)
       colorette: 2.0.20
@@ -5720,10 +5711,6 @@ snapshots:
 
   abbrev@4.0.0: {}
 
-  abort-controller@3.0.0:
-    dependencies:
-      event-target-shim: 5.0.1
-
   accepts@2.0.0:
     dependencies:
       mime-types: 3.0.2
@@ -5956,7 +5943,7 @@ snapshots:
   cli-truncate@5.2.0:
     dependencies:
       slice-ansi: 8.0.0
-      string-width: 8.2.0
+      string-width: 8.2.1
 
   cli-width@4.1.0: {}
 
@@ -6248,8 +6235,6 @@ snapshots:
 
   etag@1.8.1: {}
 
-  event-target-shim@5.0.1: {}
-
   eventemitter3@5.0.4: {}
 
   eventsource-parser@3.0.8: {}
@@ -6316,7 +6301,7 @@ snapshots:
     dependencies:
       path-expression-matcher: 1.5.0
 
-  fast-xml-parser@5.7.1:
+  fast-xml-parser@5.7.2:
     dependencies:
       '@nodable/entities': 2.1.0
       fast-xml-builder: 1.1.5
@@ -7026,7 +7011,7 @@ snapshots:
   openapi-sampler@1.7.2:
     dependencies:
       '@types/json-schema': 7.0.15
-      fast-xml-parser: 5.7.1
+      fast-xml-parser: 5.7.2
       json-pointer: 0.6.2
 
   openapi-types@12.1.3: {}
@@ -7049,7 +7034,7 @@ snapshots:
       is-unicode-supported: 2.1.0
       log-symbols: 7.0.1
       stdin-discarder: 0.3.2
-      string-width: 8.2.0
+      string-width: 8.2.1
 
   ordered-binary@1.6.1:
     optional: true
@@ -7250,7 +7235,7 @@ snapshots:
 
   redoc@2.5.1(core-js@3.48.0)(mobx@6.15.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(styled-components@6.3.9(react-dom@19.2.5(react@19.2.5))(react@19.2.5)):
     dependencies:
-      '@redocly/openapi-core': 1.34.12
+      '@redocly/openapi-core': 1.34.13
       classnames: 2.5.1
       core-js: 3.48.0
       decko: 1.2.0
@@ -7578,7 +7563,7 @@ snapshots:
       get-east-asian-width: 1.5.0
       strip-ansi: 7.2.0
 
-  string-width@8.2.0:
+  string-width@8.2.1:
     dependencies:
       get-east-asian-width: 1.5.0
       strip-ansi: 7.2.0
