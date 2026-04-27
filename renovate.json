@@ -10,6 +10,11 @@
     {
       "matchSourceUrls": ["https://github.com/golangci/golangci-lint"],
       "groupName": "golangci-lint"
+    },
+    {
+      "description": "Schedule noisy/low-priority dependencies on Monday morning",
+      "matchPackageNames": ["@redocly/cli", "@fontsource/*", "vitest", "jsdom", "prettier"],
+      "schedule": ["before 9am on monday"]
     }
   ],
   "customManagers": [
