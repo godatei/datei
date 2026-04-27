@@ -3,9 +3,10 @@ package dateierrors
 import "errors"
 
 var (
-	ErrIsDirectory = errors.New("cannot download directory")
-	ErrNotFound    = errors.New("datei not found")
-	ErrNoContent   = errors.New("datei has no content")
+	ErrIsDirectory          = errors.New("cannot download directory")
+	ErrNotFound             = errors.New("datei not found")
+	ErrNoContent            = errors.New("datei has no content")
+	ErrUnsupportedMediaType = errors.New("thumbnail not supported for this file type")
 
 	// User / auth errors
 	ErrInvalidCredentials      = errors.New("invalid credentials")

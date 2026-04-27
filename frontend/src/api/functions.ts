@@ -51,3 +51,5 @@ export type { UpdateDatei$XWwwFormUrlencoded$Params as UpdateDatei$XWwwFormUrlen
 export { updateDatei$XWwwFormUrlencoded as updateDatei$XWwwFormUrlencoded } from './fn/operations/update-datei-x-www-form-urlencoded';
 export type { DownloadDatei$Params as DownloadDatei$Params } from './fn/operations/download-datei';
 export { downloadDatei as downloadDatei } from './fn/operations/download-datei';
+export type { GetDateiThumbnail$Params as GetDateiThumbnail$Params } from './fn/operations/get-datei-thumbnail';
+export { getDateiThumbnail as getDateiThumbnail } from './fn/operations/get-datei-thumbnail';

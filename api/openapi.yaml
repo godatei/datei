@@ -49,6 +49,8 @@ paths:
     $ref: ./paths/datei_id.yaml
   /api/v1/datei/{id}/download:
     $ref: './paths/datei_id_download.yaml'
+  /api/v1/datei/{id}/thumbnail:
+    $ref: './paths/datei_id_thumbnail.yaml'
 components:
   securitySchemes:
     bearerHttpAuthentication:

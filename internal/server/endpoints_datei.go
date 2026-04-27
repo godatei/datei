@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -186,6 +187,33 @@ func (s *server) UpdateDatei(
 	}
 
 	return UpdateDatei200JSONResponse(*result), nil
+}
+
+// GetDateiThumbnail implements [StrictServerInterface].
+func (s *server) GetDateiThumbnail(
+	ctx context.Context,
+	request GetDateiThumbnailRequestObject,
+) (GetDateiThumbnailResponseObject, error) {
+	result, err := s.dateiService.GetThumbnail(ctx, request.Id)
+	if err != nil {
+		switch {
+		case errors.Is(err, dateierrors.ErrIsDirectory):
+			return GetDateiThumbnail409Response{}, nil
+		case errors.Is(err, dateierrors.ErrUnsupportedMediaType):
+			return GetDateiThumbnail415Response{}, nil
+		default:
+			return GetDateiThumbnail404Response{}, nil
+		}
+	}
+
+	return GetDateiThumbnail200ImagejpegResponse{
+		Body:          result.Body,
+		ContentLength: result.ContentLength,
+		Headers: GetDateiThumbnail200ResponseHeaders{
+			ContentType:  "image/jpeg",
+			CacheControl: "private, max-age=31536000, immutable",
+		},
+	}, nil
 }
 
 // DeleteDatei implements [StrictServerInterface].

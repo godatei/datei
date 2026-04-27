@@ -1,8 +1,10 @@
 package datei
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"time"
 
@@ -10,6 +12,7 @@ import (
 	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/storage"
+	"github.com/godatei/datei/internal/thumbnail"
 	"github.com/godatei/datei/pkg/api"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -197,6 +200,69 @@ func (s *Service) UpdateDatei(ctx context.Context, input UpdateDateiInput) (*api
 	}
 
 	return MapAggregateToAPI(agg), nil
+}
+
+// GetThumbnailOutput contains the response for fetching a thumbnail.
+type GetThumbnailOutput struct {
+	Body          io.ReadCloser
+	ContentLength int64
+}
+
+// GetThumbnail returns a JPEG thumbnail for the given datei, generating and caching it on first call.
+func (s *Service) GetThumbnail(ctx context.Context, dateiID uuid.UUID) (*GetThumbnailOutput, error) {
+	queries := db.New(s.db)
+
+	projection, err := queries.GetDateiProjectionByID(ctx, dateiID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, dateierrors.ErrNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	if projection.IsDirectory {
+		return nil, dateierrors.ErrIsDirectory
+	}
+	if projection.Checksum == nil {
+		return nil, dateierrors.ErrNoContent
+	}
+	if projection.MimeType == nil || projection.S3Key == nil {
+		return nil, dateierrors.ErrNoContent
+	}
+
+	thumbKey := "thumbs/" + *projection.Checksum
+
+	exists, err := s.store.ObjectExists(ctx, thumbKey)
+	if err != nil {
+		return nil, fmt.Errorf("check thumbnail existence: %w", err)
+	}
+
+	if exists {
+		rc, err := s.store.GetObject(ctx, thumbKey)
+		if err != nil {
+			return nil, fmt.Errorf("get cached thumbnail: %w", err)
+		}
+		return &GetThumbnailOutput{Body: rc}, nil
+	}
+
+	original, err := s.store.GetObject(ctx, *projection.S3Key)
+	if err != nil {
+		return nil, fmt.Errorf("get original file: %w", err)
+	}
+	defer original.Close()
+
+	thumbBytes, err := thumbnail.Generate(ctx, original, *projection.MimeType)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.store.PutObjectAt(ctx, bytes.NewReader(thumbBytes), thumbKey, "image/jpeg"); err != nil {
+		return nil, fmt.Errorf("store thumbnail: %w", err)
+	}
+
+	return &GetThumbnailOutput{
+		Body:          io.NopCloser(bytes.NewReader(thumbBytes)),
+		ContentLength: int64(len(thumbBytes)),
+	}, nil
 }
 
 // DeleteDatei soft-deletes a datei record

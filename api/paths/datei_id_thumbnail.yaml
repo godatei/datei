@@ -1,0 +1,32 @@
+get:
+  operationId: GetDateiThumbnail
+  summary: Get thumbnail for a Datei
+  security:
+    - bearerHttpAuthentication: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Datei ID
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: Thumbnail image
+      headers:
+        Content-Type:
+          schema:
+            type: string
+          description: MIME type of the thumbnail (image/jpeg)
+        Cache-Control:
+          schema:
+            type: string
+      content:
+        image/jpeg: {}
+    '404':
+      description: Datei not found or has no content yet
+    '409':
+      description: Cannot generate thumbnail (e.g., is a directory)
+    '415':
+      description: Unsupported media type for thumbnail generation

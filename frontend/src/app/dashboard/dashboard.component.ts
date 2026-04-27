@@ -11,6 +11,7 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { Api } from 'frontend/src/api/api';
 import { createDatei, listDatei } from 'frontend/src/api/functions';
 import { Datei } from 'frontend/src/api/models';
+import { ThumbnailIconComponent } from './thumbnail-icon.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -24,6 +25,7 @@ import { Datei } from 'frontend/src/api/models';
     MatTableModule,
     MatProgressSpinnerModule,
     DatePipe,
+    ThumbnailIconComponent,
   ],
 })
 export class DashboardComponent {
@@ -37,7 +39,7 @@ export class DashboardComponent {
     loader: () => this.api.invoke(listDatei),
   });
   protected readonly dataSource = new MatTableDataSource<Datei>([]);
-  protected readonly displayedColumns = ['name', 'createdAt', 'updatedAt', 'mimeType'];
+  protected readonly displayedColumns = ['icon', 'name', 'createdAt', 'updatedAt', 'mimeType'];
   protected readonly uploading = signal(false);
 
   constructor() {
