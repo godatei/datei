@@ -1,6 +1,6 @@
 tr.datei-row {
   /*
-  This is required because the material table set `background: interit`,
+  This is required because the material table set `background: inherit`,
   which overrules TailwindCSS `background-color: ...`
   */
 
