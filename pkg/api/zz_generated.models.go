@@ -173,6 +173,9 @@ type SetupMFAResponse struct {
 type UpdateDateiRequest struct {
 	// Name New name for the Datei (optional)
 	Name *string `json:"name,omitempty"`
+
+	// ParentId New parent directory ID (optional; empty string moves to root)
+	ParentId *openapi_types.UUID `json:"parentId,omitempty"`
 }
 
 // UpdateDateiWithFileRequest defines model for UpdateDateiWithFileRequest.
@@ -182,6 +185,9 @@ type UpdateDateiWithFileRequest struct {
 
 	// Name New name for the Datei (optional)
 	Name *string `json:"name,omitempty"`
+
+	// ParentId New parent directory ID (optional; empty string moves to root)
+	ParentId *openapi_types.UUID `json:"parentId,omitempty"`
 }
 
 // UpdateUserEmailRequest defines model for UpdateUserEmailRequest.

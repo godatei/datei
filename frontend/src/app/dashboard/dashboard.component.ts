@@ -1,6 +1,15 @@
 import { DatePipe } from '@angular/common';
 import { SelectionModel } from '@angular/cdk/collections';
-import { Component, computed, effect, inject, resource, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  inject,
+  resource,
+  signal,
+  untracked,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
@@ -17,6 +26,7 @@ import {
   downloadDatei,
   getDateiPath,
   listDatei,
+  updateDatei$FormData,
 } from 'frontend/src/api/functions';
 import { Datei } from 'frontend/src/api/models';
 import {
@@ -60,18 +70,44 @@ export class DashboardComponent {
   protected readonly dataSource = new MatTableDataSource<Datei>([]);
   protected readonly displayedColumns = ['name', 'createdAt', 'updatedAt', 'mimeType', 'actions'];
   protected readonly selection = new SelectionModel<Datei>(true, [], true, (a, b) => a.id === b.id);
+  protected readonly selectedIds = signal<ReadonlySet<string>>(new Set());
   protected readonly uploading = signal(false);
+  protected readonly isDragging = signal(false);
+  protected readonly dragOverDirectoryId = signal<string | null>(null);
+  protected readonly dragPointerPos = signal({ x: 0, y: 0 });
   private selectionAnchor: Datei | null = null;
+  protected dragItems: Datei[] = [];
+  private dragStartPos: { x: number; y: number } | null = null;
+  private dragStartRow: Datei | null = null;
+  private dragJustOccurred = false;
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly onPointerMoveBound = this.onPointerMove.bind(this);
+  private readonly onPointerUpBound = this.onPointerUp.bind(this);
 
   constructor() {
     effect(() => {
       this.dataSource.data = this.listDateiResource.value()?.items ?? [];
-      this.selection.clear();
-      this.selectionAnchor = null;
+      untracked(() => {
+        this.selection.clear();
+        this.selectionAnchor = null;
+      });
+    });
+    const sub = this.selection.changed.subscribe(() => {
+      this.selectedIds.set(new Set(this.selection.selected.map((d) => d.id)));
+    });
+    this.destroyRef.onDestroy(() => {
+      sub.unsubscribe();
+      document.removeEventListener('mousemove', this.onPointerMoveBound);
+      document.removeEventListener('mouseup', this.onPointerUpBound);
+      document.body.style.cursor = '';
     });
   }
 
   protected onRowClick(row: Datei, event: MouseEvent): void {
+    if (this.dragJustOccurred) {
+      this.dragJustOccurred = false;
+      return;
+    }
     if (event.shiftKey && this.selectionAnchor !== null) {
       const data = this.dataSource.data;
       const anchorIdx = data.findIndex((d) => d.id === this.selectionAnchor!.id);
@@ -171,6 +207,84 @@ export class DashboardComponent {
       console.error(e);
       this.snackBar.open('Failed to move to trash', 'Dismiss', { duration: 4000 });
     }
+  }
+
+  protected onRowMouseDown(row: Datei, event: MouseEvent): void {
+    if (event.button !== 0) return;
+    this.dragStartPos = { x: event.clientX, y: event.clientY };
+    this.dragStartRow = row;
+    document.addEventListener('mousemove', this.onPointerMoveBound);
+    document.addEventListener('mouseup', this.onPointerUpBound);
+  }
+
+  private onPointerMove(event: MouseEvent): void {
+    if (!this.dragStartPos || !this.dragStartRow) return;
+
+    if (!this.isDragging()) {
+      const dx = event.clientX - this.dragStartPos.x;
+      const dy = event.clientY - this.dragStartPos.y;
+      if (Math.hypot(dx, dy) < 5) return;
+
+      if (!this.selection.isSelected(this.dragStartRow)) {
+        this.selection.clear();
+        this.selection.select(this.dragStartRow);
+      }
+      this.dragItems = [...this.selection.selected];
+      this.isDragging.set(true);
+    }
+
+    this.dragPointerPos.set({ x: event.clientX, y: event.clientY });
+
+    const el = document.elementFromPoint(event.clientX, event.clientY);
+    const target = el?.closest<HTMLElement>('[data-drop-target]');
+    if (target) {
+      const id = target.dataset['dropTarget']!;
+      if (!this.dragItems.some((d) => d.id === id)) {
+        this.dragOverDirectoryId.set(id);
+        return;
+      }
+    }
+    this.dragOverDirectoryId.set(null);
+  }
+
+  private async onPointerUp(): Promise<void> {
+    document.removeEventListener('mousemove', this.onPointerMoveBound);
+    document.removeEventListener('mouseup', this.onPointerUpBound);
+
+    const targetId = this.dragOverDirectoryId();
+    const wasDragging = this.isDragging();
+
+    this.isDragging.set(false);
+    this.dragOverDirectoryId.set(null);
+    this.dragStartPos = null;
+    this.dragStartRow = null;
+
+    if (wasDragging) {
+      // Suppress the synthetic click that the browser fires after mouseup on the same element.
+      this.dragJustOccurred = true;
+      setTimeout(() => {
+        this.dragJustOccurred = false;
+      }, 0);
+    }
+    if (!wasDragging || targetId === null) return;
+
+    // targetId === '' means move to root; pass as empty string so the multipart
+    // endpoint interprets it as "move to root" (no UUID → newParentID = nil).
+    const items = this.dragItems;
+    const results = await Promise.allSettled(
+      items.map((item) =>
+        this.api.invoke(updateDatei$FormData, {
+          id: item.id,
+          body: { parentId: targetId },
+        }),
+      ),
+    );
+
+    const failed = results.filter((r) => r.status === 'rejected').length;
+    if (failed > 0) {
+      this.snackBar.open(`Failed to move ${failed} item(s)`, 'Dismiss', { duration: 4000 });
+    }
+    this.refresh.update((v) => v + 1);
   }
 
   protected async startUpload(el: HTMLInputElement) {

@@ -7,4 +7,9 @@ export interface UpdateDateiRequest {
    * New name for the Datei (optional)
    */
   name?: string | null;
+
+  /**
+   * New parent directory ID (optional; empty string moves to root)
+   */
+  parentId?: string | null;
 }

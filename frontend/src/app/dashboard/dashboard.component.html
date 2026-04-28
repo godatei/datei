@@ -1,24 +1,36 @@
-<div class="mx-5">
-  <nav aria-label="Breadcrumb" class="flex items-center gap-1 flex-wrap mat-font-label-lg">
-    <button mat-button (click)="navigateTo(null)">
+<div class="mx-5" [class.cursor-grabbing]="isDragging()">
+  <nav aria-label="Breadcrumb" class="flex items-center gap-1 flex-wrap mb-2 mat-font-label-lg">
+    <button
+      mat-button
+      (click)="navigateTo(null)"
+      data-drop-target=""
+      [class.drop-target]="dragOverDirectoryId() === ''"
+    >
       <mat-icon>home</mat-icon>
       Home
     </button>
-    @for (item of pathResource.value(); track item.id) {
+    @for (item of pathResource.value(); track item.id; let last = $last) {
       <mat-icon aria-hidden="true" class="mat-text-on-surface-variant">chevron_right</mat-icon>
-      <button mat-button (click)="navigateTo(item.id)">{{ item.name }}</button>
+      <button
+        mat-button
+        (click)="navigateTo(item.id)"
+        [attr.data-drop-target]="last ? null : item.id"
+        [class.drop-target]="!last && dragOverDirectoryId() === item.id"
+      >
+        {{ item.name }}
+      </button>
     }
   </nav>
 
   <div
     class="flex items-center gap-1 px-1 py-0.5 min-h-11 mat-corner-sm transition-all"
-    [class.mat-bg-secondary-container]="selection.hasValue()"
+    [class.mat-bg-secondary-container]="selectedIds().size > 0"
   >
-    @if (selection.hasValue()) {
+    @if (selectedIds().size > 0) {
       <button matIconButton (click)="selection.clear()" aria-label="Clear selection">
         <mat-icon>close</mat-icon>
       </button>
-      <span class="mat-font-label-lg">{{ selection.selected.length }} selected</span>
+      <span class="mat-font-label-lg">{{ selectedIds().size }} selected</span>
     } @else {
       <!-- TODO: Filters go here -->
     }
@@ -78,11 +90,28 @@
       *matRowDef="let row; columns: displayedColumns"
       (click)="onRowClick(row, $event)"
       (dblclick)="onRowDblClick(row)"
-      class="datei-row cursor-pointer select-none transition-all"
-      [class.selected]="selection.isSelected(row)"
+      class="select-none transition-colors"
+      [class.cursor-pointer]="!isDragging()"
+      [class.selected]="selectedIds().has(row.id)"
+      [class.drop-target]="dragOverDirectoryId() === row.id"
+      [class.opacity-50]="isDragging() && selectedIds().has(row.id)"
+      (mousedown)="onRowMouseDown(row, $event)"
+      [attr.data-drop-target]="row.isDirectory ? row.id : null"
     ></tr>
   </table>
 </div>
+
+@if (isDragging()) {
+  <div
+    class="mat-bg-primary-container mat-text-on-primary-container mat-corner-full mat-shadow-3 fixed pointer-events-none flex items-center z-10 gap-2 px-4 py-2"
+    aria-hidden="true"
+    [style.left.px]="dragPointerPos().x + 16"
+    [style.top.px]="dragPointerPos().y + 16"
+  >
+    <mat-icon aria-hidden="true">drive_file_move</mat-icon>
+    <span class="mat-font-label-lg">{{ dragItems.length }}</span>
+  </div>
+}
 
 <input type="file" class="hidden" #uploadInput (change)="startUpload($event.target)" />
 

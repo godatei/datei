@@ -1,4 +1,4 @@
-tr.datei-row {
+tr {
   /*
   This is required because the material table set `background: inherit`,
   which overrules TailwindCSS `background-color: ...`
@@ -11,4 +11,16 @@ tr.datei-row {
   &.selected {
     background: var(--mat-sys-secondary-container);
   }
+
+  &.drop-target {
+    background: var(--mat-sys-primary-container);
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: -2px;
+  }
+}
+
+/* Breadcrumb buttons highlighted as drop targets while dragging */
+nav button.drop-target {
+  background-color: var(--mat-sys-primary-container) !important;
+  color: var(--mat-sys-on-primary-container) !important;
 }

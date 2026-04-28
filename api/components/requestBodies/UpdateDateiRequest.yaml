@@ -4,3 +4,8 @@ properties:
     type: string
     description: New name for the Datei (optional)
     nullable: true
+  parentId:
+    type: string
+    format: uuid
+    description: New parent directory ID (optional; empty string moves to root)
+    nullable: true
