@@ -15,10 +15,6 @@ get:
     '200':
       description: Thumbnail image
       headers:
-        Content-Type:
-          schema:
-            type: string
-          description: MIME type of the thumbnail (image/jpeg)
         Cache-Control:
           schema:
             type: string

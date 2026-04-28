@@ -210,7 +210,6 @@ func (s *server) GetDateiThumbnail(
 		Body:          result.Body,
 		ContentLength: result.ContentLength,
 		Headers: GetDateiThumbnail200ResponseHeaders{
-			ContentType:  "image/jpeg",
 			CacheControl: "private, max-age=31536000, immutable",
 		},
 	}, nil
