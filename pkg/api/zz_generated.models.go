@@ -211,6 +211,11 @@ type ListDateiParams struct {
 	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
+// GetDateiThumbnailParams defines parameters for GetDateiThumbnail.
+type GetDateiThumbnailParams struct {
+	IfNoneMatch *string `json:"If-None-Match,omitempty"`
+}
+
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginRequest
 

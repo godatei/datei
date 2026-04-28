@@ -11,6 +11,11 @@ get:
       schema:
         type: string
         format: uuid
+    - name: If-None-Match
+      in: header
+      required: false
+      schema:
+        type: string
   responses:
     '200':
       description: Thumbnail image
@@ -18,8 +23,13 @@ get:
         Cache-Control:
           schema:
             type: string
+        ETag:
+          schema:
+            type: string
       content:
         image/jpeg: {}
+    '304':
+      description: Not Modified
     '404':
       description: Datei not found or has no content yet
     '409':

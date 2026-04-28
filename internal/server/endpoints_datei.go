@@ -194,9 +194,16 @@ func (s *server) GetDateiThumbnail(
 	ctx context.Context,
 	request GetDateiThumbnailRequestObject,
 ) (GetDateiThumbnailResponseObject, error) {
-	result, err := s.dateiService.GetThumbnail(ctx, request.Id)
+	ifNoneMatch := ""
+	if request.Params.IfNoneMatch != nil {
+		ifNoneMatch = *request.Params.IfNoneMatch
+	}
+
+	result, err := s.dateiService.GetThumbnail(ctx, request.Id, ifNoneMatch)
 	if err != nil {
 		switch {
+		case errors.Is(err, dateierrors.ErrNotModified):
+			return GetDateiThumbnail304Response{}, nil
 		case errors.Is(err, dateierrors.ErrIsDirectory):
 			return GetDateiThumbnail409Response{}, nil
 		case errors.Is(err, dateierrors.ErrUnsupportedMediaType):
@@ -210,7 +217,8 @@ func (s *server) GetDateiThumbnail(
 		Body:          result.Body,
 		ContentLength: result.ContentLength,
 		Headers: GetDateiThumbnail200ResponseHeaders{
-			CacheControl: "private, max-age=31536000, immutable",
+			CacheControl: "private, no-cache",
+			ETag:         result.ETag,
 		},
 	}, nil
 }

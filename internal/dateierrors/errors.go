@@ -7,6 +7,7 @@ var (
 	ErrNotFound             = errors.New("datei not found")
 	ErrNoContent            = errors.New("datei has no content")
 	ErrUnsupportedMediaType = errors.New("thumbnail not supported for this file type")
+	ErrNotModified          = errors.New("not modified")
 
 	// User / auth errors
 	ErrInvalidCredentials      = errors.New("invalid credentials")

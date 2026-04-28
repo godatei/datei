@@ -206,10 +206,14 @@ func (s *Service) UpdateDatei(ctx context.Context, input UpdateDateiInput) (*api
 type GetThumbnailOutput struct {
 	Body          io.ReadCloser
 	ContentLength int64
+	ETag          string
 }
 
 // GetThumbnail returns a JPEG thumbnail for the given datei, generating and caching it on first call.
-func (s *Service) GetThumbnail(ctx context.Context, dateiID uuid.UUID) (*GetThumbnailOutput, error) {
+// If ifNoneMatch equals the current checksum, returns ErrNotModified to allow a 304 response.
+func (s *Service) GetThumbnail(
+	ctx context.Context, dateiID uuid.UUID, ifNoneMatch string,
+) (*GetThumbnailOutput, error) {
 	queries := db.New(s.db)
 
 	projection, err := queries.GetDateiProjectionByID(ctx, dateiID)
@@ -229,6 +233,10 @@ func (s *Service) GetThumbnail(ctx context.Context, dateiID uuid.UUID) (*GetThum
 		return nil, dateierrors.ErrNoContent
 	}
 
+	if ifNoneMatch == *projection.Checksum {
+		return nil, dateierrors.ErrNotModified
+	}
+
 	thumbKey := "thumbs/" + *projection.Checksum
 
 	exists, err := s.store.ObjectExists(ctx, thumbKey)
@@ -241,7 +249,7 @@ func (s *Service) GetThumbnail(ctx context.Context, dateiID uuid.UUID) (*GetThum
 		if err != nil {
 			return nil, fmt.Errorf("get cached thumbnail: %w", err)
 		}
-		return &GetThumbnailOutput{Body: rc}, nil
+		return &GetThumbnailOutput{Body: rc, ETag: *projection.Checksum}, nil
 	}
 
 	original, err := s.store.GetObject(ctx, *projection.S3Key)
@@ -262,6 +270,7 @@ func (s *Service) GetThumbnail(ctx context.Context, dateiID uuid.UUID) (*GetThum
 	return &GetThumbnailOutput{
 		Body:          io.NopCloser(bytes.NewReader(thumbBytes)),
 		ContentLength: int64(len(thumbBytes)),
+		ETag:          *projection.Checksum,
 	}, nil
 }
 

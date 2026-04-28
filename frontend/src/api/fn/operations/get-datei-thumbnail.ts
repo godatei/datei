@@ -14,12 +14,14 @@ export interface GetDateiThumbnail$Params {
  * Datei ID
  */
   id: string;
+  'If-None-Match'?: string;
 }
 
 export function getDateiThumbnail(http: HttpClient, rootUrl: string, params: GetDateiThumbnail$Params, context?: HttpContext): Observable<StrictHttpResponse<any>> {
   const rb = new RequestBuilder(rootUrl, getDateiThumbnail.PATH, 'get');
   if (params) {
     rb.path('id', params.id, {});
+    rb.header('If-None-Match', params['If-None-Match'], {});
   }
 
   return http.request(
