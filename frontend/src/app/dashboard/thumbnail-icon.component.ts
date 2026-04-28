@@ -23,8 +23,8 @@ const THUMBNAIL_MIME_TYPES = new Set([
 
 function canHaveThumbnail(datei: Datei): boolean {
   if (datei.isDirectory || !datei.checksum) return false;
-  const mime = datei.mimeType ?? '';
-  return mime.startsWith('image/') || THUMBNAIL_MIME_TYPES.has(mime);
+  const mime = datei.mimeType?.toLowerCase().trim();
+  return mime !== undefined && (mime.startsWith('image/') || THUMBNAIL_MIME_TYPES.has(mime));
 }
 
 @Component({
