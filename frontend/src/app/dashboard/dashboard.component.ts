@@ -12,9 +12,20 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
+import { DomSanitizer } from '@angular/platform-browser';
 import { Api } from 'frontend/src/api/api';
-import { createDatei, deleteDatei, getDateiPath, listDatei } from 'frontend/src/api/functions';
+import {
+  createDatei,
+  deleteDatei,
+  downloadDatei,
+  getDateiPath,
+  listDatei,
+} from 'frontend/src/api/functions';
 import { Datei } from 'frontend/src/api/models';
+import {
+  ImagePreviewDialogComponent,
+  ImagePreviewDialogData,
+} from './image-preview-dialog.component';
 import { NewFolderDialogComponent } from './new-folder-dialog.component';
 
 @Component({
@@ -36,6 +47,7 @@ export class DashboardComponent {
   private readonly api = inject(Api);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
+  private readonly sanitizer = inject(DomSanitizer);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -92,10 +104,52 @@ export class DashboardComponent {
   }
 
   protected onRowDblClick(row: Datei): void {
-    if (!row.isDirectory) return;
-    this.selection.clear();
-    this.selectionAnchor = null;
-    this.router.navigate([], { relativeTo: this.route, queryParams: { parentId: row.id } });
+    if (row.isDirectory) {
+      this.selection.clear();
+      this.selectionAnchor = null;
+      this.router.navigate([], { relativeTo: this.route, queryParams: { parentId: row.id } });
+      return;
+    }
+    const name = row.name ?? '';
+    if (row.mimeType?.startsWith('image/')) {
+      void this.previewImage(row.id, name);
+    } else {
+      void this.downloadFile(row.id, name);
+    }
+  }
+
+  private async previewImage(id: string, name: string): Promise<void> {
+    try {
+      const response = await this.api.invoke$Response(downloadDatei, { id });
+      const url = URL.createObjectURL(response.body as Blob);
+      const ref = this.dialog.open(ImagePreviewDialogComponent, {
+        data: {
+          src: this.sanitizer.bypassSecurityTrustUrl(url),
+          name,
+        } satisfies ImagePreviewDialogData,
+        maxWidth: '90vw',
+        maxHeight: '90vh',
+      });
+      ref.afterClosed().subscribe(() => URL.revokeObjectURL(url));
+    } catch (e) {
+      console.error(e);
+      this.snackBar.open('Failed to load image', 'Dismiss', { duration: 4000 });
+    }
+  }
+
+  private async downloadFile(id: string, name: string): Promise<void> {
+    try {
+      const response = await this.api.invoke$Response(downloadDatei, { id });
+      const url = URL.createObjectURL(response.body as Blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+      this.snackBar.open('Failed to download file', 'Dismiss', { duration: 4000 });
+    }
   }
 
   protected navigateTo(id: string | null): void {
