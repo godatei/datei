@@ -1,13 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { SelectionModel } from '@angular/cdk/collections';
-import {
-  Component,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-} from '@angular/core';
+import { Component, computed, effect, inject, resource, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
@@ -40,7 +33,15 @@ import { DragPreviewDirective } from './drag-preview.directive';
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
-  imports: [MatMenuModule, MatIconModule, MatButtonModule, MatTableModule, DatePipe, DragDropDirective, DragPreviewDirective],
+  imports: [
+    MatMenuModule,
+    MatIconModule,
+    MatButtonModule,
+    MatTableModule,
+    DatePipe,
+    DragDropDirective,
+    DragPreviewDirective,
+  ],
 })
 export class DashboardComponent {
   private readonly api = inject(Api);

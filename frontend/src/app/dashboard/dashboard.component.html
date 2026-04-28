@@ -1,4 +1,10 @@
-<div class="mx-5" appDragDrop #drag="appDragDrop" [dragSelection]="selection" (dropped)="onDrop($event)">
+<div
+  class="mx-5"
+  appDragDrop
+  #drag="appDragDrop"
+  [dragSelection]="selection"
+  (dropped)="onDrop($event)"
+>
   <nav aria-label="Breadcrumb" class="flex items-center gap-1 flex-wrap mb-2 mat-font-label-lg">
     <button
       mat-button

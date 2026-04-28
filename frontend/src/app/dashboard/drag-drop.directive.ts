@@ -101,11 +101,7 @@ export class DragDropDirective {
 
     if (wasDragging) {
       // Suppress the synthetic click the browser fires after mouseup on the same element.
-      document.addEventListener(
-        'click',
-        (e) => e.stopPropagation(),
-        { capture: true, once: true },
-      );
+      document.addEventListener('click', (e) => e.stopPropagation(), { capture: true, once: true });
     }
 
     if (!wasDragging || targetId === null) return;
