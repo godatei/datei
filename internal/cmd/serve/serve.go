@@ -22,6 +22,7 @@ import (
 	"github.com/godatei/datei/internal/db/migrations"
 	"github.com/godatei/datei/internal/frontend"
 	"github.com/godatei/datei/internal/mailer"
+	"github.com/godatei/datei/internal/ocr"
 	"github.com/godatei/datei/internal/server"
 	"github.com/godatei/datei/internal/storage"
 	"github.com/godatei/datei/internal/users"
@@ -106,6 +107,12 @@ func run(ctx context.Context, options Options) error {
 		m = mailer.NewNoopMailer()
 	}
 
+	var ocrClient *ocr.Client
+	if uri := config.OCRServerURI(); uri != "" {
+		slog.Info("OCR enabled", "server_uri", uri)
+		ocrClient = ocr.NewClient(uri)
+	}
+
 	swagger, err := server.GetSwagger()
 	if err != nil {
 		slog.Error("swagger error", "error", err)
@@ -113,7 +120,7 @@ func run(ctx context.Context, options Options) error {
 	}
 
 	// Create the unified server implementing StrictServerInterface
-	srv := server.NewServer(db, store, dateiRepository, userRepository, m)
+	srv := server.NewServer(db, store, dateiRepository, userRepository, m, ocrClient)
 	strictHandler := server.NewStrictHandler(srv, nil)
 
 	rootMux := chi.NewRouter()

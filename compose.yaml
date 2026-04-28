@@ -29,6 +29,13 @@ services:
       RUSTFS_ACCESS_KEY: local
       RUSTFS_SECRET_KEY: local
 
+  ocr-server:
+    build:
+      context: ocrserver
+    ports:
+      - '127.0.0.1:8082:8082'
+    restart: unless-stopped
+
 volumes:
   postgres:
   rustfs:
