@@ -8,9 +8,9 @@ import {
   inject,
   resource,
   signal,
-  untracked,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -70,7 +70,10 @@ export class DashboardComponent {
   protected readonly dataSource = new MatTableDataSource<Datei>([]);
   protected readonly displayedColumns = ['name', 'createdAt', 'updatedAt', 'mimeType', 'actions'];
   protected readonly selection = new SelectionModel<Datei>(true, [], true, (a, b) => a.id === b.id);
-  protected readonly selectedIds = signal<ReadonlySet<string>>(new Set());
+  protected readonly selectedIds = toSignal(
+    this.selection.changed.pipe(map(() => new Set(this.selection.selected.map((d) => d.id)))),
+    { initialValue: new Set<string>() },
+  );
   protected readonly uploading = signal(false);
   protected readonly isDragging = signal(false);
   protected readonly dragOverDirectoryId = signal<string | null>(null);
@@ -87,16 +90,10 @@ export class DashboardComponent {
   constructor() {
     effect(() => {
       this.dataSource.data = this.listDateiResource.value()?.items ?? [];
-      untracked(() => {
-        this.selection.clear();
-        this.selectionAnchor = null;
-      });
-    });
-    const sub = this.selection.changed.subscribe(() => {
-      this.selectedIds.set(new Set(this.selection.selected.map((d) => d.id)));
+      this.selection.clear();
+      this.selectionAnchor = null;
     });
     this.destroyRef.onDestroy(() => {
-      sub.unsubscribe();
       document.removeEventListener('mousemove', this.onPointerMoveBound);
       document.removeEventListener('mouseup', this.onPointerUpBound);
       document.body.style.cursor = '';
