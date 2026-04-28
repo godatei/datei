@@ -5,6 +5,7 @@ export type { AddEmailRequest } from './models/add-email-request';
 export type { ConfirmResetPasswordRequest } from './models/confirm-reset-password-request';
 export type { CreateDateiRequest } from './models/create-datei-request';
 export type { Datei } from './models/datei';
+export type { DateiPathItem } from './models/datei-path-item';
 export type { DisableMfaRequest } from './models/disable-mfa-request';
 export type { EnableMfaRequest } from './models/enable-mfa-request';
 export type { EnableMfaResponse } from './models/enable-mfa-response';

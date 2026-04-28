@@ -138,7 +138,7 @@ func run(ctx context.Context, options Options) error {
 			},
 		}))
 		r.Use(httprate.Limit(
-			10, 1*time.Minute,
+			100, 1*time.Minute,
 			httprate.WithKeyFuncs(httprate.KeyByRealIP, httprate.KeyByEndpoint),
 		))
 		server.HandlerWithOptions(strictHandler, server.ChiServerOptions{

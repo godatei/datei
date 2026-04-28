@@ -30,6 +30,9 @@ type CreateDateiRequest struct {
 
 	// Name Name for the new Datei
 	Name *string `json:"name,omitempty"`
+
+	// ParentId Parent directory ID (omit for root)
+	ParentId *openapi_types.UUID `json:"parentId,omitempty"`
 }
 
 // Datei defines model for Datei.
@@ -78,6 +81,12 @@ type Datei struct {
 
 	// UpdatedBy User ID who last updated it
 	UpdatedBy *openapi_types.UUID `json:"updatedBy,omitempty"`
+}
+
+// DateiPathItem defines model for DateiPathItem.
+type DateiPathItem struct {
+	Id   openapi_types.UUID `json:"id"`
+	Name string             `json:"name"`
 }
 
 // DisableMFARequest defines model for DisableMFARequest.
@@ -204,6 +213,9 @@ type UserResponse struct {
 
 // ListDateiParams defines parameters for ListDatei.
 type ListDateiParams struct {
+	// ParentId Parent directory ID (omit for root)
+	ParentId *openapi_types.UUID `form:"parentId,omitempty" json:"parentId,omitempty"`
+
 	// Limit Maximum number of results
 	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 

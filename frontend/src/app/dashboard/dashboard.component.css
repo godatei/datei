@@ -1,0 +1,14 @@
+tr.datei-row {
+  /*
+  This is required because the material table set `background: inherit`,
+  which overrules TailwindCSS `background-color: ...`
+  */
+
+  &:hover {
+    background: var(--mat-sys-surface-container-low);
+  }
+
+  &.selected {
+    background: var(--mat-sys-secondary-container);
+  }
+}

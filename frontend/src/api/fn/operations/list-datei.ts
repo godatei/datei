@@ -12,6 +12,11 @@ import { ListDateiResponse } from '../../models/list-datei-response';
 export interface ListDatei$Params {
 
 /**
+ * Parent directory ID (omit for root)
+ */
+  parentId?: string;
+
+/**
  * Maximum number of results
  */
   limit?: number;
@@ -25,6 +30,7 @@ export interface ListDatei$Params {
 export function listDatei(http: HttpClient, rootUrl: string, params?: ListDatei$Params, context?: HttpContext): Observable<StrictHttpResponse<ListDateiResponse>> {
   const rb = new RequestBuilder(rootUrl, listDatei.PATH, 'get');
   if (params) {
+    rb.query('parentId', params.parentId, {});
     rb.query('limit', params.limit, {});
     rb.query('offset', params.offset, {});
   }

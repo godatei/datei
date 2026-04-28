@@ -12,6 +12,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           snackBar.open('Server unavailable. Please check your connection.', 'Dismiss', {
             duration: 5000,
           });
+        } else if (e instanceof HttpErrorResponse && e.status === 429) {
+          snackBar.open('Too many requests. Please slow down.', 'Dismiss', { duration: 5000 });
         }
       },
     }),

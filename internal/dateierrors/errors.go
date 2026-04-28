@@ -3,9 +3,12 @@ package dateierrors
 import "errors"
 
 var (
-	ErrIsDirectory = errors.New("cannot download directory")
-	ErrNotFound    = errors.New("datei not found")
-	ErrNoContent   = errors.New("datei has no content")
+	ErrIsDirectory        = errors.New("cannot download directory")
+	ErrNotFound           = errors.New("datei not found")
+	ErrNoContent          = errors.New("datei has no content")
+	ErrParentNotFound     = errors.New("parent directory not found")
+	ErrParentNotDirectory = errors.New("parent is not a directory")
+	ErrParentTrashed      = errors.New("parent directory is trashed")
 
 	// User / auth errors
 	ErrInvalidCredentials      = errors.New("invalid credentials")

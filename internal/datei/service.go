@@ -74,8 +74,9 @@ func (s *Service) startOCR(ctx context.Context, dateiID uuid.UUID, s3Key, checks
 
 // ListDateiInput contains parameters for listing datei records
 type ListDateiInput struct {
-	Limit  int
-	Offset int
+	ParentID *uuid.UUID
+	Limit    int
+	Offset   int
 }
 
 // ListDateiOutput contains the response for listing datei records
@@ -88,7 +89,13 @@ type ListDateiOutput struct {
 func (s *Service) ListDatei(ctx context.Context, input ListDateiInput) (*ListDateiOutput, error) {
 	queries := db.New(s.db)
 
-	allProjections, err := queries.ListDateiProjections(ctx)
+	var allProjections []db.DateiProjection
+	var err error
+	if input.ParentID != nil {
+		allProjections, err = queries.ListDateiProjectionsByParent(ctx, input.ParentID)
+	} else {
+		allProjections, err = queries.ListRootDateiProjections(ctx)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -113,6 +120,7 @@ func (s *Service) ListDatei(ctx context.Context, input ListDateiInput) (*ListDat
 
 // CreateDateiInput contains parameters for creating a datei
 type CreateDateiInput struct {
+	ParentID    *uuid.UUID
 	Reader      io.Reader
 	FileName    string
 	ContentType string
@@ -120,6 +128,22 @@ type CreateDateiInput struct {
 
 // CreateDatei creates a new datei record with optional file upload
 func (s *Service) CreateDatei(ctx context.Context, input CreateDateiInput) (*api.Datei, error) {
+	if input.ParentID != nil {
+		queries := db.New(s.db)
+		parent, err := queries.GetDateiProjectionByID(ctx, *input.ParentID)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, dateierrors.ErrParentNotFound
+		} else if err != nil {
+			return nil, err
+		}
+		if !parent.IsDirectory {
+			return nil, dateierrors.ErrParentNotDirectory
+		}
+		if parent.TrashedAt != nil {
+			return nil, dateierrors.ErrParentTrashed
+		}
+	}
+
 	isDirectory := input.Reader == nil
 	id := uuid.New()
 	now := time.Now()
@@ -127,7 +151,7 @@ func (s *Service) CreateDatei(ctx context.Context, input CreateDateiInput) (*api
 	userID := authn.RequireContext(ctx).UserID
 
 	agg := &Aggregate{}
-	if err := agg.Create(id, nil, isDirectory, input.FileName, userID, now); err != nil {
+	if err := agg.Create(id, input.ParentID, isDirectory, input.FileName, userID, now); err != nil {
 		return nil, err
 	}
 
@@ -243,6 +267,25 @@ func (s *Service) UpdateDatei(ctx context.Context, input UpdateDateiInput) (*api
 	}
 
 	return MapAggregateToAPI(agg), nil
+}
+
+// GetDateiPath returns the ancestor chain from root to the given datei (inclusive), root-first.
+func (s *Service) GetDateiPath(ctx context.Context, dateiID uuid.UUID) ([]api.DateiPathItem, error) {
+	queries := db.New(s.db)
+
+	rows, err := queries.GetDateiPath(ctx, dateiID)
+	if err != nil {
+		return nil, err
+	}
+	if len(rows) == 0 {
+		return nil, dateierrors.ErrNotFound
+	}
+
+	path := make([]api.DateiPathItem, len(rows))
+	for i, row := range rows {
+		path[i] = api.DateiPathItem{Id: row.ID, Name: row.Name}
+	}
+	return path, nil
 }
 
 // DeleteDatei soft-deletes a datei record
