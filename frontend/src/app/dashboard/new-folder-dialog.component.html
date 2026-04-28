@@ -14,6 +14,8 @@
         <mat-error>Name is required</mat-error>
       } @else if (nameControl.hasError('maxlength')) {
         <mat-error>Name must be 255 characters or fewer</mat-error>
+      } @else if (nameControl.hasError('pattern')) {
+        <mat-error>Name cannot be only spaces</mat-error>
       }
     </mat-form-field>
   </div>

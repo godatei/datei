@@ -22,12 +22,12 @@ export class NewFolderDialogComponent {
 
   protected readonly nameControl = new FormControl('', {
     nonNullable: true,
-    validators: [Validators.required, Validators.maxLength(255)],
+    validators: [Validators.required, Validators.maxLength(255), Validators.pattern(/\S/)],
   });
 
   protected confirm(): void {
     if (this.nameControl.invalid) return;
-    this.dialogRef.close(this.nameControl.value);
+    this.dialogRef.close(this.nameControl.value.trim());
   }
 
   protected cancel(): void {
