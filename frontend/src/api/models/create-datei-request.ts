@@ -12,4 +12,9 @@ export interface CreateDateiRequest {
    * Name for the new Datei
    */
   name?: string;
+
+  /**
+   * Parent directory ID (omit for root)
+   */
+  parentId?: string;
 }

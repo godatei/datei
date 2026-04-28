@@ -36,6 +36,12 @@ get:
   security:
     - bearerHttpAuthentication: []
   parameters:
+    - name: parentId
+      in: query
+      description: Parent directory ID (omit for root)
+      schema:
+        type: string
+        format: uuid
     - name: limit
       in: query
       description: Maximum number of results

@@ -53,3 +53,5 @@ export type { DownloadDatei$Params as DownloadDatei$Params } from './fn/operatio
 export { downloadDatei as downloadDatei } from './fn/operations/download-datei';
 export type { GetDateiThumbnail$Params as GetDateiThumbnail$Params } from './fn/operations/get-datei-thumbnail';
 export { getDateiThumbnail as getDateiThumbnail } from './fn/operations/get-datei-thumbnail';
+export type { GetDateiPath$Params as GetDateiPath$Params } from './fn/operations/get-datei-path';
+export { getDateiPath as getDateiPath } from './fn/operations/get-datei-path';

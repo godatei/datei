@@ -8,6 +8,9 @@ var (
 	ErrNoContent            = errors.New("datei has no content")
 	ErrUnsupportedMediaType = errors.New("thumbnail not supported for this file type")
 	ErrNotModified          = errors.New("not modified")
+	ErrParentNotFound       = errors.New("parent directory not found")
+	ErrParentNotDirectory   = errors.New("parent is not a directory")
+	ErrParentTrashed        = errors.New("parent directory is trashed")
 
 	// User / auth errors
 	ErrInvalidCredentials      = errors.New("invalid credentials")
