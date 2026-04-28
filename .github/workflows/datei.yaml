@@ -86,7 +86,7 @@ jobs:
         ports:
           - 9000:9000
     name: Build
-    timeout-minutes: 10
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -96,78 +96,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Setup Go
-        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
-        with:
-          go-version-file: 'go.mod'
-          check-latest: true
-          cache-dependency-path: |
-            go.sum
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@903f9c1a6ebcba6cf41d87230be49611ac97822e # v6.0.3
-
-      - name: Setup node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-        with:
-          node-version: '24'
-          cache: pnpm
-          registry-url: 'https://registry.npmjs.org'
-
       - name: Generate commit hash
         id: hash
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
-      - name: Install frontend dependencies with pnpm
-        run: pnpm install --frozen-lockfile
-
-      - name: Build frontend
-        run: pnpm run build
-
-      - name: Build application
-        run: go build -ldflags="$LDFLAGS" -o dist/datei .
-        env:
-          CGO_ENABLED: '0'
-          LDFLAGS: >-
-            -s -w
-            -X github.com/godatei/datei/internal/buildconfig.version=${{ github.ref_name }}
-            -X github.com/godatei/datei/internal/buildconfig.commit=${{ steps.hash.outputs.sha_short }}
-
-      - name: Start and verify migrations
-        shell: bash
-        run: |
-          dist/datei serve &
-          sleep 5 &&
-          psql $DATEI_DATABASE_URI -c "select version >= 0, dirty from schema_migrations" --csv -t | grep "t,f" &&
-          pkill -SIGTERM datei &&
-          dist/datei migrate --down
-        env:
-          DATEI_AUTH_JWT_SECRET: H4V7z6mEpe8/k5H/KyogT/iATJhNpEIUMd5cHF6mqF8=
-          DATEI_DATABASE_URI: postgres://test-user:test-password@localhost:5432/datei
-          DATEI_SERVER_ADDR: 0.0.0.0:8080
-          DATEI_STORAGE_S3_BUCKET: datei
-          DATEI_STORAGE_S3_ENDPOINT: http://localhost:9000
-          DATEI_STORAGE_S3_REGION: local
-          DATEI_STORAGE_S3_USE_PATH_STYLE: true
-          DATEI_STORAGE_S3_ACCESS_KEY_ID: local
-          DATEI_STORAGE_S3_SECRET_ACCESS_KEY: local
-
-      - name: Generate SBOM for frontend project
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
-        with:
-          file: pnpm-lock.yaml
-          output-file: dist/frontend.spdx.json
-          artifact-name: frontend.spdx.json
-          format: spdx-json
-          upload-release-assets: false
-
-      - name: Login to GitHub Container Registry (tag only)
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
@@ -186,19 +117,62 @@ jobs:
             org.opencontainers.image.description=Datei
             org.opencontainers.image.vendor=Glasskube
 
-      - name: Docker build (push on tag only)
+      - name: Build Docker image (amd64)
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
+        with:
+          platforms: linux/amd64
+          context: .
+          load: true
+          tags: datei:ci
+          build-args: |
+            VERSION=${{ github.ref_name }}
+            COMMIT=${{ steps.hash.outputs.sha_short }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=min
+
+      - name: Verify migrations
+        run: |
+          docker run --rm --network host $DATEI_ENV datei:ci migrate
+          psql $DATEI_DATABASE_URI -c "select version >= 0, dirty from schema_migrations" --csv -t | grep "t,f"
+          docker run --rm --network host $DATEI_ENV datei:ci migrate --down
+        env:
+          DATEI_DATABASE_URI: postgres://test-user:test-password@localhost:5432/datei
+          DATEI_ENV: >-
+            -e DATEI_AUTH_JWT_SECRET=H4V7z6mEpe8/k5H/KyogT/iATJhNpEIUMd5cHF6mqF8=
+            -e DATEI_DATABASE_URI=postgres://test-user:test-password@localhost:5432/datei
+            -e DATEI_SERVER_ADDR=0.0.0.0:8080
+            -e DATEI_STORAGE_S3_BUCKET=datei
+            -e DATEI_STORAGE_S3_ENDPOINT=http://localhost:9000
+            -e DATEI_STORAGE_S3_REGION=local
+            -e DATEI_STORAGE_S3_USE_PATH_STYLE=true
+            -e DATEI_STORAGE_S3_ACCESS_KEY_ID=local
+            -e DATEI_STORAGE_S3_SECRET_ACCESS_KEY=local
+
+      - name: Login to GitHub Container Registry (tag only)
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push (tag only, multi-platform)
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
         id: build-push
         with:
-          platforms: ${{ startsWith(github.ref, 'refs/tags/') && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
+          platforms: linux/amd64,linux/arm64
           context: .
-          push: ${{ startsWith(github.ref, 'refs/tags/') }}
+          push: true
           sbom: true
           provenance: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ github.ref_name }}
+            COMMIT=${{ steps.hash.outputs.sha_short }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=min
 
       - uses: sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003 # v4.1.1
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
