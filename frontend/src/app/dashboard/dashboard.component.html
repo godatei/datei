@@ -1,10 +1,10 @@
-<div class="mx-5" [class.cursor-grabbing]="isDragging()">
+<div class="mx-5" appDragDrop #drag="appDragDrop" [dragSelection]="selection" (dropped)="onDrop($event)">
   <nav aria-label="Breadcrumb" class="flex items-center gap-1 flex-wrap mb-2 mat-font-label-lg">
     <button
       mat-button
       (click)="navigateTo(null)"
       data-drop-target=""
-      [class.drop-target]="dragOverDirectoryId() === ''"
+      [class.drop-target]="drag.dragOverDirectoryId() === ''"
     >
       <mat-icon>home</mat-icon>
       Home
@@ -15,7 +15,7 @@
         mat-button
         (click)="navigateTo(item.id)"
         [attr.data-drop-target]="last ? null : item.id"
-        [class.drop-target]="!last && dragOverDirectoryId() === item.id"
+        [class.drop-target]="!last && drag.dragOverDirectoryId() === item.id"
       >
         {{ item.name }}
       </button>
@@ -90,28 +90,31 @@
       *matRowDef="let row; columns: displayedColumns"
       (click)="onRowClick(row, $event)"
       (dblclick)="onRowDblClick(row)"
+      (mousedown)="drag.onRowMouseDown(row, $event)"
       class="select-none transition-colors"
-      [class.cursor-pointer]="!isDragging()"
+      [class.cursor-pointer]="!drag.isDragging()"
       [class.selected]="selectedIds().has(row.id)"
-      [class.drop-target]="dragOverDirectoryId() === row.id"
-      [class.opacity-50]="isDragging() && selectedIds().has(row.id)"
-      (mousedown)="onRowMouseDown(row, $event)"
+      [class.drop-target]="drag.dragOverDirectoryId() === row.id"
+      [class.opacity-50]="drag.isDragging() && selectedIds().has(row.id)"
       [attr.data-drop-target]="row.isDirectory ? row.id : null"
     ></tr>
   </table>
-</div>
 
-@if (isDragging()) {
   <div
+    appDragPreview
     class="mat-bg-primary-container mat-text-on-primary-container mat-corner-full mat-shadow-3 fixed pointer-events-none flex items-center z-10 gap-2 px-4 py-2"
     aria-hidden="true"
-    [style.left.px]="dragPointerPos().x + 16"
-    [style.top.px]="dragPointerPos().y + 16"
   >
     <mat-icon aria-hidden="true">drive_file_move</mat-icon>
-    <span class="mat-font-label-lg">{{ dragItems.length }}</span>
+    <span class="mat-font-label-lg">
+      @if (drag.dragOverDirectoryId()) {
+        Move {{ drag.dragItems().length }} to {{ drag.dragOverDirectoryId() }}
+      } @else {
+        {{ drag.dragItems().length }} selected
+      }
+    </span>
   </div>
-}
+</div>
 
 <input type="file" class="hidden" #uploadInput (change)="startUpload($event.target)" />
 
