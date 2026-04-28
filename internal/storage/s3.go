@@ -173,6 +173,9 @@ func (s *s3Store) ObjectExists(ctx context.Context, key string) (bool, error) {
 func (s *s3Store) PutObjectAt(ctx context.Context, data io.Reader, key, contentType string) error {
 	var rs io.ReadSeeker
 	if drs, ok := data.(io.ReadSeeker); ok {
+		if _, err := drs.Seek(0, io.SeekStart); err != nil {
+			return fmt.Errorf("seek data to start: %w", err)
+		}
 		rs = drs
 	} else {
 		buf, err := io.ReadAll(data)
