@@ -81,6 +81,7 @@ describe('DashboardComponent', () => {
       httpTesting.expectOne('/api/v1/datei').flush(EMPTY_LIST);
       component['onRowDblClick'](makeFile('file-123'));
       expect(routerNavigate).not.toHaveBeenCalled();
+      httpTesting.expectOne('/api/v1/datei/file-123/download').flush(new Blob());
     });
   });
 
