@@ -5,7 +5,8 @@
     "start": "ng serve",
     "build": "ng build --configuration=production",
     "build:dev": "ng build --configuration=development",
-    "test": "ng test",
+    "test": "ng test --watch=false",
+    "test:watch": "ng test --watch",
     "lint": "prettier --check . && ng lint",
     "format": "prettier --write . && ng lint --fix",
     "generate-openapi-bundle": "redocly bundle api/openapi.yaml -o dist/openapi.yaml",
@@ -59,7 +60,7 @@
     "postcss": "^8.5.3",
     "prettier": "^3.8.1",
     "typescript": "~5.9.2",
-    "typescript-eslint": "8.59.0",
+    "typescript-eslint": "8.59.1",
     "vitest": "^4.0.8"
   }
 }

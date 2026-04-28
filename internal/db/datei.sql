@@ -31,6 +31,11 @@ UPDATE datei_projection
  SET parent_id = $1, updated_at = $2, updated_by = NULL
  WHERE id = $3;
 
+-- name: UpdateDateiProjectionContentMD :exec
+UPDATE datei_projection
+ SET content_md = $1
+ WHERE id = $2 AND checksum = $3;
+
 -- name: UpdateDateiProjectionTrashed :exec
 UPDATE datei_projection
  SET trashed_at = $1, trashed_by = NULL, updated_at = $2, updated_by = NULL
