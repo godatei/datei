@@ -25,15 +25,17 @@
   </div>
 
   <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+    <ng-container matColumnDef="icon">
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let element" class="w-20">
+        <app-thumbnail-icon [datei]="element" />
+      </td>
+    </ng-container>
+
     <ng-container matColumnDef="name">
       <th mat-header-cell *matHeaderCellDef>Name</th>
       <td mat-cell *matCellDef="let element">
-        <div class="flex items-center gap-2">
-          <mat-icon aria-hidden="true">{{
-            element.isDirectory ? 'folder' : 'insert_drive_file'
-          }}</mat-icon>
-          {{ element.name }}
-        </div>
+        {{ element.name }}
       </td>
     </ng-container>
 

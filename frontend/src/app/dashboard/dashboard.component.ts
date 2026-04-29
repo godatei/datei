@@ -19,6 +19,7 @@ import {
   listDatei,
 } from 'frontend/src/api/functions';
 import { Datei } from 'frontend/src/api/models';
+import { ThumbnailIconComponent } from './thumbnail-icon.component';
 import {
   ImagePreviewDialogComponent,
   ImagePreviewDialogData,
@@ -29,7 +30,14 @@ import { NewFolderDialogComponent } from './new-folder-dialog.component';
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
-  imports: [MatMenuModule, MatIconModule, MatButtonModule, MatTableModule, DatePipe],
+  imports: [
+    MatMenuModule,
+    MatIconModule,
+    MatButtonModule,
+    MatTableModule,
+    DatePipe,
+    ThumbnailIconComponent,
+  ],
 })
 export class DashboardComponent {
   private readonly api = inject(Api);
@@ -58,7 +66,14 @@ export class DashboardComponent {
         : Promise.resolve([]),
   });
   protected readonly dataSource = new MatTableDataSource<Datei>([]);
-  protected readonly displayedColumns = ['name', 'createdAt', 'updatedAt', 'mimeType', 'actions'];
+  protected readonly displayedColumns = [
+    'icon',
+    'name',
+    'createdAt',
+    'updatedAt',
+    'mimeType',
+    'actions',
+  ];
   protected readonly selection = new SelectionModel<Datei>(true, [], true, (a, b) => a.id === b.id);
   protected readonly uploading = signal(false);
   private selectionAnchor: Datei | null = null;
