@@ -2,15 +2,15 @@
   class="mx-5"
   appDragDrop
   #drag="appDragDrop"
-  [dragSelection]="selection"
+  (dragStart)="onDrag($event)"
   (dropped)="onDrop($event)"
 >
   <nav aria-label="Breadcrumb" class="flex items-center gap-1 flex-wrap mb-2 mat-font-label-lg">
     <button
       mat-button
       (click)="navigateTo(null)"
-      data-drop-target=""
-      [class.drop-target]="drag.dragOverDirectoryId() === ''"
+      [appDropTarget]="null"
+      [dropTargetEnabled]="parentId() !== null"
     >
       <mat-icon>home</mat-icon>
       Home
@@ -20,8 +20,8 @@
       <button
         mat-button
         (click)="navigateTo(item.id)"
-        [attr.data-drop-target]="last ? null : item.id"
-        [class.drop-target]="!last && drag.dragOverDirectoryId() === item.id"
+        [appDropTarget]="item"
+        [dropTargetEnabled]="!last"
       >
         {{ item.name }}
       </button>
@@ -96,15 +96,15 @@
     <tr
       mat-row
       *matRowDef="let row; columns: displayedColumns"
+      [appDragItem]="row"
+      [appDropTarget]="row"
+      [dropTargetEnabled]="row.isDirectory"
       (click)="onRowClick(row, $event)"
       (dblclick)="onRowDblClick(row)"
-      (mousedown)="drag.onRowMouseDown(row, $event)"
       class="select-none transition-colors"
-      [class.cursor-pointer]="!drag.isDragging()"
       [class.selected]="selectedIds().has(row.id)"
-      [class.drop-target]="drag.dragOverDirectoryId() === row.id"
       [class.opacity-50]="drag.isDragging() && selectedIds().has(row.id)"
-      [attr.data-drop-target]="row.isDirectory ? row.id : null"
+      [class.cursor-pointer]="!drag.isDragging()"
     ></tr>
   </table>
 
@@ -115,10 +115,14 @@
   >
     <mat-icon aria-hidden="true">drive_file_move</mat-icon>
     <span class="mat-font-label-lg">
-      @if (drag.dragOverDirectoryId()) {
-        Move {{ drag.dragItems().length }} to {{ drag.dragOverDirectoryId() }}
+      @let item = drag.dragOverItem();
+      @let n = selection.selected.length;
+      @if (item === undefined) {
+        {{ n }} selected
+      } @else if (item === null) {
+        Move {{ n }} here
       } @else {
-        {{ drag.dragItems().length }} selected
+        Move {{ n }} to {{ item.name }}
       }
     </span>
   </div>

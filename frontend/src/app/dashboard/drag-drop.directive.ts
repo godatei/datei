@@ -1,22 +1,20 @@
 import {
+  contentChildren,
   DestroyRef,
   Directive,
   forwardRef,
   inject,
-  input,
   InjectionToken,
   output,
   signal,
 } from '@angular/core';
-import { SelectionModel } from '@angular/cdk/collections';
-import { Datei } from 'frontend/src/api/models';
+import { DropTargetDirective } from './drop-target.directive';
 
-export interface DropEvent {
-  items: Datei[];
-  targetId: string;
+export interface DropEvent<T> {
+  target: T | null;
 }
 
-export const DRAG_DROP = new InjectionToken<DragDropDirective>('DragDropDirective');
+export const DRAG_DROP = new InjectionToken<DragDropDirective<unknown>>('DragDropDirective');
 
 @Directive({
   selector: '[appDragDrop]',
@@ -24,19 +22,21 @@ export const DRAG_DROP = new InjectionToken<DragDropDirective>('DragDropDirectiv
   providers: [{ provide: DRAG_DROP, useExisting: forwardRef(() => DragDropDirective) }],
   host: { '[class.cursor-grabbing]': 'isDragging()' },
 })
-export class DragDropDirective {
+export class DragDropDirective<T> {
   private readonly destroyRef = inject(DestroyRef);
+  private readonly dropTargets = contentChildren<DropTargetDirective<T>>(DropTargetDirective, {
+    descendants: true,
+  });
 
-  readonly dragSelection = input.required<SelectionModel<Datei>>();
-  readonly dropped = output<DropEvent>();
+  readonly dragStart = output<DropEvent<T>>();
+  readonly dropped = output<DropEvent<T>>();
 
   readonly isDragging = signal(false);
-  readonly dragOverDirectoryId = signal<string | null>(null);
+  readonly dragOverItem = signal<T | null | undefined>(undefined);
   readonly dragPointerPos = signal({ x: 0, y: 0 });
-  readonly dragItems = signal<Datei[]>([]);
 
   private dragStartPos: { x: number; y: number } | null = null;
-  private dragStartRow: Datei | null = null;
+  private dragStartItem: T | null = null;
 
   private readonly onPointerMoveBound = this.onPointerMove.bind(this);
   private readonly onPointerUpBound = this.onPointerUp.bind(this);
@@ -48,64 +48,68 @@ export class DragDropDirective {
     });
   }
 
-  onRowMouseDown(row: Datei, event: MouseEvent): void {
+  startDrag(item: T, event: MouseEvent): void {
     if (event.button !== 0) return;
     this.dragStartPos = { x: event.clientX, y: event.clientY };
-    this.dragStartRow = row;
+    this.dragStartItem = item;
     document.addEventListener('mousemove', this.onPointerMoveBound);
     document.addEventListener('mouseup', this.onPointerUpBound);
   }
 
   private onPointerMove(event: MouseEvent): void {
-    if (!this.dragStartPos || !this.dragStartRow) return;
+    if (!this.dragStartPos || !this.dragStartItem) return;
 
     if (!this.isDragging()) {
       const dx = event.clientX - this.dragStartPos.x;
       const dy = event.clientY - this.dragStartPos.y;
-      if (Math.hypot(dx, dy) < 5) return;
-
-      const selection = this.dragSelection();
-      if (!selection.isSelected(this.dragStartRow)) {
-        selection.clear();
-        selection.select(this.dragStartRow);
+      if (Math.hypot(dx, dy) < 5) {
+        return;
       }
-      this.dragItems.set([...selection.selected]);
+
+      this.dragStart.emit({ target: this.dragStartItem });
       this.isDragging.set(true);
     }
 
     this.dragPointerPos.set({ x: event.clientX, y: event.clientY });
 
     const el = document.elementFromPoint(event.clientX, event.clientY);
-    const target = el?.closest<HTMLElement>('[data-drop-target]');
-    if (target) {
-      const id = target.dataset['dropTarget']!;
-      if (!this.dragItems().some((d) => d.id === id)) {
-        this.dragOverDirectoryId.set(id);
-        return;
+    const target = this.findDropTarget(el);
+    this.dragOverItem.set(target);
+  }
+
+  private findDropTarget(el: Element | null): T | null | undefined {
+    let node: Element | null = el;
+    while (node) {
+      const match = this.dropTargets().find((t) => t.nativeElement === node);
+      if (match) {
+        return match.dropTargetEnabled() ? match.target() : undefined;
       }
+      node = node.parentElement;
     }
-    this.dragOverDirectoryId.set(null);
+    return undefined;
   }
 
   private onPointerUp(): void {
     document.removeEventListener('mousemove', this.onPointerMoveBound);
     document.removeEventListener('mouseup', this.onPointerUpBound);
 
-    const targetId = this.dragOverDirectoryId();
+    const target = this.dragOverItem();
     const wasDragging = this.isDragging();
 
     this.isDragging.set(false);
-    this.dragOverDirectoryId.set(null);
+    this.dragOverItem.set(undefined);
     this.dragStartPos = null;
-    this.dragStartRow = null;
+    this.dragStartItem = null;
 
     if (wasDragging) {
       // Suppress the synthetic click the browser fires after mouseup on the same element.
       document.addEventListener('click', (e) => e.stopPropagation(), { capture: true, once: true });
     }
 
-    if (!wasDragging || targetId === null) return;
+    if (!wasDragging || target === undefined) {
+      return;
+    }
 
-    this.dropped.emit({ items: this.dragItems(), targetId });
+    this.dropped.emit({ target });
   }
 }

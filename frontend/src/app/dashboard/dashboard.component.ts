@@ -29,6 +29,8 @@ import {
 import { NewFolderDialogComponent } from './new-folder-dialog.component';
 import { DragDropDirective, DropEvent } from './drag-drop.directive';
 import { DragPreviewDirective } from './drag-preview.directive';
+import { DragItemDirective } from './drag-row.directive';
+import { DropTargetDirective } from './drop-target.directive';
 
 @Component({
   selector: 'app-dashboard',
@@ -43,6 +45,8 @@ import { DragPreviewDirective } from './drag-preview.directive';
     ThumbnailIconComponent,
     DragDropDirective,
     DragPreviewDirective,
+    DragItemDirective,
+    DropTargetDirective,
   ],
 })
 export class DashboardComponent {
@@ -199,22 +203,34 @@ export class DashboardComponent {
     }
   }
 
-  protected async onDrop(event: DropEvent): Promise<void> {
-    // targetId === '' means move to root; the multipart endpoint interprets
+  protected onDrag(event: DropEvent<Datei>): void {
+    if (!event.target) return;
+    if (!this.selection.isSelected(event.target)) {
+      this.selection.setSelection(event.target);
+    }
+  }
+
+  protected async onDrop(event: DropEvent<Datei>): Promise<void> {
+    // parentId === '' means move to root; the multipart endpoint interprets
     // an empty string as "no UUID → newParentID = nil".
+    const parentId = event.target?.id ?? '';
+    const items = this.selection.selected.filter((item) => item.id !== event.target?.id);
     const results = await Promise.allSettled(
-      event.items.map((item) =>
+      items.map((item) =>
         this.api.invoke(updateDatei$FormData, {
           id: item.id,
-          body: { parentId: event.targetId },
+          body: { parentId },
         }),
       ),
     );
+
     const failed = results.filter((r) => r.status === 'rejected').length;
     if (failed > 0) {
       this.snackBar.open(`Failed to move ${failed} item(s)`, 'Dismiss', { duration: 4000 });
     }
-    this.refresh.update((v) => v + 1);
+    if (failed !== results.length) {
+      this.refresh.update((v) => v + 1);
+    }
   }
 
   protected async startUpload(el: HTMLInputElement) {
