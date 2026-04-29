@@ -3,13 +3,15 @@ package dateierrors
 import "errors"
 
 var (
-	ErrIsDirectory        = errors.New("cannot download directory")
-	ErrNotFound           = errors.New("datei not found")
-	ErrNoContent          = errors.New("datei has no content")
-	ErrParentNotFound     = errors.New("parent directory not found")
-	ErrParentNotDirectory = errors.New("parent is not a directory")
-	ErrParentTrashed      = errors.New("parent directory is trashed")
-	ErrCycleDetected      = errors.New("cannot move directory into its own subtree")
+	ErrIsDirectory          = errors.New("cannot download directory")
+	ErrNotFound             = errors.New("datei not found")
+	ErrNoContent            = errors.New("datei has no content")
+	ErrUnsupportedMediaType = errors.New("thumbnail not supported for this file type")
+	ErrNotModified          = errors.New("not modified")
+	ErrParentNotFound       = errors.New("parent directory not found")
+	ErrParentNotDirectory   = errors.New("parent is not a directory")
+	ErrParentTrashed        = errors.New("parent directory is trashed")
+	ErrCycleDetected        = errors.New("cannot move directory into its own subtree")
 
 	// User / auth errors
 	ErrInvalidCredentials      = errors.New("invalid credentials")

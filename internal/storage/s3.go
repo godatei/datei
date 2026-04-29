@@ -154,6 +154,55 @@ func (s *s3Store) PutObject(
 	return &PutObjectOutput{StorageKey: s3Key, Checksum: checksum, Size: size}, nil
 }
 
+// ObjectExists implements [Store].
+func (s *s3Store) ObjectExists(ctx context.Context, key string) (bool, error) {
+	_, err := s.client.HeadObject(ctx, &s3.HeadObjectInput{
+		Bucket: &s.config.Bucket,
+		Key:    &key,
+	})
+	if err != nil {
+		if _, isNotFound := errors.AsType[*types.NotFound](err); isNotFound {
+			return false, nil
+		}
+		return false, fmt.Errorf("s3 head object: %w", err)
+	}
+	return true, nil
+}
+
+// PutObjectAt implements [Store].
+func (s *s3Store) PutObjectAt(ctx context.Context, data io.Reader, key, contentType string) error {
+	var rs io.ReadSeeker
+	if drs, ok := data.(io.ReadSeeker); ok {
+		if _, err := drs.Seek(0, io.SeekStart); err != nil {
+			return fmt.Errorf("seek data to start: %w", err)
+		}
+		rs = drs
+	} else {
+		buf, err := io.ReadAll(data)
+		if err != nil {
+			return fmt.Errorf("read data: %w", err)
+		}
+		rs = bytes.NewReader(buf)
+	}
+
+	_, err := s.client.PutObject(ctx, &s3.PutObjectInput{
+		Bucket:      &s.config.Bucket,
+		Key:         &key,
+		Body:        rs,
+		ContentType: &contentType,
+		IfNoneMatch: new("*"),
+	})
+	if err != nil {
+		aerr, ok := errors.AsType[smithy.APIError](err)
+		if ok && (aerr.ErrorCode() == "ConditionalRequestConflict" || aerr.ErrorCode() == "PreconditionFailed") {
+			// Another request already stored the object; that's fine.
+			return nil
+		}
+		return fmt.Errorf("s3 put object at %q: %w", key, err)
+	}
+	return nil
+}
+
 // DeleteObject implements [Store].
 func (s *s3Store) DeleteObject(ctx context.Context, reference string) error {
 	_, err := s.client.DeleteObject(ctx, &s3.DeleteObjectInput{

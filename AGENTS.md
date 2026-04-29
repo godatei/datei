@@ -25,6 +25,7 @@ Each domain package (e.g., `internal/datei/`, `internal/users/`) is self-contain
 
 ## Development Workflow
 
+- **Build dependency**: `libmupdf-dev` must be installed on the build host (used by `internal/thumbnail` via CGO). On Fedora: `dnf install mupdf-devel`; on Debian/Ubuntu: `apt install libmupdf-dev`.
 - Start dev services: `podman compose up -d` (PostgreSQL, Rustfs S3, Mailpit)
 - Run server: `mise serve` (alias for `mise run:datei:serve`)
 - Run tests: `mise run test`

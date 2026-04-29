@@ -4,7 +4,6 @@ env_shell_expand = false
 [tools]
 go = "1.26.2"
 golangci-lint = "2.11.4"
-ko = "0.18.1"
 node = "24"
 pnpm = "10.33.2"
 github-cli = "2.91.0"
@@ -14,7 +13,6 @@ watchexec = "2.3.2"
 _.source = ['hack/current-commit.sh']
 _.file = ".env.local"
 VERSION = 'snapshot'
-CGO_ENABLED = "0"
 
 [vars]
 ldflags = "-s -w -X github.com/godatei/datei/internal/buildconfig.version=$VERSION -X github.com/godatei/datei/internal/buildconfig.commit=$COMMIT"
@@ -63,8 +61,7 @@ run = 'go build -ldflags="{{vars.ldflags}}" -o dist/datei .'
 depends = ["generate:backend", "build:frontend"]
 
 [tasks."build:container"]
-depends = "build:datei"
-run = "docker build -t ghcr.io/godatei/datei:snapshot ."
+run = "docker build --build-arg VERSION=$VERSION --build-arg COMMIT=$COMMIT -t ghcr.io/godatei/datei:snapshot ."
 
 [tasks."lint:backend"]
 depends = ["generate:backend"]

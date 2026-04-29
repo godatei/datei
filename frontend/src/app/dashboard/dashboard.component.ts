@@ -21,6 +21,7 @@ import {
   updateDatei$FormData,
 } from 'frontend/src/api/functions';
 import { Datei } from 'frontend/src/api/models';
+import { ThumbnailIconComponent } from './thumbnail-icon.component';
 import {
   ImagePreviewDialogComponent,
   ImagePreviewDialogData,
@@ -39,6 +40,7 @@ import { DragPreviewDirective } from './drag-preview.directive';
     MatButtonModule,
     MatTableModule,
     DatePipe,
+    ThumbnailIconComponent,
     DragDropDirective,
     DragPreviewDirective,
   ],
@@ -71,7 +73,14 @@ export class DashboardComponent {
   });
 
   protected readonly dataSource = new MatTableDataSource<Datei>([]);
-  protected readonly displayedColumns = ['name', 'createdAt', 'updatedAt', 'mimeType', 'actions'];
+  protected readonly displayedColumns = [
+    'icon',
+    'name',
+    'createdAt',
+    'updatedAt',
+    'mimeType',
+    'actions',
+  ];
   protected readonly selection = new SelectionModel<Datei>(true, [], true, (a, b) => a.id === b.id);
   protected readonly selectedIds = toSignal(
     this.selection.changed.pipe(map(() => new Set(this.selection.selected.map((d) => d.id)))),

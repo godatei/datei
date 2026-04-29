@@ -57,6 +57,9 @@ type ServerInterface interface {
 	// Get the ancestor path of a Datei from root
 	// (GET /api/v1/datei/{id}/path)
 	GetDateiPath(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// Get thumbnail for a Datei
+	// (GET /api/v1/datei/{id}/thumbnail)
+	GetDateiThumbnail(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, params GetDateiThumbnailParams)
 	// List user emails
 	// (GET /api/v1/settings/emails)
 	ListEmails(w http.ResponseWriter, r *http.Request)
@@ -165,6 +168,12 @@ func (_ Unimplemented) DownloadDatei(w http.ResponseWriter, r *http.Request, id 
 // Get the ancestor path of a Datei from root
 // (GET /api/v1/datei/{id}/path)
 func (_ Unimplemented) GetDateiPath(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get thumbnail for a Datei
+// (GET /api/v1/datei/{id}/thumbnail)
+func (_ Unimplemented) GetDateiThumbnail(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, params GetDateiThumbnailParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -507,6 +516,61 @@ func (siw *ServerInterfaceWrapper) GetDateiPath(w http.ResponseWriter, r *http.R
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetDateiPath(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetDateiThumbnail operation middleware
+func (siw *ServerInterfaceWrapper) GetDateiThumbnail(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetDateiThumbnailParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "If-None-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-None-Match")]; found {
+		var IfNoneMatch string
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-None-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-None-Match", valueList[0], &IfNoneMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-None-Match", Err: err})
+			return
+		}
+
+		params.IfNoneMatch = &IfNoneMatch
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetDateiThumbnail(w, r, id, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -982,6 +1046,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/api/v1/datei/{id}/path", wrapper.GetDateiPath)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/datei/{id}/thumbnail", wrapper.GetDateiThumbnail)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v1/settings/emails", wrapper.ListEmails)
 	})
 	r.Group(func(r chi.Router) {
@@ -1320,6 +1387,74 @@ type GetDateiPath404Response struct {
 
 func (response GetDateiPath404Response) VisitGetDateiPathResponse(w http.ResponseWriter) error {
 	w.WriteHeader(404)
+	return nil
+}
+
+type GetDateiThumbnailRequestObject struct {
+	Id     openapi_types.UUID `json:"id"`
+	Params GetDateiThumbnailParams
+}
+
+type GetDateiThumbnailResponseObject interface {
+	VisitGetDateiThumbnailResponse(w http.ResponseWriter) error
+}
+
+type GetDateiThumbnail200ResponseHeaders struct {
+	CacheControl string
+	ETag         string
+}
+
+type GetDateiThumbnail200ImagejpegResponse struct {
+	Body          io.Reader
+	Headers       GetDateiThumbnail200ResponseHeaders
+	ContentLength int64
+}
+
+func (response GetDateiThumbnail200ImagejpegResponse) VisitGetDateiThumbnailResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "image/jpeg")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.Header().Set("Cache-Control", fmt.Sprint(response.Headers.CacheControl))
+	w.Header().Set("ETag", fmt.Sprint(response.Headers.ETag))
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type GetDateiThumbnail304Response struct {
+}
+
+func (response GetDateiThumbnail304Response) VisitGetDateiThumbnailResponse(w http.ResponseWriter) error {
+	w.WriteHeader(304)
+	return nil
+}
+
+type GetDateiThumbnail404Response struct {
+}
+
+func (response GetDateiThumbnail404Response) VisitGetDateiThumbnailResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type GetDateiThumbnail409Response struct {
+}
+
+func (response GetDateiThumbnail409Response) VisitGetDateiThumbnailResponse(w http.ResponseWriter) error {
+	w.WriteHeader(409)
+	return nil
+}
+
+type GetDateiThumbnail415Response struct {
+}
+
+func (response GetDateiThumbnail415Response) VisitGetDateiThumbnailResponse(w http.ResponseWriter) error {
+	w.WriteHeader(415)
 	return nil
 }
 
@@ -1716,6 +1851,9 @@ type StrictServerInterface interface {
 	// Get the ancestor path of a Datei from root
 	// (GET /api/v1/datei/{id}/path)
 	GetDateiPath(ctx context.Context, request GetDateiPathRequestObject) (GetDateiPathResponseObject, error)
+	// Get thumbnail for a Datei
+	// (GET /api/v1/datei/{id}/thumbnail)
+	GetDateiThumbnail(ctx context.Context, request GetDateiThumbnailRequestObject) (GetDateiThumbnailResponseObject, error)
 	// List user emails
 	// (GET /api/v1/settings/emails)
 	ListEmails(ctx context.Context, request ListEmailsRequestObject) (ListEmailsResponseObject, error)
@@ -2083,6 +2221,33 @@ func (sh *strictHandler) GetDateiPath(w http.ResponseWriter, r *http.Request, id
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetDateiPathResponseObject); ok {
 		if err := validResponse.VisitGetDateiPathResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetDateiThumbnail operation middleware
+func (sh *strictHandler) GetDateiThumbnail(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, params GetDateiThumbnailParams) {
+	var request GetDateiThumbnailRequestObject
+
+	request.Id = id
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetDateiThumbnail(ctx, request.(GetDateiThumbnailRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetDateiThumbnail")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetDateiThumbnailResponseObject); ok {
+		if err := validResponse.VisitGetDateiThumbnailResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -2506,53 +2671,56 @@ func (sh *strictHandler) RequestEmailVerification(w http.ResponseWriter, r *http
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"H4sIAAAAAAAC/+Rc3W7cuhF+FUItUBvQZu2etGi3Vz6xk7qIcwzHaS4CX9DSaMVEIhWSsrM1/O4F/yTt",
+	"ipTkXa9zil7FkKiZ4fx8nBnO5iFKWFkxClSKaPEQiSSHEus/T9L0rMSkuILvNQipHlWcVcAlAb0A1Fv1",
+	"R8Z4iWW0sE/iSK4qiBaRkJzQZfT4GEccvteEQxotvthVN80ydvsVEhk9xtEbRjPCyysQIC+xEPeMp0H2",
+	"lV2g/i4JfQ90KfNo8bcx9s13Xgk4YAmnWAIJMs5IAerfFETCSSUJo9EieksKQCmWGB0w/QwXMWIlkShj",
+	"HKWEQyIZJyAOo7jV2C2hmK/6KosjiksPlw+4BE1Q5oAo3CMtqu/7CnOg8jzt07jUbxqRVuj8FB00knLG",
+	"5JqIdU1Sr017yjOy9PSV5JB8E3UZ0Jl7jQ5oXRQ+bann+FYpXfIaPHtNGJVA5YVnsxeYf0vZPUV2Dao4",
+	"3BG4n0RWO0N6IvtktZ8QRpEkJQiJy6qrshRLmKk3UZjqr6s+1U8CuLIGy5BexbjHEKNiE48aPlHyvQZE",
+	"UqCSZAT4uIXjiIhT5yN9ip9zkDkoRyQCEYFw61AtrVvGCsBUESsI/QapdhGfU5pdm0XGqdGBcgWxKtVD",
+	"cbiNJkpSwrV+2HOL84szpNbv4HX+CH1Tcx1e6q3akgpUF6SjJJ8UtNtoRJD/hLBLvUKEotuVBBFWS8OS",
+	"UPnX12GehEpYAldMJcci98fRtXo1HkSj+7IshoLqPmfILkNEbqO8ukpDePAeC4nM+y0gwRIek75omWy3",
+	"hY2T0HyCtUzdWO8iX3fXNyHMv8QyP5dQ9rHfYNEo0rhQmiqvVxIi1NYv3p5MShl2SBLO6BijhKUT9qNX",
+	"jTAQFaMC+hw4JOwO+OoNS62mJZTCw7MhjznHq54M63R8wrwnQtqEKCRMw3vdd08UR4WBBs8NSaGcza3/",
+	"I4csWkR/mLdZ6NymoHMDmj3540gyiQsPlKjHiNblLXDFVDNBB7eQMQ6owktC9ZF9GPUxatPRtHyOU0gp",
+	"OjsWYa3oPHddP0P7VZGuSY7azBL2ysWWhOo0ejnkO0siJNfaMK7WjYjmzO55Sv+roAi7Fw1xVGb4jT+O",
+	"4idEsiM/GNFW5rDCND1xkWGfopSjfAPql6XHS4d1J+g+SixrMcS8xIQSumxCfcR7Nz7w7fcKlkCBYwmb",
+	"0uwbO4c4/3ysu9I+Dvw53DdwpsVbF66Okz2xR9Q8pYR+/gr+I8i6Gjy4vnOl/k+88OpGQMJBjvuYXRd3",
+	"yPnE+aRzl+FyPlBow71J4V2xbWsSV9sf7pbOK/KVtw639P+BoKzkChliqGR3IJBkwfJ8PPMbUs5nInNV",
+	"BDyx56F2kfX7Hv4Ox5b11P+NIZrz/wXDteUcTmVNPXsZhv9ngrq+cE1C1Beq25mZVmM9AbknFi1EXHJS",
+	"YtMc6ecEd8BJRialVpq+E6cl26HRLcluAroKY26Z4YE8b2r5Zc+dDrG+JAbCa07k6qPKaw3/W8Ac+D+l",
+	"rE5qmQOVJMEm/ty7t07Z//p8HcUbMfqrXoJ0koVqocIQI7NQJ8/QrGnNlEtZRY9KHkIzpjdHpIpKU7Gi",
+	"k8tzo19heBy/Onp1pHTBKqC4ItEi+kU/Uk4sc72NOa7I/O54jmuZzwuVMmpVMxM2SuF6VwpmTEYZGQWC",
+	"kL+ydGUKQ92FVH/iqiqsHuZfhVGGqQXGKoW1DPtx3UwKdPQD4wta7j8fHT03b+tpmvlGJ0QtQKJOEhAi",
+	"qwvEOLp4e4IaER/j6PXRsacDSO9wQVKUcNBdSlwI960ulLu+FS2+3MSRqEsTfoopIhTdE5kjHUcI0xQ1",
+	"6KM+7Rtvnug6SUmyBI8J34HslFPRvpW6UbUFVWukro2gg1p5BxIVgW/W1MFt2ht2Z5cY78mjN/PuSU79",
+	"uu9DV50ateODxueOwj5HaFVL5W3WeQoOOF0hpxfntb+McExNCyodtIrbK8L6AqcW6s8kYTWVPssI45oh",
+	"s3TS/L3ZxlNKbG8gAdJqWQCVI5rSzBBuIhnx9vs1ZaXu6skbyU0LS6M5xyVI4CJafNnuakzhfvS9BpPW",
+	"6rOzzTDjjlpH79D6t1U/SFmXnS4WB1EXpmnm4VqQUveBW5YpZLguZLQ4Pjry9bl6+e8mJ5Xbim+kCnBk",
+	"WSYgwNLH8GafsNnrTPpAkwjZ9CBHgUDvFnV8ZMM/h3KZLzeP64eS4oyLomXtD+LOnfNgCJd1IUmFuZwr",
+	"v5qpmmu6rjwX25Ni+PjZrGW10LeQSchsfttB7WLVMddkETYyXxACLyckt26hJ6XtCeychTtFKin/7rkK",
+	"ZDQrSCLRAbxavor7dSZlClhqmh7u4mfGtPY4cVregMb5A0kfjYQFSOg74al+Pgkkjb30/aNGCJUftwBB",
+	"3DnUetVTIPFmyiliJDBb8XlM8JNG4WGbYaoWGdrOcOsW0/2AnSxmlI1wBxmwTPK+VTotmp9vlSmpxY/Z",
+	"/f39TONTzQugKnNPp2OEp1+n1LwT8g20uV64dhpBQHezG0DACRg0xe+391qjyNZrvRgzT9k9LRhOg8nY",
+	"qV3we8SaIVuzRIKcCckBl9HioW9FM81kP46jHHCqN/WgDgL1cHZKRMUEca2PjdtSKXGSl+qEMJ+acjYj",
+	"BdjOS7uz/lnmWIyNu9iJFN3PHaL4+FxAaq3toHR9Umg3FHWkRzxS+8xAkd+MMPwPOWMfeKbfqTfTGv37",
+	"sp5P/8ZTVf6iwmbRmCYgJOMCZZyVuiJSBYNyqSW5A+q684QmRS3IHRy+BDK9A6lFcNIhZRktrpWnETbk",
+	"IzKvy1tqO8SDjnLdrPyZ3hI/GKIGKVqy59nsA6Mwu9D5xFCAj/sbKfES5l8rWHrhrlEE0gs3EA8nOcwU",
+	"KHFWrDtqH7vOrvFyeI1a9YvPiT4wiS5YaprkEz0NMY5yLBBlzVDoCuQYkLlra9S4ShDS4uj18V98M5ii",
+	"rirG1RlfQkqwQWRzr+VoWjae1t7TA8LRVBx8GClASkKXYt5OqgTbJ2bYJdpzNb8xUjNQzluRdy3PdffN",
+	"0QoV6G4Sfk8Nts1B+217a2emd5mmLhQG0kbTgVN+YVudhCpd7KLPkzS1NWi/PbfhafMH/e/5cEl6BSW7",
+	"g7PSi7UeSLU0919+GkVzLV5Y1RY3zDJUmTs9p5sAUhnKz3ImGu0pizA62+A+xTLzqr3cDFSnH0Haq8rf",
+	"rZEESISF037QVmZxWQuJbgG5W1fdCvUQ2K/hPiqO1N1EdFj7rFZmeG5vHcK3BO1k7J4QrD96uy2GXbw9",
+	"6dyiBO5cHIg1twL2mlA3Z6j3BuZJdYXhr0iGlW74hHXejPDuSeW9GeQX7mX0R5Q9h7UySmOQEWMmLIVY",
+	"m9EdSfbLuGteFY51tYt1jeCaoK6vr3+7vmwvmL22dnODM7VMzHkzwjh4XxoYc9zfDerIROcLO8iEQU+P",
+	"x7iF2iICtar+aWjQ7sOOMXQFnOwzQg/5DhWX/rHgfSbcI4PI49axm9qxTulrtUvYq1wBsq7CweeGUPep",
+	"vN6gawD+tKiIUCLJoBd7gG8XxZ5bhqiRwa9NfZ8+647pBe4oPb/M3ROSDf0IeNu04nJ9fuCpkyGj2MM4",
+	"gh+VEspyMD8I2DUL1NVUg2tu8m1jGMKwiqMfM6eYGU6sfBvm9bqAKoGHgMn+oPGTsNM/ewqotQlGTzC5",
+	"31Xqir3iTHewn6FnmHTo/km0lEPNgHZkdk/+35/JfeGTe8wS+ieJ9rLqmeLHGWHNU3e7ptJ+Yn6Ey9F4",
+	"BMyb+eDBq9h2Jnnfxn/GltATbbXDJEKO6RJciI62HHSdvTJjmLwcPXz0Zv6ta3MrwHQVNIPUT0Dyuw6r",
+	"3QHdbsLW9Xfr2/Bht9HObFx/vDO6HyhG9ILt9Nf9YGBw72kptZ3rox5t6P8DQLf8/xsAAP//jR6HFpxE",
+	"AAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
