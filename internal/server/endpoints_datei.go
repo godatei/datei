@@ -219,7 +219,9 @@ func (s *server) UpdateDatei(
 				} else {
 					fileData = bytes.NewReader(fileDataBytes)
 				}
-				contentType = part.Header.Get("Content-Type")
+				if partContentType := strings.TrimSpace(part.Header.Get("Content-Type")); partContentType != "" {
+					contentType = partContentType
+				}
 			}
 		}
 	} else if body := request.FormdataBody; body != nil {
