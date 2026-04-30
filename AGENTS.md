@@ -272,6 +272,12 @@ This project uses Angular Material 21 with Material 3 theming. All UI must follo
 - Use the `providedIn: 'root'` option for singleton services
 - Use the `inject()` function instead of constructor injection
 
+## Domain Knowledge
+
+Facts about the system that are non-obvious and have caused incorrect agent assumptions in the past.
+
+- **Datei hierarchy cycles are impossible**: `parentId` on `datei_projection` forms a tree, not a graph. When moving a directory, `Service.UpdateDatei` (`internal/datei/service.go`) walks the full ancestor path of the target parent via `GetDateiPath` and returns `ErrCycleDetected` if the moving directory appears anywhere in that chain. Files are never the parent of anything, so only directory moves need this check. Do not flag potential cycles as a concern — the guard is already there.
+
 ## Maintaining This File
 
 This file is the primary source of truth for how the AI agent works with this codebase. It MUST be kept up to date as the project evolves.
