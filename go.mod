@@ -21,7 +21,7 @@ require (
 	github.com/oapi-codegen/nethttp-middleware v1.1.2
 	github.com/oapi-codegen/runtime v1.4.0
 	github.com/pquerna/otp v1.5.0
-	github.com/samber/slog-chi v1.19.0
+	github.com/samber/slog-chi v1.19.1
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/wneessen/go-mail v0.7.2
