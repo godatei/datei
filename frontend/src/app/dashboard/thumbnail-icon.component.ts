@@ -37,6 +37,7 @@ function canHaveThumbnail(datei: Datei): boolean {
       <img
         [src]="url"
         alt=""
+        draggable="false"
         class="mat-corner-sm block size-full object-cover"
         height="512"
         width="512"

@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import { SelectionModel } from '@angular/cdk/collections';
 import { Component, computed, effect, inject, resource, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -17,6 +18,7 @@ import {
   downloadDatei,
   getDateiPath,
   listDatei,
+  updateDatei$FormData,
 } from 'frontend/src/api/functions';
 import { Datei } from 'frontend/src/api/models';
 import { ThumbnailIconComponent } from './thumbnail-icon.component';
@@ -25,6 +27,10 @@ import {
   ImagePreviewDialogData,
 } from './image-preview-dialog.component';
 import { NewFolderDialogComponent } from './new-folder-dialog.component';
+import { DragDropDirective, DropEvent } from './drag-drop.directive';
+import { DragPreviewDirective } from './drag-preview.directive';
+import { DragItemDirective } from './drag-row.directive';
+import { DropTargetDirective } from './drop-target.directive';
 
 @Component({
   selector: 'app-dashboard',
@@ -37,6 +43,10 @@ import { NewFolderDialogComponent } from './new-folder-dialog.component';
     MatTableModule,
     DatePipe,
     ThumbnailIconComponent,
+    DragDropDirective,
+    DragPreviewDirective,
+    DragItemDirective,
+    DropTargetDirective,
   ],
 })
 export class DashboardComponent {
@@ -65,6 +75,7 @@ export class DashboardComponent {
         ? this.api.invoke(getDateiPath, { id: params.parentId })
         : Promise.resolve([]),
   });
+
   protected readonly dataSource = new MatTableDataSource<Datei>([]);
   protected readonly displayedColumns = [
     'icon',
@@ -75,6 +86,10 @@ export class DashboardComponent {
     'actions',
   ];
   protected readonly selection = new SelectionModel<Datei>(true, [], true, (a, b) => a.id === b.id);
+  protected readonly selectedIds = toSignal(
+    this.selection.changed.pipe(map(() => new Set(this.selection.selected.map((d) => d.id)))),
+    { initialValue: new Set<string>() },
+  );
   protected readonly uploading = signal(false);
   private selectionAnchor: Datei | null = null;
 
@@ -185,6 +200,33 @@ export class DashboardComponent {
     } catch (e) {
       console.error(e);
       this.snackBar.open('Failed to move to trash', 'Dismiss', { duration: 4000 });
+    }
+  }
+
+  protected onDrag(event: DropEvent<Datei>): void {
+    if (!event.target) return;
+    if (!this.selection.isSelected(event.target)) {
+      this.selection.setSelection(event.target);
+    }
+  }
+
+  protected async onDrop(event: DropEvent<Datei>): Promise<void> {
+    const items = this.selection.selected.filter((item) => item.id !== event.target?.id);
+    const results = await Promise.allSettled(
+      items.map((item) =>
+        this.api.invoke(updateDatei$FormData, {
+          id: item.id,
+          body: { updateParentId: true, parentId: event.target?.id },
+        }),
+      ),
+    );
+
+    const failed = results.filter((r) => r.status === 'rejected').length;
+    if (failed > 0) {
+      this.snackBar.open(`Failed to move ${failed} item(s)`, 'Dismiss', { duration: 4000 });
+    }
+    if (failed !== results.length) {
+      this.refresh.update((v) => v + 1);
     }
   }
 

@@ -224,14 +224,16 @@ func (s *Service) DownloadDatei(ctx context.Context, dateiID uuid.UUID) (*Downlo
 
 // UpdateDateiInput contains parameters for updating a datei
 type UpdateDateiInput struct {
-	ID          uuid.UUID
-	Name        *string
-	Reader      io.Reader
-	FileName    string
-	ContentType string
+	ID            uuid.UUID
+	Name          *string
+	MoveRequested bool
+	NewParentID   *uuid.UUID
+	Reader        io.Reader
+	FileName      string
+	ContentType   string
 }
 
-// UpdateDatei updates a datei record with optional name and/or file
+// UpdateDatei updates a datei record with optional name, move, and/or file.
 func (s *Service) UpdateDatei(ctx context.Context, input UpdateDateiInput) (*api.Datei, error) {
 	agg, err := s.repository.LoadByID(ctx, input.ID)
 	if err != nil {
@@ -239,11 +241,44 @@ func (s *Service) UpdateDatei(ctx context.Context, input UpdateDateiInput) (*api
 	}
 
 	now := time.Now()
-
 	userID := authn.RequireContext(ctx).UserID
 
 	if input.Name != nil {
 		if err := agg.Rename(*input.Name, userID, now); err != nil {
+			return nil, err
+		}
+	}
+
+	if input.MoveRequested {
+		if input.NewParentID != nil {
+			queries := db.New(s.db)
+			parent, err := queries.GetDateiProjectionByID(ctx, *input.NewParentID)
+			if errors.Is(err, pgx.ErrNoRows) {
+				return nil, dateierrors.ErrParentNotFound
+			} else if err != nil {
+				return nil, err
+			}
+			if !parent.IsDirectory {
+				return nil, dateierrors.ErrParentNotDirectory
+			}
+			if parent.TrashedAt != nil {
+				return nil, dateierrors.ErrParentTrashed
+			}
+
+			if agg.IsDirectory {
+				pathRows, err := queries.GetDateiPath(ctx, *input.NewParentID)
+				if err != nil {
+					return nil, err
+				}
+				for _, row := range pathRows {
+					if row.ID == input.ID {
+						return nil, dateierrors.ErrCycleDetected
+					}
+				}
+			}
+		}
+
+		if err := agg.Move(input.NewParentID, userID, now); err != nil {
 			return nil, err
 		}
 	}
