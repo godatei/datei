@@ -211,15 +211,12 @@ export class DashboardComponent {
   }
 
   protected async onDrop(event: DropEvent<Datei>): Promise<void> {
-    // parentId === '' means move to root; the multipart endpoint interprets
-    // an empty string as "no UUID → newParentID = nil".
-    const parentId = event.target?.id ?? '';
     const items = this.selection.selected.filter((item) => item.id !== event.target?.id);
     const results = await Promise.allSettled(
       items.map((item) =>
         this.api.invoke(updateDatei$FormData, {
           id: item.id,
-          body: { parentId },
+          body: { updateParentId: true, parentId: event.target?.id },
         }),
       ),
     );

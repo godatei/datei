@@ -9,7 +9,12 @@ export interface UpdateDateiRequest {
   name?: string | null;
 
   /**
-   * New parent directory ID (optional; empty string moves to root)
+   * New parent directory ID (null moves to root; only used when updateParentId is true)
    */
   parentId?: string | null;
+
+  /**
+   * Whether to move the Datei to a new parent directory
+   */
+  updateParentId?: boolean | null;
 }

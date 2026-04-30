@@ -174,8 +174,11 @@ type UpdateDateiRequest struct {
 	// Name New name for the Datei (optional)
 	Name *string `json:"name,omitempty"`
 
-	// ParentId New parent directory ID (optional; empty string moves to root)
+	// ParentId New parent directory ID (null moves to root; only used when updateParentId is true)
 	ParentId *openapi_types.UUID `json:"parentId,omitempty"`
+
+	// UpdateParentId Whether to move the Datei to a new parent directory
+	UpdateParentId *bool `json:"updateParentId,omitempty"`
 }
 
 // UpdateDateiWithFileRequest defines model for UpdateDateiWithFileRequest.
@@ -186,8 +189,11 @@ type UpdateDateiWithFileRequest struct {
 	// Name New name for the Datei (optional)
 	Name *string `json:"name,omitempty"`
 
-	// ParentId New parent directory ID (optional; empty string moves to root)
+	// ParentId New parent directory ID (null moves to root; only used when updateParentId is true)
 	ParentId *openapi_types.UUID `json:"parentId,omitempty"`
+
+	// UpdateParentId Whether to move the Datei to a new parent directory
+	UpdateParentId *bool `json:"updateParentId,omitempty"`
 }
 
 // UpdateUserEmailRequest defines model for UpdateUserEmailRequest.

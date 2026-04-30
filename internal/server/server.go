@@ -13,9 +13,10 @@ import (
 )
 
 const (
-	fileFormField     = "file"
-	nameFormField     = "name"
-	parentIdFormField = "parentId"
+	fileFormField           = "file"
+	nameFormField           = "name"
+	parentIdFormField       = "parentId"
+	updateParentIdFormField = "updateParentId"
 )
 
 type server struct {

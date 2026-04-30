@@ -4,8 +4,12 @@ properties:
     type: string
     description: New name for the Datei (optional)
     nullable: true
+  updateParentId:
+    type: boolean
+    description: Whether to move the Datei to a new parent directory
+    nullable: true
   parentId:
     type: string
     format: uuid
-    description: New parent directory ID (optional; empty string moves to root)
+    description: New parent directory ID (null moves to root; only used when updateParentId is true)
     nullable: true

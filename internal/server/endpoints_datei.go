@@ -181,6 +181,7 @@ func (s *server) UpdateDatei(
 	contentType := "application/octet-stream"
 
 	if reader := request.MultipartBody; reader != nil {
+		var rawName, rawUpdateParentId, rawParentId *string
 		for {
 			part, err := reader.NextPart()
 			if err == io.EOF {
@@ -196,22 +197,22 @@ func (s *server) UpdateDatei(
 				if err != nil {
 					return UpdateDatei400Response{}, nil
 				}
-				if n := strings.TrimSpace(string(buf)); n != "" {
-					name = &n
+				s := strings.TrimSpace(string(buf))
+				rawName = &s
+			case updateParentIdFormField:
+				buf, err := readLimited(part, 8)
+				if err != nil {
+					return UpdateDatei400Response{}, nil
 				}
+				s := strings.TrimSpace(string(buf))
+				rawUpdateParentId = &s
 			case parentIdFormField:
 				raw, err := readLimited(part, 64)
 				if err != nil {
 					return UpdateDatei400Response{}, nil
 				}
-				moveRequested = true
-				if s := strings.TrimSpace(string(raw)); s != "" {
-					parsed, err := uuid.Parse(s)
-					if err != nil {
-						return UpdateDatei400Response{}, nil
-					}
-					newParentID = &parsed
-				}
+				s := strings.TrimSpace(string(raw))
+				rawParentId = &s
 			case fileFormField:
 				fileName = part.FileName()
 				if fileDataBytes, err := io.ReadAll(part); err != nil {
@@ -224,9 +225,22 @@ func (s *server) UpdateDatei(
 				}
 			}
 		}
+		if rawName != nil && *rawName != "" {
+			name = rawName
+		}
+		if rawUpdateParentId != nil && *rawUpdateParentId == "true" {
+			moveRequested = true
+			if rawParentId != nil && *rawParentId != "" {
+				parsed, err := uuid.Parse(*rawParentId)
+				if err != nil {
+					return UpdateDatei400Response{}, nil
+				}
+				newParentID = &parsed
+			}
+		}
 	} else if body := request.FormdataBody; body != nil {
 		name = body.Name
-		if body.ParentId != nil {
+		if body.UpdateParentId != nil && *body.UpdateParentId {
 			moveRequested = true
 			newParentID = body.ParentId
 		}
