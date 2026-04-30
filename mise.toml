@@ -6,8 +6,8 @@ go = "1.26.2"
 golangci-lint = "2.11.4"
 node = "24"
 pnpm = "10.33.2"
-github-cli = "2.91.0"
-watchexec = "2.3.2"
+github-cli = "2.92.0"
+watchexec = "2.5.1"
 
 [env]
 _.source = ['hack/current-commit.sh']

@@ -14,7 +14,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/ledongthuc/pdf"
 	"github.com/otiai10/gosseract/v2"
 	"github.com/spf13/pflag"
