@@ -15,6 +15,35 @@ import (
 	"github.com/google/uuid"
 )
 
+// ListTrash implements [StrictServerInterface].
+func (s *server) ListTrash(
+	ctx context.Context,
+	request ListTrashRequestObject,
+) (ListTrashResponseObject, error) {
+	limit := 0
+	offset := 0
+	if request.Params.Limit != nil && *request.Params.Limit > 0 {
+		limit = *request.Params.Limit
+	}
+	if request.Params.Offset != nil && *request.Params.Offset > 0 {
+		offset = *request.Params.Offset
+	}
+
+	result, err := s.dateiService.ListTrash(ctx, datei.ListTrashInput{
+		ParentID: request.Params.ParentId,
+		Limit:    limit,
+		Offset:   offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return ListTrash200JSONResponse(api.ListTrashResponse{
+		Items: result.Items,
+		Total: result.Total,
+	}), nil
+}
+
 // ListDatei implements [StrictServerInterface].
 func (s *server) ListDatei(
 	ctx context.Context,

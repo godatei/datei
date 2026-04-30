@@ -11,6 +11,7 @@ export type { EnableMfaRequest } from './models/enable-mfa-request';
 export type { EnableMfaResponse } from './models/enable-mfa-response';
 export type { ListDateiResponse } from './models/list-datei-response';
 export type { ListEmailsResponse } from './models/list-emails-response';
+export type { ListTrashResponse } from './models/list-trash-response';
 export type { LoginConfigResponse } from './models/login-config-response';
 export type { LoginRequest } from './models/login-request';
 export type { LoginResponse } from './models/login-response';
@@ -20,6 +21,7 @@ export type { RegenerateMfaRecoveryCodesResponse } from './models/regenerate-mfa
 export type { RegisterRequest } from './models/register-request';
 export type { ResetPasswordRequest } from './models/reset-password-request';
 export type { SetupMfaResponse } from './models/setup-mfa-response';
+export type { TrashedDatei } from './models/trashed-datei';
 export type { UpdateDateiRequest } from './models/update-datei-request';
 export type { UpdateDateiWithFileRequest } from './models/update-datei-with-file-request';
 export type { UpdateUserEmailRequest } from './models/update-user-email-request';

@@ -1,0 +1,15 @@
+allOf:
+  - $ref: './Datei.yaml'
+  - type: object
+    required:
+      - trashedAt
+    properties:
+      originPath:
+        type: array
+        nullable: true
+        description: >
+          Full ancestor path of the parent directory at the time of trashing.
+          Populated only for root-level trash items (when listing without parentId).
+          Empty when the item was at root level.
+        items:
+          $ref: './DateiPathItem.yaml'

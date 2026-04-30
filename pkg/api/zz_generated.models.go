@@ -118,6 +118,15 @@ type ListEmailsResponse struct {
 	Emails []UserEmail `json:"emails"`
 }
 
+// ListTrashResponse defines model for ListTrashResponse.
+type ListTrashResponse struct {
+	// Items Array of trashed Datei objects
+	Items []TrashedDatei `json:"items"`
+
+	// Total Total number of items (before pagination)
+	Total int `json:"total"`
+}
+
 // LoginConfigResponse defines model for LoginConfigResponse.
 type LoginConfigResponse struct {
 	RegistrationEnabled bool `json:"registrationEnabled"`
@@ -167,6 +176,57 @@ type ResetPasswordRequest struct {
 type SetupMFAResponse struct {
 	QrCodeUrl string `json:"qrCodeUrl"`
 	Secret    string `json:"secret"`
+}
+
+// TrashedDatei defines model for TrashedDatei.
+type TrashedDatei struct {
+	// Checksum File checksum (null for directories)
+	Checksum *string `json:"checksum,omitempty"`
+
+	// ContentMd Markdown content preview
+	ContentMd *string `json:"contentMd,omitempty"`
+
+	// CreatedAt Creation timestamp
+	CreatedAt time.Time `json:"createdAt"`
+
+	// CreatedBy User ID of creator
+	CreatedBy *openapi_types.UUID `json:"createdBy,omitempty"`
+
+	// Id Unique identifier
+	Id openapi_types.UUID `json:"id"`
+
+	// IsDirectory Whether this is a directory
+	IsDirectory bool `json:"isDirectory"`
+
+	// LinkedDateiId ID of linked Datei (for symlinks)
+	LinkedDateiId *openapi_types.UUID `json:"linkedDateiId,omitempty"`
+
+	// MimeType MIME type (null for directories)
+	MimeType *string `json:"mimeType,omitempty"`
+
+	// Name Current name of the Datei
+	Name *string `json:"name"`
+
+	// OriginPath Full ancestor path of the parent directory at the time of trashing. Populated only for root-level trash items (when listing without parentId). Empty when the item was at root level.
+	OriginPath *[]DateiPathItem `json:"originPath,omitempty"`
+
+	// ParentId Parent directory ID
+	ParentId *openapi_types.UUID `json:"parentId,omitempty"`
+
+	// Size File size in bytes (null for directories)
+	Size *int64 `json:"size,omitempty"`
+
+	// TrashedAt Trash timestamp
+	TrashedAt *time.Time `json:"trashedAt"`
+
+	// TrashedBy User ID who trashed it
+	TrashedBy *openapi_types.UUID `json:"trashedBy,omitempty"`
+
+	// UpdatedAt Last update timestamp
+	UpdatedAt time.Time `json:"updatedAt"`
+
+	// UpdatedBy User ID who last updated it
+	UpdatedBy *openapi_types.UUID `json:"updatedBy,omitempty"`
 }
 
 // UpdateDateiRequest defines model for UpdateDateiRequest.
@@ -226,6 +286,18 @@ type ListDateiParams struct {
 // GetDateiThumbnailParams defines parameters for GetDateiThumbnail.
 type GetDateiThumbnailParams struct {
 	IfNoneMatch *string `json:"If-None-Match,omitempty"`
+}
+
+// ListTrashParams defines parameters for ListTrash.
+type ListTrashParams struct {
+	// ParentId Browse contents of a specific trashed directory. Omit to list root-level trashed items.
+	ParentId *openapi_types.UUID `form:"parentId,omitempty" json:"parentId,omitempty"`
+
+	// Limit Maximum number of results
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of results to skip
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
 // LoginJSONRequestBody defines body for Login for application/json ContentType.

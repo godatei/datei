@@ -43,6 +43,8 @@ paths:
     $ref: ./paths/settings_emails_id_primary.yaml
 
   # Datei (authentication required)
+  /api/v1/trash:
+    $ref: './paths/trash.yaml'
   /api/v1/datei:
     $ref: ./paths/datei.yaml
   /api/v1/datei/{id}:

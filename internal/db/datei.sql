@@ -7,6 +7,9 @@ SELECT * FROM datei_projection ORDER BY created_at DESC;
 -- name: ListRootDateiProjections :many
 SELECT * FROM datei_projection WHERE parent_id IS NULL AND trashed_at IS NULL ORDER BY is_directory DESC, name ASC;
 
+-- name: ListTrashedDatei :many
+SELECT * FROM datei_projection WHERE trashed_at IS NOT NULL ORDER BY trashed_at DESC;
+
 -- name: ListDateiProjectionsByParent :many
 SELECT * FROM datei_projection WHERE parent_id = $1 AND trashed_at IS NULL ORDER BY is_directory DESC, name ASC;
 
@@ -66,6 +69,17 @@ WITH RECURSIVE ancestors(id, parent_id, name, trashed_at, depth) AS (
 )
 SELECT id, name FROM ancestors
 WHERE NOT EXISTS (SELECT 1 FROM ancestors WHERE trashed_at IS NOT NULL)
+ORDER BY depth DESC;
+
+-- name: GetDateiPathIncludingTrashed :many
+WITH RECURSIVE ancestors(id, parent_id, name, depth) AS (
+  SELECT d.id, d.parent_id, d.name, 0 FROM datei_projection d WHERE d.id = $1
+  UNION ALL
+  SELECT p.id, p.parent_id, p.name, a.depth + 1
+  FROM datei_projection p
+  INNER JOIN ancestors a ON p.id = a.parent_id
+)
+SELECT id, name FROM ancestors
 ORDER BY depth DESC;
 
 -- name: InsertDateiPermissionProjection :exec

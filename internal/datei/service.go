@@ -363,6 +363,82 @@ func (s *Service) GetDateiPath(ctx context.Context, dateiID uuid.UUID) ([]api.Da
 	return path, nil
 }
 
+// ListTrashInput contains parameters for listing trashed datei records.
+type ListTrashInput struct {
+	ParentID *uuid.UUID
+	Limit    int
+	Offset   int
+}
+
+// ListTrashOutput contains the response for listing trashed datei records.
+type ListTrashOutput struct {
+	Items []api.TrashedDatei
+	Total int
+}
+
+// ListTrash retrieves trashed datei records with pagination.
+// Without a ParentID it lists root-level trash items and includes origin paths.
+// With a ParentID it lists all direct children of that trashed directory.
+func (s *Service) ListTrash(ctx context.Context, input ListTrashInput) (*ListTrashOutput, error) {
+	queries := db.New(s.db)
+
+	limit := input.Limit
+	if limit <= 0 {
+		limit = 100
+	}
+	offset := max(input.Offset, 0)
+
+	if input.ParentID != nil {
+		projections, err := queries.ListDateiProjectionsByParent(ctx, input.ParentID)
+		if err != nil {
+			return nil, err
+		}
+		total := len(projections)
+		start := min(offset, total)
+		end := min(offset+limit, total)
+		items := make([]api.TrashedDatei, 0, end-start)
+		for i := range projections[start:end] {
+			if mapped := MapProjectionToTrashedDatei(&projections[start+i], nil); mapped != nil {
+				items = append(items, *mapped)
+			}
+		}
+		return &ListTrashOutput{Items: items, Total: total}, nil
+	}
+
+	projections, err := queries.ListTrashedDatei(ctx)
+	if err != nil {
+		return nil, err
+	}
+	total := len(projections)
+	start := min(offset, total)
+	end := min(offset+limit, total)
+
+	items := make([]api.TrashedDatei, 0, end-start)
+	for i := range projections[start:end] {
+		p := &projections[start+i]
+		var originPath *[]api.DateiPathItem
+		if p.ParentID != nil {
+			rows, err := queries.GetDateiPathIncludingTrashed(ctx, *p.ParentID)
+			if err != nil {
+				return nil, fmt.Errorf("get origin path for %s: %w", p.ID, err)
+			}
+			path := make([]api.DateiPathItem, len(rows))
+			for j, row := range rows {
+				path[j] = api.DateiPathItem{Id: row.ID, Name: row.Name}
+			}
+			originPath = &path
+		} else {
+			empty := []api.DateiPathItem{}
+			originPath = &empty
+		}
+		if mapped := MapProjectionToTrashedDatei(p, originPath); mapped != nil {
+			items = append(items, *mapped)
+		}
+	}
+
+	return &ListTrashOutput{Items: items, Total: total}, nil
+}
+
 // DeleteDatei soft-deletes a datei record
 func (s *Service) DeleteDatei(ctx context.Context, dateiID uuid.UUID) error {
 	agg, err := s.repository.LoadByID(ctx, dateiID)
