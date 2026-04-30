@@ -8,9 +8,19 @@
   >
     <mat-toolbar style="background: inherit">Menu</mat-toolbar>
     <mat-nav-list>
-      <a mat-list-item href="#">Link 1</a>
-      <a mat-list-item href="#">Link 2</a>
-      <a mat-list-item href="#">Link 3</a>
+      <a
+        mat-list-item
+        routerLink="/"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        <mat-icon matListItemIcon>folder</mat-icon>
+        <span matListItemTitle>All files</span>
+      </a>
+      <a mat-list-item routerLink="/trash" routerLinkActive="active">
+        <mat-icon matListItemIcon>delete</mat-icon>
+        <span matListItemTitle>Trash</span>
+      </a>
     </mat-nav-list>
   </mat-sidenav>
   <mat-sidenav-content>

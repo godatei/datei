@@ -1,0 +1,5 @@
+<ol>
+  @for (datei of trashResource.value()?.items; track datei.id) {
+    <li>{{ datei | json }}</li>
+  }
+</ol>
