@@ -68,12 +68,9 @@ func (s *server) CreateDatei(
 		}
 
 		switch part.FormName() {
-		case "parentId":
-			raw, err := io.ReadAll(io.LimitReader(part, 65))
+		case parentIdFormField:
+			raw, err := readLimited(part, 64)
 			if err != nil {
-				return CreateDatei400JSONResponse{Message: err.Error()}, nil
-			}
-			if len(raw) > 64 {
 				return CreateDatei400JSONResponse{Message: "invalid parentId"}, nil
 			}
 			if s := strings.TrimSpace(string(raw)); s != "" {
@@ -84,7 +81,7 @@ func (s *server) CreateDatei(
 				parentID = &parsed
 			}
 		case nameFormField:
-			fileNameData, err := io.ReadAll(io.LimitReader(part, 1024))
+			fileNameData, err := readLimited(part, 1024)
 			if err != nil {
 				return CreateDatei400JSONResponse{Message: err.Error()}, nil
 			}
@@ -177,12 +174,14 @@ func (s *server) UpdateDatei(
 	request UpdateDateiRequestObject,
 ) (UpdateDateiResponseObject, error) {
 	var name *string
+	var moveRequested bool
+	var newParentID *uuid.UUID
 	var fileData io.Reader
 	var fileName string
 	contentType := "application/octet-stream"
 
 	if reader := request.MultipartBody; reader != nil {
-		// Parse multipart request
+		var rawName, rawUpdateParentId, rawParentId *string
 		for {
 			part, err := reader.NextPart()
 			if err == io.EOF {
@@ -193,13 +192,27 @@ func (s *server) UpdateDatei(
 			}
 
 			switch part.FormName() {
-			case "name":
-				buf := make([]byte, 256)
-				n, _ := part.Read(buf)
-				if n > 0 {
-					nameStr := strings.TrimSpace(string(buf[:n]))
-					name = &nameStr
+			case nameFormField:
+				buf, err := readLimited(part, 1024)
+				if err != nil {
+					return UpdateDatei400Response{}, nil
 				}
+				s := strings.TrimSpace(string(buf))
+				rawName = &s
+			case updateParentIdFormField:
+				buf, err := readLimited(part, 8)
+				if err != nil {
+					return UpdateDatei400Response{}, nil
+				}
+				s := strings.TrimSpace(string(buf))
+				rawUpdateParentId = &s
+			case parentIdFormField:
+				raw, err := readLimited(part, 64)
+				if err != nil {
+					return UpdateDatei400Response{}, nil
+				}
+				s := strings.TrimSpace(string(raw))
+				rawParentId = &s
 			case fileFormField:
 				fileName = part.FileName()
 				if fileDataBytes, err := io.ReadAll(part); err != nil {
@@ -207,22 +220,54 @@ func (s *server) UpdateDatei(
 				} else {
 					fileData = bytes.NewReader(fileDataBytes)
 				}
-				contentType = part.Header.Get("Content-Type")
+				if partContentType := strings.TrimSpace(part.Header.Get("Content-Type")); partContentType != "" {
+					contentType = partContentType
+				}
 			}
 		}
-	} else if reader := request.FormdataBody; reader != nil {
-		name = reader.Name
+		if rawName != nil && *rawName != "" {
+			name = rawName
+		}
+		if rawUpdateParentId != nil && *rawUpdateParentId == "true" {
+			moveRequested = true
+			if rawParentId != nil && *rawParentId != "" {
+				parsed, err := uuid.Parse(*rawParentId)
+				if err != nil {
+					return UpdateDatei400Response{}, nil
+				}
+				newParentID = &parsed
+			}
+		}
+	} else if body := request.FormdataBody; body != nil {
+		name = body.Name
+		if body.UpdateParentId != nil && *body.UpdateParentId {
+			moveRequested = true
+			newParentID = body.ParentId
+		}
 	}
 
 	result, err := s.dateiService.UpdateDatei(ctx, datei.UpdateDateiInput{
-		ID:          request.Id,
-		Name:        name,
-		Reader:      fileData,
-		FileName:    fileName,
-		ContentType: contentType,
+		ID:            request.Id,
+		Name:          name,
+		MoveRequested: moveRequested,
+		NewParentID:   newParentID,
+		Reader:        fileData,
+		FileName:      fileName,
+		ContentType:   contentType,
 	})
 	if err != nil {
-		return UpdateDatei404Response{}, nil
+		switch {
+		case errors.Is(err, dateierrors.ErrNotFound):
+			return UpdateDatei404Response{}, nil
+		case errors.Is(err, dateierrors.ErrParentNotFound),
+			errors.Is(err, dateierrors.ErrParentNotDirectory),
+			errors.Is(err, dateierrors.ErrParentTrashed),
+			errors.Is(err, dateierrors.ErrCycleDetected):
+			return UpdateDatei400Response{}, nil
+		default:
+			slog.Error("endpoint error", "error", err)
+			return UpdateDatei400Response{}, nil
+		}
 	}
 
 	return UpdateDatei200JSONResponse(*result), nil
