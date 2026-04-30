@@ -60,6 +60,43 @@ func (q *Queries) GetDateiPath(ctx context.Context, id uuid.UUID) ([]GetDateiPat
 	return items, nil
 }
 
+const getDateiPathIncludingTrashed = `-- name: GetDateiPathIncludingTrashed :many
+WITH RECURSIVE ancestors(id, parent_id, name, depth) AS (
+  SELECT d.id, d.parent_id, d.name, 0 FROM datei_projection d WHERE d.id = $1
+  UNION ALL
+  SELECT p.id, p.parent_id, p.name, a.depth + 1
+  FROM datei_projection p
+  INNER JOIN ancestors a ON p.id = a.parent_id
+)
+SELECT id, name FROM ancestors
+ORDER BY depth DESC
+`
+
+type GetDateiPathIncludingTrashedRow struct {
+	ID   uuid.UUID `db:"id"`
+	Name string    `db:"name"`
+}
+
+func (q *Queries) GetDateiPathIncludingTrashed(ctx context.Context, id uuid.UUID) ([]GetDateiPathIncludingTrashedRow, error) {
+	rows, err := q.db.Query(ctx, getDateiPathIncludingTrashed, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetDateiPathIncludingTrashedRow
+	for rows.Next() {
+		var i GetDateiPathIncludingTrashedRow
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getDateiProjectionByID = `-- name: GetDateiProjectionByID :one
 SELECT id, parent_id, is_directory, linked_datei_id, name, s3_key, size, checksum, mime_type, content_md, content_search, created_at, updated_at, trashed_at, created_by, updated_by, trashed_by FROM datei_projection WHERE id = $1
 `
@@ -233,6 +270,48 @@ SELECT id, parent_id, is_directory, linked_datei_id, name, s3_key, size, checksu
 
 func (q *Queries) ListRootDateiProjections(ctx context.Context) ([]DateiProjection, error) {
 	rows, err := q.db.Query(ctx, listRootDateiProjections)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DateiProjection
+	for rows.Next() {
+		var i DateiProjection
+		if err := rows.Scan(
+			&i.ID,
+			&i.ParentID,
+			&i.IsDirectory,
+			&i.LinkedDateiID,
+			&i.Name,
+			&i.S3Key,
+			&i.Size,
+			&i.Checksum,
+			&i.MimeType,
+			&i.ContentMd,
+			&i.ContentSearch,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.TrashedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
+			&i.TrashedBy,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTrashedDatei = `-- name: ListTrashedDatei :many
+SELECT id, parent_id, is_directory, linked_datei_id, name, s3_key, size, checksum, mime_type, content_md, content_search, created_at, updated_at, trashed_at, created_by, updated_by, trashed_by FROM datei_projection WHERE trashed_at IS NOT NULL ORDER BY trashed_at DESC
+`
+
+func (q *Queries) ListTrashedDatei(ctx context.Context) ([]DateiProjection, error) {
+	rows, err := q.db.Query(ctx, listTrashedDatei)
 	if err != nil {
 		return nil, err
 	}

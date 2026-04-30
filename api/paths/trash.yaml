@@ -1,0 +1,35 @@
+get:
+  operationId: ListTrash
+  summary: List items in trash
+  security:
+    - bearerHttpAuthentication: []
+  parameters:
+    - name: parentId
+      in: query
+      description: >
+        Browse contents of a specific trashed directory.
+        Omit to list root-level trashed items.
+      schema:
+        type: string
+        format: uuid
+    - name: limit
+      in: query
+      description: Maximum number of results
+      schema:
+        type: integer
+        default: 100
+    - name: offset
+      in: query
+      description: Number of results to skip
+      schema:
+        type: integer
+        default: 0
+  responses:
+    '200':
+      description: List of trashed items
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ListTrashResponse.yaml'
+    '404':
+      description: Parent directory not found or not trashed

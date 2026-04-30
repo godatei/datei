@@ -57,6 +57,46 @@ func MapProjectionSliceToAPI(projections []db.DateiProjection) []api.Datei {
 	return result
 }
 
+// MapProjectionToTrashedDatei converts a db.DateiProjection to an api.TrashedDatei,
+// with an optional originPath for root-level trash items.
+func MapProjectionToTrashedDatei(p *db.DateiProjection, originPath *[]api.DateiPathItem) *api.TrashedDatei {
+	if p == nil {
+		return nil
+	}
+
+	result := &api.TrashedDatei{
+		Id:          p.ID,
+		IsDirectory: p.IsDirectory,
+		Name:        &p.Name,
+		CreatedAt:   p.CreatedAt,
+		UpdatedAt:   p.UpdatedAt,
+		Size:        p.Size,
+		Checksum:    p.Checksum,
+		MimeType:    p.MimeType,
+		ContentMd:   p.ContentMd,
+		TrashedAt:   p.TrashedAt,
+		OriginPath:  originPath,
+	}
+
+	if p.ParentID != nil {
+		result.ParentId = p.ParentID
+	}
+	if p.LinkedDateiID != nil {
+		result.LinkedDateiId = p.LinkedDateiID
+	}
+	if p.CreatedBy != nil {
+		result.CreatedBy = p.CreatedBy
+	}
+	if p.TrashedBy != nil {
+		result.TrashedBy = p.TrashedBy
+	}
+	if p.UpdatedBy != nil {
+		result.UpdatedBy = p.UpdatedBy
+	}
+
+	return result
+}
+
 // MapAggregateToAPI converts an Aggregate to an api.Datei.
 func MapAggregateToAPI(a *Aggregate) *api.Datei {
 	if a == nil {
