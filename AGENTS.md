@@ -276,7 +276,7 @@ This project uses Angular Material 21 with Material 3 theming. All UI must follo
 
 Facts about the system that are non-obvious and have caused incorrect agent assumptions in the past.
 
-- **Datei hierarchy cycles are impossible**: `parentId` on `datei_projection` forms a tree, not a graph. When moving a directory, `Service.UpdateDatei` (`internal/datei/service.go`) walks the full ancestor path of the target parent via `GetDateiPath` and returns `ErrCycleDetected` if the moving directory appears anywhere in that chain. Files are never the parent of anything, so only directory moves need this check. Do not flag potential cycles as a concern — the guard is already there.
+- **Datei hierarchy cycles are prevented by application logic for normal moves**: `parent_id` on `datei_projection` is used to represent a tree in application-managed data, but that is enforced by `Service.UpdateDatei` (`internal/datei/service.go`), not by a database-level cycle constraint. When moving a directory, `Service.UpdateDatei` walks the full ancestor path of the target parent via `GetDateiPath` and returns `ErrCycleDetected` if the moving directory appears anywhere in that chain. Files are never the parent of anything, so only directory moves need this check. Do not flag potential cycles for normal service-driven directory moves — the guard is already there.
 
 ## Maintaining This File
 
