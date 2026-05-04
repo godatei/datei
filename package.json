@@ -25,7 +25,7 @@
     ]
   },
   "private": true,
-  "packageManager": "pnpm@10.33.2",
+  "packageManager": "pnpm@10.33.3",
   "dependencies": {
     "@angular/cdk": "~21.2.0",
     "@angular/common": "^21.1.0",
