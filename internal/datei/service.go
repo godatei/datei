@@ -427,6 +427,17 @@ func (s *Service) ListTrash(ctx context.Context, input ListTrashInput) (*ListTra
 	offset := max(input.Offset, 0)
 
 	if input.ParentID != nil {
+		parent, err := queries.GetDateiProjectionByID(ctx, *input.ParentID)
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return nil, dateierrors.ErrParentNotFound
+			}
+			return nil, err
+		}
+		if parent.TrashedAt == nil {
+			return nil, dateierrors.ErrParentNotTrashed
+		}
+
 		projections, err := queries.ListDateiProjectionsByParent(ctx, input.ParentID)
 		if err != nil {
 			return nil, err

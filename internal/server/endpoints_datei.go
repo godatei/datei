@@ -35,6 +35,9 @@ func (s *server) ListTrash(
 		Offset:   offset,
 	})
 	if err != nil {
+		if errors.Is(err, dateierrors.ErrParentNotFound) || errors.Is(err, dateierrors.ErrParentNotTrashed) {
+			return ListTrash404Response{}, nil
+		}
 		return nil, err
 	}
 
