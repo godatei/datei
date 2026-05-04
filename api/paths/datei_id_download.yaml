@@ -16,10 +16,12 @@ get:
       description: File content
       headers:
         Content-Disposition:
+          required: true
           schema:
             type: string
           description: 'Attachment header with filename'
         Content-Type:
+          required: true
           schema:
             type: string
           description: MIME type of the file
