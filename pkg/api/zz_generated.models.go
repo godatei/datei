@@ -85,8 +85,9 @@ type Datei struct {
 
 // DateiPathItem defines model for DateiPathItem.
 type DateiPathItem struct {
-	Id   openapi_types.UUID `json:"id"`
-	Name string             `json:"name"`
+	Id      openapi_types.UUID `json:"id"`
+	Name    string             `json:"name"`
+	Trashed *bool              `json:"trashed,omitempty"`
 }
 
 // DisableMFARequest defines model for DisableMFARequest.

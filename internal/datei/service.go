@@ -394,6 +394,9 @@ func (s *Service) GetDateiPath(ctx context.Context, dateiID uuid.UUID) ([]api.Da
 	path := make([]api.DateiPathItem, len(rows))
 	for i, row := range rows {
 		path[i] = api.DateiPathItem{Id: row.ID, Name: row.Name}
+		if row.TrashedAt != nil {
+			path[i].Trashed = new(true)
+		}
 	}
 	return path, nil
 }

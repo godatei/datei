@@ -66,9 +66,9 @@ WITH RECURSIVE ancestors(id, parent_id, name, trashed_at, depth) AS (
   SELECT p.id, p.parent_id, p.name, p.trashed_at, a.depth + 1
   FROM datei_projection p
   INNER JOIN ancestors a ON p.id = a.parent_id
+  WHERE a.trashed_at IS NULL
 )
-SELECT id, name FROM ancestors
-WHERE NOT EXISTS (SELECT 1 FROM ancestors WHERE trashed_at IS NOT NULL)
+SELECT id, name, trashed_at FROM ancestors
 ORDER BY depth DESC;
 
 -- name: GetDateiPathIncludingTrashed :many

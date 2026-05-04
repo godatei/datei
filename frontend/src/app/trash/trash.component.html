@@ -1,5 +1,96 @@
-<ol>
-  @for (datei of trashResource.value()?.items; track datei.id) {
-    <li>{{ datei | json }}</li>
+<nav aria-label="Breadcrumb" class="flex items-center gap-1 flex-wrap mb-2 mx-5 mat-font-label-lg">
+  <button mat-button (click)="navigateTo(null)">
+    <mat-icon>delete</mat-icon>
+    Trash
+  </button>
+  @for (item of pathResource.value(); track item.id; let last = $last) {
+    <mat-icon aria-hidden="true" class="mat-text-on-surface-variant">chevron_right</mat-icon>
+    <button mat-button (click)="navigateTo(item.id)" [disabled]="last">
+      {{ item.name }}
+    </button>
   }
-</ol>
+</nav>
+
+<div class="mx-5" [appSelection]="dataSource.data" #selection="appSelection">
+  <div
+    class="flex items-center gap-1 px-1 py-0.5 min-h-11 mat-corner-sm transition-all"
+    [class.mat-bg-secondary-container]="selection.isAnySelected()"
+  >
+    @if (selection.isAnySelected()) {
+      <button matIconButton (click)="selection.clear()" aria-label="Clear selection">
+        <mat-icon>close</mat-icon>
+      </button>
+      <span class="mat-font-label-lg">{{ selection.size() }} selected</span>
+    }
+  </div>
+
+  <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+    <ng-container matColumnDef="icon">
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let element" class="w-20">
+        <app-thumbnail-icon [datei]="element" />
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef>Name</th>
+      <td mat-cell *matCellDef="let element">{{ element.name }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="trashedAt">
+      <th mat-header-cell *matHeaderCellDef>Trashed On</th>
+      <td mat-cell *matCellDef="let element">{{ element.trashedAt | date }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="trashedBy">
+      <th mat-header-cell *matHeaderCellDef>Trashed By</th>
+      <td mat-cell *matCellDef="let element">{{ element.trashedBy }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="originPath">
+      <th mat-header-cell *matHeaderCellDef>Restore Path</th>
+      <td mat-cell *matCellDef="let element" class="mat-text-on-surface-variant">
+        {{ formatOriginPath(element) }}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="actions" stickyEnd>
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let element" class="w-30 text-right">
+        <button
+          matIconButton
+          (click)="restore(element); $event.stopPropagation()"
+          aria-label="Restore"
+        >
+          <mat-icon>restore</mat-icon>
+        </button>
+
+        <button
+          matIconButton
+          [matMenuTriggerFor]="rowMenu"
+          (click)="$event.stopPropagation()"
+          aria-label="More actions"
+        >
+          <mat-icon>more_vert</mat-icon>
+        </button>
+
+        <mat-menu #rowMenu="matMenu">
+          <button mat-menu-item (click)="deletePermanently(element)">
+            <mat-icon>delete_forever</mat-icon>
+            Delete permanently
+          </button>
+        </mat-menu>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr
+      mat-row
+      *matRowDef="let row; columns: displayedColumns"
+      [appSelectionItem]="row"
+      (dblclick)="onRowDblClick(row)"
+      [class.cursor-default]="!row.isDirectory"
+      class="select-none transition-colors cursor-pointer"
+    ></tr>
+  </table>
+</div>
