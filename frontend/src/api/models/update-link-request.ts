@@ -24,7 +24,7 @@ export interface UpdateLinkRequest {
   expiresAt?: string | null;
 
   /**
-   * New display name (omit to leave unchanged)
+   * New display name (omit to leave unchanged; must not be blank when set)
    */
   name?: string | null;
 }

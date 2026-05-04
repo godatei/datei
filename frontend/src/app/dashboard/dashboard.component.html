@@ -93,11 +93,11 @@
           <mat-icon>more_vert</mat-icon>
         </button>
         <mat-menu #rowMenu="matMenu">
-          <button mat-menu-item (click)="createLinkForRow(element, $event)">
+          <button mat-menu-item (click)="createLinkForRow(element)">
             <mat-icon>link</mat-icon>
             Create public link
           </button>
-          <button mat-menu-item (click)="addToLinkForRow(element, $event)">
+          <button mat-menu-item (click)="addToLinkForRow(element)">
             <mat-icon>add_link</mat-icon>
             Add to public link
           </button>

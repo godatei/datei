@@ -3,9 +3,9 @@
   <mat-dialog-content>
     @if (listResource.isLoading()) {
       <p class="mat-text-on-surface-variant">Loading…</p>
-    } @else if ((listResource.value() ?? []).length === 0) {
+    } @else if (availableLinks().length === 0) {
       <p class="mat-text-on-surface-variant">
-        You don't have any public links yet. Create one from the Files page first.
+        You don't have any active public links yet. Create one from the Files page first.
       </p>
     } @else {
       <mat-radio-group
@@ -13,7 +13,7 @@
         aria-label="Select a public link"
         class="flex flex-col"
       >
-        @for (link of listResource.value(); track link.id) {
+        @for (link of availableLinks(); track link.id) {
           <mat-radio-button [value]="link.id" class="py-1">
             <span class="mat-font-body-md">{{ link.name }}</span>
             <span class="mat-text-on-surface-variant mat-font-body-sm ml-2">

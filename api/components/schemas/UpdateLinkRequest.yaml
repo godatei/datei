@@ -3,7 +3,9 @@ properties:
   name:
     type: string
     nullable: true
-    description: New display name (omit to leave unchanged)
+    minLength: 1
+    maxLength: 255
+    description: New display name (omit to leave unchanged; must not be blank when set)
   expiresAt:
     type: string
     format: date-time
@@ -16,6 +18,7 @@ properties:
   code:
     type: string
     nullable: true
+    maxLength: 128
     description: New plain-text code (only used when clearCode is false)
   clearCode:
     type: boolean

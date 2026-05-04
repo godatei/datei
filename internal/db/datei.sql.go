@@ -12,6 +12,17 @@ import (
 	"github.com/google/uuid"
 )
 
+const countDateiProjectionsByIDs = `-- name: CountDateiProjectionsByIDs :one
+SELECT COUNT(*)::int FROM datei_projection WHERE id = ANY($1::uuid[])
+`
+
+func (q *Queries) CountDateiProjectionsByIDs(ctx context.Context, dollar_1 []uuid.UUID) (int32, error) {
+	row := q.db.QueryRow(ctx, countDateiProjectionsByIDs, dollar_1)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const deleteDateiPermissionProjection = `-- name: DeleteDateiPermissionProjection :exec
 DELETE FROM datei_permission_projection
  WHERE id = $1

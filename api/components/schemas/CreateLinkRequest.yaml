@@ -5,7 +5,9 @@ required:
 properties:
   name:
     type: string
-    description: Display name of the link
+    minLength: 1
+    maxLength: 255
+    description: Display name of the link (mandatory, may not be blank)
   expiresAt:
     type: string
     format: date-time
@@ -14,6 +16,7 @@ properties:
   code:
     type: string
     nullable: true
+    maxLength: 128
     description: Optional plain-text code required to view
   dateiIds:
     type: array

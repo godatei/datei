@@ -19,7 +19,7 @@ export interface CreateLinkRequest {
   expiresAt?: string | null;
 
   /**
-   * Display name of the link
+   * Display name of the link (mandatory, may not be blank)
    */
   name: string;
 }

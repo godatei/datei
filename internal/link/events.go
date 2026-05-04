@@ -133,9 +133,6 @@ type LinkDateiAddedEvent struct {
 func (e LinkDateiAddedEvent) EventType() string   { return "LinkDateiAdded" }
 func (e LinkDateiAddedEvent) StreamID() uuid.UUID { return e.ID }
 func (e LinkDateiAddedEvent) ApplyTo(a *Aggregate) {
-	if a.DateiIDs == nil {
-		a.DateiIDs = make(map[uuid.UUID]struct{})
-	}
 	a.DateiIDs[e.DateiID] = struct{}{}
 	a.UpdatedAt = e.AddedAt
 }
@@ -161,6 +158,7 @@ type LinkRevokedEvent struct {
 func (e LinkRevokedEvent) EventType() string   { return "LinkRevoked" }
 func (e LinkRevokedEvent) StreamID() uuid.UUID { return e.ID }
 func (e LinkRevokedEvent) ApplyTo(a *Aggregate) {
-	a.RevokedAt = &e.RevokedAt
+	revokedAt := e.RevokedAt
+	a.RevokedAt = &revokedAt
 	a.UpdatedAt = e.RevokedAt
 }

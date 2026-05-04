@@ -12,7 +12,6 @@ import (
 	"github.com/godatei/datei/internal/datei"
 	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/db"
-	"github.com/godatei/datei/internal/storage"
 	"github.com/godatei/datei/pkg/api"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -21,20 +20,17 @@ import (
 
 type Service struct {
 	db         *pgxpool.Pool
-	store      storage.Store
 	repository Repository
 	dateiSvc   *datei.Service
 }
 
 func NewService(
 	pool *pgxpool.Pool,
-	store storage.Store,
 	repository Repository,
 	dateiSvc *datei.Service,
 ) *Service {
 	return &Service{
 		db:         pool,
-		store:      store,
 		repository: repository,
 		dateiSvc:   dateiSvc,
 	}
@@ -62,19 +58,20 @@ type CreateLinkInput struct {
 }
 
 func (s *Service) CreateLink(ctx context.Context, input CreateLinkInput) (*api.Link, error) {
-	if input.Name == "" {
+	if err := validateName(input.Name); err != nil {
 		return nil, dateierrors.ErrInvalidInput
 	}
 
 	userID := authn.RequireContext(ctx).UserID
 
 	queries := db.New(s.db)
-	for _, id := range input.DateiIDs {
-		if _, err := queries.GetDateiProjectionByID(ctx, id); err != nil {
-			if errors.Is(err, pgx.ErrNoRows) {
-				return nil, dateierrors.ErrInvalidInput
-			}
+	if len(input.DateiIDs) > 0 {
+		count, err := queries.CountDateiProjectionsByIDs(ctx, input.DateiIDs)
+		if err != nil {
 			return nil, err
+		}
+		if int(count) != len(input.DateiIDs) {
+			return nil, dateierrors.ErrInvalidInput
 		}
 	}
 
@@ -95,7 +92,7 @@ func (s *Service) CreateLink(ctx context.Context, input CreateLinkInput) (*api.L
 		return nil, err
 	}
 
-	return s.loadLinkAPI(ctx, id)
+	return s.aggregateToAPI(ctx, agg)
 }
 
 type ListLinksOutput struct {
@@ -131,23 +128,6 @@ func (s *Service) ListLinks(ctx context.Context) (*ListLinksOutput, error) {
 	return &ListLinksOutput{Items: items, Total: len(items)}, nil
 }
 
-func (s *Service) GetLink(ctx context.Context, id uuid.UUID) (*api.Link, error) {
-	userID := authn.RequireContext(ctx).UserID
-	queries := db.New(s.db)
-
-	projection, err := queries.GetLinkProjectionByID(ctx, id)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, dateierrors.ErrLinkNotFound
-	} else if err != nil {
-		return nil, err
-	}
-	if projection.OwnerID != userID {
-		return nil, dateierrors.ErrLinkNotFound
-	}
-
-	return s.linkAPIFromProjection(ctx, &projection)
-}
-
 type UpdateLinkInput struct {
 	ID              uuid.UUID
 	Name            *string
@@ -160,6 +140,14 @@ type UpdateLinkInput struct {
 func (s *Service) UpdateLink(ctx context.Context, input UpdateLinkInput) (*api.Link, error) {
 	userID := authn.RequireContext(ctx).UserID
 
+	// If the request explicitly addresses the name, it must be a valid value;
+	// silently ignoring an empty/whitespace name would be a contract violation.
+	if input.Name != nil {
+		if err := validateName(*input.Name); err != nil {
+			return nil, dateierrors.ErrInvalidInput
+		}
+	}
+
 	agg, err := s.loadOwnedAggregate(ctx, input.ID, userID)
 	if err != nil {
 		return nil, err
@@ -168,7 +156,7 @@ func (s *Service) UpdateLink(ctx context.Context, input UpdateLinkInput) (*api.L
 	// Build the absolute desired state from the input. Fields the request
 	// did not address fall back to the aggregate's current value.
 	name := agg.Name
-	if input.Name != nil && *input.Name != "" {
+	if input.Name != nil {
 		name = *input.Name
 	}
 
@@ -196,7 +184,7 @@ func (s *Service) UpdateLink(ctx context.Context, input UpdateLinkInput) (*api.L
 		return nil, err
 	}
 
-	return s.loadLinkAPI(ctx, agg.ID)
+	return s.aggregateToAPI(ctx, agg)
 }
 
 func (s *Service) RotateAccessToken(ctx context.Context, id uuid.UUID) (*api.Link, error) {
@@ -219,7 +207,7 @@ func (s *Service) RotateAccessToken(ctx context.Context, id uuid.UUID) (*api.Lin
 		return nil, err
 	}
 
-	return s.loadLinkAPI(ctx, agg.ID)
+	return s.aggregateToAPI(ctx, agg)
 }
 
 func (s *Service) AddDateiToLink(ctx context.Context, linkID, dateiID uuid.UUID) (*api.Link, error) {
@@ -249,7 +237,7 @@ func (s *Service) AddDateiToLink(ctx context.Context, linkID, dateiID uuid.UUID)
 		return nil, err
 	}
 
-	return s.loadLinkAPI(ctx, agg.ID)
+	return s.aggregateToAPI(ctx, agg)
 }
 
 func (s *Service) RemoveDateiFromLink(ctx context.Context, linkID, dateiID uuid.UUID) error {
@@ -261,7 +249,7 @@ func (s *Service) RemoveDateiFromLink(ctx context.Context, linkID, dateiID uuid.
 	}
 
 	if err := agg.RemoveDatei(dateiID, time.Now()); err != nil {
-		return err
+		return dateierrors.ErrLinkDateiNotShared
 	}
 	return s.repository.Save(ctx, agg)
 }
@@ -285,35 +273,36 @@ func (s *Service) RevokeLink(ctx context.Context, id uuid.UUID) error {
 // ============================================================================
 
 // verifyLinkAccess looks up a link by access token and validates that the
-// caller is allowed to read its contents. Returns the projection on success.
+// caller is allowed to read its contents. Returns the projection + owner name
+// on success.
 func (s *Service) verifyLinkAccess(
 	ctx context.Context,
 	accessToken string,
 	providedCode string,
-) (*db.LinkProjection, error) {
+) (*db.GetLinkProjectionByAccessTokenRow, error) {
 	queries := db.New(s.db)
 
-	projection, err := queries.GetLinkProjectionByAccessToken(ctx, accessToken)
+	row, err := queries.GetLinkProjectionByAccessToken(ctx, accessToken)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, dateierrors.ErrLinkNotFound
 	} else if err != nil {
 		return nil, err
 	}
-	if projection.RevokedAt != nil {
+	if row.RevokedAt != nil {
 		return nil, dateierrors.ErrLinkRevoked
 	}
-	if projection.ExpiresAt != nil && projection.ExpiresAt.Before(time.Now()) {
+	if row.ExpiresAt != nil && row.ExpiresAt.Before(time.Now()) {
 		return nil, dateierrors.ErrLinkExpired
 	}
-	if projection.Code != nil {
+	if row.Code != nil {
 		if providedCode == "" {
 			return nil, dateierrors.ErrLinkCodeRequired
 		}
-		if providedCode != *projection.Code {
+		if providedCode != *row.Code {
 			return nil, dateierrors.ErrLinkCodeInvalid
 		}
 	}
-	return &projection, nil
+	return &row, nil
 }
 
 // ListPublicLinkDateienOutput holds a public link's display name, owner name,
@@ -334,31 +323,26 @@ func (s *Service) ListPublicLinkDateien(
 	parentID *uuid.UUID,
 	code string,
 ) (*ListPublicLinkDateienOutput, error) {
-	projection, err := s.verifyLinkAccess(ctx, accessToken, code)
+	row, err := s.verifyLinkAccess(ctx, accessToken, code)
 	if err != nil {
 		return nil, err
 	}
 
 	queries := db.New(s.db)
-	owner, err := queries.GetUserAccountByID(ctx, projection.OwnerID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load link owner: %w", err)
-	}
-
 	if parentID == nil {
-		dateien, err := queries.ListDateienByLink(ctx, projection.ID)
+		dateien, err := queries.ListDateienByLink(ctx, row.ID)
 		if err != nil {
 			return nil, err
 		}
 		return &ListPublicLinkDateienOutput{
-			Name:      projection.Name,
-			OwnerName: owner.Name,
+			Name:      row.Name,
+			OwnerName: row.OwnerName,
 			Items:     datei.MapProjectionSliceToAPI(dateien),
 		}, nil
 	}
 
 	inScope, err := queries.IsDateiInLinkScope(ctx, db.IsDateiInLinkScopeParams{
-		LinkID: projection.ID,
+		LinkID: row.ID,
 		ID:     *parentID,
 	})
 	if err != nil {
@@ -373,8 +357,8 @@ func (s *Service) ListPublicLinkDateien(
 		return nil, err
 	}
 	return &ListPublicLinkDateienOutput{
-		Name:      projection.Name,
-		OwnerName: owner.Name,
+		Name:      row.Name,
+		OwnerName: row.OwnerName,
 		Items:     datei.MapProjectionSliceToAPI(children),
 	}, nil
 }
@@ -385,14 +369,14 @@ func (s *Service) DownloadPublicLinkDatei(
 	dateiID uuid.UUID,
 	code string,
 ) (*datei.DownloadDateiOutput, error) {
-	projection, err := s.verifyLinkAccess(ctx, accessToken, code)
+	row, err := s.verifyLinkAccess(ctx, accessToken, code)
 	if err != nil {
 		return nil, err
 	}
 
 	queries := db.New(s.db)
 	inScope, err := queries.IsDateiInLinkScope(ctx, db.IsDateiInLinkScopeParams{
-		LinkID: projection.ID,
+		LinkID: row.ID,
 		ID:     dateiID,
 	})
 	if err != nil {
@@ -423,26 +407,18 @@ func (s *Service) loadOwnedAggregate(ctx context.Context, id, userID uuid.UUID) 
 	return agg, nil
 }
 
-func (s *Service) loadLinkAPI(ctx context.Context, id uuid.UUID) (*api.Link, error) {
+// aggregateToAPI maps an in-memory aggregate plus a fresh dateien-and-counts
+// query into the API shape, avoiding an extra round-trip to refetch the
+// link_projection (which we just wrote).
+func (s *Service) aggregateToAPI(ctx context.Context, agg *Aggregate) (*api.Link, error) {
 	queries := db.New(s.db)
-	projection, err := queries.GetLinkProjectionByID(ctx, id)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, dateierrors.ErrLinkNotFound
-	} else if err != nil {
-		return nil, err
-	}
-	return s.linkAPIFromProjection(ctx, &projection)
-}
-
-func (s *Service) linkAPIFromProjection(ctx context.Context, projection *db.LinkProjection) (*api.Link, error) {
-	queries := db.New(s.db)
-	dateien, err := queries.ListDateienByLink(ctx, projection.ID)
+	dateien, err := queries.ListDateienByLink(ctx, agg.ID)
 	if err != nil {
 		return nil, err
 	}
-	counts, err := queries.CountLinkContents(ctx, projection.ID)
+	counts, err := queries.CountLinkContents(ctx, agg.ID)
 	if err != nil {
 		return nil, err
 	}
-	return MapProjectionToAPI(projection, dateien, int(counts.FileCount), int(counts.FolderCount)), nil
+	return MapAggregateToAPI(agg, dateien, int(counts.FileCount), int(counts.FolderCount)), nil
 }

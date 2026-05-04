@@ -41,30 +41,13 @@ func (s *server) CreateLink(
 		DateiIDs:  request.Body.DateiIds,
 	})
 	if err != nil {
-		switch {
-		case errors.Is(err, dateierrors.ErrInvalidInput):
+		if errors.Is(err, dateierrors.ErrInvalidInput) {
 			return CreateLink400JSONResponse{Message: "invalid input"}, nil
-		default:
-			slog.Error("create link error", "error", err)
-			return CreateLink400JSONResponse{Message: err.Error()}, nil
 		}
-	}
-	return CreateLink201JSONResponse(*result), nil
-}
-
-// GetLink implements [StrictServerInterface].
-func (s *server) GetLink(
-	ctx context.Context,
-	request GetLinkRequestObject,
-) (GetLinkResponseObject, error) {
-	result, err := s.linkService.GetLink(ctx, request.Id)
-	if err != nil {
-		if errors.Is(err, dateierrors.ErrLinkNotFound) {
-			return GetLink404Response{}, nil
-		}
+		slog.Error("create link error", "error", err)
 		return nil, err
 	}
-	return GetLink200JSONResponse(*result), nil
+	return CreateLink201JSONResponse(*result), nil
 }
 
 // UpdateLink implements [StrictServerInterface].
@@ -98,7 +81,7 @@ func (s *server) UpdateLink(
 			return UpdateLink400Response{}, nil
 		default:
 			slog.Error("update link error", "error", err)
-			return UpdateLink400Response{}, nil
+			return nil, err
 		}
 	}
 	return UpdateLink200JSONResponse(*result), nil
@@ -154,7 +137,7 @@ func (s *server) AddDateiToLink(
 			return AddDateiToLink400Response{}, nil
 		default:
 			slog.Error("add datei to link error", "error", err)
-			return AddDateiToLink400Response{}, nil
+			return nil, err
 		}
 	}
 	return AddDateiToLink200JSONResponse(*result), nil
@@ -167,7 +150,14 @@ func (s *server) RemoveDateiFromLink(
 ) (RemoveDateiFromLinkResponseObject, error) {
 	err := s.linkService.RemoveDateiFromLink(ctx, request.Id, request.DateiId)
 	if err != nil {
-		return RemoveDateiFromLink404Response{}, nil
+		switch {
+		case errors.Is(err, dateierrors.ErrLinkNotFound),
+			errors.Is(err, dateierrors.ErrLinkDateiNotShared):
+			return RemoveDateiFromLink404Response{}, nil
+		default:
+			slog.Error("remove datei from link error", "error", err)
+			return nil, err
+		}
 	}
 	return RemoveDateiFromLink204Response{}, nil
 }

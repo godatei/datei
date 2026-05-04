@@ -57,14 +57,20 @@ export class LinksListComponent {
 
   private readonly allLinks = computed(() => this.listResource.value() ?? []);
   protected readonly activeLinks = computed(() =>
-    this.allLinks().filter((l) => statusOf(l) === 'active'),
+    this.allLinks().filter((l) => LinksListComponent.statusOf(l) === 'active'),
   );
   protected readonly expiredLinks = computed(() =>
-    this.allLinks().filter((l) => statusOf(l) === 'expired'),
+    this.allLinks().filter((l) => LinksListComponent.statusOf(l) === 'expired'),
   );
   protected readonly revokedLinks = computed(() =>
-    this.allLinks().filter((l) => statusOf(l) === 'revoked'),
+    this.allLinks().filter((l) => LinksListComponent.statusOf(l) === 'revoked'),
   );
+
+  private static statusOf(link: Link): LinkStatus {
+    if (link.revokedAt) return 'revoked';
+    if (link.expiresAt && new Date(link.expiresAt).getTime() <= Date.now()) return 'expired';
+    return 'active';
+  }
 
   protected readonly selectedTab = signal<LinkStatus>('active');
   protected readonly selectedTabIndex = computed(() => {
@@ -171,10 +177,4 @@ export class LinksListComponent {
       this.snackBar.open('Failed to revoke link', 'Dismiss', { duration: 4000 });
     }
   }
-}
-
-function statusOf(link: Link): LinkStatus {
-  if (link.revokedAt) return 'revoked';
-  if (link.expiresAt && new Date(link.expiresAt).getTime() <= Date.now()) return 'expired';
-  return 'active';
 }

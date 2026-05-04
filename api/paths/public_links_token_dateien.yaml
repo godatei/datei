@@ -21,6 +21,7 @@ get:
       description: Plain-text code used to unlock the link when one is configured
       schema:
         type: string
+        maxLength: 128
   responses:
     '200':
       description: List of dateien accessible via this link

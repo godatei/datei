@@ -70,7 +70,7 @@ type CreateLinkRequest struct {
 	// ExpiresAt Expiration timestamp; omit or null for "never expires"
 	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
 
-	// Name Display name of the link
+	// Name Display name of the link (mandatory, may not be blank)
 	Name string `json:"name"`
 }
 
@@ -318,7 +318,7 @@ type UpdateLinkRequest struct {
 	// ExpiresAt New expiration timestamp (only used when clearExpiration is false)
 	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
 
-	// Name New display name (omit to leave unchanged)
+	// Name New display name (omit to leave unchanged; must not be blank when set)
 	Name *string `json:"name,omitempty"`
 }
 

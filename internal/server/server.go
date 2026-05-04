@@ -39,7 +39,7 @@ func NewServer(
 	return &server{
 		dateiService: dateiSvc,
 		userService:  users.NewUserService(pool, userRepo, m),
-		linkService:  link.NewService(pool, store, linkRepo, dateiSvc),
+		linkService:  link.NewService(pool, linkRepo, dateiSvc),
 	}
 }
 

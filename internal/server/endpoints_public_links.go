@@ -35,7 +35,7 @@ func (s *server) ListPublicLinkDateien(
 			return ListPublicLinkDateien404Response{}, nil
 		default:
 			slog.Error("list public link dateien error", "error", err)
-			return ListPublicLinkDateien404Response{}, nil
+			return nil, err
 		}
 	}
 
@@ -74,7 +74,7 @@ func (s *server) DownloadPublicLinkDatei(
 			return DownloadPublicLinkDatei404Response{}, nil
 		default:
 			slog.Error("download public link datei error", "error", err)
-			return DownloadPublicLinkDatei404Response{}, nil
+			return nil, err
 		}
 	}
 

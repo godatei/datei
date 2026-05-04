@@ -208,9 +208,10 @@ export class DashboardComponent {
     }
   }
 
-  protected createLinkForRow(row: Datei, event: Event): void {
-    event.stopPropagation();
-    this.openCreateLinkDialog([row.id], row.name ?? undefined);
+  protected createLinkForRow(row: Datei): void {
+    // Defer to the next macrotask so mat-menu's overlay finishes tearing down
+    // before the dialog overlay attaches; otherwise the menu visibly stays open.
+    setTimeout(() => this.openCreateLinkDialog([row.id], row.name ?? undefined), 0);
   }
 
   protected createLinkForSelection(): void {
@@ -239,9 +240,8 @@ export class DashboardComponent {
     });
   }
 
-  protected addToLinkForRow(row: Datei, event: Event): void {
-    event.stopPropagation();
-    this.openLinkPickerAndAdd([row.id]);
+  protected addToLinkForRow(row: Datei): void {
+    setTimeout(() => this.openLinkPickerAndAdd([row.id]), 0);
   }
 
   protected addToLinkForSelection(): void {

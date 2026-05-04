@@ -64,12 +64,31 @@ func (q *Queries) DeleteLinkDateiProjection(ctx context.Context, arg DeleteLinkD
 }
 
 const getLinkProjectionByAccessToken = `-- name: GetLinkProjectionByAccessToken :one
-SELECT id, owner_id, name, access_token, code, expires_at, revoked_at, created_at, updated_at FROM link_projection WHERE access_token = $1
+SELECT
+  l.id, l.owner_id, l.name, l.access_token, l.code, l.expires_at, l.revoked_at,
+  l.created_at, l.updated_at,
+  u.name AS owner_name
+FROM link_projection l
+INNER JOIN user_account_projection u ON u.id = l.owner_id
+WHERE l.access_token = $1
 `
 
-func (q *Queries) GetLinkProjectionByAccessToken(ctx context.Context, accessToken string) (LinkProjection, error) {
+type GetLinkProjectionByAccessTokenRow struct {
+	ID          uuid.UUID  `db:"id"`
+	OwnerID     uuid.UUID  `db:"owner_id"`
+	Name        string     `db:"name"`
+	AccessToken string     `db:"access_token"`
+	Code        *string    `db:"code"`
+	ExpiresAt   *time.Time `db:"expires_at"`
+	RevokedAt   *time.Time `db:"revoked_at"`
+	CreatedAt   time.Time  `db:"created_at"`
+	UpdatedAt   time.Time  `db:"updated_at"`
+	OwnerName   string     `db:"owner_name"`
+}
+
+func (q *Queries) GetLinkProjectionByAccessToken(ctx context.Context, accessToken string) (GetLinkProjectionByAccessTokenRow, error) {
 	row := q.db.QueryRow(ctx, getLinkProjectionByAccessToken, accessToken)
-	var i LinkProjection
+	var i GetLinkProjectionByAccessTokenRow
 	err := row.Scan(
 		&i.ID,
 		&i.OwnerID,
@@ -80,6 +99,7 @@ func (q *Queries) GetLinkProjectionByAccessToken(ctx context.Context, accessToke
 		&i.RevokedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.OwnerName,
 	)
 	return i, err
 }
@@ -125,7 +145,7 @@ func (q *Queries) InsertLinkDateiProjection(ctx context.Context, arg InsertLinkD
 const insertLinkProjection = `-- name: InsertLinkProjection :exec
 INSERT INTO link_projection
  (id, owner_id, name, access_token, code, expires_at, created_at, updated_at)
- VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
+ VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 `
 
 type InsertLinkProjectionParams struct {
@@ -136,6 +156,7 @@ type InsertLinkProjectionParams struct {
 	Code        *string    `db:"code"`
 	ExpiresAt   *time.Time `db:"expires_at"`
 	CreatedAt   time.Time  `db:"created_at"`
+	UpdatedAt   time.Time  `db:"updated_at"`
 }
 
 func (q *Queries) InsertLinkProjection(ctx context.Context, arg InsertLinkProjectionParams) error {
@@ -147,6 +168,7 @@ func (q *Queries) InsertLinkProjection(ctx context.Context, arg InsertLinkProjec
 		arg.Code,
 		arg.ExpiresAt,
 		arg.CreatedAt,
+		arg.UpdatedAt,
 	)
 	return err
 }
@@ -309,15 +331,16 @@ func (q *Queries) UpdateLinkProjectionAccessToken(ctx context.Context, arg Updat
 }
 
 const updateLinkProjectionRevoked = `-- name: UpdateLinkProjectionRevoked :exec
-UPDATE link_projection SET revoked_at = $1, updated_at = $1 WHERE id = $2
+UPDATE link_projection SET revoked_at = $1, updated_at = $2 WHERE id = $3
 `
 
 type UpdateLinkProjectionRevokedParams struct {
 	RevokedAt *time.Time `db:"revoked_at"`
+	UpdatedAt time.Time  `db:"updated_at"`
 	ID        uuid.UUID  `db:"id"`
 }
 
 func (q *Queries) UpdateLinkProjectionRevoked(ctx context.Context, arg UpdateLinkProjectionRevokedParams) error {
-	_, err := q.db.Exec(ctx, updateLinkProjectionRevoked, arg.RevokedAt, arg.ID)
+	_, err := q.db.Exec(ctx, updateLinkProjectionRevoked, arg.RevokedAt, arg.UpdatedAt, arg.ID)
 	return err
 }

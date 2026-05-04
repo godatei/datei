@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject, resource, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  resource,
+  signal,
+} from '@angular/core';
 import { form, FormField, FormRoot, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -32,6 +39,11 @@ export class LinkPickerDialogComponent {
     loader: () => firstValueFrom(this.linksService.listLinks()),
   });
 
+  // Only active links accept new dateien — revoked links are terminal.
+  protected readonly availableLinks = computed(() =>
+    (this.listResource.value() ?? []).filter((l) => !l.revokedAt),
+  );
+
   protected readonly model = signal({ linkId: '' });
   protected readonly pickerForm = form(
     this.model,
@@ -42,8 +54,7 @@ export class LinkPickerDialogComponent {
       submission: {
         action: async () => {
           const id = this.model().linkId;
-          const links = this.listResource.value() ?? [];
-          const link = links.find((l) => l.id === id);
+          const link = this.availableLinks().find((l) => l.id === id);
           if (link) {
             this.dialogRef.close(link);
           }

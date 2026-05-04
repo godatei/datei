@@ -1,6 +1,9 @@
 -- name: GetDateiProjectionByID :one
 SELECT * FROM datei_projection WHERE id = $1;
 
+-- name: CountDateiProjectionsByIDs :one
+SELECT COUNT(*)::int FROM datei_projection WHERE id = ANY($1::uuid[]);
+
 -- name: ListDateiProjections :many
 SELECT * FROM datei_projection ORDER BY created_at DESC;
 

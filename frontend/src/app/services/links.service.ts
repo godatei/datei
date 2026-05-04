@@ -5,7 +5,6 @@ import {
   addDateiToLink,
   createLink,
   downloadPublicLinkDatei,
-  getLink,
   listLinks,
   listPublicLinkDateien,
   removeDateiFromLink,
@@ -32,10 +31,6 @@ export class LinksService {
 
   createLink(body: CreateLinkRequest): Observable<Link> {
     return createLink(this.httpClient, '', { body }).pipe(map((r) => r.body));
-  }
-
-  getLink(id: string): Observable<Link> {
-    return getLink(this.httpClient, '', { id }).pipe(map((r) => r.body));
   }
 
   updateLink(id: string, body: UpdateLinkRequest): Observable<Link> {
@@ -87,7 +82,11 @@ export class LinksService {
       accessToken,
       dateiId,
       'X-Datei-Link-Code': code,
-    }).pipe(map((r) => r.body as unknown as Blob));
+    }).pipe(
+      // The generated function types the body as `any` (it streams
+      // application/octet-stream) but the runtime value is a Blob.
+      map((r) => r.body as unknown as Blob),
+    );
   }
 
   buildShareUrl(accessToken: string): string {

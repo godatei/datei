@@ -2,11 +2,14 @@ package link
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/godatei/datei/internal/events"
 	"github.com/google/uuid"
 )
+
+const linkNameMaxLen = 255
 
 // Aggregate represents the domain entity for a public-share link.
 type Aggregate struct {
@@ -55,8 +58,8 @@ func (a *Aggregate) Create(
 	if ownerID == uuid.Nil {
 		return errors.New("invalid owner id")
 	}
-	if name == "" {
-		return errors.New("name cannot be empty")
+	if err := validateName(name); err != nil {
+		return err
 	}
 	if accessToken == "" {
 		return errors.New("access token cannot be empty")
@@ -83,8 +86,8 @@ func (a *Aggregate) Update(name string, code *string, expiresAt *time.Time, now 
 	if err := a.checkActive("update"); err != nil {
 		return err
 	}
-	if name == "" {
-		return errors.New("name cannot be empty")
+	if err := validateName(name); err != nil {
+		return err
 	}
 
 	nameSame := name == a.Name
@@ -182,6 +185,18 @@ func (a *Aggregate) checkActive(action string) error {
 	}
 	if a.RevokedAt != nil {
 		return errors.New("cannot " + action + ": link revoked")
+	}
+	return nil
+}
+
+// validateName enforces the same rules as the rename dialog's form-level
+// validators (required, non-whitespace-only, max length) at the domain layer.
+func validateName(name string) error {
+	if strings.TrimSpace(name) == "" {
+		return errors.New("name cannot be empty or whitespace")
+	}
+	if len(name) > linkNameMaxLen {
+		return errors.New("name exceeds maximum length")
 	}
 	return nil
 }

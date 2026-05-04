@@ -1,3 +1,0 @@
-DROP TABLE IF EXISTS link_datei_projection CASCADE;
-DROP TABLE IF EXISTS link_projection CASCADE;
-DROP TABLE IF EXISTS link_event CASCADE;

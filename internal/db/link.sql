@@ -1,7 +1,7 @@
 -- name: InsertLinkProjection :exec
 INSERT INTO link_projection
  (id, owner_id, name, access_token, code, expires_at, created_at, updated_at)
- VALUES ($1, $2, $3, $4, $5, $6, $7, $7);
+ VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
 
 -- name: UpdateLinkProjection :exec
 UPDATE link_projection
@@ -12,13 +12,19 @@ UPDATE link_projection
 UPDATE link_projection SET access_token = $1, updated_at = $2 WHERE id = $3;
 
 -- name: UpdateLinkProjectionRevoked :exec
-UPDATE link_projection SET revoked_at = $1, updated_at = $1 WHERE id = $2;
+UPDATE link_projection SET revoked_at = $1, updated_at = $2 WHERE id = $3;
 
 -- name: GetLinkProjectionByID :one
 SELECT * FROM link_projection WHERE id = $1;
 
 -- name: GetLinkProjectionByAccessToken :one
-SELECT * FROM link_projection WHERE access_token = $1;
+SELECT
+  l.id, l.owner_id, l.name, l.access_token, l.code, l.expires_at, l.revoked_at,
+  l.created_at, l.updated_at,
+  u.name AS owner_name
+FROM link_projection l
+INNER JOIN user_account_projection u ON u.id = l.owner_id
+WHERE l.access_token = $1;
 
 -- name: ListLinkProjectionsByOwner :many
 SELECT * FROM link_projection
