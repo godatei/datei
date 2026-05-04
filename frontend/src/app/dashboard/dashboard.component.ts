@@ -193,8 +193,7 @@ export class DashboardComponent {
     });
   }
 
-  protected openRenameDialog(datei: Datei, event: Event): void {
-    event.stopPropagation();
+  protected openRenameDialog(datei: Datei): void {
     const ref = this.dialog.open(RenameDateiDialogComponent, {
       width: '360px',
       data: { currentName: datei.name ?? '' } satisfies RenameDateiDialogData,

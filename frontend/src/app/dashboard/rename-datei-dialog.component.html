@@ -1,28 +1,25 @@
 <h2 mat-dialog-title>Rename</h2>
-<mat-dialog-content>
-  <div class="pt-2">
-    <mat-form-field appearance="outline" class="w-full">
-      <mat-label>Name</mat-label>
-      <input
-        matInput
-        [formControl]="nameControl"
-        (keydown.enter)="confirm()"
-        autocomplete="off"
-        aria-label="Name"
-      />
-      @if (nameControl.hasError('required')) {
-        <mat-error>Name is required</mat-error>
-      } @else if (nameControl.hasError('maxlength')) {
-        <mat-error>Name must be 255 characters or fewer</mat-error>
-      } @else if (nameControl.hasError('pattern')) {
-        <mat-error>Name cannot be only spaces</mat-error>
-      }
-    </mat-form-field>
-  </div>
-</mat-dialog-content>
-<mat-dialog-actions align="end">
-  <button mat-button (click)="cancel()">Cancel</button>
-  <button mat-button color="primary" (click)="confirm()" [disabled]="nameControl.invalid">
-    OK
-  </button>
-</mat-dialog-actions>
+<form [formRoot]="form">
+  <mat-dialog-content>
+    <div class="pt-2">
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Name</mat-label>
+        <input #nameInput matInput [formField]="form.name" autocomplete="off" aria-label="Name" />
+        @let errs = form.name().errors();
+        @if (errs.length > 0) {
+          @if (errs[0].kind === 'required') {
+            <mat-error>Name is required</mat-error>
+          } @else if (errs[0].kind === 'maxLength') {
+            <mat-error>Name must be 255 characters or fewer</mat-error>
+          } @else if (errs[0].kind === 'pattern') {
+            <mat-error>Name cannot be only spaces</mat-error>
+          }
+        }
+      </mat-form-field>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="cancel()">Cancel</button>
+    <button mat-button color="primary" type="submit" [disabled]="form().invalid()">OK</button>
+  </mat-dialog-actions>
+</form>

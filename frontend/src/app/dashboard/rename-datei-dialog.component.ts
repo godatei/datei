@@ -1,5 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { form, FormField, FormRoot, maxLength, pattern, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -18,26 +25,39 @@ export interface RenameDateiDialogData {
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
-    ReactiveFormsModule,
+    FormField,
+    FormRoot,
   ],
 })
 export class RenameDateiDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<RenameDateiDialogComponent, string | null>);
   protected readonly data = inject<RenameDateiDialogData>(MAT_DIALOG_DATA);
+  private readonly nameInput = viewChild.required<ElementRef<HTMLInputElement>>('nameInput');
 
-  protected readonly nameControl = new FormControl(this.data.currentName, {
-    nonNullable: true,
-    validators: [Validators.required, Validators.maxLength(255), Validators.pattern(/\S/)],
-  });
+  protected readonly model = signal({ name: this.data.currentName });
+  protected readonly form = form(
+    this.model,
+    (p) => {
+      required(p.name);
+      maxLength(p.name, 255);
+      pattern(p.name, /\S/);
+    },
+    {
+      submission: {
+        action: async () => {
+          const next = this.model().name.trim();
+          this.dialogRef.close(next === this.data.currentName ? null : next);
+        },
+      },
+    },
+  );
 
-  protected confirm(): void {
-    if (this.nameControl.invalid) return;
-    const next = this.nameControl.value.trim();
-    if (next === this.data.currentName) {
-      this.dialogRef.close(null);
-      return;
-    }
-    this.dialogRef.close(next);
+  constructor() {
+    this.dialogRef.afterOpened().subscribe(() => {
+      const input = this.nameInput().nativeElement;
+      input.focus();
+      input.select();
+    });
   }
 
   protected cancel(): void {
