@@ -47,6 +47,37 @@ func (s *server) ListTrash(
 	}), nil
 }
 
+// RestoreTrash implements [StrictServerInterface].
+func (s *server) RestoreTrash(
+	ctx context.Context,
+	request RestoreTrashRequestObject,
+) (RestoreTrashResponseObject, error) {
+	var parentID *uuid.UUID
+	if request.Body != nil {
+		parentID = request.Body.ParentId
+	}
+
+	err := s.dateiService.RestoreDatei(ctx, datei.RestoreDateiInput{
+		ID:       request.DateiId,
+		ParentID: parentID,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, dateierrors.ErrNotFound), errors.Is(err, dateierrors.ErrNotInTrash),
+			errors.Is(err, dateierrors.ErrParentNotFound):
+			return RestoreTrash404Response{}, nil
+		case errors.Is(err, dateierrors.ErrInvalidInput), errors.Is(err, dateierrors.ErrParentNotDirectory),
+			errors.Is(err, dateierrors.ErrParentTrashed), errors.Is(err, dateierrors.ErrCycleDetected):
+			return RestoreTrash400Response{}, nil
+		default:
+			slog.Error("endpoint error", "error", err)
+			return nil, err
+		}
+	}
+
+	return RestoreTrash204Response{}, nil
+}
+
 // ListDatei implements [StrictServerInterface].
 func (s *server) ListDatei(
 	ctx context.Context,

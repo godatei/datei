@@ -6,10 +6,12 @@ import {
   effect,
   inject,
   resource,
+  signal,
   viewChild,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
@@ -20,6 +22,9 @@ import { TrashedDatei } from '~/api/models';
 import { ThumbnailIconComponent } from '~/frontend/dashboard/thumbnail-icon.component';
 import { SelectionDirective } from '~/frontend/dashboard/selection.directive';
 import { SelectionItemDirective } from '~/frontend/dashboard/selectable-item.directive';
+import { RestoreDialogComponent } from './restore-dialog/restore-dialog.component';
+import { filter } from 'rxjs';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-trash',
@@ -35,17 +40,23 @@ import { SelectionItemDirective } from '~/frontend/dashboard/selectable-item.dir
     ThumbnailIconComponent,
     SelectionDirective,
     SelectionItemDirective,
+    MatSnackBarModule,
   ],
 })
 export class TrashComponent {
   private readonly api = inject(Api);
+  private readonly dialog = inject(MatDialog);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly snack = inject(MatSnackBar);
+
   private readonly queryParams = toSignal(this.route.queryParamMap);
   protected readonly parentId = computed(() => this.queryParams()?.get('parentId') ?? null);
 
+  protected readonly refresh = signal(0);
+
   protected readonly trashResource = resource({
-    params: () => ({ parentId: this.parentId() }),
+    params: () => ({ refresh: this.refresh(), parentId: this.parentId() }),
     loader: ({ params }) => this.api.invoke(listTrash, { parentId: params.parentId ?? undefined }),
   });
 
@@ -91,8 +102,23 @@ export class TrashComponent {
   }
 
   protected restore(item: TrashedDatei): void {
-    // TODO: implement restore
-    console.warn('restore not implemented', item);
+    const dialogRef = this.dialog.open(RestoreDialogComponent, { data: item });
+    dialogRef
+      .afterClosed()
+      .pipe(filter((result) => result))
+      .subscribe((result) => {
+        console.log(result);
+        this.refresh.update((v) => v + 1);
+        const snackRef = this.snack.open(
+          `“${item.name}” has been restored to ${result.parent.name ?? 'My Files'}`,
+          'Show',
+        );
+        snackRef
+          .onAction()
+          .subscribe(() =>
+            this.router.navigate(['/'], { queryParams: { parentId: result.parent.id ?? null } }),
+          );
+      });
   }
 
   protected deletePermanently(item: TrashedDatei): void {

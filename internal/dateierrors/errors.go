@@ -13,6 +13,7 @@ var (
 	ErrParentTrashed        = errors.New("parent directory is trashed")
 	ErrParentNotTrashed     = errors.New("parent directory is not trashed")
 	ErrCycleDetected        = errors.New("cannot move directory into its own subtree")
+	ErrNotInTrash           = errors.New("datei is not in trash")
 
 	// User / auth errors
 	ErrInvalidCredentials      = errors.New("invalid credentials")

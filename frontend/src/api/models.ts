@@ -20,6 +20,7 @@ export type { RegenerateMfaRecoveryCodesRequest } from './models/regenerate-mfa-
 export type { RegenerateMfaRecoveryCodesResponse } from './models/regenerate-mfa-recovery-codes-response';
 export type { RegisterRequest } from './models/register-request';
 export type { ResetPasswordRequest } from './models/reset-password-request';
+export type { RestoreDateiRequest } from './models/restore-datei-request';
 export type { SetupMfaResponse } from './models/setup-mfa-response';
 export type { TrashedDatei } from './models/trashed-datei';
 export type { UpdateDateiRequest } from './models/update-datei-request';

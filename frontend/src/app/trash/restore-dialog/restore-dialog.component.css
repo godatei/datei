@@ -1,0 +1,23 @@
+@import 'tailwindcss';
+
+.breadcrumb {
+  scrollbar-width: none;
+  border-bottom-color: var(--mat-sys-outline-variant);
+}
+
+.breadcrumb::-webkit-scrollbar {
+  display: none;
+}
+
+.breadcrumb-btn {
+  @apply px-2;
+}
+
+.empty-state mat-icon {
+  @apply text-4xl;
+  @apply size-9;
+}
+
+mat-action-list {
+  padding-top: 0 !important;
+}

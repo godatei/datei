@@ -45,6 +45,8 @@ paths:
   # Datei (authentication required)
   /api/v1/trash:
     $ref: './paths/trash.yaml'
+  /api/v1/trash/{dateiId}/restore:
+    $ref: './paths/trash_id_restore.yaml'
   /api/v1/datei:
     $ref: ./paths/datei.yaml
   /api/v1/datei/{id}:

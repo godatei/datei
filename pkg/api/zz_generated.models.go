@@ -173,6 +173,12 @@ type ResetPasswordRequest struct {
 	Email openapi_types.Email `json:"email"`
 }
 
+// RestoreDateiRequest defines model for RestoreDateiRequest.
+type RestoreDateiRequest struct {
+	// ParentId New parent directory for the restored item. Required when the item's original parent is trashed, or when the item is a descendant of a trashed item.
+	ParentId *openapi_types.UUID `json:"parentId,omitempty"`
+}
+
 // SetupMFAResponse defines model for SetupMFAResponse.
 type SetupMFAResponse struct {
 	QrCodeUrl string `json:"qrCodeUrl"`
@@ -354,3 +360,6 @@ type UpdateUserJSONRequestBody = UpdateUserRequest
 
 // UpdateUserEmailJSONRequestBody defines body for UpdateUserEmail for application/json ContentType.
 type UpdateUserEmailJSONRequestBody = UpdateUserEmailRequest
+
+// RestoreTrashJSONRequestBody defines body for RestoreTrash for application/json ContentType.
+type RestoreTrashJSONRequestBody = RestoreDateiRequest

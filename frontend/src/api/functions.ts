@@ -41,6 +41,8 @@ export type { SetPrimaryEmail$Params as SetPrimaryEmail$Params } from './fn/oper
 export { setPrimaryEmail as setPrimaryEmail } from './fn/operations/set-primary-email';
 export type { ListTrash$Params as ListTrash$Params } from './fn/operations/list-trash';
 export { listTrash as listTrash } from './fn/operations/list-trash';
+export type { RestoreTrash$Params as RestoreTrash$Params } from './fn/operations/restore-trash';
+export { restoreTrash as restoreTrash } from './fn/operations/restore-trash';
 export type { ListDatei$Params as ListDatei$Params } from './fn/operations/list-datei';
 export { listDatei as listDatei } from './fn/operations/list-datei';
 export type { CreateDatei$Params as CreateDatei$Params } from './fn/operations/create-datei';
