@@ -379,7 +379,8 @@ func (s *Service) GetThumbnail(
 	}, nil
 }
 
-// GetDateiPath returns the ancestor chain from root to the given datei (inclusive), root-first.
+// GetDateiPath returns the ancestor chain up to the given datei (inclusive), root-first.
+// The chain is truncated at the first trashed ancestor: that ancestor is included but its own parents are not.
 func (s *Service) GetDateiPath(ctx context.Context, dateiID uuid.UUID) ([]api.DateiPathItem, error) {
 	queries := db.New(s.db)
 
