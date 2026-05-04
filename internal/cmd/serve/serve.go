@@ -113,7 +113,7 @@ func run(ctx context.Context, options Options) error {
 		ocrClient = ocr.NewClient(uri)
 	}
 
-	swagger, err := server.GetSwagger()
+	swagger, err := server.GetSpec()
 	if err != nil {
 		slog.Error("swagger error", "error", err)
 		return err

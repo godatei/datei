@@ -21,9 +21,11 @@ get:
       description: Thumbnail image
       headers:
         Cache-Control:
+          required: true
           schema:
             type: string
         ETag:
+          required: true
           schema:
             type: string
       content:
