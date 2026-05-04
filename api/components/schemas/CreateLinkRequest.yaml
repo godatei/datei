@@ -1,0 +1,23 @@
+type: object
+required:
+  - name
+  - dateiIds
+properties:
+  name:
+    type: string
+    description: Display name of the link
+  expiresAt:
+    type: string
+    format: date-time
+    nullable: true
+    description: Expiration timestamp; omit or null for "never expires"
+  code:
+    type: string
+    nullable: true
+    description: Optional plain-text code required to view
+  dateiIds:
+    type: array
+    items:
+      type: string
+      format: uuid
+    description: IDs of dateien to share (may be empty)

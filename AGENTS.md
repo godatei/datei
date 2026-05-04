@@ -297,6 +297,7 @@ This project uses Angular Material 21 with Material 3 theming. All UI must follo
 - Do NOT use `ngClass`, use `class` bindings instead
 - Do NOT use `ngStyle`, use `style` bindings instead
 - When using external templates/styles, use paths relative to the component TS file.
+- Do NOT create empty or placeholder-only component CSS/SCSS files.
 
 ### State Management
 

@@ -1,0 +1,31 @@
+post:
+  operationId: AddDateiToLink
+  summary: Add a datei to a link
+  security:
+    - bearerHttpAuthentication: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/AddDateiToLinkRequest.yaml'
+  responses:
+    '200':
+      description: Updated link
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/Link.yaml'
+    '400':
+      description: Invalid request
+    '404':
+      description: Link not found
+    '409':
+      description: Datei already added to the link

@@ -1,0 +1,48 @@
+get:
+  operationId: DownloadPublicLinkDatei
+  summary: Download a datei via a public link
+  security: []
+  parameters:
+    - name: accessToken
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: dateiId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: X-Datei-Link-Code
+      in: header
+      required: false
+      description: Plain-text code used to unlock the link when one is configured
+      schema:
+        type: string
+  responses:
+    '200':
+      description: File content
+      headers:
+        Content-Disposition:
+          required: true
+          schema:
+            type: string
+        Content-Type:
+          required: true
+          schema:
+            type: string
+      content:
+        application/octet-stream: {}
+    '403':
+      description: Code required or invalid
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/PublicLinkErrorResponse.yaml'
+    '404':
+      description: Link not found, revoked, or datei not shared
+    '409':
+      description: Datei is a directory
+    '410':
+      description: Link expired

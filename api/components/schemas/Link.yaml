@@ -1,0 +1,59 @@
+type: object
+required:
+  - id
+  - ownerId
+  - name
+  - accessToken
+  - dateien
+  - fileCount
+  - folderCount
+  - createdAt
+  - updatedAt
+properties:
+  id:
+    type: string
+    format: uuid
+    description: Unique identifier
+  ownerId:
+    type: string
+    format: uuid
+    description: User ID of the owner
+  name:
+    type: string
+    description: Display name of the link
+  accessToken:
+    type: string
+    description: Opaque URL slug used to access the link publicly
+  code:
+    type: string
+    nullable: true
+    description: Optional plain-text code required to view; null if no code is set
+  expiresAt:
+    type: string
+    format: date-time
+    nullable: true
+    description: Expiration timestamp; null if the link never expires
+  revokedAt:
+    type: string
+    format: date-time
+    nullable: true
+    description: Revocation timestamp; null if the link is active
+  dateien:
+    type: array
+    items:
+      $ref: './Datei.yaml'
+    description: Top-level dateien shared by the link
+  fileCount:
+    type: integer
+    description: Total number of files reachable in the shared subtree (excluding trashed)
+  folderCount:
+    type: integer
+    description: Total number of folders reachable in the shared subtree (excluding trashed)
+  createdAt:
+    type: string
+    format: date-time
+    description: Creation timestamp
+  updatedAt:
+    type: string
+    format: date-time
+    description: Last update timestamp

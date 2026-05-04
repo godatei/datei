@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/godatei/datei/internal/datei"
+	"github.com/godatei/datei/internal/link"
 	"github.com/godatei/datei/internal/mailer"
 	"github.com/godatei/datei/internal/ocr"
 	"github.com/godatei/datei/internal/storage"
@@ -22,6 +23,7 @@ const (
 type server struct {
 	dateiService *datei.Service
 	userService  *users.UserService
+	linkService  *link.Service
 }
 
 func NewServer(
@@ -29,12 +31,15 @@ func NewServer(
 	store storage.Store,
 	dateiRepo datei.Repository,
 	userRepo users.Repository,
+	linkRepo link.Repository,
 	m mailer.Mailer,
 	ocrClient *ocr.Client,
 ) *server {
+	dateiSvc := datei.NewService(pool, store, dateiRepo, ocrClient)
 	return &server{
-		dateiService: datei.NewService(pool, store, dateiRepo, ocrClient),
+		dateiService: dateiSvc,
 		userService:  users.NewUserService(pool, userRepo, m),
+		linkService:  link.NewService(pool, store, linkRepo, dateiSvc),
 	}
 }
 

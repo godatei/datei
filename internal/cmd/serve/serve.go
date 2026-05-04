@@ -21,6 +21,7 @@ import (
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/db/migrations"
 	"github.com/godatei/datei/internal/frontend"
+	"github.com/godatei/datei/internal/link"
 	"github.com/godatei/datei/internal/mailer"
 	"github.com/godatei/datei/internal/ocr"
 	"github.com/godatei/datei/internal/server"
@@ -98,6 +99,9 @@ func run(ctx context.Context, options Options) error {
 	userEventStore := users.NewEventStore(db)
 	userRepository := users.NewRepository(db, userEventStore)
 
+	linkEventStore := link.NewEventStore(db)
+	linkRepository := link.NewRepository(db, linkEventStore)
+
 	// Create mailer
 	var m mailer.Mailer
 	mc := config.Mailer()
@@ -120,7 +124,7 @@ func run(ctx context.Context, options Options) error {
 	}
 
 	// Create the unified server implementing StrictServerInterface
-	srv := server.NewServer(db, store, dateiRepository, userRepository, m, ocrClient)
+	srv := server.NewServer(db, store, dateiRepository, userRepository, linkRepository, m, ocrClient)
 	strictHandler := server.NewStrictHandler(srv, nil)
 
 	rootMux := chi.NewRouter()

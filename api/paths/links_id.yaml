@@ -1,0 +1,69 @@
+get:
+  operationId: GetLink
+  summary: Get a link by ID
+  security:
+    - bearerHttpAuthentication: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: Link
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/Link.yaml'
+    '404':
+      description: Link not found
+
+patch:
+  operationId: UpdateLink
+  summary: Update a link
+  security:
+    - bearerHttpAuthentication: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/UpdateLinkRequest.yaml'
+  responses:
+    '200':
+      description: Link updated
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/Link.yaml'
+    '400':
+      description: Invalid request
+    '404':
+      description: Link not found
+
+delete:
+  operationId: RevokeLink
+  summary: Revoke a link
+  security:
+    - bearerHttpAuthentication: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '204':
+      description: Link revoked
+    '404':
+      description: Link not found

@@ -1,0 +1,42 @@
+get:
+  operationId: ListLinks
+  summary: List the authenticated user's links
+  security:
+    - bearerHttpAuthentication: []
+  responses:
+    '200':
+      description: List of links
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ListLinksResponse.yaml'
+
+post:
+  operationId: CreateLink
+  summary: Create a new public link
+  security:
+    - bearerHttpAuthentication: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/CreateLinkRequest.yaml'
+  responses:
+    '201':
+      description: Link created
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/Link.yaml'
+    '400':
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+            required:
+              - message

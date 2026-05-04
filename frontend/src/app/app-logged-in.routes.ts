@@ -5,4 +5,9 @@ import { UserSettingsComponent } from '~/frontend/settings/user-settings.compone
 export const routes: Routes = [
   { path: '', pathMatch: 'full', component: DashboardComponent },
   { path: 'settings', component: UserSettingsComponent },
+  {
+    path: 'links',
+    loadComponent: () =>
+      import('~/frontend/links/links-list/links-list.component').then((m) => m.LinksListComponent),
+  },
 ];

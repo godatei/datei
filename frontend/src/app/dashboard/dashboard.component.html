@@ -37,6 +37,15 @@
         <mat-icon>close</mat-icon>
       </button>
       <span class="mat-font-label-lg">{{ selectedIds().size }} selected</span>
+      <span class="grow"></span>
+      <button mat-button (click)="addToLinkForSelection()">
+        <mat-icon>add_link</mat-icon>
+        Add to public link
+      </button>
+      <button mat-button (click)="createLinkForSelection()">
+        <mat-icon>link</mat-icon>
+        Create public link
+      </button>
     } @else {
       <!-- TODO: Filters go here -->
     }
@@ -84,6 +93,14 @@
           <mat-icon>more_vert</mat-icon>
         </button>
         <mat-menu #rowMenu="matMenu">
+          <button mat-menu-item (click)="createLinkForRow(element, $event)">
+            <mat-icon>link</mat-icon>
+            Create public link
+          </button>
+          <button mat-menu-item (click)="addToLinkForRow(element, $event)">
+            <mat-icon>add_link</mat-icon>
+            Add to public link
+          </button>
           <button mat-menu-item (click)="trashDatei(element.id, $event)">
             <mat-icon>delete</mat-icon>
             Move to trash

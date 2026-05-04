@@ -1,0 +1,17 @@
+type: object
+required:
+  - name
+  - ownerName
+  - items
+properties:
+  name:
+    type: string
+    description: Display name of the link
+  ownerName:
+    type: string
+    description: Display name of the user who created the link
+  items:
+    type: array
+    items:
+      $ref: './Datei.yaml'
+    description: Array of Datei objects accessible via the public link

@@ -13,6 +13,16 @@ var (
 	ErrParentTrashed        = errors.New("parent directory is trashed")
 	ErrCycleDetected        = errors.New("cannot move directory into its own subtree")
 
+	// Link / public-share errors
+	ErrLinkNotFound          = errors.New("link not found")
+	ErrLinkExpired           = errors.New("link expired")
+	ErrLinkRevoked           = errors.New("link revoked")
+	ErrLinkCodeRequired      = errors.New("link code required")
+	ErrLinkCodeInvalid       = errors.New("link code invalid")
+	ErrLinkDateiNotShared    = errors.New("datei not in link scope")
+	ErrLinkDateiAlreadyAdded = errors.New("datei already added to link")
+	ErrLinkForbidden         = errors.New("link operation forbidden")
+
 	// User / auth errors
 	ErrInvalidCredentials      = errors.New("invalid credentials")
 	ErrInvalidInput            = errors.New("invalid input")

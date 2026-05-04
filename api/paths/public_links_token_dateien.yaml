@@ -1,0 +1,40 @@
+get:
+  operationId: ListPublicLinkDateien
+  summary: List dateien shared via a public link
+  security: []
+  parameters:
+    - name: accessToken
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: parentId
+      in: query
+      required: false
+      description: When set, list children of this folder (must be inside the link's shared scope); when omitted, list the top-level shared dateien
+      schema:
+        type: string
+        format: uuid
+    - name: X-Datei-Link-Code
+      in: header
+      required: false
+      description: Plain-text code used to unlock the link when one is configured
+      schema:
+        type: string
+  responses:
+    '200':
+      description: List of dateien accessible via this link
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ListPublicLinkDateienResponse.yaml'
+    '403':
+      description: Code required or invalid
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/PublicLinkErrorResponse.yaml'
+    '404':
+      description: Link not found, revoked, or datei not shared
+    '410':
+      description: Link expired

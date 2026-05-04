@@ -1,0 +1,13 @@
+type: object
+required:
+  - items
+  - total
+properties:
+  items:
+    type: array
+    items:
+      $ref: './Link.yaml'
+    description: Array of Link objects
+  total:
+    type: integer
+    description: Total number of items

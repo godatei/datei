@@ -27,6 +27,15 @@ import {
   ImagePreviewDialogData,
 } from './image-preview-dialog.component';
 import { NewFolderDialogComponent } from './new-folder-dialog.component';
+import {
+  LinkFormDialogComponent,
+  LinkFormDialogData,
+} from '~/frontend/links/link-form-dialog/link-form-dialog.component';
+import { LinkPickerDialogComponent } from '~/frontend/links/link-picker-dialog/link-picker-dialog.component';
+import { LinksService } from '~/frontend/services/links.service';
+import type { Link } from '~/api/models/link';
+import { firstValueFrom } from 'rxjs';
+import { triggerDownload } from 'frontend/src/util/download';
 import { DragDropDirective, DropEvent } from './drag-drop.directive';
 import { DragPreviewDirective } from './drag-preview.directive';
 import { DragItemDirective } from './drag-row.directive';
@@ -56,6 +65,7 @@ export class DashboardComponent {
   private readonly sanitizer = inject(DomSanitizer);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly linksService = inject(LinksService);
 
   private readonly refresh = signal(0);
   private readonly queryParams = toSignal(this.route.queryParamMap);
@@ -158,12 +168,7 @@ export class DashboardComponent {
   private async downloadFile(id: string, name: string): Promise<void> {
     try {
       const response = await this.api.invoke$Response(downloadDatei, { id });
-      const url = URL.createObjectURL(response.body as Blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = name;
-      a.click();
-      URL.revokeObjectURL(url);
+      triggerDownload(response.body as Blob, name);
     } catch (e) {
       console.error(e);
       this.snackBar.open('Failed to download file', 'Dismiss', { duration: 4000 });
@@ -201,6 +206,74 @@ export class DashboardComponent {
       console.error(e);
       this.snackBar.open('Failed to move to trash', 'Dismiss', { duration: 4000 });
     }
+  }
+
+  protected createLinkForRow(row: Datei, event: Event): void {
+    event.stopPropagation();
+    this.openCreateLinkDialog([row.id], row.name ?? undefined);
+  }
+
+  protected createLinkForSelection(): void {
+    const items = this.selection.selected;
+    if (items.length === 0) return;
+    const ids = items.map((i) => i.id);
+    const defaultName = items.length === 1 ? (items[0].name ?? undefined) : undefined;
+    this.openCreateLinkDialog(ids, defaultName);
+  }
+
+  private openCreateLinkDialog(dateiIds: string[], defaultName: string | undefined): void {
+    const ref = this.dialog.open(LinkFormDialogComponent, {
+      width: '420px',
+      data: { mode: 'create', dateiIds, defaultName } satisfies LinkFormDialogData,
+    });
+    ref.afterClosed().subscribe((link) => {
+      if (!link) return;
+      const shareUrl = this.linksService.buildShareUrl(link.accessToken);
+      const snackRef = this.snackBar.open(`Public link "${link.name}" created`, 'Copy link', {
+        duration: 6000,
+      });
+      snackRef.onAction().subscribe(() => {
+        void navigator.clipboard.writeText(shareUrl);
+      });
+      this.selection.clear();
+    });
+  }
+
+  protected addToLinkForRow(row: Datei, event: Event): void {
+    event.stopPropagation();
+    this.openLinkPickerAndAdd([row.id]);
+  }
+
+  protected addToLinkForSelection(): void {
+    const ids = this.selection.selected.map((d) => d.id);
+    if (ids.length === 0) return;
+    this.openLinkPickerAndAdd(ids);
+  }
+
+  private openLinkPickerAndAdd(dateiIds: string[]): void {
+    const ref = this.dialog.open(LinkPickerDialogComponent, { width: '420px' });
+    ref.afterClosed().subscribe(async (link: Link | undefined) => {
+      if (!link) return;
+      const results = await Promise.allSettled(
+        dateiIds.map((dateiId) => firstValueFrom(this.linksService.addDatei(link.id, dateiId))),
+      );
+      const failed = results.filter((r) => r.status === 'rejected').length;
+      const added = results.length - failed;
+      if (failed === 0) {
+        this.snackBar.open(
+          `Added ${added} ${added === 1 ? 'item' : 'items'} to "${link.name}"`,
+          'OK',
+          { duration: 3000 },
+        );
+      } else {
+        this.snackBar.open(
+          `Added ${added} of ${results.length} items; ${failed} failed`,
+          'Dismiss',
+          { duration: 4000 },
+        );
+      }
+      this.selection.clear();
+    });
   }
 
   protected onDrag(event: DropEvent<Datei>): void {

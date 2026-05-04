@@ -1,0 +1,89 @@
+package server
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log/slog"
+
+	"github.com/godatei/datei/internal/dateierrors"
+	"github.com/godatei/datei/pkg/api"
+)
+
+// ListPublicLinkDateien implements [StrictServerInterface].
+func (s *server) ListPublicLinkDateien(
+	ctx context.Context,
+	request ListPublicLinkDateienRequestObject,
+) (ListPublicLinkDateienResponseObject, error) {
+	code := ""
+	if request.Params.XDateiLinkCode != nil {
+		code = *request.Params.XDateiLinkCode
+	}
+
+	result, err := s.linkService.ListPublicLinkDateien(ctx, request.AccessToken, request.Params.ParentId, code)
+	if err != nil {
+		switch {
+		case errors.Is(err, dateierrors.ErrLinkCodeRequired):
+			return ListPublicLinkDateien403JSONResponse(api.PublicLinkErrorResponse{Code: api.CodeRequired}), nil
+		case errors.Is(err, dateierrors.ErrLinkCodeInvalid):
+			return ListPublicLinkDateien403JSONResponse(api.PublicLinkErrorResponse{Code: api.CodeInvalid}), nil
+		case errors.Is(err, dateierrors.ErrLinkExpired):
+			return ListPublicLinkDateien410Response{}, nil
+		case errors.Is(err, dateierrors.ErrLinkNotFound),
+			errors.Is(err, dateierrors.ErrLinkRevoked),
+			errors.Is(err, dateierrors.ErrLinkDateiNotShared):
+			return ListPublicLinkDateien404Response{}, nil
+		default:
+			slog.Error("list public link dateien error", "error", err)
+			return ListPublicLinkDateien404Response{}, nil
+		}
+	}
+
+	return ListPublicLinkDateien200JSONResponse(api.ListPublicLinkDateienResponse{
+		Name:      result.Name,
+		OwnerName: result.OwnerName,
+		Items:     result.Items,
+	}), nil
+}
+
+// DownloadPublicLinkDatei implements [StrictServerInterface].
+func (s *server) DownloadPublicLinkDatei(
+	ctx context.Context,
+	request DownloadPublicLinkDateiRequestObject,
+) (DownloadPublicLinkDateiResponseObject, error) {
+	code := ""
+	if request.Params.XDateiLinkCode != nil {
+		code = *request.Params.XDateiLinkCode
+	}
+
+	result, err := s.linkService.DownloadPublicLinkDatei(ctx, request.AccessToken, request.DateiId, code)
+	if err != nil {
+		switch {
+		case errors.Is(err, dateierrors.ErrLinkCodeRequired):
+			return DownloadPublicLinkDatei403JSONResponse(api.PublicLinkErrorResponse{Code: api.CodeRequired}), nil
+		case errors.Is(err, dateierrors.ErrLinkCodeInvalid):
+			return DownloadPublicLinkDatei403JSONResponse(api.PublicLinkErrorResponse{Code: api.CodeInvalid}), nil
+		case errors.Is(err, dateierrors.ErrLinkExpired):
+			return DownloadPublicLinkDatei410Response{}, nil
+		case errors.Is(err, dateierrors.ErrIsDirectory):
+			return DownloadPublicLinkDatei409Response{}, nil
+		case errors.Is(err, dateierrors.ErrLinkNotFound),
+			errors.Is(err, dateierrors.ErrLinkRevoked),
+			errors.Is(err, dateierrors.ErrLinkDateiNotShared),
+			errors.Is(err, dateierrors.ErrNotFound):
+			return DownloadPublicLinkDatei404Response{}, nil
+		default:
+			slog.Error("download public link datei error", "error", err)
+			return DownloadPublicLinkDatei404Response{}, nil
+		}
+	}
+
+	return DownloadPublicLinkDatei200ApplicationoctetStreamResponse{
+		Body: result.Reader,
+		Headers: DownloadPublicLinkDatei200ResponseHeaders{
+			ContentDisposition: fmt.Sprintf(`attachment; filename="%v"`, result.ContentFileName),
+			ContentType:        result.ContentType,
+		},
+		ContentLength: result.ContentLength,
+	}, nil
+}

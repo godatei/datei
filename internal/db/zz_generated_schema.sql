@@ -20,20 +20,6 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: public; Type: SCHEMA; Schema: -; Owner: -
---
-
--- *not* creating schema, since initdb creates it
-
-
---
--- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
---
-
-COMMENT ON SCHEMA public IS '';
-
-
---
 -- Name: datei_permission_type; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -124,6 +110,68 @@ CREATE TABLE public.datei_projection (
 
 
 --
+-- Name: link_datei_projection; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.link_datei_projection (
+    link_id uuid NOT NULL,
+    datei_id uuid NOT NULL,
+    added_at timestamp with time zone NOT NULL
+);
+
+
+--
+-- Name: link_event; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.link_event (
+    id bigint NOT NULL,
+    stream_id uuid NOT NULL,
+    stream_version integer NOT NULL,
+    event_type character varying NOT NULL,
+    event_data jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT ck_link_event_stream_version CHECK ((stream_version > 0))
+);
+
+
+--
+-- Name: link_event_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.link_event_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: link_event_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.link_event_id_seq OWNED BY public.link_event.id;
+
+
+--
+-- Name: link_projection; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.link_projection (
+    id uuid NOT NULL,
+    owner_id uuid NOT NULL,
+    name text NOT NULL,
+    access_token text NOT NULL,
+    code text,
+    expires_at timestamp with time zone,
+    revoked_at timestamp with time zone,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL
+);
+
+
+--
 -- Name: user_account_email_projection; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -210,6 +258,13 @@ CREATE TABLE public.user_account_projection (
 --
 
 ALTER TABLE ONLY public.datei_event ALTER COLUMN id SET DEFAULT nextval('public.datei_event_id_seq'::regclass);
+
+
+--
+-- Name: link_event id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.link_event ALTER COLUMN id SET DEFAULT nextval('public.link_event_id_seq'::regclass);
 
 
 --

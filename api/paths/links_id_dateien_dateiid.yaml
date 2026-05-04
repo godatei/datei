@@ -1,0 +1,23 @@
+delete:
+  operationId: RemoveDateiFromLink
+  summary: Remove a datei from a link
+  security:
+    - bearerHttpAuthentication: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: dateiId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '204':
+      description: Datei removed
+    '404':
+      description: Link or datei not found

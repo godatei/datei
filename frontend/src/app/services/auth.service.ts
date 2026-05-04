@@ -170,7 +170,7 @@ export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
 };
 
 function authenticatedRoute(req: HttpRequest<unknown>): boolean {
-  return !req.url.startsWith('/api/v1/auth');
+  return !req.url.startsWith('/api/v1/auth') && !req.url.startsWith('/api/v1/public');
 }
 
 function redirectToLogin(email?: string) {

@@ -60,6 +60,36 @@ type ServerInterface interface {
 	// Get thumbnail for a Datei
 	// (GET /api/v1/datei/{id}/thumbnail)
 	GetDateiThumbnail(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, params GetDateiThumbnailParams)
+	// List the authenticated user's links
+	// (GET /api/v1/links)
+	ListLinks(w http.ResponseWriter, r *http.Request)
+	// Create a new public link
+	// (POST /api/v1/links)
+	CreateLink(w http.ResponseWriter, r *http.Request)
+	// Revoke a link
+	// (DELETE /api/v1/links/{id})
+	RevokeLink(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// Get a link by ID
+	// (GET /api/v1/links/{id})
+	GetLink(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// Update a link
+	// (PATCH /api/v1/links/{id})
+	UpdateLink(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// Add a datei to a link
+	// (POST /api/v1/links/{id}/dateien)
+	AddDateiToLink(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// Remove a datei from a link
+	// (DELETE /api/v1/links/{id}/dateien/{dateiId})
+	RemoveDateiFromLink(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, dateiId openapi_types.UUID)
+	// Generate a new access token, invalidating the old URL
+	// (POST /api/v1/links/{id}/rotate)
+	RotateLinkAccessToken(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// List dateien shared via a public link
+	// (GET /api/v1/public/links/{accessToken}/dateien)
+	ListPublicLinkDateien(w http.ResponseWriter, r *http.Request, accessToken string, params ListPublicLinkDateienParams)
+	// Download a datei via a public link
+	// (GET /api/v1/public/links/{accessToken}/dateien/{dateiId}/download)
+	DownloadPublicLinkDatei(w http.ResponseWriter, r *http.Request, accessToken string, dateiId openapi_types.UUID, params DownloadPublicLinkDateiParams)
 	// List user emails
 	// (GET /api/v1/settings/emails)
 	ListEmails(w http.ResponseWriter, r *http.Request)
@@ -174,6 +204,66 @@ func (_ Unimplemented) GetDateiPath(w http.ResponseWriter, r *http.Request, id o
 // Get thumbnail for a Datei
 // (GET /api/v1/datei/{id}/thumbnail)
 func (_ Unimplemented) GetDateiThumbnail(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, params GetDateiThumbnailParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List the authenticated user's links
+// (GET /api/v1/links)
+func (_ Unimplemented) ListLinks(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Create a new public link
+// (POST /api/v1/links)
+func (_ Unimplemented) CreateLink(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Revoke a link
+// (DELETE /api/v1/links/{id})
+func (_ Unimplemented) RevokeLink(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get a link by ID
+// (GET /api/v1/links/{id})
+func (_ Unimplemented) GetLink(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update a link
+// (PATCH /api/v1/links/{id})
+func (_ Unimplemented) UpdateLink(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Add a datei to a link
+// (POST /api/v1/links/{id}/dateien)
+func (_ Unimplemented) AddDateiToLink(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Remove a datei from a link
+// (DELETE /api/v1/links/{id}/dateien/{dateiId})
+func (_ Unimplemented) RemoveDateiFromLink(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, dateiId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Generate a new access token, invalidating the old URL
+// (POST /api/v1/links/{id}/rotate)
+func (_ Unimplemented) RotateLinkAccessToken(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List dateien shared via a public link
+// (GET /api/v1/public/links/{accessToken}/dateien)
+func (_ Unimplemented) ListPublicLinkDateien(w http.ResponseWriter, r *http.Request, accessToken string, params ListPublicLinkDateienParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Download a datei via a public link
+// (GET /api/v1/public/links/{accessToken}/dateien/{dateiId}/download)
+func (_ Unimplemented) DownloadPublicLinkDatei(w http.ResponseWriter, r *http.Request, accessToken string, dateiId openapi_types.UUID, params DownloadPublicLinkDateiParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -592,6 +682,369 @@ func (siw *ServerInterfaceWrapper) GetDateiThumbnail(w http.ResponseWriter, r *h
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetDateiThumbnail(w, r, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListLinks operation middleware
+func (siw *ServerInterfaceWrapper) ListLinks(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListLinks(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateLink operation middleware
+func (siw *ServerInterfaceWrapper) CreateLink(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateLink(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RevokeLink operation middleware
+func (siw *ServerInterfaceWrapper) RevokeLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RevokeLink(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetLink operation middleware
+func (siw *ServerInterfaceWrapper) GetLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetLink(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateLink operation middleware
+func (siw *ServerInterfaceWrapper) UpdateLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateLink(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AddDateiToLink operation middleware
+func (siw *ServerInterfaceWrapper) AddDateiToLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AddDateiToLink(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RemoveDateiFromLink operation middleware
+func (siw *ServerInterfaceWrapper) RemoveDateiFromLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "dateiId" -------------
+	var dateiId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "dateiId", chi.URLParam(r, "dateiId"), &dateiId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dateiId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemoveDateiFromLink(w, r, id, dateiId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RotateLinkAccessToken operation middleware
+func (siw *ServerInterfaceWrapper) RotateLinkAccessToken(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RotateLinkAccessToken(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListPublicLinkDateien operation middleware
+func (siw *ServerInterfaceWrapper) ListPublicLinkDateien(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "accessToken" -------------
+	var accessToken string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "accessToken", chi.URLParam(r, "accessToken"), &accessToken, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accessToken", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListPublicLinkDateienParams
+
+	// ------------- Optional query parameter "parentId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "parentId", r.URL.Query(), &params.ParentId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "parentId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "parentId", Err: err})
+		}
+		return
+	}
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Datei-Link-Code" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Datei-Link-Code")]; found {
+		var XDateiLinkCode string
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Datei-Link-Code", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Datei-Link-Code", valueList[0], &XDateiLinkCode, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Datei-Link-Code", Err: err})
+			return
+		}
+
+		params.XDateiLinkCode = &XDateiLinkCode
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListPublicLinkDateien(w, r, accessToken, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DownloadPublicLinkDatei operation middleware
+func (siw *ServerInterfaceWrapper) DownloadPublicLinkDatei(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "accessToken" -------------
+	var accessToken string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "accessToken", chi.URLParam(r, "accessToken"), &accessToken, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accessToken", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "dateiId" -------------
+	var dateiId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "dateiId", chi.URLParam(r, "dateiId"), &dateiId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dateiId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DownloadPublicLinkDateiParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "X-Datei-Link-Code" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Datei-Link-Code")]; found {
+		var XDateiLinkCode string
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Datei-Link-Code", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Datei-Link-Code", valueList[0], &XDateiLinkCode, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Datei-Link-Code", Err: err})
+			return
+		}
+
+		params.XDateiLinkCode = &XDateiLinkCode
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DownloadPublicLinkDatei(w, r, accessToken, dateiId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1072,6 +1525,36 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/api/v1/datei/{id}/thumbnail", wrapper.GetDateiThumbnail)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/links", wrapper.ListLinks)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/links", wrapper.CreateLink)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v1/links/{id}", wrapper.RevokeLink)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/links/{id}", wrapper.GetLink)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v1/links/{id}", wrapper.UpdateLink)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/links/{id}/dateien", wrapper.AddDateiToLink)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v1/links/{id}/dateien/{dateiId}", wrapper.RemoveDateiFromLink)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/links/{id}/rotate", wrapper.RotateLinkAccessToken)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/public/links/{accessToken}/dateien", wrapper.ListPublicLinkDateien)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/public/links/{accessToken}/dateien/{dateiId}/download", wrapper.DownloadPublicLinkDatei)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v1/settings/emails", wrapper.ListEmails)
 	})
 	r.Group(func(r chi.Router) {
@@ -1518,6 +2001,389 @@ func (response GetDateiThumbnail415Response) VisitGetDateiThumbnailResponse(w ht
 	return nil
 }
 
+type ListLinksRequestObject struct {
+}
+
+type ListLinksResponseObject interface {
+	VisitListLinksResponse(w http.ResponseWriter) error
+}
+
+type ListLinks200JSONResponse ListLinksResponse
+
+func (response ListLinks200JSONResponse) VisitListLinksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateLinkRequestObject struct {
+	Body *CreateLinkJSONRequestBody
+}
+
+type CreateLinkResponseObject interface {
+	VisitCreateLinkResponse(w http.ResponseWriter) error
+}
+
+type CreateLink201JSONResponse Link
+
+func (response CreateLink201JSONResponse) VisitCreateLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateLink400JSONResponse struct {
+	Message string `json:"message"`
+}
+
+func (response CreateLink400JSONResponse) VisitCreateLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeLinkRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type RevokeLinkResponseObject interface {
+	VisitRevokeLinkResponse(w http.ResponseWriter) error
+}
+
+type RevokeLink204Response struct {
+}
+
+func (response RevokeLink204Response) VisitRevokeLinkResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RevokeLink404Response struct {
+}
+
+func (response RevokeLink404Response) VisitRevokeLinkResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type GetLinkRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type GetLinkResponseObject interface {
+	VisitGetLinkResponse(w http.ResponseWriter) error
+}
+
+type GetLink200JSONResponse Link
+
+func (response GetLink200JSONResponse) VisitGetLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetLink404Response struct {
+}
+
+func (response GetLink404Response) VisitGetLinkResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type UpdateLinkRequestObject struct {
+	Id   openapi_types.UUID `json:"id"`
+	Body *UpdateLinkJSONRequestBody
+}
+
+type UpdateLinkResponseObject interface {
+	VisitUpdateLinkResponse(w http.ResponseWriter) error
+}
+
+type UpdateLink200JSONResponse Link
+
+func (response UpdateLink200JSONResponse) VisitUpdateLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateLink400Response struct {
+}
+
+func (response UpdateLink400Response) VisitUpdateLinkResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type UpdateLink404Response struct {
+}
+
+func (response UpdateLink404Response) VisitUpdateLinkResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type AddDateiToLinkRequestObject struct {
+	Id   openapi_types.UUID `json:"id"`
+	Body *AddDateiToLinkJSONRequestBody
+}
+
+type AddDateiToLinkResponseObject interface {
+	VisitAddDateiToLinkResponse(w http.ResponseWriter) error
+}
+
+type AddDateiToLink200JSONResponse Link
+
+func (response AddDateiToLink200JSONResponse) VisitAddDateiToLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddDateiToLink400Response struct {
+}
+
+func (response AddDateiToLink400Response) VisitAddDateiToLinkResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type AddDateiToLink404Response struct {
+}
+
+func (response AddDateiToLink404Response) VisitAddDateiToLinkResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type AddDateiToLink409Response struct {
+}
+
+func (response AddDateiToLink409Response) VisitAddDateiToLinkResponse(w http.ResponseWriter) error {
+	w.WriteHeader(409)
+	return nil
+}
+
+type RemoveDateiFromLinkRequestObject struct {
+	Id      openapi_types.UUID `json:"id"`
+	DateiId openapi_types.UUID `json:"dateiId"`
+}
+
+type RemoveDateiFromLinkResponseObject interface {
+	VisitRemoveDateiFromLinkResponse(w http.ResponseWriter) error
+}
+
+type RemoveDateiFromLink204Response struct {
+}
+
+func (response RemoveDateiFromLink204Response) VisitRemoveDateiFromLinkResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RemoveDateiFromLink404Response struct {
+}
+
+func (response RemoveDateiFromLink404Response) VisitRemoveDateiFromLinkResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type RotateLinkAccessTokenRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type RotateLinkAccessTokenResponseObject interface {
+	VisitRotateLinkAccessTokenResponse(w http.ResponseWriter) error
+}
+
+type RotateLinkAccessToken200JSONResponse Link
+
+func (response RotateLinkAccessToken200JSONResponse) VisitRotateLinkAccessTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RotateLinkAccessToken404Response struct {
+}
+
+func (response RotateLinkAccessToken404Response) VisitRotateLinkAccessTokenResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ListPublicLinkDateienRequestObject struct {
+	AccessToken string `json:"accessToken"`
+	Params      ListPublicLinkDateienParams
+}
+
+type ListPublicLinkDateienResponseObject interface {
+	VisitListPublicLinkDateienResponse(w http.ResponseWriter) error
+}
+
+type ListPublicLinkDateien200JSONResponse ListPublicLinkDateienResponse
+
+func (response ListPublicLinkDateien200JSONResponse) VisitListPublicLinkDateienResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPublicLinkDateien403JSONResponse PublicLinkErrorResponse
+
+func (response ListPublicLinkDateien403JSONResponse) VisitListPublicLinkDateienResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPublicLinkDateien404Response struct {
+}
+
+func (response ListPublicLinkDateien404Response) VisitListPublicLinkDateienResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ListPublicLinkDateien410Response struct {
+}
+
+func (response ListPublicLinkDateien410Response) VisitListPublicLinkDateienResponse(w http.ResponseWriter) error {
+	w.WriteHeader(410)
+	return nil
+}
+
+type DownloadPublicLinkDateiRequestObject struct {
+	AccessToken string             `json:"accessToken"`
+	DateiId     openapi_types.UUID `json:"dateiId"`
+	Params      DownloadPublicLinkDateiParams
+}
+
+type DownloadPublicLinkDateiResponseObject interface {
+	VisitDownloadPublicLinkDateiResponse(w http.ResponseWriter) error
+}
+
+type DownloadPublicLinkDatei200ResponseHeaders struct {
+	ContentDisposition string
+	ContentType        string
+}
+
+type DownloadPublicLinkDatei200ApplicationoctetStreamResponse struct {
+	Body          io.Reader
+	Headers       DownloadPublicLinkDatei200ResponseHeaders
+	ContentLength int64
+}
+
+func (response DownloadPublicLinkDatei200ApplicationoctetStreamResponse) VisitDownloadPublicLinkDateiResponse(w http.ResponseWriter) error {
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.Header().Set("Content-Disposition", fmt.Sprint(response.Headers.ContentDisposition))
+	w.Header().Set("Content-Type", fmt.Sprint(response.Headers.ContentType))
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type DownloadPublicLinkDatei403JSONResponse PublicLinkErrorResponse
+
+func (response DownloadPublicLinkDatei403JSONResponse) VisitDownloadPublicLinkDateiResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DownloadPublicLinkDatei404Response struct {
+}
+
+func (response DownloadPublicLinkDatei404Response) VisitDownloadPublicLinkDateiResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type DownloadPublicLinkDatei409Response struct {
+}
+
+func (response DownloadPublicLinkDatei409Response) VisitDownloadPublicLinkDateiResponse(w http.ResponseWriter) error {
+	w.WriteHeader(409)
+	return nil
+}
+
+type DownloadPublicLinkDatei410Response struct {
+}
+
+func (response DownloadPublicLinkDatei410Response) VisitDownloadPublicLinkDateiResponse(w http.ResponseWriter) error {
+	w.WriteHeader(410)
+	return nil
+}
+
 type ListEmailsRequestObject struct {
 }
 
@@ -1949,6 +2815,36 @@ type StrictServerInterface interface {
 	// Get thumbnail for a Datei
 	// (GET /api/v1/datei/{id}/thumbnail)
 	GetDateiThumbnail(ctx context.Context, request GetDateiThumbnailRequestObject) (GetDateiThumbnailResponseObject, error)
+	// List the authenticated user's links
+	// (GET /api/v1/links)
+	ListLinks(ctx context.Context, request ListLinksRequestObject) (ListLinksResponseObject, error)
+	// Create a new public link
+	// (POST /api/v1/links)
+	CreateLink(ctx context.Context, request CreateLinkRequestObject) (CreateLinkResponseObject, error)
+	// Revoke a link
+	// (DELETE /api/v1/links/{id})
+	RevokeLink(ctx context.Context, request RevokeLinkRequestObject) (RevokeLinkResponseObject, error)
+	// Get a link by ID
+	// (GET /api/v1/links/{id})
+	GetLink(ctx context.Context, request GetLinkRequestObject) (GetLinkResponseObject, error)
+	// Update a link
+	// (PATCH /api/v1/links/{id})
+	UpdateLink(ctx context.Context, request UpdateLinkRequestObject) (UpdateLinkResponseObject, error)
+	// Add a datei to a link
+	// (POST /api/v1/links/{id}/dateien)
+	AddDateiToLink(ctx context.Context, request AddDateiToLinkRequestObject) (AddDateiToLinkResponseObject, error)
+	// Remove a datei from a link
+	// (DELETE /api/v1/links/{id}/dateien/{dateiId})
+	RemoveDateiFromLink(ctx context.Context, request RemoveDateiFromLinkRequestObject) (RemoveDateiFromLinkResponseObject, error)
+	// Generate a new access token, invalidating the old URL
+	// (POST /api/v1/links/{id}/rotate)
+	RotateLinkAccessToken(ctx context.Context, request RotateLinkAccessTokenRequestObject) (RotateLinkAccessTokenResponseObject, error)
+	// List dateien shared via a public link
+	// (GET /api/v1/public/links/{accessToken}/dateien)
+	ListPublicLinkDateien(ctx context.Context, request ListPublicLinkDateienRequestObject) (ListPublicLinkDateienResponseObject, error)
+	// Download a datei via a public link
+	// (GET /api/v1/public/links/{accessToken}/dateien/{dateiId}/download)
+	DownloadPublicLinkDatei(ctx context.Context, request DownloadPublicLinkDateiRequestObject) (DownloadPublicLinkDateiResponseObject, error)
 	// List user emails
 	// (GET /api/v1/settings/emails)
 	ListEmails(ctx context.Context, request ListEmailsRequestObject) (ListEmailsResponseObject, error)
@@ -2343,6 +3239,287 @@ func (sh *strictHandler) GetDateiThumbnail(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetDateiThumbnailResponseObject); ok {
 		if err := validResponse.VisitGetDateiThumbnailResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListLinks operation middleware
+func (sh *strictHandler) ListLinks(w http.ResponseWriter, r *http.Request) {
+	var request ListLinksRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListLinks(ctx, request.(ListLinksRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListLinks")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListLinksResponseObject); ok {
+		if err := validResponse.VisitListLinksResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateLink operation middleware
+func (sh *strictHandler) CreateLink(w http.ResponseWriter, r *http.Request) {
+	var request CreateLinkRequestObject
+
+	var body CreateLinkJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateLink(ctx, request.(CreateLinkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateLink")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateLinkResponseObject); ok {
+		if err := validResponse.VisitCreateLinkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RevokeLink operation middleware
+func (sh *strictHandler) RevokeLink(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request RevokeLinkRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RevokeLink(ctx, request.(RevokeLinkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RevokeLink")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RevokeLinkResponseObject); ok {
+		if err := validResponse.VisitRevokeLinkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetLink operation middleware
+func (sh *strictHandler) GetLink(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request GetLinkRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetLink(ctx, request.(GetLinkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetLink")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetLinkResponseObject); ok {
+		if err := validResponse.VisitGetLinkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateLink operation middleware
+func (sh *strictHandler) UpdateLink(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request UpdateLinkRequestObject
+
+	request.Id = id
+
+	var body UpdateLinkJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateLink(ctx, request.(UpdateLinkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateLink")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateLinkResponseObject); ok {
+		if err := validResponse.VisitUpdateLinkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AddDateiToLink operation middleware
+func (sh *strictHandler) AddDateiToLink(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request AddDateiToLinkRequestObject
+
+	request.Id = id
+
+	var body AddDateiToLinkJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AddDateiToLink(ctx, request.(AddDateiToLinkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AddDateiToLink")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AddDateiToLinkResponseObject); ok {
+		if err := validResponse.VisitAddDateiToLinkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RemoveDateiFromLink operation middleware
+func (sh *strictHandler) RemoveDateiFromLink(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, dateiId openapi_types.UUID) {
+	var request RemoveDateiFromLinkRequestObject
+
+	request.Id = id
+	request.DateiId = dateiId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RemoveDateiFromLink(ctx, request.(RemoveDateiFromLinkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RemoveDateiFromLink")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RemoveDateiFromLinkResponseObject); ok {
+		if err := validResponse.VisitRemoveDateiFromLinkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RotateLinkAccessToken operation middleware
+func (sh *strictHandler) RotateLinkAccessToken(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request RotateLinkAccessTokenRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RotateLinkAccessToken(ctx, request.(RotateLinkAccessTokenRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RotateLinkAccessToken")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RotateLinkAccessTokenResponseObject); ok {
+		if err := validResponse.VisitRotateLinkAccessTokenResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListPublicLinkDateien operation middleware
+func (sh *strictHandler) ListPublicLinkDateien(w http.ResponseWriter, r *http.Request, accessToken string, params ListPublicLinkDateienParams) {
+	var request ListPublicLinkDateienRequestObject
+
+	request.AccessToken = accessToken
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListPublicLinkDateien(ctx, request.(ListPublicLinkDateienRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListPublicLinkDateien")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListPublicLinkDateienResponseObject); ok {
+		if err := validResponse.VisitListPublicLinkDateienResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DownloadPublicLinkDatei operation middleware
+func (sh *strictHandler) DownloadPublicLinkDatei(w http.ResponseWriter, r *http.Request, accessToken string, dateiId openapi_types.UUID, params DownloadPublicLinkDateiParams) {
+	var request DownloadPublicLinkDateiRequestObject
+
+	request.AccessToken = accessToken
+	request.DateiId = dateiId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DownloadPublicLinkDatei(ctx, request.(DownloadPublicLinkDateiRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DownloadPublicLinkDatei")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DownloadPublicLinkDateiResponseObject); ok {
+		if err := validResponse.VisitDownloadPublicLinkDateiResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -2768,56 +3945,76 @@ func (sh *strictHandler) RequestEmailVerification(w http.ResponseWriter, r *http
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"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",
-	"N/zaL/QM/m2XUtu5QOpBQ//vCrrl/98AAAD//w==",
+	"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",
+	"x8rXC6ntqXPqoYYrUz89/ScAAP//",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
