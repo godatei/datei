@@ -196,7 +196,10 @@ export class DashboardComponent {
   protected openRenameDialog(datei: Datei): void {
     const ref = this.dialog.open(RenameDateiDialogComponent, {
       width: '360px',
-      data: { currentName: datei.name ?? '' } satisfies RenameDateiDialogData,
+      data: {
+        currentName: datei.name ?? '',
+        isDirectory: datei.isDirectory,
+      } satisfies RenameDateiDialogData,
     });
     ref.afterClosed().subscribe(async (name: string | null) => {
       if (!name) return;

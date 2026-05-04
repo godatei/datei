@@ -16,6 +16,20 @@
           }
         }
       </mat-form-field>
+      @if (extensionChanged()) {
+        <div class="flex items-center gap-2 mat-font-body-sm mat-text-on-surface-variant">
+          <mat-icon class="mat-text-error" aria-hidden="false" aria-label="Warning"
+            >warning</mat-icon
+          >
+          <span>
+            Extension will change from
+            <strong>{{ currentExt() || 'none' }}</strong>
+            to
+            <strong>{{ nextExt() || 'none' }}</strong
+            >.
+          </span>
+        </div>
+      }
     </div>
   </mat-dialog-content>
   <mat-dialog-actions align="end">
