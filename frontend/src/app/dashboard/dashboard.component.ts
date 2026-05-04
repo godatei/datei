@@ -1,8 +1,6 @@
 import { DatePipe } from '@angular/common';
-import { SelectionModel } from '@angular/cdk/collections';
-import { Component, computed, effect, inject, resource, signal } from '@angular/core';
+import { Component, computed, effect, inject, resource, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -31,6 +29,8 @@ import { DragDropDirective, DropEvent } from './drag-drop.directive';
 import { DragPreviewDirective } from './drag-preview.directive';
 import { DragItemDirective } from './drag-row.directive';
 import { DropTargetDirective } from './drop-target.directive';
+import { SelectionDirective } from './selection.directive';
+import { SelectionItemDirective } from './selectable-item.directive';
 
 @Component({
   selector: 'app-dashboard',
@@ -47,6 +47,8 @@ import { DropTargetDirective } from './drop-target.directive';
     DragPreviewDirective,
     DragItemDirective,
     DropTargetDirective,
+    SelectionDirective,
+    SelectionItemDirective,
   ],
 })
 export class DashboardComponent {
@@ -85,46 +87,19 @@ export class DashboardComponent {
     'mimeType',
     'actions',
   ];
-  protected readonly selection = new SelectionModel<Datei>(true, [], true, (a, b) => a.id === b.id);
-  protected readonly selectedIds = toSignal(
-    this.selection.changed.pipe(map(() => new Set(this.selection.selected.map((d) => d.id)))),
-    { initialValue: new Set<string>() },
-  );
+  protected readonly selection = viewChild.required<SelectionDirective<Datei>>(SelectionDirective);
   protected readonly uploading = signal(false);
-  private selectionAnchor: Datei | null = null;
 
   constructor() {
     effect(() => {
       this.dataSource.data = this.listDateiResource.value()?.items ?? [];
-      this.selection.clear();
-      this.selectionAnchor = null;
+      this.selection().clear();
     });
-  }
-
-  protected onRowClick(row: Datei, event: MouseEvent): void {
-    if (event.shiftKey && this.selectionAnchor !== null) {
-      const data = this.dataSource.data;
-      const anchorIdx = data.findIndex((d) => d.id === this.selectionAnchor!.id);
-      const rowIdx = data.findIndex((d) => d.id === row.id);
-      if (anchorIdx !== -1 && rowIdx !== -1) {
-        const [lo, hi] = anchorIdx <= rowIdx ? [anchorIdx, rowIdx] : [rowIdx, anchorIdx];
-        this.selection.clear();
-        data.slice(lo, hi + 1).forEach((d) => this.selection.select(d));
-      }
-    } else if (event.ctrlKey || event.metaKey) {
-      this.selection.toggle(row);
-      this.selectionAnchor = row;
-    } else {
-      this.selection.clear();
-      this.selection.select(row);
-      this.selectionAnchor = row;
-    }
   }
 
   protected onRowDblClick(row: Datei): void {
     if (row.isDirectory) {
-      this.selection.clear();
-      this.selectionAnchor = null;
+      this.selection().clear();
       this.router.navigate([], { relativeTo: this.route, queryParams: { parentId: row.id } });
       return;
     }
@@ -205,13 +180,15 @@ export class DashboardComponent {
 
   protected onDrag(event: DropEvent<Datei>): void {
     if (!event.target) return;
-    if (!this.selection.isSelected(event.target)) {
-      this.selection.setSelection(event.target);
+    if (!this.selection().isSelected(event.target)) {
+      this.selection().setSelection(event.target);
     }
   }
 
   protected async onDrop(event: DropEvent<Datei>): Promise<void> {
-    const items = this.selection.selected.filter((item) => item.id !== event.target?.id);
+    const items = this.selection()
+      .selected()
+      .filter((item) => item.id !== event.target?.id);
     const results = await Promise.allSettled(
       items.map((item) =>
         this.api.invoke(updateDatei$FormData, {
