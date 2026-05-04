@@ -37,7 +37,7 @@ Touch only what you must. Clean up only your own mess.
 - Don't refactor things that aren't broken.
 - Match existing style, even if you'd do it differently.
 - If you notice unrelated dead code, mention it — don't delete it.
-- Remove imports/variables/functions that *your* changes made unused; leave pre-existing dead code alone unless asked.
+- Remove imports/variables/functions that _your_ changes made unused; leave pre-existing dead code alone unless asked.
 
 The test: every changed line should trace directly to the user's request.
 
