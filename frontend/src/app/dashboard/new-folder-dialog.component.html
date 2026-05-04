@@ -4,6 +4,7 @@
     <mat-form-field appearance="outline" class="w-full">
       <mat-label>Folder name</mat-label>
       <input
+        #nameInput
         matInput
         [formControl]="nameControl"
         (keydown.enter)="confirm()"
