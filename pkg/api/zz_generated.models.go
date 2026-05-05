@@ -207,6 +207,9 @@ type ListLinksResponse struct {
 
 // ListPublicLinkDateienResponse defines model for ListPublicLinkDateienResponse.
 type ListPublicLinkDateienResponse struct {
+	// ExpiresAt When the link expires; null if it never expires
+	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
+
 	// Items Array of Datei objects accessible via the public link
 	Items []Datei `json:"items"`
 

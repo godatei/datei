@@ -65,6 +65,8 @@ export class PublicLinkViewerComponent {
   protected readonly dataSource = new MatTableDataSource<Datei>([]);
   protected readonly linkName = signal<string>('');
   protected readonly ownerName = signal<string>('');
+  protected readonly expiresAt = signal<Date | null>(null);
+  protected readonly expiryText = computed(() => formatExpiryText(this.expiresAt()));
 
   protected readonly displayedColumns = ['icon', 'name', 'size', 'actions'];
   protected readonly path = signal<{ id: string | null; name: string }[]>([
@@ -115,6 +117,7 @@ export class PublicLinkViewerComponent {
       this.dataSource.data = result.items;
       this.linkName.set(result.name);
       this.ownerName.set(result.ownerName);
+      this.expiresAt.set(result.expiresAt ? new Date(result.expiresAt) : null);
       this.state.set({ kind: 'ready' });
     } catch (e) {
       this.handleError(e);
@@ -185,4 +188,18 @@ export class PublicLinkViewerComponent {
   }
 
   protected readonly formatBytes = formatBytes;
+}
+
+function formatExpiryText(expiresAt: Date | null): string {
+  if (!expiresAt) return 'Never expires';
+  const ms = expiresAt.getTime() - Date.now();
+  if (ms <= 0) return 'Expired';
+  const minutes = Math.floor(ms / 60_000);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  if (days >= 30) return `Expires on ${expiresAt.toLocaleDateString()}`;
+  if (days >= 1) return `Expires in ${days} ${days === 1 ? 'day' : 'days'}`;
+  if (hours >= 1) return `Expires in ${hours} ${hours === 1 ? 'hour' : 'hours'}`;
+  if (minutes >= 1) return `Expires in ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`;
+  return 'Expires in less than a minute';
 }

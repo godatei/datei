@@ -5,6 +5,11 @@ import { Datei } from '../models/datei';
 export interface ListPublicLinkDateienResponse {
 
   /**
+   * When the link expires; null if it never expires
+   */
+  expiresAt?: string | null;
+
+  /**
    * Array of Datei objects accessible via the public link
    */
   items: Array<Datei>;

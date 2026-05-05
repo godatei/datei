@@ -95,6 +95,21 @@ export class LinksListComponent {
     }
   });
 
+  private readonly revealedCodes = signal<ReadonlySet<string>>(new Set());
+
+  protected isCodeRevealed(linkId: string): boolean {
+    return this.revealedCodes().has(linkId);
+  }
+
+  protected toggleCodeVisibility(linkId: string): void {
+    this.revealedCodes.update((s) => {
+      const next = new Set(s);
+      if (next.has(linkId)) next.delete(linkId);
+      else next.add(linkId);
+      return next;
+    });
+  }
+
   protected readonly dataSource = new MatTableDataSource<Link>([]);
   protected readonly displayedColumns = computed(() =>
     this.selectedTab() === 'revoked'

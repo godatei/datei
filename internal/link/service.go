@@ -306,10 +306,11 @@ func (s *Service) verifyLinkAccess(
 }
 
 // ListPublicLinkDateienOutput holds a public link's display name, owner name,
-// and the dateien accessible at the requested level.
+// expiration, and the dateien accessible at the requested level.
 type ListPublicLinkDateienOutput struct {
 	Name      string
 	OwnerName string
+	ExpiresAt *time.Time
 	Items     []api.Datei
 }
 
@@ -337,6 +338,7 @@ func (s *Service) ListPublicLinkDateien(
 		return &ListPublicLinkDateienOutput{
 			Name:      row.Name,
 			OwnerName: row.OwnerName,
+			ExpiresAt: row.ExpiresAt,
 			Items:     datei.MapProjectionSliceToAPI(dateien),
 		}, nil
 	}
@@ -359,6 +361,7 @@ func (s *Service) ListPublicLinkDateien(
 	return &ListPublicLinkDateienOutput{
 		Name:      row.Name,
 		OwnerName: row.OwnerName,
+		ExpiresAt: row.ExpiresAt,
 		Items:     datei.MapProjectionSliceToAPI(children),
 	}, nil
 }

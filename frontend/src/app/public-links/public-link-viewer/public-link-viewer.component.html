@@ -4,11 +4,13 @@
       <mat-icon class="mat-text-primary">folder_shared</mat-icon>
       <h1 class="mat-font-headline-md mb-0">Shared files</h1>
     </div>
-    <p class="mat-text-on-surface-variant mat-font-body-md mb-0">
-      {{ ownerName() }} shared the public link
-      <strong class="mat-text-on-surface">{{ linkName() }}</strong>
-      with you.
-    </p>
+    @if (state().kind === 'ready') {
+      <p class="mat-text-on-surface-variant mat-font-body-md mb-0">
+        {{ ownerName() }} shared the public link
+        <strong class="mat-text-on-surface">{{ linkName() }}</strong>
+        with you. {{ expiryText() }}.
+      </p>
+    }
   </header>
 
   @switch (state().kind) {

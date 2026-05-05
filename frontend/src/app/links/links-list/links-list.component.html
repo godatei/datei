@@ -60,12 +60,22 @@
             @if (link.code) {
               <button
                 mat-button
+                (click)="toggleCodeVisibility(link.id)"
+                [matTooltip]="isCodeRevealed(link.id) ? 'Hide code' : 'Show code'"
+                [attr.aria-label]="isCodeRevealed(link.id) ? 'Hide code' : 'Show code'"
+              >
+                {{ isCodeRevealed(link.id) ? link.code : '••••••' }}
+                <mat-icon iconPositionEnd>
+                  {{ isCodeRevealed(link.id) ? 'visibility_off' : 'visibility' }}
+                </mat-icon>
+              </button>
+              <button
+                mat-button
                 (click)="copyCode(link)"
                 matTooltip="Copy code"
                 aria-label="Copy code"
               >
                 <mat-icon>content_copy</mat-icon>
-                {{ link.code }}
               </button>
             } @else {
               <span class="mat-text-on-surface-variant">—</span>

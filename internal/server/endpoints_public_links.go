@@ -42,6 +42,7 @@ func (s *server) ListPublicLinkDateien(
 	return ListPublicLinkDateien200JSONResponse(api.ListPublicLinkDateienResponse{
 		Name:      result.Name,
 		OwnerName: result.OwnerName,
+		ExpiresAt: result.ExpiresAt,
 		Items:     result.Items,
 	}), nil
 }
