@@ -43,23 +43,19 @@ describe('TrashComponent', () => {
   });
 
   describe('listTrash params', () => {
-    it('omits parentId at the root', () => {
-      const req = httpTesting.expectOne(
-        (r) => r.url === '/api/v1/trash' && !r.params.has('parentId'),
-      );
+    it('calls /trash at the root', () => {
+      const req = httpTesting.expectOne('/api/v1/trash');
       expect(req.request.method).toBe('GET');
       req.flush(EMPTY_TRASH);
     });
 
-    it('sends parentId when set via query params', () => {
+    it('calls /trash/{id}/children when parentId is set', () => {
       httpTesting.expectOne('/api/v1/trash').flush(EMPTY_TRASH);
 
       queryParamMap$.next(convertToParamMap({ parentId: 'dir-123' }));
       fixture.detectChanges();
 
-      const req = httpTesting.expectOne(
-        (r) => r.url === '/api/v1/trash' && r.params.get('parentId') === 'dir-123',
-      );
+      const req = httpTesting.expectOne('/api/v1/trash/dir-123/children');
       expect(req.request.method).toBe('GET');
       req.flush(EMPTY_TRASH);
       httpTesting.expectOne('/api/v1/datei/dir-123/path').flush([]);
@@ -78,9 +74,7 @@ describe('TrashComponent', () => {
       queryParamMap$.next(convertToParamMap({ parentId: 'dir-456' }));
       fixture.detectChanges();
 
-      httpTesting
-        .expectOne((r) => r.url === '/api/v1/trash' && r.params.get('parentId') === 'dir-456')
-        .flush(EMPTY_TRASH);
+      httpTesting.expectOne('/api/v1/trash/dir-456/children').flush(EMPTY_TRASH);
       httpTesting.expectOne('/api/v1/datei/dir-456/path').flush([]);
     });
   });
