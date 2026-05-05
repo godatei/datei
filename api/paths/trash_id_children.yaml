@@ -1,9 +1,15 @@
 get:
-  operationId: ListTrash
-  summary: List items in trash
+  operationId: ListTrashChildren
+  summary: List the contents of a trashed directory
   security:
     - bearerHttpAuthentication: []
   parameters:
+    - name: dateiId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     - name: limit
       in: query
       description: Maximum number of results
@@ -18,8 +24,10 @@ get:
         default: 0
   responses:
     '200':
-      description: List of trashed items
+      description: List of items inside the trashed directory
       content:
         application/json:
           schema:
-            $ref: '../components/schemas/ListTrashResponse.yaml'
+            $ref: '../components/schemas/ListDateiResponse.yaml'
+    '404':
+      description: Trashed directory not found or not trashed

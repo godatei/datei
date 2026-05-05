@@ -7,9 +7,10 @@ import { filter, map } from 'rxjs/operators';
 import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
-import { ListTrashResponse } from '../../models/list-trash-response';
+import { ListDateiResponse } from '../../models/list-datei-response';
 
-export interface ListTrash$Params {
+export interface ListTrashChildren$Params {
+  dateiId: string;
 
 /**
  * Maximum number of results
@@ -22,9 +23,10 @@ export interface ListTrash$Params {
   offset?: number;
 }
 
-export function listTrash(http: HttpClient, rootUrl: string, params?: ListTrash$Params, context?: HttpContext): Observable<StrictHttpResponse<ListTrashResponse>> {
-  const rb = new RequestBuilder(rootUrl, listTrash.PATH, 'get');
+export function listTrashChildren(http: HttpClient, rootUrl: string, params: ListTrashChildren$Params, context?: HttpContext): Observable<StrictHttpResponse<ListDateiResponse>> {
+  const rb = new RequestBuilder(rootUrl, listTrashChildren.PATH, 'get');
   if (params) {
+    rb.path('dateiId', params.dateiId, {});
     rb.query('limit', params.limit, {});
     rb.query('offset', params.offset, {});
   }
@@ -34,9 +36,9 @@ export function listTrash(http: HttpClient, rootUrl: string, params?: ListTrash$
   ).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
-      return r as StrictHttpResponse<ListTrashResponse>;
+      return r as StrictHttpResponse<ListDateiResponse>;
     })
   );
 }
 
-listTrash.PATH = '/api/v1/trash';
+listTrashChildren.PATH = '/api/v1/trash/{dateiId}/children';

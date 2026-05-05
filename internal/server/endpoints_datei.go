@@ -30,18 +30,46 @@ func (s *server) ListTrash(
 	}
 
 	result, err := s.dateiService.ListTrash(ctx, datei.ListTrashInput{
-		ParentID: request.Params.ParentId,
+		Limit:  limit,
+		Offset: offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return ListTrash200JSONResponse(api.ListTrashResponse{
+		Items: result.Items,
+		Total: result.Total,
+	}), nil
+}
+
+// ListTrashChildren implements [StrictServerInterface].
+func (s *server) ListTrashChildren(
+	ctx context.Context,
+	request ListTrashChildrenRequestObject,
+) (ListTrashChildrenResponseObject, error) {
+	limit := 0
+	offset := 0
+	if request.Params.Limit != nil && *request.Params.Limit > 0 {
+		limit = *request.Params.Limit
+	}
+	if request.Params.Offset != nil && *request.Params.Offset > 0 {
+		offset = *request.Params.Offset
+	}
+
+	result, err := s.dateiService.ListTrashChildren(ctx, datei.ListTrashChildrenInput{
+		ParentID: request.DateiId,
 		Limit:    limit,
 		Offset:   offset,
 	})
 	if err != nil {
 		if errors.Is(err, dateierrors.ErrParentNotFound) || errors.Is(err, dateierrors.ErrParentNotTrashed) {
-			return ListTrash404Response{}, nil
+			return ListTrashChildren404Response{}, nil
 		}
 		return nil, err
 	}
 
-	return ListTrash200JSONResponse(api.ListTrashResponse{
+	return ListTrashChildren200JSONResponse(api.ListDateiResponse{
 		Items: result.Items,
 		Total: result.Total,
 	}), nil

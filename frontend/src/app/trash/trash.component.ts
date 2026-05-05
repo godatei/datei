@@ -17,8 +17,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Api } from '~/api/api';
-import { getDateiPath, listTrash } from '~/api/functions';
-import { TrashedDatei } from '~/api/models';
+import { getDateiPath, listTrash, listTrashChildren } from '~/api/functions';
+import { Datei, TrashedDatei } from '~/api/models';
 import { ThumbnailIconComponent } from '~/frontend/dashboard/thumbnail-icon.component';
 import { SelectionDirective } from '~/frontend/dashboard/selection.directive';
 import { SelectionItemDirective } from '~/frontend/dashboard/selectable-item.directive';
@@ -57,7 +57,10 @@ export class TrashComponent {
 
   protected readonly trashResource = resource({
     params: () => ({ refresh: this.refresh(), parentId: this.parentId() }),
-    loader: ({ params }) => this.api.invoke(listTrash, { parentId: params.parentId ?? undefined }),
+    loader: ({ params }) =>
+      params.parentId
+        ? this.api.invoke(listTrashChildren, { dateiId: params.parentId })
+        : this.api.invoke(listTrash, undefined),
   });
 
   protected readonly pathResource = resource({
@@ -68,17 +71,14 @@ export class TrashComponent {
         : Promise.resolve([]),
   });
 
-  protected readonly dataSource = new MatTableDataSource<TrashedDatei>([]);
-  protected readonly displayedColumns = [
-    'icon',
-    'name',
-    'trashedAt',
-    'trashedBy',
-    'originPath',
-    'actions',
-  ];
-  protected readonly selection =
-    viewChild.required<SelectionDirective<TrashedDatei>>(SelectionDirective);
+  protected readonly displayedColumns = computed(() =>
+    this.parentId()
+      ? ['icon', 'name', 'actions']
+      : ['icon', 'name', 'trashedAt', 'originPath', 'actions'],
+  );
+
+  protected readonly dataSource = new MatTableDataSource<Datei>([]);
+  protected readonly selection = viewChild.required<SelectionDirective<Datei>>(SelectionDirective);
 
   constructor() {
     effect(() => {
@@ -94,34 +94,34 @@ export class TrashComponent {
     });
   }
 
-  protected onRowDblClick(row: TrashedDatei): void {
+  protected onRowDblClick(row: Datei): void {
     if (row.isDirectory) {
       this.selection().clear();
       this.router.navigate([], { relativeTo: this.route, queryParams: { parentId: row.id } });
     }
   }
 
-  protected restore(item: TrashedDatei): void {
+  protected restore(item: Datei): void {
     const dialogRef = this.dialog.open(RestoreDialogComponent, { data: item });
     dialogRef
       .afterClosed()
       .pipe(filter((result) => result))
-      .subscribe((result) => {
-        console.log(result);
+      .subscribe((result: { parent?: Datei }) => {
         this.refresh.update((v) => v + 1);
+        console.log(result);
         const snackRef = this.snack.open(
-          `“${item.name}” has been restored to ${result.parent.name ?? 'My Files'}`,
+          `"${item.name}" has been restored to ${result.parent?.name ?? 'My Files'}`,
           'Show',
         );
         snackRef
           .onAction()
           .subscribe(() =>
-            this.router.navigate(['/'], { queryParams: { parentId: result.parent.id ?? null } }),
+            this.router.navigate(['/'], { queryParams: { parentId: result.parent?.id ?? null } }),
           );
       });
   }
 
-  protected deletePermanently(item: TrashedDatei): void {
+  protected deletePermanently(item: Datei): void {
     // TODO: implement permanent delete
     console.warn('delete not implemented', item);
   }

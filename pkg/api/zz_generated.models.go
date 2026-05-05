@@ -312,9 +312,15 @@ type GetDateiThumbnailParams struct {
 
 // ListTrashParams defines parameters for ListTrash.
 type ListTrashParams struct {
-	// ParentId Browse contents of a specific trashed directory. Omit to list root-level trashed items.
-	ParentId *openapi_types.UUID `form:"parentId,omitempty" json:"parentId,omitempty"`
+	// Limit Maximum number of results
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 
+	// Offset Number of results to skip
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// ListTrashChildrenParams defines parameters for ListTrashChildren.
+type ListTrashChildrenParams struct {
 	// Limit Maximum number of results
 	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 

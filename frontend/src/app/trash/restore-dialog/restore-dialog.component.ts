@@ -14,7 +14,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Api } from '~/api/api';
 import { getDateiPath, listDatei, restoreTrash } from '~/api/functions';
-import { Datei, DateiPathItem, TrashedDatei } from '~/api/models';
+import { Datei, DateiPathItem } from '~/api/models';
 
 @Component({
   templateUrl: './restore-dialog.component.html',
@@ -23,7 +23,7 @@ import { Datei, DateiPathItem, TrashedDatei } from '~/api/models';
   imports: [MatButtonModule, MatDialogModule, MatIconModule, MatListModule, MatProgressBarModule],
 })
 export class RestoreDialogComponent implements OnInit {
-  protected readonly data = inject<TrashedDatei>(MAT_DIALOG_DATA);
+  protected readonly data = inject<Datei>(MAT_DIALOG_DATA);
   protected readonly dialogRef = inject(MatDialogRef<RestoreDialogComponent>);
   private readonly api = inject(Api);
 

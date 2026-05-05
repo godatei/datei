@@ -187,6 +187,8 @@ export class DashboardComponent {
       return;
     }
 
+    console.log(items);
+
     const results = await Promise.allSettled(
       items.map((item) => this.api.invoke(deleteDatei, { id: item.id })),
     );

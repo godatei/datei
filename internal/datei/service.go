@@ -383,9 +383,8 @@ func (s *Service) GetDateiPath(ctx context.Context, dateiID uuid.UUID) ([]api.Da
 
 // ListTrashInput contains parameters for listing trashed datei records.
 type ListTrashInput struct {
-	ParentID *uuid.UUID
-	Limit    int
-	Offset   int
+	Limit  int
+	Offset int
 }
 
 // ListTrashOutput contains the response for listing trashed datei records.
@@ -394,9 +393,7 @@ type ListTrashOutput struct {
 	Total int
 }
 
-// ListTrash retrieves trashed datei records with pagination.
-// Without a ParentID it lists root-level trash items and includes origin paths.
-// With a ParentID it lists all direct children of that trashed directory.
+// ListTrash retrieves root-level trashed datei records with pagination.
 func (s *Service) ListTrash(ctx context.Context, input ListTrashInput) (*ListTrashOutput, error) {
 	queries := db.New(s.db)
 
@@ -405,34 +402,6 @@ func (s *Service) ListTrash(ctx context.Context, input ListTrashInput) (*ListTra
 		limit = 100
 	}
 	offset := max(input.Offset, 0)
-
-	if input.ParentID != nil {
-		parent, err := queries.GetDateiProjectionByID(ctx, *input.ParentID)
-		if err != nil {
-			if errors.Is(err, pgx.ErrNoRows) {
-				return nil, dateierrors.ErrParentNotFound
-			}
-			return nil, err
-		}
-		if parent.TrashedAt == nil {
-			return nil, dateierrors.ErrParentNotTrashed
-		}
-
-		projections, err := queries.ListDateiProjectionsByParent(ctx, input.ParentID)
-		if err != nil {
-			return nil, err
-		}
-		total := len(projections)
-		start := min(offset, total)
-		end := min(offset+limit, total)
-		items := make([]api.TrashedDatei, 0, end-start)
-		for i := range projections[start:end] {
-			if mapped := MapProjectionToTrashedDatei(&projections[start+i], nil); mapped != nil {
-				items = append(items, *mapped)
-			}
-		}
-		return &ListTrashOutput{Items: items, Total: total}, nil
-	}
 
 	projections, err := queries.ListTrashedDatei(ctx)
 	if err != nil {
@@ -466,6 +435,63 @@ func (s *Service) ListTrash(ctx context.Context, input ListTrashInput) (*ListTra
 	}
 
 	return &ListTrashOutput{Items: items, Total: total}, nil
+}
+
+// ListTrashChildrenInput contains parameters for listing contents of a trashed directory.
+type ListTrashChildrenInput struct {
+	ParentID uuid.UUID
+	Limit    int
+	Offset   int
+}
+
+// ListTrashChildren lists the direct children of a trashed directory.
+func (s *Service) ListTrashChildren(ctx context.Context, input ListTrashChildrenInput) (*ListDateiOutput, error) {
+	queries := db.New(s.db)
+
+	limit := input.Limit
+	if limit <= 0 {
+		limit = 100
+	}
+	offset := max(input.Offset, 0)
+
+	parent, err := queries.GetDateiProjectionByID(ctx, input.ParentID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, dateierrors.ErrParentNotFound
+		}
+		return nil, err
+	}
+
+	// A directory is browsable in trash if it is directly trashed or has a trashed ancestor.
+	inTrash := parent.TrashedAt != nil
+	if !inTrash {
+		path, err := queries.GetDateiPath(ctx, input.ParentID)
+		if err != nil {
+			return nil, err
+		}
+		for _, row := range path {
+			if row.TrashedAt != nil {
+				inTrash = true
+				break
+			}
+		}
+	}
+	if !inTrash {
+		return nil, dateierrors.ErrParentNotTrashed
+	}
+
+	projections, err := queries.ListDateiProjectionsByParent(ctx, &input.ParentID)
+	if err != nil {
+		return nil, err
+	}
+	total := len(projections)
+	start := min(offset, total)
+	end := min(offset+limit, total)
+
+	return &ListDateiOutput{
+		Items: MapProjectionSliceToAPI(projections[start:end]),
+		Total: total,
+	}, nil
 }
 
 // DeleteDatei soft-deletes a datei record
