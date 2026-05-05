@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Api } from 'frontend/src/api/api';
@@ -49,6 +50,7 @@ import { SelectionItemDirective } from './selectable-item.directive';
     DropTargetDirective,
     SelectionDirective,
     SelectionItemDirective,
+    MatTooltipModule,
   ],
 })
 export class DashboardComponent {
@@ -167,14 +169,42 @@ export class DashboardComponent {
     });
   }
 
-  protected async trashDatei(id: string, event: Event): Promise<void> {
+  protected async trashDatei(item: Datei, event: Event): Promise<void> {
     event.stopPropagation();
-    try {
-      await this.api.invoke(deleteDatei, { id });
+    this.trash(item);
+  }
+
+  protected async trashSelected(): Promise<void> {
+    this.trash(this.selection().selected());
+  }
+
+  private async trash(items: Datei | Datei[]): Promise<void> {
+    if (!Array.isArray(items)) {
+      items = [items];
+    }
+
+    if (items.length === 0) {
+      return;
+    }
+
+    const results = await Promise.allSettled(
+      items.map((item) => this.api.invoke(deleteDatei, { id: item.id })),
+    );
+
+    const failed = results.filter((r) => r.status === 'rejected').length;
+    if (failed > 0) {
+      this.snackBar.open(`Failed to move ${failed} item(s) to trash`, 'Dismiss', {
+        duration: 4000,
+      });
+    }
+
+    if (failed !== results.length) {
       this.refresh.update((v) => v + 1);
-    } catch (e) {
-      console.error(e);
-      this.snackBar.open('Failed to move to trash', 'Dismiss', { duration: 4000 });
+      this.snackBar.open(
+        `Moved ${items.length > 1 ? items.length - failed : items[0].name} to trash`,
+        'Dismiss',
+        { duration: 4000 },
+      );
     }
   }
 

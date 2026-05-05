@@ -39,6 +39,15 @@
         <mat-icon>close</mat-icon>
       </button>
       <span class="mat-font-label-lg">{{ selection.size() }} selected</span>
+      <button
+        class="ms-4"
+        matIconButton
+        (click)="trashSelected()"
+        aria-label="Move selected to trash"
+        [matTooltip]="`Move ${selection.size()} files to trash`"
+      >
+        <mat-icon>delete</mat-icon>
+      </button>
     } @else {
       <!-- TODO: Filters go here -->
     }
