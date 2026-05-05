@@ -26,6 +26,7 @@ import (
 	"github.com/godatei/datei/internal/server"
 	"github.com/godatei/datei/internal/storage"
 	"github.com/godatei/datei/internal/users"
+	dateiwebdav "github.com/godatei/datei/internal/webdav"
 	oapimiddleware "github.com/oapi-codegen/nethttp-middleware"
 	slogchi "github.com/samber/slog-chi"
 	"github.com/spf13/cobra"
@@ -119,9 +120,13 @@ func run(ctx context.Context, options Options) error {
 		return err
 	}
 
-	// Create the unified server implementing StrictServerInterface
-	srv := server.NewServer(db, store, dateiRepository, userRepository, m, ocrClient)
+	dateiSvc := datei.NewService(db, store, dateiRepository, ocrClient)
+	userSvc := users.NewUserService(db, userRepository, m)
+
+	srv := server.NewServer(dateiSvc, userSvc)
 	strictHandler := server.NewStrictHandler(srv, nil)
+
+	davHandler := dateiwebdav.NewHandler(db, dateiSvc)
 
 	rootMux := chi.NewRouter()
 	rootMux.Use(chimiddleware.Recoverer)
@@ -144,6 +149,12 @@ func run(ctx context.Context, options Options) error {
 		server.HandlerWithOptions(strictHandler, server.ChiServerOptions{
 			BaseRouter: r,
 		})
+	})
+
+	// WebDAV: Basic Auth, no rate limiting (clients batch many small requests)
+	rootMux.Group(func(r chi.Router) {
+		r.Use(dateiwebdav.BasicAuthMiddleware(userSvc))
+		r.Mount("/dav", davHandler)
 	})
 
 	rootMux.Handle("/*", frontend.NewHandler())
