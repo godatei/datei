@@ -1,5 +1,12 @@
-import { ChangeDetectionStrategy, Component, ElementRef, inject, viewChild } from '@angular/core';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { form, FormField, FormRoot, maxLength, pattern, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -14,17 +21,30 @@ import { MatInputModule } from '@angular/material/input';
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
-    ReactiveFormsModule,
+    FormField,
+    FormRoot,
   ],
 })
 export class NewFolderDialogComponent {
-  private readonly dialogRef = inject(MatDialogRef<NewFolderDialogComponent>);
+  private readonly dialogRef = inject(MatDialogRef<NewFolderDialogComponent, string | null>);
   private readonly nameInput = viewChild.required<ElementRef<HTMLInputElement>>('nameInput');
 
-  protected readonly nameControl = new FormControl('Untitled folder', {
-    nonNullable: true,
-    validators: [Validators.required, Validators.maxLength(255), Validators.pattern(/\S/)],
-  });
+  protected readonly model = signal({ name: 'Untitled folder' });
+  protected readonly form = form(
+    this.model,
+    (p) => {
+      required(p.name);
+      maxLength(p.name, 255);
+      pattern(p.name, /\S/);
+    },
+    {
+      submission: {
+        action: async () => {
+          this.dialogRef.close(this.model().name.trim());
+        },
+      },
+    },
+  );
 
   constructor() {
     this.dialogRef.afterOpened().subscribe(() => {
@@ -32,11 +52,6 @@ export class NewFolderDialogComponent {
       input.focus();
       input.select();
     });
-  }
-
-  protected confirm(): void {
-    if (this.nameControl.invalid) return;
-    this.dialogRef.close(this.nameControl.value.trim());
   }
 
   protected cancel(): void {
