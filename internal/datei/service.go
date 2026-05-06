@@ -570,7 +570,7 @@ func (s *Service) RestoreDatei(ctx context.Context, input RestoreDateiInput) err
 	return s.repository.Save(ctx, agg)
 }
 
-// validateMoveTarget checks that targetParentID is a valid, non-trashed directory,
+// validateMoveTarget checks that targetParentID is a valid, accessible (non-trashed) directory,
 // and (for directory items) that moving itemID there would not create a cycle.
 func (s *Service) validateMoveTarget(
 	ctx context.Context,
@@ -588,18 +588,20 @@ func (s *Service) validateMoveTarget(
 	if !parent.IsDirectory {
 		return dateierrors.ErrParentNotDirectory
 	}
-	if parent.TrashedAt != nil {
-		return dateierrors.ErrParentTrashed
+
+	// Walk the target's ancestor path to detect both trashed ancestors and cycles.
+	// GetDateiPath includes the target itself and stops above the first trashed node,
+	// but includes that node — so any trashed entry means the target is inside trash.
+	pathRows, err := queries.GetDateiPath(ctx, targetParentID)
+	if err != nil {
+		return err
 	}
-	if itemIsDirectory {
-		pathRows, err := queries.GetDateiPath(ctx, targetParentID)
-		if err != nil {
-			return err
+	for _, row := range pathRows {
+		if row.TrashedAt != nil {
+			return dateierrors.ErrParentTrashed
 		}
-		for _, row := range pathRows {
-			if row.ID == itemID {
-				return dateierrors.ErrCycleDetected
-			}
+		if itemIsDirectory && row.ID == itemID {
+			return dateierrors.ErrCycleDetected
 		}
 	}
 	return nil
