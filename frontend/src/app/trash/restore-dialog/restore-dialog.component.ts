@@ -77,11 +77,22 @@ export class RestoreDialogComponent implements OnInit {
   }
 
   protected async restore() {
-    const parent = this.currentNavItem();
-    await this.api.invoke(restoreTrash, {
-      dateiId: this.data.id,
-      body: { parentId: parent?.id ?? null },
-    });
-    this.dialogRef.close({ parent });
+    try {
+      const parent = this.currentNavItem();
+      await this.api.invoke(restoreTrash, {
+        dateiId: this.data.id,
+        body: { parentId: parent?.id ?? null },
+      });
+      this.dialogRef.close({ parent });
+    } catch (e) {
+      console.error(e);
+      this.snack.open(
+        `Failed to restore ${this.data.name ?? 'Unnamed'} in ${parent?.name ?? 'My files'}`,
+        'Dismiss',
+        {
+          duration: snackErrorDuration,
+        },
+      );
+    }
   }
 }
