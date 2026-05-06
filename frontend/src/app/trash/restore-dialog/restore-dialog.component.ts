@@ -66,8 +66,8 @@ export class RestoreDialogComponent implements OnInit {
     });
   }
 
-  protected async restore(target?: Datei) {
-    const parent = target ? { id: target.id, name: target.name } : this.currentNavItem();
+  protected async restore() {
+    const parent = this.currentNavItem();
     await this.api.invoke(restoreTrash, {
       dateiId: this.data.id,
       body: { parentId: parent?.id ?? null },
