@@ -25,3 +25,28 @@ func MapEmailProjectionSliceToAPI(rows []db.UserAccountEmailProjection) []api.Us
 	}
 	return emails
 }
+
+// ToAdminUserListItem converts a list-row to the API DTO used by both list and single-user admin endpoints.
+func ToAdminUserListItem(row db.ListUserAccountProjectionsRow) api.AdminUserListItem {
+	item := api.AdminUserListItem{
+		Id:             row.ID,
+		Name:           row.Name,
+		IsAdmin:        row.IsAdmin,
+		MfaEnabled:     row.MfaEnabled,
+		Archived:       row.ArchivedAt != nil,
+		CreatedAt:      row.CreatedAt,
+		LastLoggedInAt: row.LastLoggedInAt,
+	}
+	if row.PrimaryEmail != nil {
+		email := openapi_types.Email(*row.PrimaryEmail)
+		item.PrimaryEmail = &email
+	}
+	if row.PrimaryEmailVerifiedAt != nil {
+		verified := true
+		item.PrimaryEmailVerified = &verified
+	} else if row.PrimaryEmail != nil {
+		notVerified := false
+		item.PrimaryEmailVerified = &notVerified
+	}
+	return item
+}

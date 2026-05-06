@@ -1,9 +1,12 @@
 type: object
 required:
   - name
+  - isAdmin
   - mfaEnabled
 properties:
   name:
     type: string
+  isAdmin:
+    type: boolean
   mfaEnabled:
     type: boolean

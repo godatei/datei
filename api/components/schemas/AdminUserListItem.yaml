@@ -1,0 +1,34 @@
+type: object
+required:
+  - id
+  - name
+  - isAdmin
+  - mfaEnabled
+  - archived
+  - createdAt
+properties:
+  id:
+    type: string
+    format: uuid
+  name:
+    type: string
+  isAdmin:
+    type: boolean
+  primaryEmail:
+    type: string
+    format: email
+    nullable: true
+  primaryEmailVerified:
+    type: boolean
+    nullable: true
+  mfaEnabled:
+    type: boolean
+  archived:
+    type: boolean
+  createdAt:
+    type: string
+    format: date-time
+  lastLoggedInAt:
+    type: string
+    format: date-time
+    nullable: true

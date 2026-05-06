@@ -12,8 +12,9 @@ import (
 type Aggregate struct {
 	events.Base[Aggregate, UserEvent]
 
-	ID   uuid.UUID
-	Name string
+	ID      uuid.UUID
+	Name    string
+	IsAdmin bool
 
 	Email         string
 	EmailID       uuid.UUID
@@ -47,7 +48,7 @@ func (a *Aggregate) Replay(domainEvents []events.DomainEvent) {
 
 func (a *Aggregate) Register(
 	id uuid.UUID, name, email string, emailID uuid.UUID,
-	passwordHash, passwordSalt []byte, now time.Time,
+	passwordHash, passwordSalt []byte, isAdmin bool, now time.Time,
 ) error {
 	if id == uuid.Nil {
 		return errors.New("invalid user id")
@@ -66,6 +67,7 @@ func (a *Aggregate) Register(
 		EmailID:      emailID,
 		PasswordHash: passwordHash,
 		PasswordSalt: passwordSalt,
+		IsAdmin:      isAdmin,
 		CreatedAt:    now,
 	})
 	return nil
@@ -85,6 +87,22 @@ func (a *Aggregate) ChangeName(newName string, now time.Time) error {
 	a.recordEvent(UserNameChangedEvent{
 		ID:        a.ID,
 		NewName:   newName,
+		ChangedAt: now,
+	})
+	return nil
+}
+
+func (a *Aggregate) SetAdmin(isAdmin bool, now time.Time) error {
+	if a.ID == uuid.Nil {
+		return errors.New("user not created")
+	}
+	if isAdmin == a.IsAdmin {
+		return nil
+	}
+
+	a.recordEvent(UserAdminChangedEvent{
+		ID:        a.ID,
+		IsAdmin:   isAdmin,
 		ChangedAt: now,
 	})
 	return nil
@@ -272,6 +290,21 @@ func (a *Aggregate) Archive(now time.Time) error {
 	a.recordEvent(UserArchivedEvent{
 		ID:         a.ID,
 		ArchivedAt: now,
+	})
+	return nil
+}
+
+func (a *Aggregate) Unarchive(now time.Time) error {
+	if a.ID == uuid.Nil {
+		return errors.New("user not created")
+	}
+	if a.ArchivedAt == nil {
+		return errors.New("user not archived")
+	}
+
+	a.recordEvent(UserUnarchivedEvent{
+		ID:           a.ID,
+		UnarchivedAt: now,
 	})
 	return nil
 }

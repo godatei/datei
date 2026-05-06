@@ -152,7 +152,7 @@ func (q *Queries) GetUnusedMFARecoveryCodes(ctx context.Context, userAccountID u
 }
 
 const getUserAccountByEmail = `-- name: GetUserAccountByEmail :one
-SELECT ua.id, ua.name, ua.password_hash, ua.password_salt, ua.mfa_secret, ua.mfa_enabled, ua.mfa_enabled_at, ua.archived_at, ua.last_logged_in_at, ua.created_at, ua.updated_at FROM user_account_projection ua
+SELECT ua.id, ua.name, ua.password_hash, ua.password_salt, ua.is_admin, ua.mfa_secret, ua.mfa_enabled, ua.mfa_enabled_at, ua.archived_at, ua.last_logged_in_at, ua.created_at, ua.updated_at FROM user_account_projection ua
 JOIN user_account_email_projection ue ON ue.user_account_id = ua.id
 WHERE ue.email = $1 AND ua.archived_at IS NULL
 `
@@ -165,6 +165,7 @@ func (q *Queries) GetUserAccountByEmail(ctx context.Context, email string) (User
 		&i.Name,
 		&i.PasswordHash,
 		&i.PasswordSalt,
+		&i.IsAdmin,
 		&i.MfaSecret,
 		&i.MfaEnabled,
 		&i.MfaEnabledAt,
@@ -178,7 +179,7 @@ func (q *Queries) GetUserAccountByEmail(ctx context.Context, email string) (User
 
 const getUserAccountByID = `-- name: GetUserAccountByID :one
 
-SELECT id, name, password_hash, password_salt, mfa_secret, mfa_enabled, mfa_enabled_at, archived_at, last_logged_in_at, created_at, updated_at FROM user_account_projection WHERE id = $1
+SELECT id, name, password_hash, password_salt, is_admin, mfa_secret, mfa_enabled, mfa_enabled_at, archived_at, last_logged_in_at, created_at, updated_at FROM user_account_projection WHERE id = $1
 `
 
 // ============================================================================
@@ -192,6 +193,7 @@ func (q *Queries) GetUserAccountByID(ctx context.Context, id uuid.UUID) (UserAcc
 		&i.Name,
 		&i.PasswordHash,
 		&i.PasswordSalt,
+		&i.IsAdmin,
 		&i.MfaSecret,
 		&i.MfaEnabled,
 		&i.MfaEnabledAt,
@@ -259,8 +261,8 @@ func (q *Queries) InsertUserAccountEmailProjection(ctx context.Context, arg Inse
 
 const insertUserAccountProjection = `-- name: InsertUserAccountProjection :exec
 
-INSERT INTO user_account_projection (id, name, password_hash, password_salt, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $5)
+INSERT INTO user_account_projection (id, name, password_hash, password_salt, is_admin, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $6)
 `
 
 type InsertUserAccountProjectionParams struct {
@@ -268,6 +270,7 @@ type InsertUserAccountProjectionParams struct {
 	Name         string    `db:"name"`
 	PasswordHash []byte    `db:"password_hash"`
 	PasswordSalt []byte    `db:"password_salt"`
+	IsAdmin      bool      `db:"is_admin"`
 	CreatedAt    time.Time `db:"created_at"`
 }
 
@@ -280,9 +283,69 @@ func (q *Queries) InsertUserAccountProjection(ctx context.Context, arg InsertUse
 		arg.Name,
 		arg.PasswordHash,
 		arg.PasswordSalt,
+		arg.IsAdmin,
 		arg.CreatedAt,
 	)
 	return err
+}
+
+const listUserAccountProjections = `-- name: ListUserAccountProjections :many
+SELECT
+  ua.id,
+  ua.name,
+  ua.is_admin,
+  ua.mfa_enabled,
+  ua.archived_at,
+  ua.created_at,
+  ua.last_logged_in_at,
+  ue.email AS primary_email,
+  ue.verified_at AS primary_email_verified_at
+FROM user_account_projection ua
+LEFT JOIN user_account_email_projection ue
+  ON ue.user_account_id = ua.id AND ue.is_primary = true
+ORDER BY (ua.archived_at IS NOT NULL), NOT ua.is_admin, ua.name ASC
+`
+
+type ListUserAccountProjectionsRow struct {
+	ID                     uuid.UUID  `db:"id"`
+	Name                   string     `db:"name"`
+	IsAdmin                bool       `db:"is_admin"`
+	MfaEnabled             bool       `db:"mfa_enabled"`
+	ArchivedAt             *time.Time `db:"archived_at"`
+	CreatedAt              time.Time  `db:"created_at"`
+	LastLoggedInAt         *time.Time `db:"last_logged_in_at"`
+	PrimaryEmail           *string    `db:"primary_email"`
+	PrimaryEmailVerifiedAt *time.Time `db:"primary_email_verified_at"`
+}
+
+func (q *Queries) ListUserAccountProjections(ctx context.Context) ([]ListUserAccountProjectionsRow, error) {
+	rows, err := q.db.Query(ctx, listUserAccountProjections)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListUserAccountProjectionsRow
+	for rows.Next() {
+		var i ListUserAccountProjectionsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.IsAdmin,
+			&i.MfaEnabled,
+			&i.ArchivedAt,
+			&i.CreatedAt,
+			&i.LastLoggedInAt,
+			&i.PrimaryEmail,
+			&i.PrimaryEmailVerifiedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const markMFARecoveryCodeUsedProjection = `-- name: MarkMFARecoveryCodeUsedProjection :exec
@@ -341,16 +404,32 @@ func (q *Queries) UpdateUserAccountEmailProjectionVerified(ctx context.Context, 
 }
 
 const updateUserAccountProjectionArchived = `-- name: UpdateUserAccountProjectionArchived :exec
-UPDATE user_account_projection SET archived_at = $1, updated_at = $1 WHERE id = $2
+UPDATE user_account_projection SET archived_at = $1, updated_at = $2 WHERE id = $3
 `
 
 type UpdateUserAccountProjectionArchivedParams struct {
 	ArchivedAt *time.Time `db:"archived_at"`
+	UpdatedAt  time.Time  `db:"updated_at"`
 	ID         uuid.UUID  `db:"id"`
 }
 
 func (q *Queries) UpdateUserAccountProjectionArchived(ctx context.Context, arg UpdateUserAccountProjectionArchivedParams) error {
-	_, err := q.db.Exec(ctx, updateUserAccountProjectionArchived, arg.ArchivedAt, arg.ID)
+	_, err := q.db.Exec(ctx, updateUserAccountProjectionArchived, arg.ArchivedAt, arg.UpdatedAt, arg.ID)
+	return err
+}
+
+const updateUserAccountProjectionIsAdmin = `-- name: UpdateUserAccountProjectionIsAdmin :exec
+UPDATE user_account_projection SET is_admin = $1, updated_at = $2 WHERE id = $3
+`
+
+type UpdateUserAccountProjectionIsAdminParams struct {
+	IsAdmin   bool      `db:"is_admin"`
+	UpdatedAt time.Time `db:"updated_at"`
+	ID        uuid.UUID `db:"id"`
+}
+
+func (q *Queries) UpdateUserAccountProjectionIsAdmin(ctx context.Context, arg UpdateUserAccountProjectionIsAdminParams) error {
+	_, err := q.db.Exec(ctx, updateUserAccountProjectionIsAdmin, arg.IsAdmin, arg.UpdatedAt, arg.ID)
 	return err
 }
 

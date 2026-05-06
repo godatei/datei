@@ -1,0 +1,38 @@
+<div class="max-w-xl mx-auto flex flex-col gap-6 px-4 my-8">
+  <a mat-button routerLink="/admin/users" class="self-start">
+    <mat-icon>arrow_back</mat-icon>
+    Users
+  </a>
+
+  @if (loading()) {
+    <div class="animate-pulse mat-bg-surface-container mat-corner-md h-24"></div>
+  } @else if (user(); as u) {
+    <div class="flex items-center gap-4">
+      <div
+        class="flex items-center justify-center w-16 h-16 mat-corner-full mat-bg-primary-container mat-text-on-primary-container mat-font-headline-sm shrink-0"
+        aria-hidden="true"
+      >
+        {{ initials(u.name) }}
+      </div>
+      <div class="flex flex-col min-w-0">
+        <h2 class="mat-font-headline-sm m-0 truncate">{{ u.name }}</h2>
+        <span class="mat-font-body-md mat-text-on-surface-variant truncate">{{
+          primaryEmail() || '—'
+        }}</span>
+      </div>
+    </div>
+
+    <app-user-profile [port]="port()" [name]="u.name" (changed)="load()" />
+    <app-user-emails [port]="port()" />
+    @if (!isSelf()) {
+      <app-user-password [port]="port()" [requireCurrentPassword]="false" />
+      <app-admin-role [userId]="userId()" [isAdmin]="u.isAdmin" (changed)="load()" />
+    }
+    <app-admin-mfa [userId]="userId()" [mfaEnabled]="u.mfaEnabled" (changed)="load()" />
+    @if (!isSelf()) {
+      <app-admin-archive [userId]="userId()" [archived]="u.archived" (changed)="load()" />
+    }
+  } @else {
+    <p class="mat-text-on-surface-variant">User not found.</p>
+  }
+</div>

@@ -87,7 +87,9 @@ func (s *UserService) Login(ctx context.Context, input LoginInput) (*LoginOutput
 
 	emailVerified := !config.AuthEmailVerificationRequired() || primaryEmail.VerifiedAt != nil
 
-	tokenString, err := authjwt.GenerateDefaultToken(user.ID, user.Name, primaryEmail.Email, emailVerified)
+	tokenString, err := authjwt.GenerateDefaultToken(
+		user.ID, user.Name, primaryEmail.Email, user.IsAdmin, emailVerified,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate token: %w", err)
 	}
@@ -191,7 +193,10 @@ func (s *UserService) Register(ctx context.Context, input RegisterInput) error {
 	userID := uuid.New()
 	emailID := uuid.New()
 	agg := &Aggregate{}
-	if err := agg.Register(userID, input.Name, input.Email, emailID, passwordHash, passwordSalt, time.Now()); err != nil {
+	if err := agg.Register(
+		userID, input.Name, input.Email, emailID, passwordHash, passwordSalt,
+		true, time.Now(),
+	); err != nil {
 		return fmt.Errorf("failed to register: %w", err)
 	}
 

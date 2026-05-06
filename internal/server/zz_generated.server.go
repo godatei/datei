@@ -27,6 +27,42 @@ import (
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// List all user accounts (admin only)
+	// (GET /api/v1/admin/users)
+	ListUsersAdmin(w http.ResponseWriter, r *http.Request)
+	// Create a new user account (admin only)
+	// (POST /api/v1/admin/users)
+	CreateUserAdmin(w http.ResponseWriter, r *http.Request)
+	// Get a single user (admin only)
+	// (GET /api/v1/admin/users/{id})
+	GetUserAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// Update a user's name and/or role (admin only)
+	// (POST /api/v1/admin/users/{id})
+	UpdateUserAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// Unarchive a user account (admin only)
+	// (DELETE /api/v1/admin/users/{id}/archive)
+	UnarchiveUserAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// Archive a user account (admin only)
+	// (POST /api/v1/admin/users/{id}/archive)
+	ArchiveUserAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// List a user's emails (admin only)
+	// (GET /api/v1/admin/users/{id}/emails)
+	ListUserEmailsAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// Add an email to a user (admin only)
+	// (POST /api/v1/admin/users/{id}/emails)
+	AddUserEmailAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// Remove a non-primary email from a user (admin only)
+	// (DELETE /api/v1/admin/users/{id}/emails/{emailId})
+	RemoveUserEmailAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, emailId openapi_types.UUID)
+	// Set a user's email as primary (admin only)
+	// (PATCH /api/v1/admin/users/{id}/emails/{emailId}/primary)
+	SetPrimaryUserEmailAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, emailId openapi_types.UUID)
+	// Disable a user's MFA (admin only)
+	// (POST /api/v1/admin/users/{id}/mfa/disable)
+	DisableUserMFAAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// Reset a user's password (admin only)
+	// (POST /api/v1/admin/users/{id}/password)
+	ResetUserPasswordAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
 	// Log in with email and password
 	// (POST /api/v1/auth/login)
 	Login(w http.ResponseWriter, r *http.Request)
@@ -152,6 +188,78 @@ type ServerInterface interface {
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
 
 type Unimplemented struct{}
+
+// List all user accounts (admin only)
+// (GET /api/v1/admin/users)
+func (_ Unimplemented) ListUsersAdmin(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Create a new user account (admin only)
+// (POST /api/v1/admin/users)
+func (_ Unimplemented) CreateUserAdmin(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get a single user (admin only)
+// (GET /api/v1/admin/users/{id})
+func (_ Unimplemented) GetUserAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update a user's name and/or role (admin only)
+// (POST /api/v1/admin/users/{id})
+func (_ Unimplemented) UpdateUserAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Unarchive a user account (admin only)
+// (DELETE /api/v1/admin/users/{id}/archive)
+func (_ Unimplemented) UnarchiveUserAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Archive a user account (admin only)
+// (POST /api/v1/admin/users/{id}/archive)
+func (_ Unimplemented) ArchiveUserAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List a user's emails (admin only)
+// (GET /api/v1/admin/users/{id}/emails)
+func (_ Unimplemented) ListUserEmailsAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Add an email to a user (admin only)
+// (POST /api/v1/admin/users/{id}/emails)
+func (_ Unimplemented) AddUserEmailAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Remove a non-primary email from a user (admin only)
+// (DELETE /api/v1/admin/users/{id}/emails/{emailId})
+func (_ Unimplemented) RemoveUserEmailAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, emailId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Set a user's email as primary (admin only)
+// (PATCH /api/v1/admin/users/{id}/emails/{emailId}/primary)
+func (_ Unimplemented) SetPrimaryUserEmailAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, emailId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Disable a user's MFA (admin only)
+// (POST /api/v1/admin/users/{id}/mfa/disable)
+func (_ Unimplemented) DisableUserMFAAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Reset a user's password (admin only)
+// (POST /api/v1/admin/users/{id}/password)
+func (_ Unimplemented) ResetUserPasswordAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
 
 // Log in with email and password
 // (POST /api/v1/auth/login)
@@ -401,6 +509,384 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// ListUsersAdmin operation middleware
+func (siw *ServerInterfaceWrapper) ListUsersAdmin(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListUsersAdmin(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateUserAdmin operation middleware
+func (siw *ServerInterfaceWrapper) CreateUserAdmin(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateUserAdmin(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetUserAdmin operation middleware
+func (siw *ServerInterfaceWrapper) GetUserAdmin(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetUserAdmin(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateUserAdmin operation middleware
+func (siw *ServerInterfaceWrapper) UpdateUserAdmin(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateUserAdmin(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UnarchiveUserAdmin operation middleware
+func (siw *ServerInterfaceWrapper) UnarchiveUserAdmin(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UnarchiveUserAdmin(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveUserAdmin operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveUserAdmin(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveUserAdmin(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListUserEmailsAdmin operation middleware
+func (siw *ServerInterfaceWrapper) ListUserEmailsAdmin(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListUserEmailsAdmin(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AddUserEmailAdmin operation middleware
+func (siw *ServerInterfaceWrapper) AddUserEmailAdmin(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AddUserEmailAdmin(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RemoveUserEmailAdmin operation middleware
+func (siw *ServerInterfaceWrapper) RemoveUserEmailAdmin(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "emailId" -------------
+	var emailId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "emailId", chi.URLParam(r, "emailId"), &emailId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "emailId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemoveUserEmailAdmin(w, r, id, emailId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetPrimaryUserEmailAdmin operation middleware
+func (siw *ServerInterfaceWrapper) SetPrimaryUserEmailAdmin(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "emailId" -------------
+	var emailId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "emailId", chi.URLParam(r, "emailId"), &emailId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "emailId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetPrimaryUserEmailAdmin(w, r, id, emailId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DisableUserMFAAdmin operation middleware
+func (siw *ServerInterfaceWrapper) DisableUserMFAAdmin(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DisableUserMFAAdmin(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ResetUserPasswordAdmin operation middleware
+func (siw *ServerInterfaceWrapper) ResetUserPasswordAdmin(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ResetUserPasswordAdmin(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // Login operation middleware
 func (siw *ServerInterfaceWrapper) Login(w http.ResponseWriter, r *http.Request) {
@@ -1693,6 +2179,42 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/admin/users", wrapper.ListUsersAdmin)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/admin/users", wrapper.CreateUserAdmin)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/admin/users/{id}", wrapper.GetUserAdmin)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/admin/users/{id}", wrapper.UpdateUserAdmin)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v1/admin/users/{id}/archive", wrapper.UnarchiveUserAdmin)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/admin/users/{id}/archive", wrapper.ArchiveUserAdmin)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/admin/users/{id}/emails", wrapper.ListUserEmailsAdmin)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/admin/users/{id}/emails", wrapper.AddUserEmailAdmin)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v1/admin/users/{id}/emails/{emailId}", wrapper.RemoveUserEmailAdmin)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v1/admin/users/{id}/emails/{emailId}/primary", wrapper.SetPrimaryUserEmailAdmin)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/admin/users/{id}/mfa/disable", wrapper.DisableUserMFAAdmin)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/admin/users/{id}/password", wrapper.ResetUserPasswordAdmin)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v1/auth/login", wrapper.Login)
 	})
 	r.Group(func(r chi.Router) {
@@ -1814,6 +2336,434 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 
 	return r
+}
+
+type ListUsersAdminRequestObject struct {
+}
+
+type ListUsersAdminResponseObject interface {
+	VisitListUsersAdminResponse(w http.ResponseWriter) error
+}
+
+type ListUsersAdmin200JSONResponse ListAdminUsersResponse
+
+func (response ListUsersAdmin200JSONResponse) VisitListUsersAdminResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListUsersAdmin403Response struct {
+}
+
+func (response ListUsersAdmin403Response) VisitListUsersAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type CreateUserAdminRequestObject struct {
+	Body *CreateUserAdminJSONRequestBody
+}
+
+type CreateUserAdminResponseObject interface {
+	VisitCreateUserAdminResponse(w http.ResponseWriter) error
+}
+
+type CreateUserAdmin201JSONResponse AdminUserListItem
+
+func (response CreateUserAdmin201JSONResponse) VisitCreateUserAdminResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateUserAdmin400Response struct {
+}
+
+func (response CreateUserAdmin400Response) VisitCreateUserAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type CreateUserAdmin403Response struct {
+}
+
+func (response CreateUserAdmin403Response) VisitCreateUserAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type GetUserAdminRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type GetUserAdminResponseObject interface {
+	VisitGetUserAdminResponse(w http.ResponseWriter) error
+}
+
+type GetUserAdmin200JSONResponse AdminUserListItem
+
+func (response GetUserAdmin200JSONResponse) VisitGetUserAdminResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetUserAdmin403Response struct {
+}
+
+func (response GetUserAdmin403Response) VisitGetUserAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type GetUserAdmin404Response struct {
+}
+
+func (response GetUserAdmin404Response) VisitGetUserAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type UpdateUserAdminRequestObject struct {
+	Id   openapi_types.UUID `json:"id"`
+	Body *UpdateUserAdminJSONRequestBody
+}
+
+type UpdateUserAdminResponseObject interface {
+	VisitUpdateUserAdminResponse(w http.ResponseWriter) error
+}
+
+type UpdateUserAdmin204Response struct {
+}
+
+func (response UpdateUserAdmin204Response) VisitUpdateUserAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type UpdateUserAdmin400Response struct {
+}
+
+func (response UpdateUserAdmin400Response) VisitUpdateUserAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type UpdateUserAdmin403Response struct {
+}
+
+func (response UpdateUserAdmin403Response) VisitUpdateUserAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type UpdateUserAdmin404Response struct {
+}
+
+func (response UpdateUserAdmin404Response) VisitUpdateUserAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type UnarchiveUserAdminRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type UnarchiveUserAdminResponseObject interface {
+	VisitUnarchiveUserAdminResponse(w http.ResponseWriter) error
+}
+
+type UnarchiveUserAdmin204Response struct {
+}
+
+func (response UnarchiveUserAdmin204Response) VisitUnarchiveUserAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type UnarchiveUserAdmin403Response struct {
+}
+
+func (response UnarchiveUserAdmin403Response) VisitUnarchiveUserAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type UnarchiveUserAdmin404Response struct {
+}
+
+func (response UnarchiveUserAdmin404Response) VisitUnarchiveUserAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ArchiveUserAdminRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type ArchiveUserAdminResponseObject interface {
+	VisitArchiveUserAdminResponse(w http.ResponseWriter) error
+}
+
+type ArchiveUserAdmin204Response struct {
+}
+
+func (response ArchiveUserAdmin204Response) VisitArchiveUserAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type ArchiveUserAdmin403Response struct {
+}
+
+func (response ArchiveUserAdmin403Response) VisitArchiveUserAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type ArchiveUserAdmin404Response struct {
+}
+
+func (response ArchiveUserAdmin404Response) VisitArchiveUserAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ListUserEmailsAdminRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type ListUserEmailsAdminResponseObject interface {
+	VisitListUserEmailsAdminResponse(w http.ResponseWriter) error
+}
+
+type ListUserEmailsAdmin200JSONResponse ListEmailsResponse
+
+func (response ListUserEmailsAdmin200JSONResponse) VisitListUserEmailsAdminResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListUserEmailsAdmin403Response struct {
+}
+
+func (response ListUserEmailsAdmin403Response) VisitListUserEmailsAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type AddUserEmailAdminRequestObject struct {
+	Id   openapi_types.UUID `json:"id"`
+	Body *AddUserEmailAdminJSONRequestBody
+}
+
+type AddUserEmailAdminResponseObject interface {
+	VisitAddUserEmailAdminResponse(w http.ResponseWriter) error
+}
+
+type AddUserEmailAdmin204Response struct {
+}
+
+func (response AddUserEmailAdmin204Response) VisitAddUserEmailAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type AddUserEmailAdmin400Response struct {
+}
+
+func (response AddUserEmailAdmin400Response) VisitAddUserEmailAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type AddUserEmailAdmin403Response struct {
+}
+
+func (response AddUserEmailAdmin403Response) VisitAddUserEmailAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type RemoveUserEmailAdminRequestObject struct {
+	Id      openapi_types.UUID `json:"id"`
+	EmailId openapi_types.UUID `json:"emailId"`
+}
+
+type RemoveUserEmailAdminResponseObject interface {
+	VisitRemoveUserEmailAdminResponse(w http.ResponseWriter) error
+}
+
+type RemoveUserEmailAdmin204Response struct {
+}
+
+func (response RemoveUserEmailAdmin204Response) VisitRemoveUserEmailAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RemoveUserEmailAdmin400Response struct {
+}
+
+func (response RemoveUserEmailAdmin400Response) VisitRemoveUserEmailAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type RemoveUserEmailAdmin403Response struct {
+}
+
+func (response RemoveUserEmailAdmin403Response) VisitRemoveUserEmailAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type RemoveUserEmailAdmin404Response struct {
+}
+
+func (response RemoveUserEmailAdmin404Response) VisitRemoveUserEmailAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type SetPrimaryUserEmailAdminRequestObject struct {
+	Id      openapi_types.UUID `json:"id"`
+	EmailId openapi_types.UUID `json:"emailId"`
+}
+
+type SetPrimaryUserEmailAdminResponseObject interface {
+	VisitSetPrimaryUserEmailAdminResponse(w http.ResponseWriter) error
+}
+
+type SetPrimaryUserEmailAdmin204Response struct {
+}
+
+func (response SetPrimaryUserEmailAdmin204Response) VisitSetPrimaryUserEmailAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type SetPrimaryUserEmailAdmin400Response struct {
+}
+
+func (response SetPrimaryUserEmailAdmin400Response) VisitSetPrimaryUserEmailAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type SetPrimaryUserEmailAdmin403Response struct {
+}
+
+func (response SetPrimaryUserEmailAdmin403Response) VisitSetPrimaryUserEmailAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type SetPrimaryUserEmailAdmin404Response struct {
+}
+
+func (response SetPrimaryUserEmailAdmin404Response) VisitSetPrimaryUserEmailAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type DisableUserMFAAdminRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type DisableUserMFAAdminResponseObject interface {
+	VisitDisableUserMFAAdminResponse(w http.ResponseWriter) error
+}
+
+type DisableUserMFAAdmin204Response struct {
+}
+
+func (response DisableUserMFAAdmin204Response) VisitDisableUserMFAAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DisableUserMFAAdmin403Response struct {
+}
+
+func (response DisableUserMFAAdmin403Response) VisitDisableUserMFAAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type DisableUserMFAAdmin404Response struct {
+}
+
+func (response DisableUserMFAAdmin404Response) VisitDisableUserMFAAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ResetUserPasswordAdminRequestObject struct {
+	Id   openapi_types.UUID `json:"id"`
+	Body *ResetUserPasswordAdminJSONRequestBody
+}
+
+type ResetUserPasswordAdminResponseObject interface {
+	VisitResetUserPasswordAdminResponse(w http.ResponseWriter) error
+}
+
+type ResetUserPasswordAdmin204Response struct {
+}
+
+func (response ResetUserPasswordAdmin204Response) VisitResetUserPasswordAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type ResetUserPasswordAdmin400Response struct {
+}
+
+func (response ResetUserPasswordAdmin400Response) VisitResetUserPasswordAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type ResetUserPasswordAdmin403Response struct {
+}
+
+func (response ResetUserPasswordAdmin403Response) VisitResetUserPasswordAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type ResetUserPasswordAdmin404Response struct {
+}
+
+func (response ResetUserPasswordAdmin404Response) VisitResetUserPasswordAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
 }
 
 type LoginRequestObject struct {
@@ -3146,6 +4096,42 @@ func (response RestoreTrash404Response) VisitRestoreTrashResponse(w http.Respons
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// List all user accounts (admin only)
+	// (GET /api/v1/admin/users)
+	ListUsersAdmin(ctx context.Context, request ListUsersAdminRequestObject) (ListUsersAdminResponseObject, error)
+	// Create a new user account (admin only)
+	// (POST /api/v1/admin/users)
+	CreateUserAdmin(ctx context.Context, request CreateUserAdminRequestObject) (CreateUserAdminResponseObject, error)
+	// Get a single user (admin only)
+	// (GET /api/v1/admin/users/{id})
+	GetUserAdmin(ctx context.Context, request GetUserAdminRequestObject) (GetUserAdminResponseObject, error)
+	// Update a user's name and/or role (admin only)
+	// (POST /api/v1/admin/users/{id})
+	UpdateUserAdmin(ctx context.Context, request UpdateUserAdminRequestObject) (UpdateUserAdminResponseObject, error)
+	// Unarchive a user account (admin only)
+	// (DELETE /api/v1/admin/users/{id}/archive)
+	UnarchiveUserAdmin(ctx context.Context, request UnarchiveUserAdminRequestObject) (UnarchiveUserAdminResponseObject, error)
+	// Archive a user account (admin only)
+	// (POST /api/v1/admin/users/{id}/archive)
+	ArchiveUserAdmin(ctx context.Context, request ArchiveUserAdminRequestObject) (ArchiveUserAdminResponseObject, error)
+	// List a user's emails (admin only)
+	// (GET /api/v1/admin/users/{id}/emails)
+	ListUserEmailsAdmin(ctx context.Context, request ListUserEmailsAdminRequestObject) (ListUserEmailsAdminResponseObject, error)
+	// Add an email to a user (admin only)
+	// (POST /api/v1/admin/users/{id}/emails)
+	AddUserEmailAdmin(ctx context.Context, request AddUserEmailAdminRequestObject) (AddUserEmailAdminResponseObject, error)
+	// Remove a non-primary email from a user (admin only)
+	// (DELETE /api/v1/admin/users/{id}/emails/{emailId})
+	RemoveUserEmailAdmin(ctx context.Context, request RemoveUserEmailAdminRequestObject) (RemoveUserEmailAdminResponseObject, error)
+	// Set a user's email as primary (admin only)
+	// (PATCH /api/v1/admin/users/{id}/emails/{emailId}/primary)
+	SetPrimaryUserEmailAdmin(ctx context.Context, request SetPrimaryUserEmailAdminRequestObject) (SetPrimaryUserEmailAdminResponseObject, error)
+	// Disable a user's MFA (admin only)
+	// (POST /api/v1/admin/users/{id}/mfa/disable)
+	DisableUserMFAAdmin(ctx context.Context, request DisableUserMFAAdminRequestObject) (DisableUserMFAAdminResponseObject, error)
+	// Reset a user's password (admin only)
+	// (POST /api/v1/admin/users/{id}/password)
+	ResetUserPasswordAdmin(ctx context.Context, request ResetUserPasswordAdminRequestObject) (ResetUserPasswordAdminResponseObject, error)
 	// Log in with email and password
 	// (POST /api/v1/auth/login)
 	Login(ctx context.Context, request LoginRequestObject) (LoginResponseObject, error)
@@ -3295,6 +4281,344 @@ type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
 	options     StrictHTTPServerOptions
+}
+
+// ListUsersAdmin operation middleware
+func (sh *strictHandler) ListUsersAdmin(w http.ResponseWriter, r *http.Request) {
+	var request ListUsersAdminRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListUsersAdmin(ctx, request.(ListUsersAdminRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListUsersAdmin")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListUsersAdminResponseObject); ok {
+		if err := validResponse.VisitListUsersAdminResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateUserAdmin operation middleware
+func (sh *strictHandler) CreateUserAdmin(w http.ResponseWriter, r *http.Request) {
+	var request CreateUserAdminRequestObject
+
+	var body CreateUserAdminJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateUserAdmin(ctx, request.(CreateUserAdminRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateUserAdmin")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateUserAdminResponseObject); ok {
+		if err := validResponse.VisitCreateUserAdminResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetUserAdmin operation middleware
+func (sh *strictHandler) GetUserAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request GetUserAdminRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetUserAdmin(ctx, request.(GetUserAdminRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetUserAdmin")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetUserAdminResponseObject); ok {
+		if err := validResponse.VisitGetUserAdminResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateUserAdmin operation middleware
+func (sh *strictHandler) UpdateUserAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request UpdateUserAdminRequestObject
+
+	request.Id = id
+
+	var body UpdateUserAdminJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateUserAdmin(ctx, request.(UpdateUserAdminRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateUserAdmin")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateUserAdminResponseObject); ok {
+		if err := validResponse.VisitUpdateUserAdminResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UnarchiveUserAdmin operation middleware
+func (sh *strictHandler) UnarchiveUserAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request UnarchiveUserAdminRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UnarchiveUserAdmin(ctx, request.(UnarchiveUserAdminRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UnarchiveUserAdmin")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UnarchiveUserAdminResponseObject); ok {
+		if err := validResponse.VisitUnarchiveUserAdminResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ArchiveUserAdmin operation middleware
+func (sh *strictHandler) ArchiveUserAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request ArchiveUserAdminRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ArchiveUserAdmin(ctx, request.(ArchiveUserAdminRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ArchiveUserAdmin")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ArchiveUserAdminResponseObject); ok {
+		if err := validResponse.VisitArchiveUserAdminResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListUserEmailsAdmin operation middleware
+func (sh *strictHandler) ListUserEmailsAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request ListUserEmailsAdminRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListUserEmailsAdmin(ctx, request.(ListUserEmailsAdminRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListUserEmailsAdmin")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListUserEmailsAdminResponseObject); ok {
+		if err := validResponse.VisitListUserEmailsAdminResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AddUserEmailAdmin operation middleware
+func (sh *strictHandler) AddUserEmailAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request AddUserEmailAdminRequestObject
+
+	request.Id = id
+
+	var body AddUserEmailAdminJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AddUserEmailAdmin(ctx, request.(AddUserEmailAdminRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AddUserEmailAdmin")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AddUserEmailAdminResponseObject); ok {
+		if err := validResponse.VisitAddUserEmailAdminResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RemoveUserEmailAdmin operation middleware
+func (sh *strictHandler) RemoveUserEmailAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, emailId openapi_types.UUID) {
+	var request RemoveUserEmailAdminRequestObject
+
+	request.Id = id
+	request.EmailId = emailId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RemoveUserEmailAdmin(ctx, request.(RemoveUserEmailAdminRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RemoveUserEmailAdmin")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RemoveUserEmailAdminResponseObject); ok {
+		if err := validResponse.VisitRemoveUserEmailAdminResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetPrimaryUserEmailAdmin operation middleware
+func (sh *strictHandler) SetPrimaryUserEmailAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, emailId openapi_types.UUID) {
+	var request SetPrimaryUserEmailAdminRequestObject
+
+	request.Id = id
+	request.EmailId = emailId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetPrimaryUserEmailAdmin(ctx, request.(SetPrimaryUserEmailAdminRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetPrimaryUserEmailAdmin")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetPrimaryUserEmailAdminResponseObject); ok {
+		if err := validResponse.VisitSetPrimaryUserEmailAdminResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DisableUserMFAAdmin operation middleware
+func (sh *strictHandler) DisableUserMFAAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request DisableUserMFAAdminRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DisableUserMFAAdmin(ctx, request.(DisableUserMFAAdminRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DisableUserMFAAdmin")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DisableUserMFAAdminResponseObject); ok {
+		if err := validResponse.VisitDisableUserMFAAdminResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ResetUserPasswordAdmin operation middleware
+func (sh *strictHandler) ResetUserPasswordAdmin(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request ResetUserPasswordAdminRequestObject
+
+	request.Id = id
+
+	var body ResetUserPasswordAdminJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ResetUserPasswordAdmin(ctx, request.(ResetUserPasswordAdminRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ResetUserPasswordAdmin")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ResetUserPasswordAdminResponseObject); ok {
+		if err := validResponse.VisitResetUserPasswordAdminResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
 }
 
 // Login operation middleware
@@ -4442,89 +5766,98 @@ func (sh *strictHandler) RestoreTrash(w http.ResponseWriter, r *http.Request, da
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"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",
+	"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",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

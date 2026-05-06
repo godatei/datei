@@ -128,7 +128,7 @@ func run(ctx context.Context, options Options) error {
 	userSvc := users.NewUserService(db, userRepository, m)
 	linkSvc := link.NewService(db, linkRepository, dateiSvc)
 
-	srv := server.NewServer(dateiSvc, userSvc, linkSvc)
+	srv := server.NewServer(db, dateiSvc, userSvc, linkSvc)
 	strictHandler := server.NewStrictHandlerWithOptions(srv, nil, server.StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
 			slog.InfoContext(r.Context(), "request validation/decoding error",

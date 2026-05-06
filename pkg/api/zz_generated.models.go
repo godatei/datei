@@ -46,6 +46,38 @@ type AddEmailRequest struct {
 	Email openapi_types.Email `json:"email"`
 }
 
+// AdminCreateUserRequest defines model for AdminCreateUserRequest.
+type AdminCreateUserRequest struct {
+	Email    openapi_types.Email `json:"email"`
+	IsAdmin  bool                `json:"isAdmin"`
+	Name     string              `json:"name"`
+	Password string              `json:"password"`
+}
+
+// AdminResetPasswordRequest defines model for AdminResetPasswordRequest.
+type AdminResetPasswordRequest struct {
+	Password string `json:"password"`
+}
+
+// AdminUpdateUserRequest defines model for AdminUpdateUserRequest.
+type AdminUpdateUserRequest struct {
+	IsAdmin *bool   `json:"isAdmin,omitempty"`
+	Name    *string `json:"name,omitempty"`
+}
+
+// AdminUserListItem defines model for AdminUserListItem.
+type AdminUserListItem struct {
+	Archived             bool                 `json:"archived"`
+	CreatedAt            time.Time            `json:"createdAt"`
+	Id                   openapi_types.UUID   `json:"id"`
+	IsAdmin              bool                 `json:"isAdmin"`
+	LastLoggedInAt       *time.Time           `json:"lastLoggedInAt,omitempty"`
+	MfaEnabled           bool                 `json:"mfaEnabled"`
+	Name                 string               `json:"name"`
+	PrimaryEmail         *openapi_types.Email `json:"primaryEmail,omitempty"`
+	PrimaryEmailVerified *bool                `json:"primaryEmailVerified,omitempty"`
+}
+
 // ConfirmResetPasswordRequest defines model for ConfirmResetPasswordRequest.
 type ConfirmResetPasswordRequest struct {
 	Password string `json:"password"`
@@ -227,6 +259,11 @@ type LinkDetail struct {
 
 	// UpdatedAt Last update timestamp
 	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+// ListAdminUsersResponse defines model for ListAdminUsersResponse.
+type ListAdminUsersResponse struct {
+	Users []AdminUserListItem `json:"users"`
 }
 
 // ListDateiResponse defines model for ListDateiResponse.
@@ -467,6 +504,7 @@ type UserEmail struct {
 
 // UserResponse defines model for UserResponse.
 type UserResponse struct {
+	IsAdmin    bool   `json:"isAdmin"`
 	MfaEnabled bool   `json:"mfaEnabled"`
 	Name       string `json:"name"`
 }
@@ -532,6 +570,18 @@ type ListTrashChildrenParams struct {
 	// Offset Number of results to skip
 	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
+
+// CreateUserAdminJSONRequestBody defines body for CreateUserAdmin for application/json ContentType.
+type CreateUserAdminJSONRequestBody = AdminCreateUserRequest
+
+// UpdateUserAdminJSONRequestBody defines body for UpdateUserAdmin for application/json ContentType.
+type UpdateUserAdminJSONRequestBody = AdminUpdateUserRequest
+
+// AddUserEmailAdminJSONRequestBody defines body for AddUserEmailAdmin for application/json ContentType.
+type AddUserEmailAdminJSONRequestBody = AddEmailRequest
+
+// ResetUserPasswordAdminJSONRequestBody defines body for ResetUserPasswordAdmin for application/json ContentType.
+type ResetUserPasswordAdminJSONRequestBody = AdminResetPasswordRequest
 
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginRequest

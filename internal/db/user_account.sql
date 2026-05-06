@@ -3,11 +3,14 @@
 -- ============================================================================
 
 -- name: InsertUserAccountProjection :exec
-INSERT INTO user_account_projection (id, name, password_hash, password_salt, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $5);
+INSERT INTO user_account_projection (id, name, password_hash, password_salt, is_admin, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $6);
 
 -- name: UpdateUserAccountProjectionName :exec
 UPDATE user_account_projection SET name = $1, updated_at = $2 WHERE id = $3;
+
+-- name: UpdateUserAccountProjectionIsAdmin :exec
+UPDATE user_account_projection SET is_admin = $1, updated_at = $2 WHERE id = $3;
 
 -- name: UpdateUserAccountProjectionPassword :exec
 UPDATE user_account_projection SET password_hash = $1, password_salt = $2, updated_at = $3 WHERE id = $4;
@@ -22,7 +25,7 @@ UPDATE user_account_projection SET mfa_enabled = true, mfa_enabled_at = $1, upda
 UPDATE user_account_projection SET mfa_enabled = false, mfa_secret = NULL, mfa_enabled_at = NULL, updated_at = $1 WHERE id = $2;
 
 -- name: UpdateUserAccountProjectionArchived :exec
-UPDATE user_account_projection SET archived_at = $1, updated_at = $1 WHERE id = $2;
+UPDATE user_account_projection SET archived_at = $1, updated_at = $2 WHERE id = $3;
 
 -- name: UpdateUserAccountProjectionLoggedIn :exec
 UPDATE user_account_projection SET last_logged_in_at = $1 WHERE id = $2;
@@ -72,6 +75,22 @@ WHERE user_account_id = $1;
 
 -- name: GetUserAccountByID :one
 SELECT * FROM user_account_projection WHERE id = $1;
+
+-- name: ListUserAccountProjections :many
+SELECT
+  ua.id,
+  ua.name,
+  ua.is_admin,
+  ua.mfa_enabled,
+  ua.archived_at,
+  ua.created_at,
+  ua.last_logged_in_at,
+  ue.email AS primary_email,
+  ue.verified_at AS primary_email_verified_at
+FROM user_account_projection ua
+LEFT JOIN user_account_email_projection ue
+  ON ue.user_account_id = ua.id AND ue.is_primary = true
+ORDER BY (ua.archived_at IS NOT NULL), NOT ua.is_admin, ua.name ASC;
 
 -- name: GetUserAccountByEmail :one
 SELECT ua.* FROM user_account_projection ua

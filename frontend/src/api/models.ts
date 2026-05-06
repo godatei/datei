@@ -3,6 +3,10 @@
 
 export type { AddDateiToLinkRequest } from './models/add-datei-to-link-request';
 export type { AddEmailRequest } from './models/add-email-request';
+export type { AdminCreateUserRequest } from './models/admin-create-user-request';
+export type { AdminResetPasswordRequest } from './models/admin-reset-password-request';
+export type { AdminUpdateUserRequest } from './models/admin-update-user-request';
+export type { AdminUserListItem } from './models/admin-user-list-item';
 export type { ConfirmResetPasswordRequest } from './models/confirm-reset-password-request';
 export type { CreateDateiRequest } from './models/create-datei-request';
 export type { CreateLinkRequest } from './models/create-link-request';
@@ -13,6 +17,7 @@ export type { EnableMfaRequest } from './models/enable-mfa-request';
 export type { EnableMfaResponse } from './models/enable-mfa-response';
 export type { Link } from './models/link';
 export type { LinkDetail } from './models/link-detail';
+export type { ListAdminUsersResponse } from './models/list-admin-users-response';
 export type { ListDateiResponse } from './models/list-datei-response';
 export type { ListEmailsResponse } from './models/list-emails-response';
 export type { ListLinksResponse } from './models/list-links-response';

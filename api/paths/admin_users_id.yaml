@@ -1,0 +1,50 @@
+get:
+  operationId: GetUserAdmin
+  summary: Get a single user (admin only)
+  security:
+    - bearerHttpAuthentication: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: User details
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/AdminUserListItem.yaml'
+    '403':
+      description: Caller is not an admin
+    '404':
+      description: User not found
+post:
+  operationId: UpdateUserAdmin
+  summary: Update a user's name and/or role (admin only)
+  security:
+    - bearerHttpAuthentication: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/AdminUpdateUserRequest.yaml'
+  responses:
+    '204':
+      description: User updated
+    '400':
+      description: Invalid input
+    '403':
+      description: Caller is not an admin
+    '404':
+      description: User not found

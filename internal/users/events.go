@@ -49,6 +49,7 @@ func NewEventStore(pool *pgxpool.Pool) *events.PostgresEventStore {
 func init() {
 	events.RegisterEvent("UserRegistered", func() events.DomainEvent { return &UserRegisteredEvent{} })
 	events.RegisterEvent("UserNameChanged", func() events.DomainEvent { return &UserNameChangedEvent{} })
+	events.RegisterEvent("UserAdminChanged", func() events.DomainEvent { return &UserAdminChangedEvent{} })
 	events.RegisterEvent("UserPasswordChanged", func() events.DomainEvent { return &UserPasswordChangedEvent{} })
 	events.RegisterEvent("UserEmailChanged", func() events.DomainEvent { return &UserEmailChangedEvent{} })
 	events.RegisterEvent("UserEmailVerified", func() events.DomainEvent { return &UserEmailVerifiedEvent{} })
@@ -62,6 +63,7 @@ func init() {
 	events.RegisterEvent("UserMFARecoveryCodesRegenerated",
 		func() events.DomainEvent { return &UserMFARecoveryCodesRegeneratedEvent{} })
 	events.RegisterEvent("UserArchived", func() events.DomainEvent { return &UserArchivedEvent{} })
+	events.RegisterEvent("UserUnarchived", func() events.DomainEvent { return &UserUnarchivedEvent{} })
 	events.RegisterEvent("UserLoggedIn", func() events.DomainEvent { return &UserLoggedInEvent{} })
 }
 
@@ -79,6 +81,7 @@ type UserRegisteredEvent struct {
 	EmailID      uuid.UUID `json:"email_id"`
 	PasswordHash []byte    `json:"password_hash"`
 	PasswordSalt []byte    `json:"password_salt"`
+	IsAdmin      bool      `json:"is_admin"`
 	CreatedAt    time.Time `json:"created_at"`
 }
 
@@ -91,8 +94,22 @@ func (e UserRegisteredEvent) ApplyTo(a *Aggregate) {
 	a.EmailID = e.EmailID
 	a.PasswordHash = e.PasswordHash
 	a.PasswordSalt = e.PasswordSalt
+	a.IsAdmin = e.IsAdmin
 	a.CreatedAt = e.CreatedAt
 	a.UpdatedAt = e.CreatedAt
+}
+
+type UserAdminChangedEvent struct {
+	ID        uuid.UUID `json:"id"`
+	IsAdmin   bool      `json:"is_admin"`
+	ChangedAt time.Time `json:"changed_at"`
+}
+
+func (e UserAdminChangedEvent) EventType() string   { return "UserAdminChanged" }
+func (e UserAdminChangedEvent) StreamID() uuid.UUID { return e.ID }
+func (e UserAdminChangedEvent) ApplyTo(a *Aggregate) {
+	a.IsAdmin = e.IsAdmin
+	a.UpdatedAt = e.ChangedAt
 }
 
 type UserNameChangedEvent struct {
@@ -258,6 +275,18 @@ func (e UserArchivedEvent) StreamID() uuid.UUID { return e.ID }
 func (e UserArchivedEvent) ApplyTo(a *Aggregate) {
 	a.ArchivedAt = &e.ArchivedAt
 	a.UpdatedAt = e.ArchivedAt
+}
+
+type UserUnarchivedEvent struct {
+	ID           uuid.UUID `json:"id"`
+	UnarchivedAt time.Time `json:"unarchived_at"`
+}
+
+func (e UserUnarchivedEvent) EventType() string   { return "UserUnarchived" }
+func (e UserUnarchivedEvent) StreamID() uuid.UUID { return e.ID }
+func (e UserUnarchivedEvent) ApplyTo(a *Aggregate) {
+	a.ArchivedAt = nil
+	a.UpdatedAt = e.UnarchivedAt
 }
 
 type UserLoggedInEvent struct {

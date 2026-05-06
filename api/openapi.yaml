@@ -42,6 +42,24 @@ paths:
   /api/v1/settings/emails/{emailId}/primary:
     $ref: ./paths/settings_emails_id_primary.yaml
 
+  # Admin (authentication + admin role required)
+  /api/v1/admin/users:
+    $ref: ./paths/admin_users.yaml
+  /api/v1/admin/users/{id}:
+    $ref: ./paths/admin_users_id.yaml
+  /api/v1/admin/users/{id}/password:
+    $ref: ./paths/admin_users_id_password.yaml
+  /api/v1/admin/users/{id}/emails:
+    $ref: ./paths/admin_users_id_emails.yaml
+  /api/v1/admin/users/{id}/emails/{emailId}:
+    $ref: ./paths/admin_users_id_emails_emailid.yaml
+  /api/v1/admin/users/{id}/emails/{emailId}/primary:
+    $ref: ./paths/admin_users_id_emails_emailid_primary.yaml
+  /api/v1/admin/users/{id}/mfa/disable:
+    $ref: ./paths/admin_users_id_mfa_disable.yaml
+  /api/v1/admin/users/{id}/archive:
+    $ref: ./paths/admin_users_id_archive.yaml
+
   # Datei (authentication required)
   /api/v1/trash:
     $ref: './paths/trash.yaml'

@@ -154,6 +154,7 @@ type UserAccountProjection struct {
 	Name           string     `db:"name"`
 	PasswordHash   []byte     `db:"password_hash"`
 	PasswordSalt   []byte     `db:"password_salt"`
+	IsAdmin        bool       `db:"is_admin"`
 	MfaSecret      *string    `db:"mfa_secret"`
 	MfaEnabled     bool       `db:"mfa_enabled"`
 	MfaEnabledAt   *time.Time `db:"mfa_enabled_at"`
