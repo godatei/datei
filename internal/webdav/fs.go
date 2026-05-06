@@ -96,7 +96,7 @@ func (fs *dateiFS) Mkdir(ctx context.Context, name string, _ os.FileMode) error 
 		ParentID: parentID,
 		FileName: base,
 	})
-	return err
+	return mapErr(err)
 }
 
 func (fs *dateiFS) RemoveAll(ctx context.Context, name string) error {
@@ -107,7 +107,7 @@ func (fs *dateiFS) RemoveAll(ctx context.Context, name string) error {
 	if proj == nil {
 		return os.ErrPermission
 	}
-	return fs.service.DeleteDatei(ctx, proj.Id)
+	return mapErr(fs.service.DeleteDatei(ctx, proj.Id))
 }
 
 func (fs *dateiFS) Rename(ctx context.Context, oldName, newName string) error {
@@ -148,7 +148,7 @@ func (fs *dateiFS) Rename(ctx context.Context, oldName, newName string) error {
 		input.NewParentID = newParentID
 	}
 	_, err = fs.service.UpdateDatei(ctx, input)
-	return err
+	return mapErr(err)
 }
 
 func (fs *dateiFS) Stat(ctx context.Context, name string) (os.FileInfo, error) {
