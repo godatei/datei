@@ -111,7 +111,7 @@ export class TrashComponent {
         console.log(result);
         const snackRef = this.snack.open(
           `"${item.name}" has been restored to ${result.parent?.name ?? 'My Files'}`,
-          'Show',
+          'Open location',
         );
         snackRef
           .onAction()
