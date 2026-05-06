@@ -109,7 +109,7 @@ export class TrashComponent {
       .subscribe((result: { parent?: Datei }) => {
         this.refresh.update((v) => v + 1);
         const snackRef = this.snack.open(
-          `"${item.name}" has been restored to ${result.parent?.name ?? 'My Files'}`,
+          `"${item.name ?? 'Unnamed'}" has been restored to ${result.parent?.name ?? 'My files'}`,
           'Open location',
         );
         snackRef
