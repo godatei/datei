@@ -44,7 +44,7 @@ export class RestoreDialogComponent implements OnInit {
 
   public async ngOnInit(): Promise<void> {
     if (this.data.parentId) {
-      // intitialize the directory picker with the original parent unless it is also trashed
+      // initialize the directory picker with the original parent unless it is also trashed
       const path = await this.api.invoke(getDateiPath, { id: this.data.parentId });
       if (!path.some((it) => it.trashed)) {
         this.navItems.set(path);
