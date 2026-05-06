@@ -175,8 +175,8 @@ type ResetPasswordRequest struct {
 
 // RestoreDateiRequest defines model for RestoreDateiRequest.
 type RestoreDateiRequest struct {
-	// ParentId New parent directory for the restored item. Required when the item's original parent is trashed, or when the item is a descendant of a trashed item.
-	ParentId *openapi_types.UUID `json:"parentId,omitempty"`
+	// ParentId Target parent directory for the restored item, or null to restore to the root.
+	ParentId *openapi_types.UUID `json:"parentId"`
 }
 
 // SetupMFAResponse defines model for SetupMFAResponse.

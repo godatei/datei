@@ -11,6 +11,7 @@ post:
         type: string
         format: uuid
   requestBody:
+    required: true
     content:
       application/json:
         schema:
@@ -19,6 +20,6 @@ post:
     '204':
       description: Successfully restored
     '400':
-      description: Invalid input (parentId required or invalid)
+      description: Invalid input (invalid parentId)
     '404':
       description: Item not found or not in trash

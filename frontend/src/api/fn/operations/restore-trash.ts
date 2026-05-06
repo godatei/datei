@@ -11,7 +11,7 @@ import { RestoreDateiRequest } from '../../models/restore-datei-request';
 
 export interface RestoreTrash$Params {
   dateiId: string;
-      body?: RestoreDateiRequest
+      body: RestoreDateiRequest
 }
 
 export function restoreTrash(http: HttpClient, rootUrl: string, params: RestoreTrash$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {

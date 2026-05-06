@@ -515,6 +515,7 @@ type RestoreDateiInput struct {
 }
 
 // RestoreDatei restores a trashed datei or moves a descendant of a trashed datei to a new parent.
+// parentId == nil moves the item to root.
 func (s *Service) RestoreDatei(ctx context.Context, input RestoreDateiInput) error {
 	queries := db.New(s.db)
 	projection, err := queries.GetDateiProjectionByID(ctx, input.ID)
@@ -527,67 +528,41 @@ func (s *Service) RestoreDatei(ctx context.Context, input RestoreDateiInput) err
 	userID := authn.RequireContext(ctx).UserID
 	now := time.Now()
 
-	if projection.TrashedAt != nil {
-		// Item is directly trashed. If no parentId, check the original parent is still accessible.
-		if input.ParentID == nil && projection.ParentID != nil {
-			parentPath, err := queries.GetDateiPath(ctx, *projection.ParentID)
-			if err != nil {
-				return err
-			}
-			for _, row := range parentPath {
-				if row.TrashedAt != nil {
-					return fmt.Errorf("%w: parentId required when original parent is in trash", dateierrors.ErrInvalidInput)
-				}
-			}
-		}
-
-		if input.ParentID != nil {
-			if err := s.validateMoveTarget(ctx, queries, input.ID, *input.ParentID, projection.IsDirectory); err != nil {
-				return err
-			}
-		}
-
-		agg, err := s.repository.LoadByID(ctx, input.ID)
-		if err != nil {
-			return err
-		}
-		if err := agg.Restore(userID, now); err != nil {
-			return err
-		}
-		if err := agg.Move(input.ParentID, userID, now); err != nil {
-			return err
-		}
-		return s.repository.Save(ctx, agg)
-	}
-
-	// Item is not directly trashed — check if it has a trashed ancestor.
-	if projection.ParentID == nil {
-		return dateierrors.ErrNotInTrash
-	}
-	parentPath, err := queries.GetDateiPath(ctx, *projection.ParentID)
-	if err != nil {
-		return err
-	}
-	hasTrashedAncestor := false
-	for _, row := range parentPath {
-		if row.TrashedAt != nil {
-			hasTrashedAncestor = true
-			break
-		}
-	}
-	if !hasTrashedAncestor {
-		return dateierrors.ErrNotInTrash
-	}
-
 	if input.ParentID != nil {
 		if err := s.validateMoveTarget(ctx, queries, input.ID, *input.ParentID, projection.IsDirectory); err != nil {
 			return err
 		}
 	}
 
+	directlyTrashed := projection.TrashedAt != nil
+	if !directlyTrashed {
+		if projection.ParentID == nil {
+			return dateierrors.ErrNotInTrash
+		}
+		parentPath, err := queries.GetDateiPath(ctx, *projection.ParentID)
+		if err != nil {
+			return err
+		}
+		hasTrashedAncestor := false
+		for _, row := range parentPath {
+			if row.TrashedAt != nil {
+				hasTrashedAncestor = true
+				break
+			}
+		}
+		if !hasTrashedAncestor {
+			return dateierrors.ErrNotInTrash
+		}
+	}
+
 	agg, err := s.repository.LoadByID(ctx, input.ID)
 	if err != nil {
 		return err
+	}
+	if directlyTrashed {
+		if err := agg.Restore(userID, now); err != nil {
+			return err
+		}
 	}
 	if err := agg.Move(input.ParentID, userID, now); err != nil {
 		return err

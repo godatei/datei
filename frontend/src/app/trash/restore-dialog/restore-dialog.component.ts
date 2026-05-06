@@ -70,7 +70,7 @@ export class RestoreDialogComponent implements OnInit {
     const parent = target ? { id: target.id, name: target.name } : this.currentNavItem();
     await this.api.invoke(restoreTrash, {
       dateiId: this.data.id,
-      body: { parentId: parent?.id },
+      body: { parentId: parent?.id ?? null },
     });
     this.dialogRef.close({ parent });
   }

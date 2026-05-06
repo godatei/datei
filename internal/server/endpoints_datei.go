@@ -80,14 +80,9 @@ func (s *server) RestoreTrash(
 	ctx context.Context,
 	request RestoreTrashRequestObject,
 ) (RestoreTrashResponseObject, error) {
-	var parentID *uuid.UUID
-	if request.Body != nil {
-		parentID = request.Body.ParentId
-	}
-
 	err := s.dateiService.RestoreDatei(ctx, datei.RestoreDateiInput{
 		ID:       request.DateiId,
-		ParentID: parentID,
+		ParentID: request.Body.ParentId,
 	})
 	if err != nil {
 		switch {

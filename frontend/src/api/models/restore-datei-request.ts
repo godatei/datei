@@ -4,7 +4,7 @@
 export interface RestoreDateiRequest {
 
   /**
-   * New parent directory for the restored item. Required when the item's original parent is trashed, or when the item is a descendant of a trashed item.
+   * Target parent directory for the restored item, or null to restore to the root.
    */
-  parentId?: string;
+  parentId: string | null;
 }
