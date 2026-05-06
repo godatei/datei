@@ -22,6 +22,7 @@ type dateiFS struct {
 // It must be mounted at /dav (or with the same prefix passed here).
 func NewHandler(service *datei.Service) *xdav.Handler {
 	return &xdav.Handler{
+		Prefix:     "/dav",
 		FileSystem: &dateiFS{service: service},
 		LockSystem: xdav.NewMemLS(),
 	}
@@ -150,7 +151,7 @@ func (fs *dateiFS) Stat(ctx context.Context, name string) (os.FileInfo, error) {
 func (fs *dateiFS) OpenFile(ctx context.Context, name string, flag int, _ os.FileMode) (xdav.File, error) {
 	isWrite := flag&(os.O_WRONLY|os.O_RDWR|os.O_CREATE) != 0
 
-	if name == "/" {
+	if name == "/" || name == "" {
 		children, err := fs.service.ListDateiChildren(ctx, nil)
 		if err != nil {
 			return nil, err
