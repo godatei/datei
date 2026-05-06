@@ -63,10 +63,14 @@ func (s *server) ListTrashChildren(
 		Offset:   offset,
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrParentNotFound) || errors.Is(err, dateierrors.ErrParentNotTrashed) {
+		switch {
+		case errors.Is(err, dateierrors.ErrParentNotFound),
+			errors.Is(err, dateierrors.ErrParentNotTrashed),
+			errors.Is(err, dateierrors.ErrParentNotDirectory):
 			return ListTrashChildren404Response{}, nil
+		default:
+			return nil, err
 		}
-		return nil, err
 	}
 
 	return ListTrashChildren200JSONResponse(api.ListDateiResponse{
