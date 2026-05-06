@@ -86,8 +86,8 @@
       *matRowDef="let row; columns: displayedColumns()"
       [appSelectionItem]="row"
       (dblclick)="onRowDblClick(row)"
-      [class.cursor-default]="!row.isDirectory"
-      class="select-none transition-colors cursor-pointer"
+      class="select-none transition-colors"
+      [class.cursor-pointer]="row.isDirectory"
     ></tr>
   </table>
 </div>
