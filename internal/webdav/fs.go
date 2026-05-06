@@ -3,6 +3,8 @@ package webdav
 import (
 	"context"
 	"errors"
+	"log/slog"
+	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -25,6 +27,14 @@ func NewHandler(service *datei.Service) *xdav.Handler {
 		Prefix:     "/dav",
 		FileSystem: &dateiFS{service: service},
 		LockSystem: xdav.NewMemLS(),
+		Logger: func(r *http.Request, err error) {
+			if err != nil {
+				slog.Warn("error encountered in webdav handler",
+					"method", r.Method,
+					"path", r.URL.Path,
+					"error", err)
+			}
+		},
 	}
 }
 
@@ -125,7 +135,14 @@ func (fs *dateiFS) Rename(ctx context.Context, oldName, newName string) error {
 	sameParent := (proj.ParentId == nil && newParentID == nil) ||
 		(proj.ParentId != nil && newParentID != nil && *proj.ParentId == *newParentID)
 
-	input := datei.UpdateDateiInput{ID: proj.Id, Name: &newBase}
+	input := datei.UpdateDateiInput{ID: proj.Id}
+	currentName := ""
+	if proj.Name != nil {
+		currentName = *proj.Name
+	}
+	if newBase != currentName {
+		input.Name = &newBase
+	}
 	if !sameParent {
 		input.MoveRequested = true
 		input.NewParentID = newParentID
