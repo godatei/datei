@@ -8,7 +8,7 @@ tr {
     background: var(--mat-sys-surface-container-low);
   }
 
-  &.selected {
+  &.selection-item-selected {
     background: var(--mat-sys-secondary-container);
   }
 

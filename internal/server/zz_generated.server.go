@@ -105,6 +105,15 @@ type ServerInterface interface {
 	// Request an email verification link
 	// (POST /api/v1/settings/verify/request)
 	RequestEmailVerification(w http.ResponseWriter, r *http.Request)
+	// List items in trash
+	// (GET /api/v1/trash)
+	ListTrash(w http.ResponseWriter, r *http.Request, params ListTrashParams)
+	// List the contents of a trashed directory
+	// (GET /api/v1/trash/{dateiId}/children)
+	ListTrashChildren(w http.ResponseWriter, r *http.Request, dateiId openapi_types.UUID, params ListTrashChildrenParams)
+	// Restore an item from trash
+	// (POST /api/v1/trash/{dateiId}/restore)
+	RestoreTrash(w http.ResponseWriter, r *http.Request, dateiId openapi_types.UUID)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -264,6 +273,24 @@ func (_ Unimplemented) ConfirmEmailVerification(w http.ResponseWriter, r *http.R
 // Request an email verification link
 // (POST /api/v1/settings/verify/request)
 func (_ Unimplemented) RequestEmailVerification(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List items in trash
+// (GET /api/v1/trash)
+func (_ Unimplemented) ListTrash(w http.ResponseWriter, r *http.Request, params ListTrashParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List the contents of a trashed directory
+// (GET /api/v1/trash/{dateiId}/children)
+func (_ Unimplemented) ListTrashChildren(w http.ResponseWriter, r *http.Request, dateiId openapi_types.UUID, params ListTrashChildrenParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Restore an item from trash
+// (POST /api/v1/trash/{dateiId}/restore)
+func (_ Unimplemented) RestoreTrash(w http.ResponseWriter, r *http.Request, dateiId openapi_types.UUID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -925,6 +952,151 @@ func (siw *ServerInterfaceWrapper) RequestEmailVerification(w http.ResponseWrite
 	handler.ServeHTTP(w, r)
 }
 
+// ListTrash operation middleware
+func (siw *ServerInterfaceWrapper) ListTrash(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListTrashParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListTrash(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListTrashChildren operation middleware
+func (siw *ServerInterfaceWrapper) ListTrashChildren(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "dateiId" -------------
+	var dateiId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "dateiId", chi.URLParam(r, "dateiId"), &dateiId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dateiId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListTrashChildrenParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListTrashChildren(w, r, dateiId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RestoreTrash operation middleware
+func (siw *ServerInterfaceWrapper) RestoreTrash(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "dateiId" -------------
+	var dateiId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "dateiId", chi.URLParam(r, "dateiId"), &dateiId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dateiId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RestoreTrash(w, r, dateiId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 type UnescapedCookieParamError struct {
 	ParamName string
 	Err       error
@@ -1115,6 +1287,15 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v1/settings/verify/request", wrapper.RequestEmailVerification)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/trash", wrapper.ListTrash)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/trash/{dateiId}/children", wrapper.ListTrashChildren)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/trash/{dateiId}/restore", wrapper.RestoreTrash)
 	})
 
 	return r
@@ -1914,6 +2095,92 @@ func (response RequestEmailVerification204Response) VisitRequestEmailVerificatio
 	return nil
 }
 
+type ListTrashRequestObject struct {
+	Params ListTrashParams
+}
+
+type ListTrashResponseObject interface {
+	VisitListTrashResponse(w http.ResponseWriter) error
+}
+
+type ListTrash200JSONResponse ListTrashResponse
+
+func (response ListTrash200JSONResponse) VisitListTrashResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTrashChildrenRequestObject struct {
+	DateiId openapi_types.UUID `json:"dateiId"`
+	Params  ListTrashChildrenParams
+}
+
+type ListTrashChildrenResponseObject interface {
+	VisitListTrashChildrenResponse(w http.ResponseWriter) error
+}
+
+type ListTrashChildren200JSONResponse ListDateiResponse
+
+func (response ListTrashChildren200JSONResponse) VisitListTrashChildrenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTrashChildren404Response struct {
+}
+
+func (response ListTrashChildren404Response) VisitListTrashChildrenResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type RestoreTrashRequestObject struct {
+	DateiId openapi_types.UUID `json:"dateiId"`
+	Body    *RestoreTrashJSONRequestBody
+}
+
+type RestoreTrashResponseObject interface {
+	VisitRestoreTrashResponse(w http.ResponseWriter) error
+}
+
+type RestoreTrash204Response struct {
+}
+
+func (response RestoreTrash204Response) VisitRestoreTrashResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RestoreTrash400Response struct {
+}
+
+func (response RestoreTrash400Response) VisitRestoreTrashResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type RestoreTrash404Response struct {
+}
+
+func (response RestoreTrash404Response) VisitRestoreTrashResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// Log in with email and password
@@ -1994,6 +2261,15 @@ type StrictServerInterface interface {
 	// Request an email verification link
 	// (POST /api/v1/settings/verify/request)
 	RequestEmailVerification(ctx context.Context, request RequestEmailVerificationRequestObject) (RequestEmailVerificationResponseObject, error)
+	// List items in trash
+	// (GET /api/v1/trash)
+	ListTrash(ctx context.Context, request ListTrashRequestObject) (ListTrashResponseObject, error)
+	// List the contents of a trashed directory
+	// (GET /api/v1/trash/{dateiId}/children)
+	ListTrashChildren(ctx context.Context, request ListTrashChildrenRequestObject) (ListTrashChildrenResponseObject, error)
+	// Restore an item from trash
+	// (POST /api/v1/trash/{dateiId}/restore)
+	RestoreTrash(ctx context.Context, request RestoreTrashRequestObject) (RestoreTrashResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
@@ -2763,61 +3039,154 @@ func (sh *strictHandler) RequestEmailVerification(w http.ResponseWriter, r *http
 	}
 }
 
+// ListTrash operation middleware
+func (sh *strictHandler) ListTrash(w http.ResponseWriter, r *http.Request, params ListTrashParams) {
+	var request ListTrashRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListTrash(ctx, request.(ListTrashRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListTrash")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListTrashResponseObject); ok {
+		if err := validResponse.VisitListTrashResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListTrashChildren operation middleware
+func (sh *strictHandler) ListTrashChildren(w http.ResponseWriter, r *http.Request, dateiId openapi_types.UUID, params ListTrashChildrenParams) {
+	var request ListTrashChildrenRequestObject
+
+	request.DateiId = dateiId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListTrashChildren(ctx, request.(ListTrashChildrenRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListTrashChildren")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListTrashChildrenResponseObject); ok {
+		if err := validResponse.VisitListTrashChildrenResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RestoreTrash operation middleware
+func (sh *strictHandler) RestoreTrash(w http.ResponseWriter, r *http.Request, dateiId openapi_types.UUID) {
+	var request RestoreTrashRequestObject
+
+	request.DateiId = dateiId
+
+	var body RestoreTrashJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RestoreTrash(ctx, request.(RestoreTrashRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RestoreTrash")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RestoreTrashResponseObject); ok {
+		if err := validResponse.VisitRestoreTrashResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // Base64 encoded, compressed with deflate, json marshaled OpenAPI spec.
 // Stored as a slice of fixed-width chunks rather than one concatenated
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"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",
-	"N/zaL/QM/m2XUtu5QOpBQ//vCrrl/98AAAD//w==",
+	"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",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

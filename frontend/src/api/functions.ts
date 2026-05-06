@@ -39,6 +39,12 @@ export type { RemoveEmail$Params as RemoveEmail$Params } from './fn/operations/r
 export { removeEmail as removeEmail } from './fn/operations/remove-email';
 export type { SetPrimaryEmail$Params as SetPrimaryEmail$Params } from './fn/operations/set-primary-email';
 export { setPrimaryEmail as setPrimaryEmail } from './fn/operations/set-primary-email';
+export type { ListTrash$Params as ListTrash$Params } from './fn/operations/list-trash';
+export { listTrash as listTrash } from './fn/operations/list-trash';
+export type { ListTrashChildren$Params as ListTrashChildren$Params } from './fn/operations/list-trash-children';
+export { listTrashChildren as listTrashChildren } from './fn/operations/list-trash-children';
+export type { RestoreTrash$Params as RestoreTrash$Params } from './fn/operations/restore-trash';
+export { restoreTrash as restoreTrash } from './fn/operations/restore-trash';
 export type { ListDatei$Params as ListDatei$Params } from './fn/operations/list-datei';
 export { listDatei as listDatei } from './fn/operations/list-datei';
 export type { CreateDatei$Params as CreateDatei$Params } from './fn/operations/create-datei';

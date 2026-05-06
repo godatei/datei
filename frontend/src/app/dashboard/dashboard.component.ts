@@ -1,14 +1,13 @@
 import { DatePipe } from '@angular/common';
-import { SelectionModel } from '@angular/cdk/collections';
-import { Component, computed, effect, inject, resource, signal } from '@angular/core';
+import { Component, computed, effect, inject, resource, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Api } from 'frontend/src/api/api';
@@ -32,6 +31,8 @@ import { DragDropDirective, DropEvent } from './drag-drop.directive';
 import { DragPreviewDirective } from './drag-preview.directive';
 import { DragItemDirective } from './drag-row.directive';
 import { DropTargetDirective } from './drop-target.directive';
+import { SelectionDirective } from './selection.directive';
+import { SelectionItemDirective } from './selection-item.directive';
 
 @Component({
   selector: 'app-dashboard',
@@ -48,6 +49,9 @@ import { DropTargetDirective } from './drop-target.directive';
     DragPreviewDirective,
     DragItemDirective,
     DropTargetDirective,
+    SelectionDirective,
+    SelectionItemDirective,
+    MatTooltipModule,
   ],
 })
 export class DashboardComponent {
@@ -86,46 +90,19 @@ export class DashboardComponent {
     'mimeType',
     'actions',
   ];
-  protected readonly selection = new SelectionModel<Datei>(true, [], true, (a, b) => a.id === b.id);
-  protected readonly selectedIds = toSignal(
-    this.selection.changed.pipe(map(() => new Set(this.selection.selected.map((d) => d.id)))),
-    { initialValue: new Set<string>() },
-  );
+  protected readonly selection = viewChild.required<SelectionDirective<Datei>>(SelectionDirective);
   protected readonly uploading = signal(false);
-  private selectionAnchor: Datei | null = null;
 
   constructor() {
     effect(() => {
       this.dataSource.data = this.listDateiResource.value()?.items ?? [];
-      this.selection.clear();
-      this.selectionAnchor = null;
+      this.selection().clear();
     });
-  }
-
-  protected onRowClick(row: Datei, event: MouseEvent): void {
-    if (event.shiftKey && this.selectionAnchor !== null) {
-      const data = this.dataSource.data;
-      const anchorIdx = data.findIndex((d) => d.id === this.selectionAnchor!.id);
-      const rowIdx = data.findIndex((d) => d.id === row.id);
-      if (anchorIdx !== -1 && rowIdx !== -1) {
-        const [lo, hi] = anchorIdx <= rowIdx ? [anchorIdx, rowIdx] : [rowIdx, anchorIdx];
-        this.selection.clear();
-        data.slice(lo, hi + 1).forEach((d) => this.selection.select(d));
-      }
-    } else if (event.ctrlKey || event.metaKey) {
-      this.selection.toggle(row);
-      this.selectionAnchor = row;
-    } else {
-      this.selection.clear();
-      this.selection.select(row);
-      this.selectionAnchor = row;
-    }
   }
 
   protected onRowDblClick(row: Datei): void {
     if (row.isDirectory) {
-      this.selection.clear();
-      this.selectionAnchor = null;
+      this.selection().clear();
       this.router.navigate([], { relativeTo: this.route, queryParams: { parentId: row.id } });
       return;
     }
@@ -213,26 +190,53 @@ export class DashboardComponent {
     });
   }
 
-  protected async trashDatei(id: string, event: Event): Promise<void> {
+  protected async trashDatei(item: Datei, event: Event): Promise<void> {
     event.stopPropagation();
-    try {
-      await this.api.invoke(deleteDatei, { id });
+    await this.trash(item);
+  }
+
+  protected async trashSelected(): Promise<void> {
+    await this.trash(this.selection().selected());
+  }
+
+  private async trash(items: Datei | Datei[]): Promise<void> {
+    if (!Array.isArray(items)) {
+      items = [items];
+    }
+
+    if (items.length === 0) {
+      return;
+    }
+
+    const results = await Promise.allSettled(
+      items.map((item) => this.api.invoke(deleteDatei, { id: item.id })),
+    );
+
+    const failed = results.filter((r) => r.status === 'rejected').length;
+    if (failed > 0) {
+      this.snackBar.open(`Failed to move ${failed} item(s) to trash`, 'Dismiss', {
+        duration: 4000,
+      });
+    }
+
+    if (failed !== results.length) {
       this.refresh.update((v) => v + 1);
-    } catch (e) {
-      console.error(e);
-      this.snackBar.open('Failed to move to trash', 'Dismiss', { duration: 4000 });
+      const moved = items.length > 1 ? `${items.length - failed} items` : items[0].name || '1 item';
+      this.snackBar.open(`Moved ${moved} to trash`, 'Dismiss', { duration: 4000 });
     }
   }
 
   protected onDrag(event: DropEvent<Datei>): void {
     if (!event.target) return;
-    if (!this.selection.isSelected(event.target)) {
-      this.selection.setSelection(event.target);
+    if (!this.selection().isSelected(event.target)) {
+      this.selection().setSelection(event.target);
     }
   }
 
   protected async onDrop(event: DropEvent<Datei>): Promise<void> {
-    const items = this.selection.selected.filter((item) => item.id !== event.target?.id);
+    const items = this.selection()
+      .selected()
+      .filter((item) => item.id !== event.target?.id);
     const results = await Promise.allSettled(
       items.map((item) =>
         this.api.invoke(updateDatei$FormData, {

@@ -1,0 +1,9 @@
+tr {
+  &:hover {
+    background: var(--mat-sys-surface-container-low);
+  }
+
+  &.selection-item-selected {
+    background: var(--mat-sys-secondary-container);
+  }
+}

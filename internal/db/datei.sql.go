@@ -12,6 +12,39 @@ import (
 	"github.com/google/uuid"
 )
 
+const countDateiProjectionsByParent = `-- name: CountDateiProjectionsByParent :one
+SELECT COUNT(*) FROM datei_projection WHERE parent_id = $1 AND trashed_at IS NULL
+`
+
+func (q *Queries) CountDateiProjectionsByParent(ctx context.Context, parentID *uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countDateiProjectionsByParent, parentID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countRootDateiProjections = `-- name: CountRootDateiProjections :one
+SELECT COUNT(*) FROM datei_projection WHERE parent_id IS NULL AND trashed_at IS NULL
+`
+
+func (q *Queries) CountRootDateiProjections(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countRootDateiProjections)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countTrashedDatei = `-- name: CountTrashedDatei :one
+SELECT COUNT(*) FROM datei_projection WHERE trashed_at IS NOT NULL
+`
+
+func (q *Queries) CountTrashedDatei(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countTrashedDatei)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const deleteDateiPermissionProjection = `-- name: DeleteDateiPermissionProjection :exec
 DELETE FROM datei_permission_projection
  WHERE id = $1
@@ -29,15 +62,16 @@ WITH RECURSIVE ancestors(id, parent_id, name, trashed_at, depth) AS (
   SELECT p.id, p.parent_id, p.name, p.trashed_at, a.depth + 1
   FROM datei_projection p
   INNER JOIN ancestors a ON p.id = a.parent_id
+  WHERE a.trashed_at IS NULL
 )
-SELECT id, name FROM ancestors
-WHERE NOT EXISTS (SELECT 1 FROM ancestors WHERE trashed_at IS NOT NULL)
+SELECT id, name, trashed_at FROM ancestors
 ORDER BY depth DESC
 `
 
 type GetDateiPathRow struct {
-	ID   uuid.UUID `db:"id"`
-	Name string    `db:"name"`
+	ID        uuid.UUID  `db:"id"`
+	Name      string     `db:"name"`
+	TrashedAt *time.Time `db:"trashed_at"`
 }
 
 func (q *Queries) GetDateiPath(ctx context.Context, id uuid.UUID) ([]GetDateiPathRow, error) {
@@ -49,6 +83,43 @@ func (q *Queries) GetDateiPath(ctx context.Context, id uuid.UUID) ([]GetDateiPat
 	var items []GetDateiPathRow
 	for rows.Next() {
 		var i GetDateiPathRow
+		if err := rows.Scan(&i.ID, &i.Name, &i.TrashedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getDateiPathIncludingTrashed = `-- name: GetDateiPathIncludingTrashed :many
+WITH RECURSIVE ancestors(id, parent_id, name, depth) AS (
+  SELECT d.id, d.parent_id, d.name, 0 FROM datei_projection d WHERE d.id = $1
+  UNION ALL
+  SELECT p.id, p.parent_id, p.name, a.depth + 1
+  FROM datei_projection p
+  INNER JOIN ancestors a ON p.id = a.parent_id
+)
+SELECT id, name FROM ancestors
+ORDER BY depth DESC
+`
+
+type GetDateiPathIncludingTrashedRow struct {
+	ID   uuid.UUID `db:"id"`
+	Name string    `db:"name"`
+}
+
+func (q *Queries) GetDateiPathIncludingTrashed(ctx context.Context, id uuid.UUID) ([]GetDateiPathIncludingTrashedRow, error) {
+	rows, err := q.db.Query(ctx, getDateiPathIncludingTrashed, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetDateiPathIncludingTrashedRow
+	for rows.Next() {
+		var i GetDateiPathIncludingTrashedRow
 		if err := rows.Scan(&i.ID, &i.Name); err != nil {
 			return nil, err
 		}
@@ -187,10 +258,17 @@ func (q *Queries) ListDateiProjections(ctx context.Context) ([]DateiProjection, 
 
 const listDateiProjectionsByParent = `-- name: ListDateiProjectionsByParent :many
 SELECT id, parent_id, is_directory, linked_datei_id, name, s3_key, size, checksum, mime_type, content_md, content_search, created_at, updated_at, trashed_at, created_by, updated_by, trashed_by FROM datei_projection WHERE parent_id = $1 AND trashed_at IS NULL ORDER BY is_directory DESC, name ASC
+LIMIT $2 OFFSET $3
 `
 
-func (q *Queries) ListDateiProjectionsByParent(ctx context.Context, parentID *uuid.UUID) ([]DateiProjection, error) {
-	rows, err := q.db.Query(ctx, listDateiProjectionsByParent, parentID)
+type ListDateiProjectionsByParentParams struct {
+	ParentID *uuid.UUID `db:"parent_id"`
+	Limit    int32      `db:"limit"`
+	Offset   int32      `db:"offset"`
+}
+
+func (q *Queries) ListDateiProjectionsByParent(ctx context.Context, arg ListDateiProjectionsByParentParams) ([]DateiProjection, error) {
+	rows, err := q.db.Query(ctx, listDateiProjectionsByParent, arg.ParentID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -229,10 +307,64 @@ func (q *Queries) ListDateiProjectionsByParent(ctx context.Context, parentID *uu
 
 const listRootDateiProjections = `-- name: ListRootDateiProjections :many
 SELECT id, parent_id, is_directory, linked_datei_id, name, s3_key, size, checksum, mime_type, content_md, content_search, created_at, updated_at, trashed_at, created_by, updated_by, trashed_by FROM datei_projection WHERE parent_id IS NULL AND trashed_at IS NULL ORDER BY is_directory DESC, name ASC
+LIMIT $1 OFFSET $2
 `
 
-func (q *Queries) ListRootDateiProjections(ctx context.Context) ([]DateiProjection, error) {
-	rows, err := q.db.Query(ctx, listRootDateiProjections)
+type ListRootDateiProjectionsParams struct {
+	Limit  int32 `db:"limit"`
+	Offset int32 `db:"offset"`
+}
+
+func (q *Queries) ListRootDateiProjections(ctx context.Context, arg ListRootDateiProjectionsParams) ([]DateiProjection, error) {
+	rows, err := q.db.Query(ctx, listRootDateiProjections, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DateiProjection
+	for rows.Next() {
+		var i DateiProjection
+		if err := rows.Scan(
+			&i.ID,
+			&i.ParentID,
+			&i.IsDirectory,
+			&i.LinkedDateiID,
+			&i.Name,
+			&i.S3Key,
+			&i.Size,
+			&i.Checksum,
+			&i.MimeType,
+			&i.ContentMd,
+			&i.ContentSearch,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.TrashedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
+			&i.TrashedBy,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTrashedDatei = `-- name: ListTrashedDatei :many
+SELECT id, parent_id, is_directory, linked_datei_id, name, s3_key, size, checksum, mime_type, content_md, content_search, created_at, updated_at, trashed_at, created_by, updated_by, trashed_by FROM datei_projection WHERE trashed_at IS NOT NULL ORDER BY trashed_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type ListTrashedDateiParams struct {
+	Limit  int32 `db:"limit"`
+	Offset int32 `db:"offset"`
+}
+
+func (q *Queries) ListTrashedDatei(ctx context.Context, arg ListTrashedDateiParams) ([]DateiProjection, error) {
+	rows, err := q.db.Query(ctx, listTrashedDatei, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

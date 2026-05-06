@@ -1,0 +1,25 @@
+post:
+  operationId: RestoreTrash
+  summary: Restore an item from trash
+  security:
+    - bearerHttpAuthentication: []
+  parameters:
+    - name: dateiId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/RestoreDateiRequest.yaml'
+  responses:
+    '204':
+      description: Successfully restored
+    '400':
+      description: Invalid input (invalid parentId)
+    '404':
+      description: Item not found or not in trash

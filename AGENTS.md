@@ -38,6 +38,7 @@ Touch only what you must. Clean up only your own mess.
 - Match existing style, even if you'd do it differently.
 - If you notice unrelated dead code, mention it — don't delete it.
 - Remove imports/variables/functions that _your_ changes made unused; leave pre-existing dead code alone unless asked.
+- If you extract a helper from new code that duplicates existing logic elsewhere, update the existing code to use the helper too. A helper that only covers half the callers leaves the codebase worse than no helper at all.
 
 The test: every changed line should trace directly to the user's request.
 
