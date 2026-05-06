@@ -252,6 +252,9 @@ func (s *UserService) AdminDisableMFA(ctx context.Context, userID uuid.UUID) err
 	q := s.queries()
 	user, err := q.GetUserAccountByID(ctx, userID)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return dateierrors.ErrNotFound
+		}
 		return fmt.Errorf("failed to get user: %w", err)
 	}
 	if !user.MfaEnabled {

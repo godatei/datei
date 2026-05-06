@@ -253,6 +253,9 @@ func (s *server) DisableUserMFAAdmin(
 	}
 
 	if err := s.userService.AdminDisableMFA(ctx, request.Id); err != nil {
+		if errors.Is(err, dateierrors.ErrNotFound) {
+			return DisableUserMFAAdmin404Response{}, nil
+		}
 		if errors.Is(err, dateierrors.ErrMFANotEnabled) {
 			return DisableUserMFAAdmin403Response{}, nil
 		}

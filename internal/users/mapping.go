@@ -42,11 +42,9 @@ func ToAdminUserListItem(row db.ListUserAccountProjectionsRow) api.AdminUserList
 		item.PrimaryEmail = &email
 	}
 	if row.PrimaryEmailVerifiedAt != nil {
-		verified := true
-		item.PrimaryEmailVerified = &verified
+		item.PrimaryEmailVerified = new(true)
 	} else if row.PrimaryEmail != nil {
-		notVerified := false
-		item.PrimaryEmailVerified = &notVerified
+		item.PrimaryEmailVerified = new(false)
 	}
 	return item
 }
