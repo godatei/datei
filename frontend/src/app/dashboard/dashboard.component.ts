@@ -200,11 +200,8 @@ export class DashboardComponent {
 
     if (failed !== results.length) {
       this.refresh.update((v) => v + 1);
-      this.snackBar.open(
-        `Moved ${items.length > 1 ? items.length - failed : items[0].name} to trash`,
-        'Dismiss',
-        { duration: 4000 },
-      );
+      const moved = items.length > 1 ? `${items.length - failed} items` : items[0].name || '1 item';
+      this.snackBar.open(`Moved ${moved} to trash`, 'Dismiss', { duration: 4000 });
     }
   }
 
