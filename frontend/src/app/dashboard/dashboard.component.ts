@@ -27,6 +27,7 @@ import {
   ImagePreviewDialogData,
 } from './image-preview-dialog.component';
 import { NewFolderDialogComponent } from './new-folder-dialog.component';
+import { RenameDateiDialogComponent, RenameDateiDialogData } from './rename-datei-dialog.component';
 import {
   LinkFormDialogComponent,
   LinkFormDialogData,
@@ -193,6 +194,26 @@ export class DashboardComponent {
       } catch (e) {
         console.error(e);
         this.snackBar.open('Failed to create folder', 'Dismiss', { duration: 4000 });
+      }
+    });
+  }
+
+  protected openRenameDialog(datei: Datei): void {
+    const ref = this.dialog.open(RenameDateiDialogComponent, {
+      width: '360px',
+      data: {
+        currentName: datei.name ?? '',
+        isDirectory: datei.isDirectory,
+      } satisfies RenameDateiDialogData,
+    });
+    ref.afterClosed().subscribe(async (name: string | null) => {
+      if (!name) return;
+      try {
+        await this.api.invoke(updateDatei$FormData, { id: datei.id, body: { name } });
+        this.refresh.update((v) => v + 1);
+      } catch (e) {
+        console.error(e);
+        this.snackBar.open('Failed to rename', 'Dismiss', { duration: 4000 });
       }
     });
   }

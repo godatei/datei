@@ -1,16 +1,10 @@
-<h2 mat-dialog-title>New folder</h2>
+<h2 mat-dialog-title>Rename</h2>
 <form [formRoot]="form">
   <mat-dialog-content>
     <div class="pt-2">
       <mat-form-field appearance="outline" class="w-full">
-        <mat-label>Folder name</mat-label>
-        <input
-          #nameInput
-          matInput
-          [formField]="form.name"
-          autocomplete="off"
-          aria-label="Folder name"
-        />
+        <mat-label>Name</mat-label>
+        <input #nameInput matInput [formField]="form.name" autocomplete="off" aria-label="Name" />
         @let errs = form.name().errors();
         @if (errs.length > 0) {
           @if (errs[0].kind === 'required') {
@@ -22,10 +16,24 @@
           }
         }
       </mat-form-field>
+      @if (extensionChanged()) {
+        <div class="flex items-center gap-2 mat-font-body-sm mat-text-on-surface-variant">
+          <mat-icon class="mat-text-error" aria-hidden="false" aria-label="Warning"
+            >warning</mat-icon
+          >
+          <span>
+            Extension will change from
+            <strong>{{ currentExt() || 'none' }}</strong>
+            to
+            <strong>{{ nextExt() || 'none' }}</strong
+            >.
+          </span>
+        </div>
+      }
     </div>
   </mat-dialog-content>
   <mat-dialog-actions align="end">
     <button mat-button type="button" (click)="cancel()">Cancel</button>
-    <button mat-button color="primary" type="submit" [disabled]="form().invalid()">Create</button>
+    <button mat-button color="primary" type="submit" [disabled]="form().invalid()">OK</button>
   </mat-dialog-actions>
 </form>
