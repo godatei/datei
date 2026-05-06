@@ -171,11 +171,11 @@ export class DashboardComponent {
 
   protected async trashDatei(item: Datei, event: Event): Promise<void> {
     event.stopPropagation();
-    this.trash(item);
+    await this.trash(item);
   }
 
   protected async trashSelected(): Promise<void> {
-    this.trash(this.selection().selected());
+    await this.trash(this.selection().selected());
   }
 
   private async trash(items: Datei | Datei[]): Promise<void> {
