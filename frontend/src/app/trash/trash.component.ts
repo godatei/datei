@@ -21,7 +21,7 @@ import { getDateiPath, listTrash, listTrashChildren } from '~/api/functions';
 import { Datei, TrashedDatei } from '~/api/models';
 import { ThumbnailIconComponent } from '~/frontend/dashboard/thumbnail-icon.component';
 import { SelectionDirective } from '~/frontend/dashboard/selection.directive';
-import { SelectionItemDirective } from '~/frontend/dashboard/selectable-item.directive';
+import { SelectionItemDirective } from '~/frontend/dashboard/selection-item.directive';
 import { RestoreDialogComponent } from './restore-dialog/restore-dialog.component';
 import { filter } from 'rxjs';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';

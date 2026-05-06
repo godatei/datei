@@ -31,7 +31,7 @@ import { DragPreviewDirective } from './drag-preview.directive';
 import { DragItemDirective } from './drag-row.directive';
 import { DropTargetDirective } from './drop-target.directive';
 import { SelectionDirective } from './selection.directive';
-import { SelectionItemDirective } from './selectable-item.directive';
+import { SelectionItemDirective } from './selection-item.directive';
 
 @Component({
   selector: 'app-dashboard',
