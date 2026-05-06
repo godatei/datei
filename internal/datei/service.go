@@ -92,32 +92,43 @@ type ListDateiOutput struct {
 func (s *Service) ListDatei(ctx context.Context, input ListDateiInput) (*ListDateiOutput, error) {
 	queries := db.New(s.db)
 
-	var allProjections []db.DateiProjection
+	limit := int32(input.Limit)
+	if limit <= 0 {
+		limit = 100
+	}
+	offset := int32(max(input.Offset, 0))
+
+	var projections []db.DateiProjection
+	var total int64
 	var err error
+
 	if input.ParentID != nil {
-		allProjections, err = queries.ListDateiProjectionsByParent(ctx, input.ParentID)
+		total, err = queries.CountDateiProjectionsByParent(ctx, input.ParentID)
+		if err != nil {
+			return nil, err
+		}
+		projections, err = queries.ListDateiProjectionsByParent(ctx, db.ListDateiProjectionsByParentParams{
+			ParentID: input.ParentID,
+			Limit:    limit,
+			Offset:   offset,
+		})
 	} else {
-		allProjections, err = queries.ListRootDateiProjections(ctx)
+		total, err = queries.CountRootDateiProjections(ctx)
+		if err != nil {
+			return nil, err
+		}
+		projections, err = queries.ListRootDateiProjections(ctx, db.ListRootDateiProjectionsParams{
+			Limit:  limit,
+			Offset: offset,
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	limit := input.Limit
-	if limit <= 0 {
-		limit = 100
-	}
-
-	offset := max(input.Offset, 0)
-	total := len(allProjections)
-	start := min(offset, len(allProjections))
-	end := min(offset+limit, len(allProjections))
-
-	items := MapProjectionSliceToAPI(allProjections[start:end])
-
 	return &ListDateiOutput{
-		Items: items,
-		Total: total,
+		Items: MapProjectionSliceToAPI(projections),
+		Total: int(total),
 	}, nil
 }
 
@@ -397,23 +408,28 @@ type ListTrashOutput struct {
 func (s *Service) ListTrash(ctx context.Context, input ListTrashInput) (*ListTrashOutput, error) {
 	queries := db.New(s.db)
 
-	limit := input.Limit
+	limit := int32(input.Limit)
 	if limit <= 0 {
 		limit = 100
 	}
-	offset := max(input.Offset, 0)
+	offset := int32(max(input.Offset, 0))
 
-	projections, err := queries.ListTrashedDatei(ctx)
+	total, err := queries.CountTrashedDatei(ctx)
 	if err != nil {
 		return nil, err
 	}
-	total := len(projections)
-	start := min(offset, total)
-	end := min(offset+limit, total)
 
-	items := make([]api.TrashedDatei, 0, end-start)
-	for i := range projections[start:end] {
-		p := &projections[start+i]
+	projections, err := queries.ListTrashedDatei(ctx, db.ListTrashedDateiParams{
+		Limit:  limit,
+		Offset: offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]api.TrashedDatei, 0, len(projections))
+	for i := range projections {
+		p := &projections[i]
 		var originPath *[]api.DateiPathItem
 		if p.ParentID != nil {
 			rows, err := queries.GetDateiPathIncludingTrashed(ctx, *p.ParentID)
@@ -434,7 +450,7 @@ func (s *Service) ListTrash(ctx context.Context, input ListTrashInput) (*ListTra
 		}
 	}
 
-	return &ListTrashOutput{Items: items, Total: total}, nil
+	return &ListTrashOutput{Items: items, Total: int(total)}, nil
 }
 
 // ListTrashChildrenInput contains parameters for listing contents of a trashed directory.
@@ -480,17 +496,23 @@ func (s *Service) ListTrashChildren(ctx context.Context, input ListTrashChildren
 		return nil, dateierrors.ErrParentNotTrashed
 	}
 
-	projections, err := queries.ListDateiProjectionsByParent(ctx, &input.ParentID)
+	total, err := queries.CountDateiProjectionsByParent(ctx, &input.ParentID)
 	if err != nil {
 		return nil, err
 	}
-	total := len(projections)
-	start := min(offset, total)
-	end := min(offset+limit, total)
+
+	projections, err := queries.ListDateiProjectionsByParent(ctx, db.ListDateiProjectionsByParentParams{
+		ParentID: &input.ParentID,
+		Limit:    int32(limit),
+		Offset:   int32(offset),
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	return &ListDateiOutput{
-		Items: MapProjectionSliceToAPI(projections[start:end]),
-		Total: total,
+		Items: MapProjectionSliceToAPI(projections),
+		Total: int(total),
 	}, nil
 }
 

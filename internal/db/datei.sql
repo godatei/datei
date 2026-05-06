@@ -5,13 +5,25 @@ SELECT * FROM datei_projection WHERE id = $1;
 SELECT * FROM datei_projection ORDER BY created_at DESC;
 
 -- name: ListRootDateiProjections :many
-SELECT * FROM datei_projection WHERE parent_id IS NULL AND trashed_at IS NULL ORDER BY is_directory DESC, name ASC;
+SELECT * FROM datei_projection WHERE parent_id IS NULL AND trashed_at IS NULL ORDER BY is_directory DESC, name ASC
+LIMIT $1 OFFSET $2;
+
+-- name: CountRootDateiProjections :one
+SELECT COUNT(*) FROM datei_projection WHERE parent_id IS NULL AND trashed_at IS NULL;
 
 -- name: ListTrashedDatei :many
-SELECT * FROM datei_projection WHERE trashed_at IS NOT NULL ORDER BY trashed_at DESC;
+SELECT * FROM datei_projection WHERE trashed_at IS NOT NULL ORDER BY trashed_at DESC
+LIMIT $1 OFFSET $2;
+
+-- name: CountTrashedDatei :one
+SELECT COUNT(*) FROM datei_projection WHERE trashed_at IS NOT NULL;
 
 -- name: ListDateiProjectionsByParent :many
-SELECT * FROM datei_projection WHERE parent_id = $1 AND trashed_at IS NULL ORDER BY is_directory DESC, name ASC;
+SELECT * FROM datei_projection WHERE parent_id = $1 AND trashed_at IS NULL ORDER BY is_directory DESC, name ASC
+LIMIT $2 OFFSET $3;
+
+-- name: CountDateiProjectionsByParent :one
+SELECT COUNT(*) FROM datei_projection WHERE parent_id = $1 AND trashed_at IS NULL;
 
 -- name: InsertDateiProjection :exec
 INSERT INTO datei_projection
