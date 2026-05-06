@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"math"
 	"strings"
 	"time"
 
@@ -92,32 +93,43 @@ type ListDateiOutput struct {
 func (s *Service) ListDatei(ctx context.Context, input ListDateiInput) (*ListDateiOutput, error) {
 	queries := db.New(s.db)
 
-	var allProjections []db.DateiProjection
+	limit := int32(input.Limit)
+	if limit <= 0 {
+		limit = 100
+	}
+	offset := int32(max(input.Offset, 0))
+
+	var projections []db.DateiProjection
+	var total int64
 	var err error
+
 	if input.ParentID != nil {
-		allProjections, err = queries.ListDateiProjectionsByParent(ctx, input.ParentID)
+		total, err = queries.CountDateiProjectionsByParent(ctx, input.ParentID)
+		if err != nil {
+			return nil, err
+		}
+		projections, err = queries.ListDateiProjectionsByParent(ctx, db.ListDateiProjectionsByParentParams{
+			ParentID: input.ParentID,
+			Limit:    limit,
+			Offset:   offset,
+		})
 	} else {
-		allProjections, err = queries.ListRootDateiProjections(ctx)
+		total, err = queries.CountRootDateiProjections(ctx)
+		if err != nil {
+			return nil, err
+		}
+		projections, err = queries.ListRootDateiProjections(ctx, db.ListRootDateiProjectionsParams{
+			Limit:  limit,
+			Offset: offset,
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	limit := input.Limit
-	if limit <= 0 {
-		limit = 100
-	}
-
-	offset := max(input.Offset, 0)
-	total := len(allProjections)
-	start := min(offset, len(allProjections))
-	end := min(offset+limit, len(allProjections))
-
-	items := MapProjectionSliceToAPI(allProjections[start:end])
-
 	return &ListDateiOutput{
-		Items: items,
-		Total: total,
+		Items: MapProjectionSliceToAPI(projections),
+		Total: int(total),
 	}, nil
 }
 
@@ -252,29 +264,8 @@ func (s *Service) UpdateDatei(ctx context.Context, input UpdateDateiInput) (*api
 	if input.MoveRequested {
 		if input.NewParentID != nil {
 			queries := db.New(s.db)
-			parent, err := queries.GetDateiProjectionByID(ctx, *input.NewParentID)
-			if errors.Is(err, pgx.ErrNoRows) {
-				return nil, dateierrors.ErrParentNotFound
-			} else if err != nil {
+			if err := s.validateMoveTarget(ctx, queries, input.ID, *input.NewParentID, agg.IsDirectory); err != nil {
 				return nil, err
-			}
-			if !parent.IsDirectory {
-				return nil, dateierrors.ErrParentNotDirectory
-			}
-			if parent.TrashedAt != nil {
-				return nil, dateierrors.ErrParentTrashed
-			}
-
-			if agg.IsDirectory {
-				pathRows, err := queries.GetDateiPath(ctx, *input.NewParentID)
-				if err != nil {
-					return nil, err
-				}
-				for _, row := range pathRows {
-					if row.ID == input.ID {
-						return nil, dateierrors.ErrCycleDetected
-					}
-				}
 			}
 		}
 
@@ -379,7 +370,8 @@ func (s *Service) GetThumbnail(
 	}, nil
 }
 
-// GetDateiPath returns the ancestor chain from root to the given datei (inclusive), root-first.
+// GetDateiPath returns the ancestor chain up to the given datei (inclusive), root-first.
+// The chain is truncated at the first trashed ancestor: that ancestor is included but its own parents are not.
 func (s *Service) GetDateiPath(ctx context.Context, dateiID uuid.UUID) ([]api.DateiPathItem, error) {
 	queries := db.New(s.db)
 
@@ -394,6 +386,9 @@ func (s *Service) GetDateiPath(ctx context.Context, dateiID uuid.UUID) ([]api.Da
 	path := make([]api.DateiPathItem, len(rows))
 	for i, row := range rows {
 		path[i] = api.DateiPathItem{Id: row.ID, Name: row.Name}
+		if row.TrashedAt != nil {
+			path[i].Trashed = new(true)
+		}
 	}
 	return path, nil
 }
@@ -438,14 +433,145 @@ func (s *Service) ListDateiChildren(ctx context.Context, parentID *uuid.UUID) ([
 	var projs []db.DateiProjection
 	var err error
 	if parentID == nil {
-		projs, err = queries.ListRootDateiProjections(ctx)
+		projs, err = queries.ListRootDateiProjections(ctx, db.ListRootDateiProjectionsParams{
+			Limit:  math.MaxInt32,
+			Offset: 0,
+		})
 	} else {
-		projs, err = queries.ListDateiProjectionsByParent(ctx, parentID)
+		projs, err = queries.ListDateiProjectionsByParent(ctx, db.ListDateiProjectionsByParentParams{
+			ParentID: parentID,
+			Limit:    math.MaxInt32,
+			Offset:   0,
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	return MapProjectionSliceToAPI(projs), nil
+}
+
+// ListTrashInput contains parameters for listing trashed datei records.
+type ListTrashInput struct {
+	Limit  int
+	Offset int
+}
+
+// ListTrashOutput contains the response for listing trashed datei records.
+type ListTrashOutput struct {
+	Items []api.TrashedDatei
+	Total int
+}
+
+// ListTrash retrieves root-level trashed datei records with pagination.
+func (s *Service) ListTrash(ctx context.Context, input ListTrashInput) (*ListTrashOutput, error) {
+	queries := db.New(s.db)
+
+	limit := int32(input.Limit)
+	if limit <= 0 {
+		limit = 100
+	}
+	offset := int32(max(input.Offset, 0))
+
+	total, err := queries.CountTrashedDatei(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	projections, err := queries.ListTrashedDatei(ctx, db.ListTrashedDateiParams{
+		Limit:  limit,
+		Offset: offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]api.TrashedDatei, 0, len(projections))
+	for i := range projections {
+		p := &projections[i]
+		var originPath *[]api.DateiPathItem
+		if p.ParentID != nil {
+			rows, err := queries.GetDateiPathIncludingTrashed(ctx, *p.ParentID)
+			if err != nil {
+				return nil, fmt.Errorf("get origin path for %s: %w", p.ID, err)
+			}
+			path := make([]api.DateiPathItem, len(rows))
+			for j, row := range rows {
+				path[j] = api.DateiPathItem{Id: row.ID, Name: row.Name}
+			}
+			originPath = &path
+		} else {
+			empty := []api.DateiPathItem{}
+			originPath = &empty
+		}
+		if mapped := MapProjectionToTrashedDatei(p, originPath); mapped != nil {
+			items = append(items, *mapped)
+		}
+	}
+
+	return &ListTrashOutput{Items: items, Total: int(total)}, nil
+}
+
+// ListTrashChildrenInput contains parameters for listing contents of a trashed directory.
+type ListTrashChildrenInput struct {
+	ParentID uuid.UUID
+	Limit    int
+	Offset   int
+}
+
+// ListTrashChildren lists the direct children of a trashed directory.
+func (s *Service) ListTrashChildren(ctx context.Context, input ListTrashChildrenInput) (*ListDateiOutput, error) {
+	queries := db.New(s.db)
+
+	limit := input.Limit
+	if limit <= 0 {
+		limit = 100
+	}
+	offset := max(input.Offset, 0)
+
+	parent, err := queries.GetDateiProjectionByID(ctx, input.ParentID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, dateierrors.ErrParentNotFound
+		}
+		return nil, err
+	}
+
+	// A directory is browsable in trash if it is directly trashed or has a trashed ancestor.
+	inTrash := parent.TrashedAt != nil
+	if !inTrash {
+		path, err := queries.GetDateiPath(ctx, input.ParentID)
+		if err != nil {
+			return nil, err
+		}
+		for _, row := range path {
+			if row.TrashedAt != nil {
+				inTrash = true
+				break
+			}
+		}
+	}
+	if !inTrash {
+		return nil, dateierrors.ErrParentNotTrashed
+	}
+
+	total, err := queries.CountDateiProjectionsByParent(ctx, &input.ParentID)
+	if err != nil {
+		return nil, err
+	}
+
+	projections, err := queries.ListDateiProjectionsByParent(ctx, db.ListDateiProjectionsByParentParams{
+		ParentID: &input.ParentID,
+		Limit:    int32(limit),
+		Offset:   int32(offset),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &ListDateiOutput{
+		Items: MapProjectionSliceToAPI(projections),
+		Total: int(total),
+	}, nil
 }
 
 // DeleteDatei soft-deletes a datei record
@@ -461,4 +587,102 @@ func (s *Service) DeleteDatei(ctx context.Context, dateiID uuid.UUID) error {
 	}
 
 	return s.repository.Save(ctx, agg)
+}
+
+type RestoreDateiInput struct {
+	ID       uuid.UUID
+	ParentID *uuid.UUID
+}
+
+// RestoreDatei restores a trashed datei or moves a descendant of a trashed datei to a new parent.
+// parentId == nil moves the item to root.
+func (s *Service) RestoreDatei(ctx context.Context, input RestoreDateiInput) error {
+	queries := db.New(s.db)
+	projection, err := queries.GetDateiProjectionByID(ctx, input.ID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return dateierrors.ErrNotFound
+	} else if err != nil {
+		return err
+	}
+
+	userID := authn.RequireContext(ctx).UserID
+	now := time.Now()
+
+	if input.ParentID != nil {
+		if err := s.validateMoveTarget(ctx, queries, input.ID, *input.ParentID, projection.IsDirectory); err != nil {
+			return err
+		}
+	}
+
+	directlyTrashed := projection.TrashedAt != nil
+	if !directlyTrashed {
+		if projection.ParentID == nil {
+			return dateierrors.ErrNotInTrash
+		}
+		parentPath, err := queries.GetDateiPath(ctx, *projection.ParentID)
+		if err != nil {
+			return err
+		}
+		hasTrashedAncestor := false
+		for _, row := range parentPath {
+			if row.TrashedAt != nil {
+				hasTrashedAncestor = true
+				break
+			}
+		}
+		if !hasTrashedAncestor {
+			return dateierrors.ErrNotInTrash
+		}
+	}
+
+	agg, err := s.repository.LoadByID(ctx, input.ID)
+	if err != nil {
+		return err
+	}
+	if directlyTrashed {
+		if err := agg.Restore(userID, now); err != nil {
+			return err
+		}
+	}
+	if err := agg.Move(input.ParentID, userID, now); err != nil {
+		return err
+	}
+	return s.repository.Save(ctx, agg)
+}
+
+// validateMoveTarget checks that targetParentID is a valid, accessible (non-trashed) directory,
+// and (for directory items) that moving itemID there would not create a cycle.
+func (s *Service) validateMoveTarget(
+	ctx context.Context,
+	queries *db.Queries,
+	itemID uuid.UUID,
+	targetParentID uuid.UUID,
+	itemIsDirectory bool,
+) error {
+	parent, err := queries.GetDateiProjectionByID(ctx, targetParentID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return dateierrors.ErrParentNotFound
+	} else if err != nil {
+		return err
+	}
+	if !parent.IsDirectory {
+		return dateierrors.ErrParentNotDirectory
+	}
+
+	// Walk the target's ancestor path to detect both trashed ancestors and cycles.
+	// GetDateiPath includes the target itself and stops above the first trashed node,
+	// but includes that node — so any trashed entry means the target is inside trash.
+	pathRows, err := queries.GetDateiPath(ctx, targetParentID)
+	if err != nil {
+		return err
+	}
+	for _, row := range pathRows {
+		if row.TrashedAt != nil {
+			return dateierrors.ErrParentTrashed
+		}
+		if itemIsDirectory && row.ID == itemID {
+			return dateierrors.ErrCycleDetected
+		}
+	}
+	return nil
 }

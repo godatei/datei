@@ -4,4 +4,5 @@
 export interface DateiPathItem {
   id: string;
   name: string;
+  trashed?: boolean;
 }
