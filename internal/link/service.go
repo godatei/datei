@@ -36,6 +36,11 @@ func NewService(
 	}
 }
 
+// publicListChildrenLimit caps the number of children returned by a single
+// public folder listing. Pagination at the public viewer is a future task; for
+// now we cap at a generous value to avoid surprises.
+const publicListChildrenLimit = 1000
+
 // generateAccessToken returns a 32-byte random token encoded as base64-url
 // (43 ASCII characters) suitable for use as a URL slug.
 func generateAccessToken() (string, error) {
@@ -354,7 +359,13 @@ func (s *Service) ListPublicLinkDateien(
 		return nil, dateierrors.ErrLinkDateiNotShared
 	}
 
-	children, err := queries.ListDateiProjectionsByParent(ctx, parentID)
+	// The public viewer renders the full folder contents in one shot — no
+	// pagination yet — so request all rows.
+	children, err := queries.ListDateiProjectionsByParent(ctx, db.ListDateiProjectionsByParentParams{
+		ParentID: parentID,
+		Limit:    publicListChildrenLimit,
+		Offset:   0,
+	})
 	if err != nil {
 		return nil, err
 	}

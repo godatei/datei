@@ -1,0 +1,11 @@
+type: object
+required:
+  - parentId
+properties:
+  parentId:
+    type: string
+    format: uuid
+    nullable: true
+    description: >
+      Target parent directory for the restored item,
+      or null to restore to the root.

@@ -8,3 +8,5 @@ properties:
     format: uuid
   name:
     type: string
+  trashed:
+    type: boolean

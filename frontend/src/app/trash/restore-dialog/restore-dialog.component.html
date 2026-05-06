@@ -1,0 +1,59 @@
+<h2 mat-dialog-title>Restore "{{ data.name }}"</h2>
+
+<mat-dialog-content class="w-lg min-h-64">
+  <nav
+    class="breadcrumb flex items-center flex-nowrap overflow-x-auto pb-1 mb-1 border-b"
+    aria-label="Current location"
+  >
+    <button mat-button class="breadcrumb-btn" (click)="navigateUpTo()">
+      <mat-icon>home</mat-icon>
+      My files
+    </button>
+    @for (item of navItems(); track item.id; let last = $last) {
+      <mat-icon class="breadcrumb-sep shrink-0 mat-text-on-surface-variant">chevron_right</mat-icon>
+      @if (last) {
+        <span class="px-2 whitespace-nowrap font-medium mat-text-on-surface mat-font-label-lg">{{
+          item.name
+        }}</span>
+      } @else {
+        <button mat-button class="breadcrumb-btn" (click)="navigateUpTo(item.id)">
+          {{ item.name }}
+        </button>
+      }
+    }
+  </nav>
+
+  @if (currentContents.isLoading()) {
+    <mat-progress-bar mode="indeterminate" />
+  } @else if (!currentContents.value()?.length) {
+    <div
+      class="empty-state flex flex-col items-center justify-center min-h-56 gap-2 mat-text-on-surface-variant"
+    >
+      <mat-icon>folder_open</mat-icon>
+      <p class="m-0 mat-font-body-md">No subfolders here</p>
+    </div>
+  } @else {
+    <mat-action-list>
+      @for (item of currentContents.value(); track item.id) {
+        <button mat-list-item (click)="navigateTo(item)">
+          <mat-icon matListItemIcon>folder</mat-icon>
+          <span matListItemTitle>{{ item.name }}</span>
+          <span matListItemMeta>
+            <mat-icon>chevron_right</mat-icon>
+          </span>
+        </button>
+      }
+    </mat-action-list>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-flat-button (click)="restore()">
+    @if (currentNavItem(); as item) {
+      Restore to "{{ item.name }}"
+    } @else {
+      Restore to My files
+    }
+  </button>
+</mat-dialog-actions>
