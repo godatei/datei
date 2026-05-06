@@ -14,6 +14,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Api } from '~/api/api';
+import { snackErrorDuration } from '~/frontend/constants';
 import { getDateiPath, listDatei, restoreTrash } from '~/api/functions';
 import { Datei, DateiPathItem } from '~/api/models';
 
@@ -54,7 +55,9 @@ export class RestoreDialogComponent implements OnInit {
         }
       } catch (e) {
         console.error(e);
-        this.snack.open('Failed to load original path', 'Dismiss', { duration: 3000 });
+        this.snack.open('Failed to load original path', 'Dismiss', {
+          duration: snackErrorDuration,
+        });
       }
     }
   }
