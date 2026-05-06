@@ -89,6 +89,113 @@ func (q *Queries) GetDateiProjectionByID(ctx context.Context, id uuid.UUID) (Dat
 	return i, err
 }
 
+const getDateiProjectionByParentAndName = `-- name: GetDateiProjectionByParentAndName :one
+SELECT id, parent_id, is_directory, linked_datei_id, name, s3_key, size, checksum, mime_type, content_md, content_search, created_at, updated_at, trashed_at, created_by, updated_by, trashed_by FROM datei_projection WHERE parent_id = $1 AND name = $2 AND trashed_at IS NULL
+`
+
+type GetDateiProjectionByParentAndNameParams struct {
+	ParentID *uuid.UUID `db:"parent_id"`
+	Name     string     `db:"name"`
+}
+
+func (q *Queries) GetDateiProjectionByParentAndName(ctx context.Context, arg GetDateiProjectionByParentAndNameParams) (DateiProjection, error) {
+	row := q.db.QueryRow(ctx, getDateiProjectionByParentAndName, arg.ParentID, arg.Name)
+	var i DateiProjection
+	err := row.Scan(
+		&i.ID,
+		&i.ParentID,
+		&i.IsDirectory,
+		&i.LinkedDateiID,
+		&i.Name,
+		&i.S3Key,
+		&i.Size,
+		&i.Checksum,
+		&i.MimeType,
+		&i.ContentMd,
+		&i.ContentSearch,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.TrashedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+		&i.TrashedBy,
+	)
+	return i, err
+}
+
+const getDateiProjectionByPath = `-- name: GetDateiProjectionByPath :one
+WITH RECURSIVE path_walk AS (
+  SELECT d.id, 1::int AS depth
+  FROM datei_projection d
+  WHERE d.parent_id IS NULL
+    AND d.name = ($1::text[])[1]
+    AND d.trashed_at IS NULL
+  UNION ALL
+  SELECT d.id, pw.depth + 1
+  FROM datei_projection d
+  JOIN path_walk pw ON d.parent_id = pw.id
+  WHERE d.name = ($1::text[])[pw.depth + 1]
+    AND d.trashed_at IS NULL
+)
+SELECT dp.id, dp.parent_id, dp.is_directory, dp.linked_datei_id, dp.name, dp.s3_key, dp.size, dp.checksum, dp.mime_type, dp.content_md, dp.content_search, dp.created_at, dp.updated_at, dp.trashed_at, dp.created_by, dp.updated_by, dp.trashed_by FROM datei_projection dp
+JOIN path_walk pw ON dp.id = pw.id
+WHERE pw.depth = array_length($1::text[], 1)
+`
+
+func (q *Queries) GetDateiProjectionByPath(ctx context.Context, dollar_1 []string) (DateiProjection, error) {
+	row := q.db.QueryRow(ctx, getDateiProjectionByPath, dollar_1)
+	var i DateiProjection
+	err := row.Scan(
+		&i.ID,
+		&i.ParentID,
+		&i.IsDirectory,
+		&i.LinkedDateiID,
+		&i.Name,
+		&i.S3Key,
+		&i.Size,
+		&i.Checksum,
+		&i.MimeType,
+		&i.ContentMd,
+		&i.ContentSearch,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.TrashedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+		&i.TrashedBy,
+	)
+	return i, err
+}
+
+const getRootDateiProjectionByName = `-- name: GetRootDateiProjectionByName :one
+SELECT id, parent_id, is_directory, linked_datei_id, name, s3_key, size, checksum, mime_type, content_md, content_search, created_at, updated_at, trashed_at, created_by, updated_by, trashed_by FROM datei_projection WHERE parent_id IS NULL AND name = $1 AND trashed_at IS NULL
+`
+
+func (q *Queries) GetRootDateiProjectionByName(ctx context.Context, name string) (DateiProjection, error) {
+	row := q.db.QueryRow(ctx, getRootDateiProjectionByName, name)
+	var i DateiProjection
+	err := row.Scan(
+		&i.ID,
+		&i.ParentID,
+		&i.IsDirectory,
+		&i.LinkedDateiID,
+		&i.Name,
+		&i.S3Key,
+		&i.Size,
+		&i.Checksum,
+		&i.MimeType,
+		&i.ContentMd,
+		&i.ContentSearch,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.TrashedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+		&i.TrashedBy,
+	)
+	return i, err
+}
+
 const insertDateiPermissionProjection = `-- name: InsertDateiPermissionProjection :exec
 INSERT INTO datei_permission_projection
  (id, datei_id, user_account_id, user_group_id, permission_type, created_at)

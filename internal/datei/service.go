@@ -398,6 +398,56 @@ func (s *Service) GetDateiPath(ctx context.Context, dateiID uuid.UUID) ([]api.Da
 	return path, nil
 }
 
+// FindDateiByPath resolves a slash-split path of segments to a single datei in one query.
+// Returns dateierrors.ErrNotFound if any segment along the path does not exist.
+func (s *Service) FindDateiByPath(ctx context.Context, segments []string) (*api.Datei, error) {
+	proj, err := db.New(s.db).GetDateiProjectionByPath(ctx, segments)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, dateierrors.ErrNotFound
+	} else if err != nil {
+		return nil, err
+	}
+	return MapProjectionToAPI(&proj), nil
+}
+
+// FindDateiByName finds a non-trashed datei by name within a parent (or at root).
+// Returns dateierrors.ErrNotFound if no match exists.
+func (s *Service) FindDateiByName(ctx context.Context, parentID *uuid.UUID, name string) (*api.Datei, error) {
+	queries := db.New(s.db)
+	var proj db.DateiProjection
+	var err error
+	if parentID == nil {
+		proj, err = queries.GetRootDateiProjectionByName(ctx, name)
+	} else {
+		proj, err = queries.GetDateiProjectionByParentAndName(ctx, db.GetDateiProjectionByParentAndNameParams{
+			ParentID: parentID,
+			Name:     name,
+		})
+	}
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, dateierrors.ErrNotFound
+	} else if err != nil {
+		return nil, err
+	}
+	return MapProjectionToAPI(&proj), nil
+}
+
+// ListDateiChildren returns all non-trashed children of the given parent (or root items if parentID is nil).
+func (s *Service) ListDateiChildren(ctx context.Context, parentID *uuid.UUID) ([]api.Datei, error) {
+	queries := db.New(s.db)
+	var projs []db.DateiProjection
+	var err error
+	if parentID == nil {
+		projs, err = queries.ListRootDateiProjections(ctx)
+	} else {
+		projs, err = queries.ListDateiProjectionsByParent(ctx, parentID)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return MapProjectionSliceToAPI(projs), nil
+}
+
 // DeleteDatei soft-deletes a datei record
 func (s *Service) DeleteDatei(ctx context.Context, dateiID uuid.UUID) error {
 	agg, err := s.repository.LoadByID(ctx, dateiID)

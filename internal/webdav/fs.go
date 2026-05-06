@@ -9,75 +9,51 @@ import (
 
 	"github.com/godatei/datei/internal/datei"
 	"github.com/godatei/datei/internal/dateierrors"
-	"github.com/godatei/datei/internal/db"
+	"github.com/godatei/datei/pkg/api"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 	xdav "golang.org/x/net/webdav"
 )
 
 type dateiFS struct {
 	service *datei.Service
-	queries *db.Queries
 }
 
 // NewHandler returns a webdav.Handler that serves the Datei file system.
 // It must be mounted at /dav (or with the same prefix passed here).
-func NewHandler(pool *pgxpool.Pool, service *datei.Service) *xdav.Handler {
+func NewHandler(service *datei.Service) *xdav.Handler {
 	return &xdav.Handler{
-		FileSystem: &dateiFS{service: service, queries: db.New(pool)},
+		FileSystem: &dateiFS{service: service},
 		LockSystem: xdav.NewMemLS(),
 	}
 }
 
-// resolve returns the DateiProjection for the given WebDAV path.
+// resolve returns the api.Datei for the given WebDAV path.
 // Returns nil, nil for the virtual root ("/").
-func (fs *dateiFS) resolve(ctx context.Context, name string) (*db.DateiProjection, error) {
+func (fs *dateiFS) resolve(ctx context.Context, name string) (*api.Datei, error) {
 	name = strings.Trim(name, "/")
 	if name == "" {
 		return nil, nil
 	}
 	segments := strings.Split(name, "/")
-	var parentID *uuid.UUID
-	var proj *db.DateiProjection
-	for i, seg := range segments {
-		child, err := fs.findChild(ctx, parentID, seg)
-		if err != nil {
-			return nil, err
-		}
-		proj = child
-		if i < len(segments)-1 {
-			if !proj.IsDirectory {
-				return nil, os.ErrNotExist
-			}
-			parentID = &proj.ID
-		}
+	item, err := fs.service.FindDateiByPath(ctx, segments)
+	if errors.Is(err, dateierrors.ErrNotFound) {
+		return nil, os.ErrNotExist
 	}
-	return proj, nil
+	return item, err
 }
 
 // findChild returns the non-trashed child of parentID with the given name.
-func (fs *dateiFS) findChild(ctx context.Context, parentID *uuid.UUID, name string) (*db.DateiProjection, error) {
-	var children []db.DateiProjection
-	var err error
-	if parentID == nil {
-		children, err = fs.queries.ListRootDateiProjections(ctx)
-	} else {
-		children, err = fs.queries.ListDateiProjectionsByParent(ctx, parentID)
+func (fs *dateiFS) findChild(ctx context.Context, parentID *uuid.UUID, name string) (*api.Datei, error) {
+	item, err := fs.service.FindDateiByName(ctx, parentID, name)
+	if errors.Is(err, dateierrors.ErrNotFound) {
+		return nil, os.ErrNotExist
 	}
-	if err != nil {
-		return nil, err
-	}
-	for i := range children {
-		if children[i].Name == name {
-			return &children[i], nil
-		}
-	}
-	return nil, os.ErrNotExist
+	return item, err
 }
 
-// resolveParent returns the parent projection and the base filename for a path.
+// resolveParent returns the parent datei and the base filename for a path.
 // parent is nil when the item lives directly under the virtual root.
-func (fs *dateiFS) resolveParent(ctx context.Context, name string) (*db.DateiProjection, string, error) {
+func (fs *dateiFS) resolveParent(ctx context.Context, name string) (*api.Datei, string, error) {
 	dir, base := path.Split(strings.TrimRight(name, "/"))
 	dir = strings.TrimRight(dir, "/")
 	if dir == "" {
@@ -100,7 +76,7 @@ func (fs *dateiFS) Mkdir(ctx context.Context, name string, _ os.FileMode) error 
 	}
 	var parentID *uuid.UUID
 	if parent != nil {
-		parentID = &parent.ID
+		parentID = &parent.Id
 	}
 	if _, err := fs.findChild(ctx, parentID, base); err == nil {
 		return os.ErrExist
@@ -120,7 +96,7 @@ func (fs *dateiFS) RemoveAll(ctx context.Context, name string) error {
 	if proj == nil {
 		return os.ErrPermission
 	}
-	return fs.service.DeleteDatei(ctx, proj.ID)
+	return fs.service.DeleteDatei(ctx, proj.Id)
 }
 
 func (fs *dateiFS) Rename(ctx context.Context, oldName, newName string) error {
@@ -138,17 +114,17 @@ func (fs *dateiFS) Rename(ctx context.Context, oldName, newName string) error {
 	}
 	var newParentID *uuid.UUID
 	if newParent != nil {
-		newParentID = &newParent.ID
+		newParentID = &newParent.Id
 	}
 
 	if _, err := fs.findChild(ctx, newParentID, newBase); err == nil {
 		return os.ErrExist
 	}
 
-	sameParent := (proj.ParentID == nil && newParentID == nil) ||
-		(proj.ParentID != nil && newParentID != nil && *proj.ParentID == *newParentID)
+	sameParent := (proj.ParentId == nil && newParentID == nil) ||
+		(proj.ParentId != nil && newParentID != nil && *proj.ParentId == *newParentID)
 
-	input := datei.UpdateDateiInput{ID: proj.ID, Name: &newBase}
+	input := datei.UpdateDateiInput{ID: proj.Id, Name: &newBase}
 	if !sameParent {
 		input.MoveRequested = true
 		input.NewParentID = newParentID
@@ -175,7 +151,7 @@ func (fs *dateiFS) OpenFile(ctx context.Context, name string, flag int, _ os.Fil
 	isWrite := flag&(os.O_WRONLY|os.O_RDWR|os.O_CREATE) != 0
 
 	if name == "/" {
-		children, err := fs.queries.ListRootDateiProjections(ctx)
+		children, err := fs.service.ListDateiChildren(ctx, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -188,13 +164,13 @@ func (fs *dateiFS) OpenFile(ctx context.Context, name string, flag int, _ os.Fil
 			return nil, err
 		}
 		if proj.IsDirectory {
-			children, err := fs.queries.ListDateiProjectionsByParent(ctx, &proj.ID)
+			children, err := fs.service.ListDateiChildren(ctx, &proj.Id)
 			if err != nil {
 				return nil, err
 			}
 			return newDirFile(projInfo(proj), children), nil
 		}
-		out, err := fs.service.DownloadDatei(ctx, proj.ID)
+		out, err := fs.service.DownloadDatei(ctx, proj.Id)
 		if err != nil {
 			return nil, mapErr(err)
 		}
@@ -207,14 +183,13 @@ func (fs *dateiFS) OpenFile(ctx context.Context, name string, flag int, _ os.Fil
 	}
 	var parentID *uuid.UUID
 	if parent != nil {
-		parentID = &parent.ID
+		parentID = &parent.Id
 	}
 
 	existing, lookupErr := fs.findChild(ctx, parentID, base)
 	var existingID *uuid.UUID
 	if lookupErr == nil {
-		id := existing.ID
-		existingID = &id
+		existingID = &existing.Id
 	} else if !errors.Is(lookupErr, os.ErrNotExist) {
 		return nil, lookupErr
 	}

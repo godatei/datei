@@ -126,7 +126,7 @@ func run(ctx context.Context, options Options) error {
 	srv := server.NewServer(dateiSvc, userSvc)
 	strictHandler := server.NewStrictHandler(srv, nil)
 
-	davHandler := dateiwebdav.NewHandler(db, dateiSvc)
+	davHandler := dateiwebdav.NewHandler(dateiSvc)
 
 	rootMux := chi.NewRouter()
 	rootMux.Use(chimiddleware.Recoverer)

@@ -11,12 +11,12 @@ import (
 	"time"
 
 	"github.com/godatei/datei/internal/datei"
-	"github.com/godatei/datei/internal/db"
+	"github.com/godatei/datei/pkg/api"
 	"github.com/google/uuid"
 	xdav "golang.org/x/net/webdav"
 )
 
-// fileInfo implements os.FileInfo for a DateiProjection or the virtual root.
+// fileInfo implements os.FileInfo for an api.Datei or the virtual root.
 type fileInfo struct {
 	name    string
 	size    int64
@@ -40,13 +40,17 @@ func rootInfo() *fileInfo {
 	return &fileInfo{name: "/", isDir: true}
 }
 
-func projInfo(p *db.DateiProjection) *fileInfo {
+func projInfo(p *api.Datei) *fileInfo {
 	size := int64(0)
 	if p.Size != nil {
 		size = *p.Size
 	}
+	name := ""
+	if p.Name != nil {
+		name = *p.Name
+	}
 	return &fileInfo{
-		name:    p.Name,
+		name:    name,
 		size:    size,
 		modTime: p.UpdatedAt,
 		isDir:   p.IsDirectory,
@@ -59,7 +63,7 @@ type dateiFile struct {
 	info os.FileInfo
 
 	// dir mode
-	children []db.DateiProjection
+	children []api.Datei
 	childPos int
 
 	// read mode (file content buffered for seek support)
@@ -74,7 +78,7 @@ type dateiFile struct {
 	tmpFile    *os.File
 }
 
-func newDirFile(info os.FileInfo, children []db.DateiProjection) *dateiFile {
+func newDirFile(info os.FileInfo, children []api.Datei) *dateiFile {
 	return &dateiFile{info: info, children: children}
 }
 
