@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"errors"
-	"log/slog"
 
 	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/link"
@@ -31,7 +30,7 @@ func (s *server) CreateLink(
 	request CreateLinkRequestObject,
 ) (CreateLinkResponseObject, error) {
 	if request.Body == nil {
-		return CreateLink400JSONResponse{Message: "missing request body"}, nil
+		return CreateLink400Response{}, nil
 	}
 
 	result, err := s.linkService.CreateLink(ctx, link.CreateLinkInput{
@@ -42,9 +41,8 @@ func (s *server) CreateLink(
 	})
 	if err != nil {
 		if errors.Is(err, dateierrors.ErrInvalidInput) {
-			return CreateLink400JSONResponse{Message: "invalid input"}, nil
+			return CreateLink400Response{}, nil
 		}
-		slog.Error("create link error", "error", err)
 		return nil, err
 	}
 	return CreateLink201JSONResponse(*result), nil
@@ -80,7 +78,6 @@ func (s *server) UpdateLink(
 		case errors.Is(err, dateierrors.ErrInvalidInput):
 			return UpdateLink400Response{}, nil
 		default:
-			slog.Error("update link error", "error", err)
 			return nil, err
 		}
 	}
@@ -136,7 +133,6 @@ func (s *server) AddDateiToLink(
 		case errors.Is(err, dateierrors.ErrInvalidInput):
 			return AddDateiToLink400Response{}, nil
 		default:
-			slog.Error("add datei to link error", "error", err)
 			return nil, err
 		}
 	}
@@ -156,7 +152,6 @@ func (s *server) RemoveDateiFromLink(
 		case errors.Is(err, dateierrors.ErrLinkDateiNotShared):
 			return RemoveDateiFromLink400Response{}, nil
 		default:
-			slog.Error("remove datei from link error", "error", err)
 			return nil, err
 		}
 	}

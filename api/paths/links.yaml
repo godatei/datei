@@ -31,12 +31,3 @@ post:
             $ref: '../components/schemas/Link.yaml'
     '400':
       description: Invalid request
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
-            required:
-              - message

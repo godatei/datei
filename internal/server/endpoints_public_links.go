@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 
 	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/pkg/api"
@@ -32,7 +31,6 @@ func (s *server) ListPublicLinkDateien(
 			errors.Is(err, dateierrors.ErrLinkDateiNotShared):
 			return ListPublicLinkDateien404Response{}, nil
 		default:
-			slog.Error("list public link dateien error", "error", err)
 			return nil, err
 		}
 	}
@@ -70,7 +68,6 @@ func (s *server) DownloadPublicLinkDatei(
 			errors.Is(err, dateierrors.ErrNotFound):
 			return DownloadPublicLinkDatei404Response{}, nil
 		default:
-			slog.Error("download public link datei error", "error", err)
 			return nil, err
 		}
 	}
