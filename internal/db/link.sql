@@ -11,6 +11,9 @@ UPDATE link_projection
 -- name: UpdateLinkProjectionAccessToken :exec
 UPDATE link_projection SET access_token = $1, updated_at = $2 WHERE id = $3;
 
+-- name: TouchLinkProjection :exec
+UPDATE link_projection SET updated_at = $1 WHERE id = $2;
+
 -- name: UpdateLinkProjectionRevoked :exec
 UPDATE link_projection SET revoked_at = $1, updated_at = $2 WHERE id = $3;
 

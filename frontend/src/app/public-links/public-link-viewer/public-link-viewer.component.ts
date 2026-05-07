@@ -86,9 +86,7 @@ export class PublicLinkViewerComponent {
     {
       submission: {
         action: async () => {
-          this.code.set(this.codeModel().code);
-          this.state.set({ kind: 'loading' });
-          await this.loadDateien(this.currentParentId());
+          await this.loadDateien(this.currentParentId(), this.codeModel().code);
         },
       },
     },
@@ -103,17 +101,15 @@ export class PublicLinkViewerComponent {
     });
   }
 
-  private async loadDateien(parentId: string | null): Promise<void> {
+  private async loadDateien(parentId: string | null, candidateCode?: string): Promise<void> {
     const token = this.accessToken();
     if (!token) return;
+    const code = candidateCode ?? (this.code() === '' ? undefined : this.code());
     try {
       const result = await firstValueFrom(
-        this.linksService.listPublicDateien(
-          token,
-          parentId ?? undefined,
-          this.code() === '' ? undefined : this.code(),
-        ),
+        this.linksService.listPublicDateien(token, parentId ?? undefined, code),
       );
+      if (candidateCode !== undefined) this.code.set(candidateCode);
       this.dataSource.data = result.items;
       this.linkName.set(result.name);
       this.ownerName.set(result.ownerName);
@@ -148,13 +144,11 @@ export class PublicLinkViewerComponent {
   protected async navigateInto(folder: Datei): Promise<void> {
     if (!folder.isDirectory) return;
     this.path.update((p) => [...p, { id: folder.id, name: folder.name ?? 'Folder' }]);
-    this.state.set({ kind: 'loading' });
     await this.loadDateien(folder.id);
   }
 
   protected async navigateToBreadcrumb(index: number): Promise<void> {
     this.path.update((p) => p.slice(0, index + 1));
-    this.state.set({ kind: 'loading' });
     await this.loadDateien(this.currentParentId());
   }
 

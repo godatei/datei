@@ -287,6 +287,20 @@ func (q *Queries) ListLinkProjectionsByOwner(ctx context.Context, ownerID uuid.U
 	return items, nil
 }
 
+const touchLinkProjection = `-- name: TouchLinkProjection :exec
+UPDATE link_projection SET updated_at = $1 WHERE id = $2
+`
+
+type TouchLinkProjectionParams struct {
+	UpdatedAt time.Time `db:"updated_at"`
+	ID        uuid.UUID `db:"id"`
+}
+
+func (q *Queries) TouchLinkProjection(ctx context.Context, arg TouchLinkProjectionParams) error {
+	_, err := q.db.Exec(ctx, touchLinkProjection, arg.UpdatedAt, arg.ID)
+	return err
+}
+
 const updateLinkProjection = `-- name: UpdateLinkProjection :exec
 UPDATE link_projection
  SET name = $1, code = $2, expires_at = $3, updated_at = $4

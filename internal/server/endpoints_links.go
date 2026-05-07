@@ -151,9 +151,10 @@ func (s *server) RemoveDateiFromLink(
 	err := s.linkService.RemoveDateiFromLink(ctx, request.Id, request.DateiId)
 	if err != nil {
 		switch {
-		case errors.Is(err, dateierrors.ErrLinkNotFound),
-			errors.Is(err, dateierrors.ErrLinkDateiNotShared):
+		case errors.Is(err, dateierrors.ErrLinkNotFound):
 			return RemoveDateiFromLink404Response{}, nil
+		case errors.Is(err, dateierrors.ErrLinkDateiNotShared):
+			return RemoveDateiFromLink400Response{}, nil
 		default:
 			slog.Error("remove datei from link error", "error", err)
 			return nil, err

@@ -67,6 +67,12 @@ func updateProjectionForLinkDateiAdded(ctx context.Context, q *db.Queries, event
 	}); err != nil {
 		return fmt.Errorf("failed to insert link_datei_projection: %w", err)
 	}
+	if err := q.TouchLinkProjection(ctx, db.TouchLinkProjectionParams{
+		UpdatedAt: event.AddedAt,
+		ID:        event.ID,
+	}); err != nil {
+		return fmt.Errorf("failed to touch link_projection: %w", err)
+	}
 	return nil
 }
 
@@ -76,6 +82,12 @@ func updateProjectionForLinkDateiRemoved(ctx context.Context, q *db.Queries, eve
 		DateiID: event.DateiID,
 	}); err != nil {
 		return fmt.Errorf("failed to delete link_datei_projection: %w", err)
+	}
+	if err := q.TouchLinkProjection(ctx, db.TouchLinkProjectionParams{
+		UpdatedAt: event.RemovedAt,
+		ID:        event.ID,
+	}); err != nil {
+		return fmt.Errorf("failed to touch link_projection: %w", err)
 	}
 	return nil
 }

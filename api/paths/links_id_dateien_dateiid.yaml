@@ -19,5 +19,7 @@ delete:
   responses:
     '204':
       description: Datei removed
+    '400':
+      description: Datei is not part of this link
     '404':
-      description: Link or datei not found
+      description: Link not found
