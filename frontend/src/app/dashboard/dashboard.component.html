@@ -58,7 +58,9 @@
         Create public link
       </button>
     } @else {
-      <!-- TODO: Filters go here -->
+      <mat-chip-listbox aria-label="Filter">
+        <mat-chip-option selected>All files</mat-chip-option>
+      </mat-chip-listbox>
     }
   </div>
 

@@ -17,9 +17,9 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import type { Link } from '~/api/models/link';
+import { RelativeDatePipe } from '~/frontend/pipes/relative-date.pipe';
 import { LinksService, type LinkStatusFilter } from '~/frontend/services/links.service';
 import {
   LinkFormDialogComponent,
@@ -29,6 +29,7 @@ import {
 @Component({
   selector: 'app-links-list',
   templateUrl: './links-list.component.html',
+  styleUrl: './links-list.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatePipe,
@@ -38,7 +39,7 @@ import {
     MatMenuModule,
     MatTableModule,
     MatTooltipModule,
-    RouterLink,
+    RelativeDatePipe,
   ],
 })
 export class LinksListComponent {
@@ -63,20 +64,28 @@ export class LinksListComponent {
     return this.revealedCodes().has(linkId);
   }
 
-  protected toggleCodeVisibility(linkId: string): void {
+  protected toggleAndCopyCode(link: Link): void {
+    if (!link.code) return;
+    const wasRevealed = this.revealedCodes().has(link.id);
     this.revealedCodes.update((s) => {
       const next = new Set(s);
-      if (next.has(linkId)) next.delete(linkId);
-      else next.add(linkId);
+      if (wasRevealed) next.delete(link.id);
+      else next.add(link.id);
       return next;
     });
+    if (wasRevealed) return;
+    if (this.clipboard.copy(link.code)) {
+      this.snackBar.open('Code copied', 'OK', { duration: 2000 });
+    } else {
+      this.snackBar.open('Failed to copy', 'Dismiss', { duration: 3000 });
+    }
   }
 
   protected readonly dataSource = new MatTableDataSource<Link>([]);
   protected readonly displayedColumns = computed(() =>
     this.selectedTab() === 'revoked'
-      ? ['name', 'contents', 'createdAt', 'expiresAt', 'code']
-      : ['name', 'contents', 'createdAt', 'expiresAt', 'code', 'shareUrl', 'actions'],
+      ? ['icon', 'name', 'contents', 'createdAt', 'expiresAt', 'code']
+      : ['icon', 'name', 'contents', 'createdAt', 'expiresAt', 'code', 'shareUrl', 'actions'],
   );
 
   constructor() {
@@ -93,25 +102,16 @@ export class LinksListComponent {
     return this.linksService.buildShareUrl(link.accessToken);
   }
 
+  protected shareUrlDisplay(link: Link): string {
+    return this.shareUrl(link).replace(/^https?:\/\//, '');
+  }
+
   protected copyShareUrl(link: Link): void {
     if (this.clipboard.copy(this.shareUrl(link))) {
       this.snackBar.open('Share URL copied', 'OK', { duration: 2000 });
     } else {
       this.snackBar.open('Failed to copy', 'Dismiss', { duration: 3000 });
     }
-  }
-
-  protected copyCode(link: Link): void {
-    if (!link.code) return;
-    if (this.clipboard.copy(link.code)) {
-      this.snackBar.open('Code copied', 'OK', { duration: 2000 });
-    } else {
-      this.snackBar.open('Failed to copy', 'Dismiss', { duration: 3000 });
-    }
-  }
-
-  protected openPreview(link: Link): void {
-    window.open(this.shareUrl(link), '_blank', 'noopener');
   }
 
   protected async openEditDialog(link: Link): Promise<void> {

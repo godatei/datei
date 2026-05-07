@@ -16,9 +16,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { ActivatedRoute } from '@angular/router';
+import { isPast } from 'date-fns';
 import { firstValueFrom } from 'rxjs';
 import type { Datei } from '~/api/models/datei';
 import { LinksService } from '~/frontend/services/links.service';
+import { RelativeDatePipe } from '~/frontend/pipes/relative-date.pipe';
 import { triggerDownload } from 'frontend/src/util/download';
 import { formatBytes } from 'frontend/src/util/format-bytes';
 
@@ -42,6 +44,7 @@ type ViewerState =
     MatTableModule,
     FormField,
     FormRoot,
+    RelativeDatePipe,
   ],
 })
 export class PublicLinkViewerComponent {
@@ -66,7 +69,10 @@ export class PublicLinkViewerComponent {
   protected readonly linkName = signal<string>('');
   protected readonly ownerName = signal<string>('');
   protected readonly expiresAt = signal<Date | null>(null);
-  protected readonly expiryText = computed(() => formatExpiryText(this.expiresAt()));
+  protected readonly isExpired = computed(() => {
+    const date = this.expiresAt();
+    return date !== null && isPast(date);
+  });
 
   protected readonly displayedColumns = ['icon', 'name', 'size', 'actions'];
   protected readonly path = signal<{ id: string | null; name: string }[]>([
@@ -180,18 +186,4 @@ export class PublicLinkViewerComponent {
   }
 
   protected readonly formatBytes = formatBytes;
-}
-
-function formatExpiryText(expiresAt: Date | null): string {
-  if (!expiresAt) return '';
-  const ms = expiresAt.getTime() - Date.now();
-  if (ms <= 0) return 'Expired';
-  const minutes = Math.floor(ms / 60_000);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-  if (days >= 30) return `Expires on ${expiresAt.toLocaleDateString()}`;
-  if (days >= 1) return `Expires in ${days} ${days === 1 ? 'day' : 'days'}`;
-  if (hours >= 1) return `Expires in ${hours} ${hours === 1 ? 'hour' : 'hours'}`;
-  if (minutes >= 1) return `Expires in ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`;
-  return 'Expires in less than a minute';
 }

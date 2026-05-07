@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, resource, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -52,6 +53,7 @@ import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
     MatMenuModule,
     MatIconModule,
     MatButtonModule,
+    MatChipsModule,
     MatTableModule,
     DatePipe,
     ThumbnailIconComponent,

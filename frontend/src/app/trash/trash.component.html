@@ -21,6 +21,10 @@
         <mat-icon>close</mat-icon>
       </button>
       <span class="mat-font-label-lg">{{ selection.size() }} selected</span>
+    } @else {
+      <mat-chip-listbox aria-label="Filter">
+        <mat-chip-option selected>All</mat-chip-option>
+      </mat-chip-listbox>
     }
   </div>
 

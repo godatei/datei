@@ -9,8 +9,10 @@
         {{ ownerName() }} shared the public link
         <strong class="mat-text-on-surface">{{ linkName() }}</strong>
         with you.
-        @if (expiryText()) {
-          <span> {{ expiryText() }}.</span>
+        @if (isExpired()) {
+          <span> Expired.</span>
+        } @else if (expiresAt(); as date) {
+          <span> Expires {{ date | relativeDate }}.</span>
         }
       </p>
     }
@@ -79,9 +81,13 @@
               >chevron_right</mat-icon
             >
           }
-          <button mat-button (click)="navigateToBreadcrumb(i)" [disabled]="last">
-            {{ item.name }}
-          </button>
+          @if (last) {
+            <span aria-current="page">{{ item.name }}</span>
+          } @else {
+            <button mat-button (click)="navigateToBreadcrumb(i)">
+              {{ item.name }}
+            </button>
+          }
         }
       </nav>
 

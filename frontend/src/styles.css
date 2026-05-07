@@ -27,3 +27,16 @@
 .auth-card {
   --mat-card-content-padding: 2rem 2rem 1.5rem;
 }
+
+/* Compact variant of matIconButton for inline-with-text contexts.
+   The touch target stays at the M3 default (48px) via the overlay element. */
+.mat-icon-button-compact {
+  --mat-icon-button-state-layer-size: 28px;
+  --mat-icon-button-icon-size: 16px;
+}
+.mat-icon-button-compact .mat-icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  line-height: 16px;
+}
