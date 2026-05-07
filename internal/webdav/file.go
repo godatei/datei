@@ -67,8 +67,9 @@ type dateiFile struct {
 	children     []api.Datei
 	childPos     int
 
-	// read mode (file content buffered for seek support)
-	reader *bytes.Reader
+	// read mode — content is loaded lazily on the first Read/Seek call
+	loadContent func() (*datei.DownloadDateiOutput, error)
+	reader      *bytes.Reader
 
 	// write mode
 	writeCtx   context.Context
@@ -83,17 +84,8 @@ func newDirFile(info os.FileInfo, load func() ([]api.Datei, error)) *dateiFile {
 	return &dateiFile{info: info, loadChildren: load}
 }
 
-// newReadFile buffers the entire file content so that Seek works correctly
-// for range requests and http.ServeContent.
-func newReadFile(info os.FileInfo, out *datei.DownloadDateiOutput) (*dateiFile, error) {
-	data, err := io.ReadAll(out.Reader)
-	if rc, ok := out.Reader.(io.Closer); ok {
-		rc.Close()
-	}
-	if err != nil {
-		return nil, err
-	}
-	return &dateiFile{info: info, reader: bytes.NewReader(data)}, nil
+func newReadFile(info os.FileInfo, load func() (*datei.DownloadDateiOutput, error)) *dateiFile {
+	return &dateiFile{info: info, loadContent: load}
 }
 
 func newWriteFile(
@@ -119,11 +111,34 @@ func newWriteFile(
 
 func (f *dateiFile) Stat() (os.FileInfo, error) { return f.info, nil }
 
-func (f *dateiFile) Read(p []byte) (int, error) {
+func (f *dateiFile) ensureReader() error {
 	if f.reader != nil {
-		return f.reader.Read(p)
+		return nil
 	}
-	return 0, os.ErrInvalid
+	if f.loadContent == nil {
+		return os.ErrInvalid
+	}
+	out, err := f.loadContent()
+	if err != nil {
+		return err
+	}
+	if rc, ok := out.Reader.(io.Closer); ok {
+		defer rc.Close()
+	}
+	data, err := io.ReadAll(out.Reader)
+	if err != nil {
+		return err
+	}
+	f.reader = bytes.NewReader(data)
+	f.loadContent = nil
+	return nil
+}
+
+func (f *dateiFile) Read(p []byte) (int, error) {
+	if err := f.ensureReader(); err != nil {
+		return 0, err
+	}
+	return f.reader.Read(p)
 }
 
 func (f *dateiFile) Write(p []byte) (int, error) {
@@ -134,22 +149,22 @@ func (f *dateiFile) Write(p []byte) (int, error) {
 }
 
 func (f *dateiFile) Seek(offset int64, whence int) (int64, error) {
-	if f.reader != nil {
-		return f.reader.Seek(offset, whence)
-	}
 	if f.tmpFile != nil {
 		return f.tmpFile.Seek(offset, whence)
 	}
-	return 0, os.ErrInvalid
+	if err := f.ensureReader(); err != nil {
+		return 0, err
+	}
+	return f.reader.Seek(offset, whence)
 }
 
 func (f *dateiFile) Readdir(count int) ([]os.FileInfo, error) {
 	if f.children == nil {
-		children, err := f.loadChildren()
-		if err != nil {
+		if children, err := f.loadChildren(); err != nil {
 			return nil, err
+		} else {
+			f.children = children
 		}
-		f.children = children
 	}
 	remaining := f.children[f.childPos:]
 	if count > 0 {

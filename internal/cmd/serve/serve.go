@@ -155,8 +155,8 @@ func run(ctx context.Context, options Options) error {
 		})
 	})
 
-	// WebDAV: Basic Auth, no rate limiting (clients batch many small requests)
 	rootMux.Group(func(r chi.Router) {
+		r.Use(dateiwebdav.CacheMiddleware)
 		r.Use(dateiwebdav.BasicAuthMiddleware(userSvc))
 		r.Mount("/dav", davHandler)
 	})

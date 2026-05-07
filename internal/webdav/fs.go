@@ -16,6 +16,57 @@ import (
 	xdav "golang.org/x/net/webdav"
 )
 
+type davCacheKey struct{}
+
+type davPathCache map[string]*api.Datei
+
+func (c davPathCache) store(parentPath string, children []api.Datei) {
+	for i := range children {
+		child := &children[i]
+		if child.Name == nil {
+			continue
+		}
+		var key string
+		if parentPath == "" {
+			key = *child.Name
+		} else {
+			key = parentPath + "/" + *child.Name
+		}
+		c[key] = child
+	}
+}
+
+func readFromCache(ctx context.Context, name string) *api.Datei {
+	if cache := cacheFromContext(ctx); cache != nil {
+		if d, ok := cache[name]; ok {
+			return d
+		}
+	}
+	return nil
+}
+
+func writeToCache(ctx context.Context, parentPath string, children []api.Datei) {
+	if cache := cacheFromContext(ctx); cache != nil {
+		cache.store(parentPath, children)
+	}
+}
+
+func cacheFromContext(ctx context.Context) davPathCache {
+	c, _ := ctx.Value(davCacheKey{}).(davPathCache)
+	return c
+}
+
+// CacheMiddleware injects a per-request path cache into the context.
+// x/net/webdav calls OpenFile for every child during PROPFIND to fetch dead
+// properties; the cache lets resolve() skip the DB for paths already loaded
+// by ListDateiChildren.
+func CacheMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), davCacheKey{}, make(davPathCache))
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
 type dateiFS struct {
 	service *datei.Service
 }
@@ -45,6 +96,11 @@ func (fs *dateiFS) resolve(ctx context.Context, name string) (*api.Datei, error)
 	if name == "" {
 		return nil, nil
 	}
+
+	if d := readFromCache(ctx, name); d != nil {
+		return d, nil
+	}
+
 	segments := strings.Split(name, "/")
 	item, err := fs.service.FindDateiByPath(ctx, segments)
 	if errors.Is(err, dateierrors.ErrNotFound) {
@@ -177,7 +233,11 @@ func (fs *dateiFS) OpenFile(ctx context.Context, name string, flag int, _ os.Fil
 
 	if name == "/" || name == "" {
 		return newDirFile(rootInfo(), func() ([]api.Datei, error) {
-			return fs.service.ListDateiChildren(ctx, nil)
+			children, err := fs.service.ListDateiChildren(ctx, nil)
+			if err == nil {
+				writeToCache(ctx, "", children)
+			}
+			return children, err
 		}), nil
 	}
 
@@ -186,17 +246,23 @@ func (fs *dateiFS) OpenFile(ctx context.Context, name string, flag int, _ os.Fil
 		if err != nil {
 			return nil, err
 		}
+
 		if proj.IsDirectory {
 			id := proj.Id
+			parentTrimmed := strings.Trim(name, "/")
 			return newDirFile(projInfo(proj), func() ([]api.Datei, error) {
-				return fs.service.ListDateiChildren(ctx, &id)
+				children, err := fs.service.ListDateiChildren(ctx, &id)
+				if err == nil {
+					writeToCache(ctx, parentTrimmed, children)
+				}
+				return children, err
 			}), nil
 		}
-		out, err := fs.service.DownloadDatei(ctx, proj.Id)
-		if err != nil {
-			return nil, mapErr(err)
-		}
-		return newReadFile(projInfo(proj), out)
+
+		id := proj.Id
+		return newReadFile(projInfo(proj), func() (*datei.DownloadDateiOutput, error) {
+			return fs.service.DownloadDatei(ctx, id)
+		}), nil
 	}
 
 	parent, base, err := fs.resolveParent(ctx, name)
