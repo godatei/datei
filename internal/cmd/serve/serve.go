@@ -128,8 +128,8 @@ func run(ctx context.Context, options Options) error {
 
 	davHandler := dateiwebdav.NewHandler(dateiSvc)
 
-	for _, m := range []string{"PROPFIND", "PROPPATCH", "MKCOL", "COPY", "MOVE", "LOCK", "UNLOCK"} {
-		chi.RegisterMethod(m)
+	for _, method := range []string{"PROPFIND", "PROPPATCH", "MKCOL", "COPY", "MOVE", "LOCK", "UNLOCK"} {
+		chi.RegisterMethod(method)
 	}
 
 	rootMux := chi.NewRouter()
