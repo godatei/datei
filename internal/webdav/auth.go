@@ -26,9 +26,10 @@ func BasicAuthMiddleware(userSvc *users.UserService) func(http.Handler) http.Han
 			}
 
 			ip, _ := httprate.KeyByRealIP(r)
-			if limited, _, _ := failLimiter.Status(ip); limited {
-				failLimiter.RespondOnLimit(w, r, ip)
-				return
+			if allowed, _, _ := failLimiter.Status(ip); !allowed {
+				if limited := failLimiter.RespondOnLimit(w, r, ip); limited {
+					return
+				}
 			}
 
 			out, err := userSvc.ValidateCredentials(r.Context(), email, password)
