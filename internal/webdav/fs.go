@@ -295,13 +295,13 @@ func (fs *dateiFS) OpenFile(ctx context.Context, name string, flag int, _ os.Fil
 
 func mapErr(err error) error {
 	switch {
-	case errors.Is(err, dateierrors.ErrNotFound):
+	case errors.Is(err, dateierrors.ErrNotFound),
+		errors.Is(err, dateierrors.ErrParentNotFound),
+		errors.Is(err, dateierrors.ErrParentTrashed):
 		return os.ErrNotExist
-	case errors.Is(err, dateierrors.ErrIsDirectory):
-		return os.ErrInvalid
-	case errors.Is(err, dateierrors.ErrParentNotFound):
-		return os.ErrNotExist
-	case errors.Is(err, dateierrors.ErrCycleDetected):
+	case errors.Is(err, dateierrors.ErrIsDirectory),
+		errors.Is(err, dateierrors.ErrParentNotDirectory),
+		errors.Is(err, dateierrors.ErrCycleDetected):
 		return os.ErrInvalid
 	default:
 		return err
