@@ -2,7 +2,9 @@ package webdav
 
 import (
 	"net/http"
+	"time"
 
+	"github.com/go-chi/httprate"
 	"github.com/godatei/datei/internal/authn"
 	"github.com/godatei/datei/internal/users"
 )
@@ -10,7 +12,10 @@ import (
 // BasicAuthMiddleware validates HTTP Basic Auth credentials against the user
 // service and injects the resulting AuthInfo into the request context.
 // Accounts with MFA enabled cannot use WebDAV.
+// Failed credential attempts are rate-limited per IP (20 failures/minute).
 func BasicAuthMiddleware(userSvc *users.UserService) func(http.Handler) http.Handler {
+	failLimiter := httprate.NewRateLimiter(20, 1*time.Minute)
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			email, password, ok := r.BasicAuth()
@@ -20,10 +25,18 @@ func BasicAuthMiddleware(userSvc *users.UserService) func(http.Handler) http.Han
 				return
 			}
 
+			ip, _ := httprate.KeyByRealIP(r)
+			if limited, _, _ := failLimiter.Status(ip); limited {
+				failLimiter.RespondOnLimit(w, r, ip)
+				return
+			}
+
 			out, err := userSvc.ValidateCredentials(r.Context(), email, password)
 			if err != nil {
-				w.Header().Set("WWW-Authenticate", `Basic realm="Datei WebDAV"`)
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				if limited := failLimiter.RespondOnLimit(w, r, ip); !limited {
+					w.Header().Set("WWW-Authenticate", `Basic realm="Datei WebDAV"`)
+					http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				}
 				return
 			}
 
