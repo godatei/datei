@@ -478,6 +478,10 @@ func (s *Service) ListTrashChildren(ctx context.Context, input ListTrashChildren
 		return nil, err
 	}
 
+	if !parent.IsDirectory {
+		return nil, dateierrors.ErrParentNotDirectory
+	}
+
 	// A directory is browsable in trash if it is directly trashed or has a trashed ancestor.
 	inTrash := parent.TrashedAt != nil
 	if !inTrash {

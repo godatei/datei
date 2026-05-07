@@ -18,6 +18,7 @@ import {
 } from '~/frontend/auth/password-confirm/password-confirm.component';
 import { AuthService } from '~/frontend/services/auth.service';
 import { SettingsService } from '~/frontend/services/settings.service';
+import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
 
 @Component({
   selector: 'app-user-settings',
@@ -65,9 +66,9 @@ export class UserSettingsComponent {
               this.settings.updateUser({ name: this.profileModel().name }),
             );
             this.auth.updateName(res.name);
-            this.snackBar.open('Profile updated', 'OK', { duration: 3000 });
+            this.snackBar.open('Profile updated', 'OK', { duration: snackSuccessDuration });
           } catch {
-            this.snackBar.open('Failed to update profile', 'OK', { duration: 3000 });
+            this.snackBar.open('Failed to update profile', 'OK', { duration: snackErrorDuration });
           }
         },
       },
@@ -89,10 +90,10 @@ export class UserSettingsComponent {
             await firstValueFrom(this.settings.updateUser({ currentPassword, password }));
             this.passwordModel.set({ currentPassword: '', password: '', confirmPassword: '' });
             this.passwordForm().reset();
-            this.snackBar.open('Password changed', 'OK', { duration: 3000 });
+            this.snackBar.open('Password changed', 'OK', { duration: snackSuccessDuration });
           } catch {
             this.snackBar.open('Failed to change password. Check your current password.', 'OK', {
-              duration: 3000,
+              duration: snackErrorDuration,
             });
           }
         },
@@ -117,9 +118,9 @@ export class UserSettingsComponent {
             this.recoveryCodes.set(data.recoveryCodes);
             this.mfaEnableModel.set({ code: '' });
             this.mfaEnableForm().reset();
-            this.snackBar.open('MFA enabled', 'OK', { duration: 3000 });
+            this.snackBar.open('MFA enabled', 'OK', { duration: snackSuccessDuration });
           } catch {
-            this.snackBar.open('Invalid verification code', 'OK', { duration: 3000 });
+            this.snackBar.open('Invalid verification code', 'OK', { duration: snackErrorDuration });
           }
         },
       },
@@ -140,10 +141,10 @@ export class UserSettingsComponent {
             await firstValueFrom(this.settings.addEmail(this.addEmailModel().email));
             this.addEmailModel.set({ email: '' });
             this.addEmailForm().reset();
-            this.snackBar.open('Email added', 'OK', { duration: 3000 });
+            this.snackBar.open('Email added', 'OK', { duration: snackSuccessDuration });
             this.loadEmails();
           } catch {
-            this.snackBar.open('Failed to add email', 'OK', { duration: 3000 });
+            this.snackBar.open('Failed to add email', 'OK', { duration: snackErrorDuration });
           }
         },
       },
@@ -164,9 +165,9 @@ export class UserSettingsComponent {
             this.mfaEnabled.set(false);
             this.mfaDisableModel.set({ password: '' });
             this.mfaDisableForm().reset();
-            this.snackBar.open('MFA disabled', 'OK', { duration: 3000 });
+            this.snackBar.open('MFA disabled', 'OK', { duration: snackSuccessDuration });
           } catch {
-            this.snackBar.open('Invalid password', 'OK', { duration: 3000 });
+            this.snackBar.open('Invalid password', 'OK', { duration: snackErrorDuration });
           }
         },
       },
@@ -202,12 +203,12 @@ export class UserSettingsComponent {
     this.emailsLoading.set(true);
     this.settings.removeEmail(emailId).subscribe({
       next: () => {
-        this.snackBar.open('Email removed', 'OK', { duration: 3000 });
+        this.snackBar.open('Email removed', 'OK', { duration: snackSuccessDuration });
         this.loadEmails();
       },
       error: () => {
         this.emailsLoading.set(false);
-        this.snackBar.open('Failed to remove email', 'OK', { duration: 3000 });
+        this.snackBar.open('Failed to remove email', 'OK', { duration: snackErrorDuration });
       },
     });
   }
@@ -216,12 +217,12 @@ export class UserSettingsComponent {
     this.emailsLoading.set(true);
     this.settings.setPrimaryEmail(emailId).subscribe({
       next: () => {
-        this.snackBar.open('Primary email updated', 'OK', { duration: 3000 });
+        this.snackBar.open('Primary email updated', 'OK', { duration: snackSuccessDuration });
         this.loadEmails();
       },
       error: () => {
         this.emailsLoading.set(false);
-        this.snackBar.open('Failed to set primary email', 'OK', { duration: 3000 });
+        this.snackBar.open('Failed to set primary email', 'OK', { duration: snackErrorDuration });
       },
     });
   }
@@ -235,7 +236,7 @@ export class UserSettingsComponent {
       },
       error: () => {
         this.mfaLoading.set(false);
-        this.snackBar.open('Failed to set up MFA', 'OK', { duration: 3000 });
+        this.snackBar.open('Failed to set up MFA', 'OK', { duration: snackErrorDuration });
       },
     });
   }
@@ -244,7 +245,7 @@ export class UserSettingsComponent {
     const secret = this.mfaSetupData()?.secret;
     if (secret) {
       this.clipboard.copy(secret);
-      this.snackBar.open('Secret copied', 'OK', { duration: 2000 });
+      this.snackBar.open('Secret copied', 'OK', { duration: snackSuccessDuration });
     }
   }
 
@@ -252,7 +253,7 @@ export class UserSettingsComponent {
     const codes = this.recoveryCodes();
     if (codes) {
       this.clipboard.copy(codes.join('\n'));
-      this.snackBar.open('Recovery codes copied', 'OK', { duration: 2000 });
+      this.snackBar.open('Recovery codes copied', 'OK', { duration: snackSuccessDuration });
     }
   }
 }
