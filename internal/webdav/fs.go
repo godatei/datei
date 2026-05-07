@@ -274,6 +274,9 @@ func (fs *dateiFS) OpenFile(ctx context.Context, name string, flag int, _ os.Fil
 	if err != nil {
 		return nil, err
 	}
+	if base == "" {
+		return nil, os.ErrInvalid
+	}
 	var parentID *uuid.UUID
 	if parent != nil {
 		parentID = &parent.Id
