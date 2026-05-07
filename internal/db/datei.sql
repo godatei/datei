@@ -71,6 +71,30 @@ UPDATE datei_projection
  SET linked_datei_id = NULL, updated_at = $1, updated_by = NULL
  WHERE id = $2;
 
+-- name: GetRootDateiProjectionByName :one
+SELECT * FROM datei_projection WHERE parent_id IS NULL AND name = $1 AND trashed_at IS NULL;
+
+-- name: GetDateiProjectionByParentAndName :one
+SELECT * FROM datei_projection WHERE parent_id = $1 AND name = $2 AND trashed_at IS NULL;
+
+-- name: GetDateiProjectionByPath :one
+WITH RECURSIVE path_walk AS (
+  SELECT d.id, 1::int AS depth
+  FROM datei_projection d
+  WHERE d.parent_id IS NULL
+    AND d.name = ($1::text[])[1]
+    AND d.trashed_at IS NULL
+  UNION ALL
+  SELECT d.id, pw.depth + 1
+  FROM datei_projection d
+  JOIN path_walk pw ON d.parent_id = pw.id
+  WHERE d.name = ($1::text[])[pw.depth + 1]
+    AND d.trashed_at IS NULL
+)
+SELECT dp.* FROM datei_projection dp
+JOIN path_walk pw ON dp.id = pw.id
+WHERE pw.depth = array_length($1::text[], 1);
+
 -- name: GetDateiPath :many
 WITH RECURSIVE ancestors(id, parent_id, name, trashed_at, depth) AS (
   SELECT d.id, d.parent_id, d.name, d.trashed_at, 0 FROM datei_projection d WHERE d.id = $1
