@@ -62,9 +62,10 @@ func projInfo(p *api.Datei) *fileInfo {
 type dateiFile struct {
 	info os.FileInfo
 
-	// dir mode
-	children []api.Datei
-	childPos int
+	// dir mode — children are loaded lazily on the first Readdir call
+	loadChildren func() ([]api.Datei, error)
+	children     []api.Datei
+	childPos     int
 
 	// read mode (file content buffered for seek support)
 	reader *bytes.Reader
@@ -78,8 +79,8 @@ type dateiFile struct {
 	tmpFile    *os.File
 }
 
-func newDirFile(info os.FileInfo, children []api.Datei) *dateiFile {
-	return &dateiFile{info: info, children: children}
+func newDirFile(info os.FileInfo, load func() ([]api.Datei, error)) *dateiFile {
+	return &dateiFile{info: info, loadChildren: load}
 }
 
 // newReadFile buffers the entire file content so that Seek works correctly
@@ -143,6 +144,13 @@ func (f *dateiFile) Seek(offset int64, whence int) (int64, error) {
 }
 
 func (f *dateiFile) Readdir(count int) ([]os.FileInfo, error) {
+	if f.children == nil {
+		children, err := f.loadChildren()
+		if err != nil {
+			return nil, err
+		}
+		f.children = children
+	}
 	remaining := f.children[f.childPos:]
 	if count > 0 {
 		if count > len(remaining) {

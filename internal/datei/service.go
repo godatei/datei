@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"math"
 	"strings"
 	"time"
 
@@ -427,20 +426,23 @@ func (s *Service) FindDateiByName(ctx context.Context, parentID *uuid.UUID, name
 	return MapProjectionToAPI(&proj), nil
 }
 
-// ListDateiChildren returns all non-trashed children of the given parent (or root items if parentID is nil).
+const maxDirChildren = 10_000
+
+// ListDateiChildren returns up to 10 000 non-trashed children of the given
+// parent (or root items if parentID is nil).
 func (s *Service) ListDateiChildren(ctx context.Context, parentID *uuid.UUID) ([]api.Datei, error) {
 	queries := db.New(s.db)
 	var projs []db.DateiProjection
 	var err error
 	if parentID == nil {
 		projs, err = queries.ListRootDateiProjections(ctx, db.ListRootDateiProjectionsParams{
-			Limit:  math.MaxInt32,
+			Limit:  maxDirChildren,
 			Offset: 0,
 		})
 	} else {
 		projs, err = queries.ListDateiProjectionsByParent(ctx, db.ListDateiProjectionsByParentParams{
 			ParentID: parentID,
-			Limit:    math.MaxInt32,
+			Limit:    maxDirChildren,
 			Offset:   0,
 		})
 	}

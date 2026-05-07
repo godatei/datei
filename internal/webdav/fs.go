@@ -176,11 +176,9 @@ func (fs *dateiFS) OpenFile(ctx context.Context, name string, flag int, _ os.Fil
 	isWrite := flag&(os.O_WRONLY|os.O_RDWR|os.O_CREATE) != 0
 
 	if name == "/" || name == "" {
-		children, err := fs.service.ListDateiChildren(ctx, nil)
-		if err != nil {
-			return nil, err
-		}
-		return newDirFile(rootInfo(), children), nil
+		return newDirFile(rootInfo(), func() ([]api.Datei, error) {
+			return fs.service.ListDateiChildren(ctx, nil)
+		}), nil
 	}
 
 	if !isWrite {
@@ -189,11 +187,10 @@ func (fs *dateiFS) OpenFile(ctx context.Context, name string, flag int, _ os.Fil
 			return nil, err
 		}
 		if proj.IsDirectory {
-			children, err := fs.service.ListDateiChildren(ctx, &proj.Id)
-			if err != nil {
-				return nil, err
-			}
-			return newDirFile(projInfo(proj), children), nil
+			id := proj.Id
+			return newDirFile(projInfo(proj), func() ([]api.Datei, error) {
+				return fs.service.ListDateiChildren(ctx, &id)
+			}), nil
 		}
 		out, err := fs.service.DownloadDatei(ctx, proj.Id)
 		if err != nil {
