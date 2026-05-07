@@ -41,10 +41,11 @@ func NewService(
 // now we cap at a generous value to avoid surprises.
 const publicListChildrenLimit = 1000
 
-// generateAccessToken returns a 32-byte random token encoded as base64-url
-// (43 ASCII characters) suitable for use as a URL slug.
+// generateAccessToken returns a 12-byte random token encoded as base64-url
+// (16 ASCII characters), suitable for use as a URL slug. 96 bits of entropy
+// keeps tokens unguessable while keeping share URLs reasonably short.
 func generateAccessToken() (string, error) {
-	var b [32]byte
+	var b [12]byte
 	if _, err := rand.Read(b[:]); err != nil {
 		return "", fmt.Errorf("failed to generate access token: %w", err)
 	}
