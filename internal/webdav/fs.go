@@ -184,13 +184,18 @@ func (fs *dateiFS) Rename(ctx context.Context, oldName, newName string) error {
 	if err != nil {
 		return err
 	}
+	if newBase == "" {
+		return os.ErrInvalid
+	}
 	var newParentID *uuid.UUID
 	if newParent != nil {
 		newParentID = &newParent.Id
 	}
 
-	if _, err := fs.findChild(ctx, newParentID, newBase); err == nil {
-		return os.ErrExist
+	if existing, err := fs.findChild(ctx, newParentID, newBase); err == nil {
+		if existing.Id != proj.Id {
+			return os.ErrExist
+		}
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
