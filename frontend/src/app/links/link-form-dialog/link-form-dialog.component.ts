@@ -51,13 +51,19 @@ export class LinkFormDialogComponent {
   protected readonly isEdit = this.data.mode === 'edit';
   protected readonly title = this.isEdit ? 'Edit public link' : 'Create public link';
   protected readonly submitLabel = this.isEdit ? 'Save' : 'Create link';
-  protected readonly dateiCount = computed(() =>
-    this.data.mode === 'create' ? this.data.dateiIds.length : 0,
-  );
+
+  // Capture mode-specific payload up front so the rest of the class can use the
+  // simpler `this.isEdit` boolean without re-narrowing `this.data` everywhere.
+  private readonly editLink: Link | null = this.data.mode === 'edit' ? this.data.link : null;
+  private readonly createDateiIds: string[] = this.data.mode === 'create' ? this.data.dateiIds : [];
+  private readonly defaultName: string | undefined =
+    this.data.mode === 'create' ? this.data.defaultName : undefined;
+
+  protected readonly dateiCount = computed(() => this.createDateiIds.length);
 
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly sharedDateien = signal<Datei[]>(
-    this.data.mode === 'edit' ? [...this.data.link.dateien] : [],
+    this.editLink ? [...this.editLink.dateien] : [],
   );
   protected readonly removingDateiId = signal<string | null>(null);
   // Tracks whether any datei was removed; used so the parent refreshes even if
@@ -78,10 +84,7 @@ export class LinkFormDialogComponent {
         action: async () => {
           this.errorMessage.set(null);
           try {
-            const result =
-              this.data.mode === 'create'
-                ? await this.submitCreate(this.data.dateiIds)
-                : await this.submitEdit(this.data.link.id);
+            const result = this.isEdit ? await this.submitEdit() : await this.submitCreate();
             this.dialogRef.close(result);
           } catch (e) {
             console.error(e);
@@ -93,8 +96,8 @@ export class LinkFormDialogComponent {
   );
 
   private initialModel(): LinkFormModel {
-    if (this.data.mode === 'edit') {
-      const l = this.data.link;
+    if (this.editLink) {
+      const l = this.editLink;
       return {
         name: l.name,
         expiresAt: l.expiresAt ? new Date(l.expiresAt) : null,
@@ -102,25 +105,25 @@ export class LinkFormDialogComponent {
       };
     }
     return {
-      name: this.data.defaultName ?? 'Shared files',
+      name: this.defaultName ?? 'Shared files',
       expiresAt: null,
       code: '',
     };
   }
 
-  private async submitCreate(dateiIds: string[]): Promise<Link> {
+  private async submitCreate(): Promise<Link> {
     const v = this.model();
     return firstValueFrom(
       this.linksService.createLink({
         name: v.name.trim(),
         expiresAt: v.expiresAt ? v.expiresAt.toISOString() : undefined,
         code: v.code.trim() === '' ? undefined : v.code,
-        dateiIds,
+        dateiIds: this.createDateiIds,
       }),
     );
   }
 
-  private async submitEdit(id: string): Promise<Link> {
+  private async submitEdit(): Promise<Link> {
     const v = this.model();
     const body: UpdateLinkRequest = { name: v.name.trim() };
 
@@ -136,16 +139,17 @@ export class LinkFormDialogComponent {
       body.clearCode = true;
     }
 
-    return firstValueFrom(this.linksService.updateLink(id, body));
+    // submitEdit is only invoked when isEdit, which is equivalent to editLink !== null.
+    return firstValueFrom(this.linksService.updateLink(this.editLink!.id, body));
   }
 
   protected async removeDatei(datei: Datei): Promise<void> {
-    if (this.data.mode !== 'edit') return;
+    if (!this.isEdit) return;
     if (this.removingDateiId() !== null) return;
 
     this.removingDateiId.set(datei.id);
     try {
-      await firstValueFrom(this.linksService.removeDatei(this.data.link.id, datei.id));
+      await firstValueFrom(this.linksService.removeDatei(this.editLink!.id, datei.id));
       this.sharedDateien.update((items) => items.filter((d) => d.id !== datei.id));
       this.modified = true;
     } catch (e) {
@@ -160,8 +164,8 @@ export class LinkFormDialogComponent {
     // If a datei was removed, signal the parent to refresh its list by closing
     // with the original link reference (truthy). Otherwise close with undefined
     // so the parent does not refresh unnecessarily.
-    if (this.modified && this.data.mode === 'edit') {
-      this.dialogRef.close(this.data.link);
+    if (this.modified && this.isEdit) {
+      this.dialogRef.close(this.editLink!);
     } else {
       this.dialogRef.close(undefined);
     }

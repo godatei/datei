@@ -3,6 +3,9 @@ package dateierrors
 import "errors"
 
 var (
+	// Generic input-validation error, shared across all domains.
+	ErrInvalidInput = errors.New("invalid input")
+
 	ErrIsDirectory          = errors.New("cannot download directory")
 	ErrNotFound             = errors.New("datei not found")
 	ErrNoContent            = errors.New("datei has no content")
@@ -27,7 +30,6 @@ var (
 
 	// User / auth errors
 	ErrInvalidCredentials      = errors.New("invalid credentials")
-	ErrInvalidInput            = errors.New("invalid input")
 	ErrEmailAlreadyInUse       = errors.New("email already in use")
 	ErrRegistrationDisabled    = errors.New("registration is disabled")
 	ErrCurrentPasswordRequired = errors.New("current password required")

@@ -26,7 +26,13 @@ import {
   LinkFormDialogData,
 } from '~/frontend/links/link-form-dialog/link-form-dialog.component';
 
-type LinkStatus = 'active' | 'expired' | 'revoked';
+export type LinkStatus = 'active' | 'expired' | 'revoked';
+
+export function statusOf(link: Link): LinkStatus {
+  if (link.revokedAt) return 'revoked';
+  if (link.expiresAt && new Date(link.expiresAt).getTime() <= Date.now()) return 'expired';
+  return 'active';
+}
 
 @Component({
   selector: 'app-links-list',
@@ -57,20 +63,14 @@ export class LinksListComponent {
 
   private readonly allLinks = computed(() => this.listResource.value() ?? []);
   protected readonly activeLinks = computed(() =>
-    this.allLinks().filter((l) => LinksListComponent.statusOf(l) === 'active'),
+    this.allLinks().filter((l) => statusOf(l) === 'active'),
   );
   protected readonly expiredLinks = computed(() =>
-    this.allLinks().filter((l) => LinksListComponent.statusOf(l) === 'expired'),
+    this.allLinks().filter((l) => statusOf(l) === 'expired'),
   );
   protected readonly revokedLinks = computed(() =>
-    this.allLinks().filter((l) => LinksListComponent.statusOf(l) === 'revoked'),
+    this.allLinks().filter((l) => statusOf(l) === 'revoked'),
   );
-
-  private static statusOf(link: Link): LinkStatus {
-    if (link.revokedAt) return 'revoked';
-    if (link.expiresAt && new Date(link.expiresAt).getTime() <= Date.now()) return 'expired';
-    return 'active';
-  }
 
   protected readonly selectedTab = signal<LinkStatus>('active');
   protected readonly selectedTabIndex = computed(() => {
@@ -155,7 +155,6 @@ export class LinksListComponent {
 
   protected openEditDialog(link: Link): void {
     const ref = this.dialog.open(LinkFormDialogComponent, {
-      width: '420px',
       data: { mode: 'edit', link } satisfies LinkFormDialogData,
     });
     ref.afterClosed().subscribe((updated) => {

@@ -250,7 +250,6 @@ export class DashboardComponent {
 
   private openCreateLinkDialog(dateiIds: string[], defaultName: string | undefined): void {
     const ref = this.dialog.open(LinkFormDialogComponent, {
-      width: '420px',
       data: { mode: 'create', dateiIds, defaultName } satisfies LinkFormDialogData,
     });
     ref.afterClosed().subscribe((link) => {
@@ -279,7 +278,7 @@ export class DashboardComponent {
   }
 
   private openLinkPickerAndAdd(dateiIds: string[]): void {
-    const ref = this.dialog.open(LinkPickerDialogComponent, { width: '420px' });
+    const ref = this.dialog.open(LinkPickerDialogComponent);
     ref.afterClosed().subscribe(async (link: Link | undefined) => {
       if (!link) return;
       const results = await Promise.allSettled(

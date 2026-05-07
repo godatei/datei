@@ -8,7 +8,10 @@
       <p class="mat-text-on-surface-variant mat-font-body-md mb-0">
         {{ ownerName() }} shared the public link
         <strong class="mat-text-on-surface">{{ linkName() }}</strong>
-        with you. {{ expiryText() }}.
+        with you.
+        @if (expiryText()) {
+          <span> {{ expiryText() }}.</span>
+        }
       </p>
     }
   </header>

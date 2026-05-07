@@ -18,10 +18,7 @@ UPDATE link_projection SET revoked_at = $1, updated_at = $2 WHERE id = $3;
 SELECT * FROM link_projection WHERE id = $1;
 
 -- name: GetLinkProjectionByAccessToken :one
-SELECT
-  l.id, l.owner_id, l.name, l.access_token, l.code, l.expires_at, l.revoked_at,
-  l.created_at, l.updated_at,
-  u.name AS owner_name
+SELECT l.*, u.name AS owner_name
 FROM link_projection l
 INNER JOIN user_account_projection u ON u.id = l.owner_id
 WHERE l.access_token = $1;

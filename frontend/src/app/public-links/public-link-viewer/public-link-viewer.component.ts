@@ -191,7 +191,7 @@ export class PublicLinkViewerComponent {
 }
 
 function formatExpiryText(expiresAt: Date | null): string {
-  if (!expiresAt) return 'Never expires';
+  if (!expiresAt) return '';
   const ms = expiresAt.getTime() - Date.now();
   if (ms <= 0) return 'Expired';
   const minutes = Math.floor(ms / 60_000);
