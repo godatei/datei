@@ -8,6 +8,7 @@ import (
 	"mime"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/godatei/datei/internal/datei"
@@ -57,116 +58,37 @@ func projInfo(p *api.Datei) *fileInfo {
 	}
 }
 
-// dateiFile implements webdav.File for directories, readable files, and
-// writable files. Write-mode files buffer to a temp file and upload on Close.
-type dateiFile struct {
+// davBase provides Stat, DeadProps, and Patch shared by all three file types.
+type davBase struct {
 	info os.FileInfo
-
-	// dir mode — children are loaded lazily on the first Readdir call
-	loadChildren func() ([]api.Datei, error)
-	children     []api.Datei
-	childPos     int
-
-	// read mode — content is loaded lazily on the first Read/Seek call
-	loadContent func() (*datei.DownloadDateiOutput, error)
-	reader      *bytes.Reader
-
-	// write mode
-	writeCtx   context.Context
-	writeName  string
-	parentID   *uuid.UUID
-	existingID *uuid.UUID
-	service    *datei.Service
-	tmpFile    *os.File
 }
 
-func newDirFile(info os.FileInfo, load func() ([]api.Datei, error)) *dateiFile {
-	return &dateiFile{info: info, loadChildren: load}
+func (b *davBase) Stat() (os.FileInfo, error)                        { return b.info, nil }
+func (b *davBase) DeadProps() (map[xml.Name]xdav.Property, error)    { return nil, nil }
+func (b *davBase) Patch(_ []xdav.Proppatch) ([]xdav.Propstat, error) { return nil, nil }
+
+// dateiDirFile implements xdav.File for directory listings.
+type dateiDirFile struct {
+	davBase
+	getChildren func() ([]api.Datei, error)
+	childPos    int
 }
 
-func newReadFile(info os.FileInfo, load func() (*datei.DownloadDateiOutput, error)) *dateiFile {
-	return &dateiFile{info: info, loadContent: load}
+func newDirFile(info os.FileInfo, load func() ([]api.Datei, error)) *dateiDirFile {
+	return &dateiDirFile{davBase: davBase{info: info}, getChildren: sync.OnceValues(load)}
 }
 
-func newWriteFile(
-	ctx context.Context,
-	name string,
-	parentID, existingID *uuid.UUID,
-	service *datei.Service,
-) (*dateiFile, error) {
-	tmp, err := os.CreateTemp("", "datei-webdav-*")
+func (f *dateiDirFile) Close() error                       { return nil }
+func (f *dateiDirFile) Read(_ []byte) (int, error)         { return 0, os.ErrInvalid }
+func (f *dateiDirFile) Write(_ []byte) (int, error)        { return 0, os.ErrInvalid }
+func (f *dateiDirFile) Seek(_ int64, _ int) (int64, error) { return 0, os.ErrInvalid }
+
+func (f *dateiDirFile) Readdir(count int) ([]os.FileInfo, error) {
+	children, err := f.getChildren()
 	if err != nil {
 		return nil, err
 	}
-	return &dateiFile{
-		info:       &fileInfo{name: name, modTime: time.Now()},
-		writeCtx:   ctx,
-		writeName:  name,
-		parentID:   parentID,
-		existingID: existingID,
-		service:    service,
-		tmpFile:    tmp,
-	}, nil
-}
-
-func (f *dateiFile) Stat() (os.FileInfo, error) { return f.info, nil }
-
-func (f *dateiFile) ensureReader() error {
-	if f.reader != nil {
-		return nil
-	}
-	if f.loadContent == nil {
-		return os.ErrInvalid
-	}
-	out, err := f.loadContent()
-	if err != nil {
-		return err
-	}
-	if rc, ok := out.Reader.(io.Closer); ok {
-		defer rc.Close()
-	}
-	data, err := io.ReadAll(out.Reader)
-	if err != nil {
-		return err
-	}
-	f.reader = bytes.NewReader(data)
-	f.loadContent = nil
-	return nil
-}
-
-func (f *dateiFile) Read(p []byte) (int, error) {
-	if err := f.ensureReader(); err != nil {
-		return 0, err
-	}
-	return f.reader.Read(p)
-}
-
-func (f *dateiFile) Write(p []byte) (int, error) {
-	if f.tmpFile != nil {
-		return f.tmpFile.Write(p)
-	}
-	return 0, os.ErrInvalid
-}
-
-func (f *dateiFile) Seek(offset int64, whence int) (int64, error) {
-	if f.tmpFile != nil {
-		return f.tmpFile.Seek(offset, whence)
-	}
-	if err := f.ensureReader(); err != nil {
-		return 0, err
-	}
-	return f.reader.Seek(offset, whence)
-}
-
-func (f *dateiFile) Readdir(count int) ([]os.FileInfo, error) {
-	if f.children == nil {
-		if children, err := f.loadChildren(); err != nil {
-			return nil, err
-		} else {
-			f.children = children
-		}
-	}
-	remaining := f.children[f.childPos:]
+	remaining := children[f.childPos:]
 	if count > 0 {
 		if count > len(remaining) {
 			count = len(remaining)
@@ -178,20 +100,103 @@ func (f *dateiFile) Readdir(count int) ([]os.FileInfo, error) {
 	}
 	infos := make([]os.FileInfo, len(remaining))
 	for i := range remaining {
-		infos[i] = projInfo(&f.children[f.childPos+i])
+		infos[i] = projInfo(&children[f.childPos+i])
 	}
 	f.childPos += len(remaining)
 	return infos, nil
 }
 
-// Close is a no-op for read/dir files. For write files it uploads the buffered
-// content to the service and removes the temp file.
-func (f *dateiFile) Close() error {
-	if f.tmpFile == nil {
-		return nil
+// dateiReadFile implements xdav.File for readable files.
+// Content is loaded lazily from S3 on the first Read or Seek call.
+type dateiReadFile struct {
+	davBase
+	getReader func() (*bytes.Reader, error)
+}
+
+func newReadFile(info os.FileInfo, load func() (*datei.DownloadDateiOutput, error)) *dateiReadFile {
+	return &dateiReadFile{
+		davBase: davBase{info: info},
+		getReader: sync.OnceValues(func() (*bytes.Reader, error) {
+			out, err := load()
+			if err != nil {
+				return nil, err
+			}
+			if rc, ok := out.Reader.(io.Closer); ok {
+				defer rc.Close()
+			}
+			data, err := io.ReadAll(out.Reader)
+			if err != nil {
+				return nil, err
+			}
+			return bytes.NewReader(data), nil
+		}),
 	}
+}
+
+func (f *dateiReadFile) Close() error                         { return nil }
+func (f *dateiReadFile) Write(_ []byte) (int, error)          { return 0, os.ErrInvalid }
+func (f *dateiReadFile) Readdir(_ int) ([]os.FileInfo, error) { return nil, os.ErrInvalid }
+
+func (f *dateiReadFile) Read(p []byte) (int, error) {
+	r, err := f.getReader()
+	if err != nil {
+		return 0, err
+	}
+	return r.Read(p)
+}
+
+func (f *dateiReadFile) Seek(offset int64, whence int) (int64, error) {
+	r, err := f.getReader()
+	if err != nil {
+		return 0, err
+	}
+	return r.Seek(offset, whence)
+}
+
+// dateiWriteFile implements xdav.File for file uploads. Data is buffered to a
+// temp file and uploaded (create or update) when Close is called.
+type dateiWriteFile struct {
+	davBase
+	writeCtx   context.Context
+	writeName  string
+	parentID   *uuid.UUID
+	existingID *uuid.UUID
+	service    *datei.Service
+	tmpFile    *os.File
+}
+
+func newWriteFile(
+	ctx context.Context,
+	name string,
+	parentID, existingID *uuid.UUID,
+	service *datei.Service,
+) (*dateiWriteFile, error) {
+	tmp, err := os.CreateTemp("", "datei-webdav-*")
+	if err != nil {
+		return nil, err
+	}
+	return &dateiWriteFile{
+		davBase:    davBase{info: &fileInfo{name: name, modTime: time.Now()}},
+		writeCtx:   ctx,
+		writeName:  name,
+		parentID:   parentID,
+		existingID: existingID,
+		service:    service,
+		tmpFile:    tmp,
+	}, nil
+}
+
+func (f *dateiWriteFile) Read(_ []byte) (int, error)           { return 0, os.ErrInvalid }
+func (f *dateiWriteFile) Seek(_ int64, _ int) (int64, error)   { return 0, os.ErrInvalid }
+func (f *dateiWriteFile) Readdir(_ int) ([]os.FileInfo, error) { return nil, os.ErrInvalid }
+
+func (f *dateiWriteFile) Write(p []byte) (int, error) {
+	return f.tmpFile.Write(p)
+}
+
+// Close uploads the buffered content to the service and removes the temp file.
+func (f *dateiWriteFile) Close() error {
 	tmp := f.tmpFile
-	f.tmpFile = nil
 	defer func() {
 		tmp.Close()
 		os.Remove(tmp.Name())
@@ -222,14 +227,4 @@ func (f *dateiFile) Close() error {
 		ContentType: contentType,
 	})
 	return mapErr(err)
-}
-
-// DeadProps returns an empty map — no custom WebDAV properties are stored.
-func (f *dateiFile) DeadProps() (map[xml.Name]xdav.Property, error) {
-	return nil, nil
-}
-
-// Patch is a no-op — custom WebDAV properties are not persisted.
-func (f *dateiFile) Patch(_ []xdav.Proppatch) ([]xdav.Propstat, error) {
-	return nil, nil
 }
