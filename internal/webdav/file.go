@@ -190,7 +190,7 @@ func (f *dateiFile) Close() error {
 			FileName:    f.writeName,
 			ContentType: contentType,
 		})
-		return err
+		return mapErr(err)
 	}
 	_, err := f.service.UpdateDatei(f.writeCtx, datei.UpdateDateiInput{
 		ID:          *f.existingID,
@@ -198,7 +198,7 @@ func (f *dateiFile) Close() error {
 		FileName:    f.writeName,
 		ContentType: contentType,
 	})
-	return err
+	return mapErr(err)
 }
 
 // DeadProps returns an empty map — no custom WebDAV properties are stored.
