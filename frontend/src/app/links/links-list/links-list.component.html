@@ -6,128 +6,121 @@
     multiple items.
   </p>
 
+  <mat-chip-listbox
+    [value]="selectedTab()"
+    (change)="onFilterChange($event.value)"
+    aria-label="Filter by status"
+    class="mt-4"
+  >
+    <mat-chip-option value="active" selected>Active</mat-chip-option>
+    <mat-chip-option value="expired">Expired</mat-chip-option>
+    <mat-chip-option value="revoked">Revoked</mat-chip-option>
+  </mat-chip-listbox>
+
   @if (listResource.isLoading()) {
-    <p class="mat-text-on-surface-variant">Loading…</p>
-  } @else if (allLinksTotal() === 0) {
-    <div class="mat-bg-surface-container mat-corner-md p-6 text-center mt-4">
-      <mat-icon class="mat-text-on-surface-variant">link_off</mat-icon>
-      <p class="mat-font-body-lg mt-2">You haven't created any public links yet.</p>
-    </div>
+    <p class="mat-text-on-surface-variant mt-4">Loading…</p>
+  } @else if (dataSource.data.length === 0) {
+    <p class="mat-text-on-surface-variant mt-4">No links in this category.</p>
   } @else {
-    <mat-tab-group
-      mat-stretch-tabs="false"
-      mat-align-tabs="start"
-      [selectedIndex]="selectedTabIndex()"
-      (selectedIndexChange)="onTabChange($event)"
-    >
-      <mat-tab label="Active ({{ activeLinks().length }})"></mat-tab>
-      <mat-tab label="Expired ({{ expiredLinks().length }})"></mat-tab>
-      <mat-tab label="Revoked ({{ revokedLinks().length }})"></mat-tab>
-    </mat-tab-group>
+    <table mat-table [dataSource]="dataSource" class="mat-elevation-z8 mt-4 w-full">
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Name</th>
+        <td mat-cell *matCellDef="let link">{{ link.name }}</td>
+      </ng-container>
 
-    @if (dataSource.data.length === 0) {
-      <p class="mat-text-on-surface-variant mt-4">No links in this category.</p>
-    } @else {
-      <table mat-table [dataSource]="dataSource" class="mat-elevation-z8 mt-4 w-full">
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef>Name</th>
-          <td mat-cell *matCellDef="let link">{{ link.name }}</td>
-        </ng-container>
+      <ng-container matColumnDef="contents">
+        <th mat-header-cell *matHeaderCellDef>Contents</th>
+        <td mat-cell *matCellDef="let link">
+          {{ link.folderCount }} {{ link.folderCount === 1 ? 'folder' : 'folders' }},
+          {{ link.fileCount }} {{ link.fileCount === 1 ? 'file' : 'files' }}
+        </td>
+      </ng-container>
 
-        <ng-container matColumnDef="contents">
-          <th mat-header-cell *matHeaderCellDef>Contents</th>
-          <td mat-cell *matCellDef="let link">
-            {{ link.folderCount }} {{ link.folderCount === 1 ? 'folder' : 'folders' }},
-            {{ link.fileCount }} {{ link.fileCount === 1 ? 'file' : 'files' }}
-          </td>
-        </ng-container>
+      <ng-container matColumnDef="createdAt">
+        <th mat-header-cell *matHeaderCellDef>Created</th>
+        <td mat-cell *matCellDef="let link">{{ link.createdAt | date }}</td>
+      </ng-container>
 
-        <ng-container matColumnDef="createdAt">
-          <th mat-header-cell *matHeaderCellDef>Created</th>
-          <td mat-cell *matCellDef="let link">{{ link.createdAt | date }}</td>
-        </ng-container>
+      <ng-container matColumnDef="expiresAt">
+        <th mat-header-cell *matHeaderCellDef>Expires</th>
+        <td mat-cell *matCellDef="let link">
+          {{ link.expiresAt ? (link.expiresAt | date) : 'Never' }}
+        </td>
+      </ng-container>
 
-        <ng-container matColumnDef="expiresAt">
-          <th mat-header-cell *matHeaderCellDef>Expires</th>
-          <td mat-cell *matCellDef="let link">
-            {{ link.expiresAt ? (link.expiresAt | date) : 'Never' }}
-          </td>
-        </ng-container>
-
-        <ng-container matColumnDef="code">
-          <th mat-header-cell *matHeaderCellDef>Code</th>
-          <td mat-cell *matCellDef="let link">
-            @if (link.code) {
-              <button
-                mat-button
-                (click)="toggleCodeVisibility(link.id)"
-                [matTooltip]="isCodeRevealed(link.id) ? 'Hide code' : 'Show code'"
-                [attr.aria-label]="isCodeRevealed(link.id) ? 'Hide code' : 'Show code'"
-              >
-                {{ isCodeRevealed(link.id) ? link.code : '••••••' }}
-                <mat-icon iconPositionEnd>
-                  {{ isCodeRevealed(link.id) ? 'visibility_off' : 'visibility' }}
-                </mat-icon>
-              </button>
-              <button
-                mat-button
-                (click)="copyCode(link)"
-                matTooltip="Copy code"
-                aria-label="Copy code"
-              >
-                <mat-icon>content_copy</mat-icon>
-              </button>
-            } @else {
-              <span class="mat-text-on-surface-variant">—</span>
-            }
-          </td>
-        </ng-container>
-
-        <ng-container matColumnDef="shareUrl">
-          <th mat-header-cell *matHeaderCellDef>Share URL</th>
-          <td mat-cell *matCellDef="let link">
+      <ng-container matColumnDef="code">
+        <th mat-header-cell *matHeaderCellDef>Code</th>
+        <td mat-cell *matCellDef="let link">
+          @if (link.code) {
             <button
               mat-button
-              (click)="copyShareUrl(link)"
-              matTooltip="Copy share URL"
-              aria-label="Copy share URL"
+              (click)="toggleCodeVisibility(link.id)"
+              [matTooltip]="isCodeRevealed(link.id) ? 'Hide code' : 'Show code'"
+              [attr.aria-label]="isCodeRevealed(link.id) ? 'Hide code' : 'Show code'"
+            >
+              {{ isCodeRevealed(link.id) ? link.code : '••••••' }}
+              <mat-icon iconPositionEnd>
+                {{ isCodeRevealed(link.id) ? 'visibility_off' : 'visibility' }}
+              </mat-icon>
+            </button>
+            <button
+              mat-button
+              (click)="copyCode(link)"
+              matTooltip="Copy code"
+              aria-label="Copy code"
             >
               <mat-icon>content_copy</mat-icon>
-              Copy
             </button>
-          </td>
-        </ng-container>
+          } @else {
+            <span class="mat-text-on-surface-variant">—</span>
+          }
+        </td>
+      </ng-container>
 
-        <ng-container matColumnDef="actions" stickyEnd>
-          <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let link" class="w-12 text-right">
-            <button matIconButton [matMenuTriggerFor]="rowMenu" aria-label="More actions">
-              <mat-icon>more_vert</mat-icon>
+      <ng-container matColumnDef="shareUrl">
+        <th mat-header-cell *matHeaderCellDef>Share URL</th>
+        <td mat-cell *matCellDef="let link">
+          <button
+            mat-button
+            (click)="copyShareUrl(link)"
+            matTooltip="Copy share URL"
+            aria-label="Copy share URL"
+          >
+            <mat-icon>content_copy</mat-icon>
+            Copy
+          </button>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions" stickyEnd>
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let link" class="w-12 text-right">
+          <button matIconButton [matMenuTriggerFor]="rowMenu" aria-label="More actions">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #rowMenu="matMenu">
+            <button mat-menu-item (click)="openPreview(link)">
+              <mat-icon>open_in_new</mat-icon>
+              Preview
             </button>
-            <mat-menu #rowMenu="matMenu">
-              <button mat-menu-item (click)="openPreview(link)">
-                <mat-icon>open_in_new</mat-icon>
-                Preview
-              </button>
-              <button mat-menu-item (click)="openEditDialog(link)">
-                <mat-icon>edit</mat-icon>
-                Edit
-              </button>
-              <button mat-menu-item (click)="rotateAccessToken(link)">
-                <mat-icon>autorenew</mat-icon>
-                Regenerate link
-              </button>
-              <button mat-menu-item (click)="revokeLink(link)">
-                <mat-icon>delete</mat-icon>
-                Revoke
-              </button>
-            </mat-menu>
-          </td>
-        </ng-container>
+            <button mat-menu-item (click)="openEditDialog(link)">
+              <mat-icon>edit</mat-icon>
+              Edit
+            </button>
+            <button mat-menu-item (click)="rotateAccessToken(link)">
+              <mat-icon>autorenew</mat-icon>
+              Regenerate link
+            </button>
+            <button mat-menu-item (click)="revokeLink(link)">
+              <mat-icon>delete</mat-icon>
+              Revoke
+            </button>
+          </mat-menu>
+        </td>
+      </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
-      </table>
-    }
+      <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
+    </table>
   }
 </div>

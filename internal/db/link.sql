@@ -27,9 +27,29 @@ INNER JOIN user_account_projection u ON u.id = l.owner_id
 WHERE l.access_token = $1;
 
 -- name: ListLinkProjectionsByOwner :many
+-- status filter values: 'active', 'expired', 'revoked', or '' to return all.
 SELECT * FROM link_projection
- WHERE owner_id = $1
- ORDER BY created_at DESC;
+ WHERE owner_id = @owner_id
+   AND CASE @status::text
+     WHEN 'active'  THEN revoked_at IS NULL AND (expires_at IS NULL OR expires_at > NOW())
+     WHEN 'expired' THEN revoked_at IS NULL AND expires_at IS NOT NULL AND expires_at <= NOW()
+     WHEN 'revoked' THEN revoked_at IS NOT NULL
+     ELSE TRUE
+   END
+ ORDER BY created_at DESC
+ LIMIT @lim OFFSET @off;
+
+-- name: CountLinkProjectionsByOwner :one
+-- Total row count for the same filter as ListLinkProjectionsByOwner; used to
+-- populate the response's `total` field for pagination.
+SELECT COUNT(*)::bigint FROM link_projection
+ WHERE owner_id = @owner_id
+   AND CASE @status::text
+     WHEN 'active'  THEN revoked_at IS NULL AND (expires_at IS NULL OR expires_at > NOW())
+     WHEN 'expired' THEN revoked_at IS NULL AND expires_at IS NOT NULL AND expires_at <= NOW()
+     WHEN 'revoked' THEN revoked_at IS NOT NULL
+     ELSE TRUE
+   END;
 
 -- name: InsertLinkDateiProjection :exec
 INSERT INTO link_datei_projection (link_id, datei_id, added_at)

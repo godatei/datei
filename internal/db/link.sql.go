@@ -48,6 +48,31 @@ func (q *Queries) CountLinkContents(ctx context.Context, linkID uuid.UUID) (Coun
 	return i, err
 }
 
+const countLinkProjectionsByOwner = `-- name: CountLinkProjectionsByOwner :one
+SELECT COUNT(*)::bigint FROM link_projection
+ WHERE owner_id = $1
+   AND CASE $2::text
+     WHEN 'active'  THEN revoked_at IS NULL AND (expires_at IS NULL OR expires_at > NOW())
+     WHEN 'expired' THEN revoked_at IS NULL AND expires_at IS NOT NULL AND expires_at <= NOW()
+     WHEN 'revoked' THEN revoked_at IS NOT NULL
+     ELSE TRUE
+   END
+`
+
+type CountLinkProjectionsByOwnerParams struct {
+	OwnerID uuid.UUID `db:"owner_id"`
+	Status  string    `db:"status"`
+}
+
+// Total row count for the same filter as ListLinkProjectionsByOwner; used to
+// populate the response's `total` field for pagination.
+func (q *Queries) CountLinkProjectionsByOwner(ctx context.Context, arg CountLinkProjectionsByOwnerParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countLinkProjectionsByOwner, arg.OwnerID, arg.Status)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const deleteLinkDateiProjection = `-- name: DeleteLinkDateiProjection :exec
 DELETE FROM link_datei_projection
  WHERE link_id = $1 AND datei_id = $2
@@ -254,11 +279,31 @@ func (q *Queries) ListDateienByLink(ctx context.Context, linkID uuid.UUID) ([]Da
 const listLinkProjectionsByOwner = `-- name: ListLinkProjectionsByOwner :many
 SELECT id, owner_id, name, access_token, code, expires_at, revoked_at, created_at, updated_at FROM link_projection
  WHERE owner_id = $1
+   AND CASE $2::text
+     WHEN 'active'  THEN revoked_at IS NULL AND (expires_at IS NULL OR expires_at > NOW())
+     WHEN 'expired' THEN revoked_at IS NULL AND expires_at IS NOT NULL AND expires_at <= NOW()
+     WHEN 'revoked' THEN revoked_at IS NOT NULL
+     ELSE TRUE
+   END
  ORDER BY created_at DESC
+ LIMIT $4 OFFSET $3
 `
 
-func (q *Queries) ListLinkProjectionsByOwner(ctx context.Context, ownerID uuid.UUID) ([]LinkProjection, error) {
-	rows, err := q.db.Query(ctx, listLinkProjectionsByOwner, ownerID)
+type ListLinkProjectionsByOwnerParams struct {
+	OwnerID uuid.UUID `db:"owner_id"`
+	Status  string    `db:"status"`
+	Off     int32     `db:"off"`
+	Lim     int32     `db:"lim"`
+}
+
+// status filter values: 'active', 'expired', 'revoked', or ” to return all.
+func (q *Queries) ListLinkProjectionsByOwner(ctx context.Context, arg ListLinkProjectionsByOwnerParams) ([]LinkProjection, error) {
+	rows, err := q.db.Query(ctx, listLinkProjectionsByOwner,
+		arg.OwnerID,
+		arg.Status,
+		arg.Off,
+		arg.Lim,
+	)
 	if err != nil {
 		return nil, err
 	}

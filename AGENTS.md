@@ -232,6 +232,12 @@ HTTP Request → Server Endpoint → Service → db.Queries (read from projectio
 
 - Use `new(value)` (e.g., `new(true)`, `new("foo")`) to create pointers to literals — do NOT write `xxxPtr` helper functions
 
+### List Endpoints
+
+- Every list endpoint accepts `limit` (default `100`) and `offset` (default `0`) query parameters
+- Response shape is `{ items, total }` where `total` is the row count matching the filter (before `LIMIT`/`OFFSET`)
+- Filtering — including chip/tab-style status filters (e.g. `active`/`expired`/`revoked`) — belongs on the server as a query parameter. Do NOT fetch all rows and filter client-side; that breaks pagination and forces every consumer to re-implement the same predicates
+
 ## Frontend Conventions
 
 ### TypeScript Best Practices

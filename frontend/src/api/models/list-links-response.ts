@@ -10,7 +10,7 @@ export interface ListLinksResponse {
   items: Array<Link>;
 
   /**
-   * Total number of items
+   * Total number of items matching the filter (before pagination)
    */
   total: number;
 }

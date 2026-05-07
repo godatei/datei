@@ -10,4 +10,4 @@ properties:
     description: Array of Link objects
   total:
     type: integer
-    description: Total number of items
+    description: Total number of items matching the filter (before pagination)

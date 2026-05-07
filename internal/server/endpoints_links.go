@@ -12,9 +12,26 @@ import (
 // ListLinks implements [StrictServerInterface].
 func (s *server) ListLinks(
 	ctx context.Context,
-	_ ListLinksRequestObject,
+	request ListLinksRequestObject,
 ) (ListLinksResponseObject, error) {
-	result, err := s.linkService.ListLinks(ctx)
+	limit := 0
+	offset := 0
+	if request.Params.Limit != nil && *request.Params.Limit > 0 {
+		limit = *request.Params.Limit
+	}
+	if request.Params.Offset != nil && *request.Params.Offset > 0 {
+		offset = *request.Params.Offset
+	}
+	status := ""
+	if request.Params.Status != nil {
+		status = string(*request.Params.Status)
+	}
+
+	result, err := s.linkService.ListLinks(ctx, link.ListLinksInput{
+		Status: status,
+		Limit:  limit,
+		Offset: offset,
+	})
 	if err != nil {
 		return nil, err
 	}

@@ -98,33 +98,59 @@ func (s *Service) CreateLink(ctx context.Context, input CreateLinkInput) (*api.L
 	return s.aggregateToLinkDetail(ctx, agg)
 }
 
+type ListLinksInput struct {
+	// Status is "active", "expired", "revoked", or "" to return all.
+	Status string
+	Limit  int
+	Offset int
+}
+
 type ListLinksOutput struct {
 	Items []api.Link
 	Total int
 }
 
-func (s *Service) ListLinks(ctx context.Context) (*ListLinksOutput, error) {
+func (s *Service) ListLinks(ctx context.Context, input ListLinksInput) (*ListLinksOutput, error) {
 	userID := authn.RequireContext(ctx).UserID
 	queries := db.New(s.db)
 
-	projections, err := queries.ListLinkProjectionsByOwner(ctx, userID)
+	limit := int32(input.Limit)
+	if limit <= 0 {
+		limit = 100
+	}
+	offset := int32(max(input.Offset, 0))
+
+	total, err := queries.CountLinkProjectionsByOwner(ctx, db.CountLinkProjectionsByOwnerParams{
+		OwnerID: userID,
+		Status:  input.Status,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	projections, err := queries.ListLinkProjectionsByOwner(ctx, db.ListLinkProjectionsByOwnerParams{
+		OwnerID: userID,
+		Status:  input.Status,
+		Lim:     limit,
+		Off:     offset,
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	items := make([]api.Link, 0, len(projections))
 	for i := range projections {
-		counts, err := queries.CountLinkContents(ctx, projections[i].ID)
+		c, err := queries.CountLinkContents(ctx, projections[i].ID)
 		if err != nil {
 			return nil, err
 		}
-		mapped := MapProjectionToLink(&projections[i], int(counts.FileCount), int(counts.FolderCount))
+		mapped := MapProjectionToLink(&projections[i], int(c.FileCount), int(c.FolderCount))
 		if mapped != nil {
 			items = append(items, *mapped)
 		}
 	}
 
-	return &ListLinksOutput{Items: items, Total: len(items)}, nil
+	return &ListLinksOutput{Items: items, Total: int(total)}, nil
 }
 
 type UpdateLinkInput struct {

@@ -14,10 +14,12 @@ import {
   updateLink,
 } from '~/api/functions';
 import type { CreateLinkRequest } from '~/api/models/create-link-request';
-import type { Link } from '~/api/models/link';
 import type { LinkDetail } from '~/api/models/link-detail';
+import type { ListLinksResponse } from '~/api/models/list-links-response';
 import type { ListPublicLinkDateienResponse } from '~/api/models/list-public-link-dateien-response';
 import type { UpdateLinkRequest } from '~/api/models/update-link-request';
+
+export type LinkStatusFilter = 'active' | 'expired' | 'revoked';
 
 @Injectable({ providedIn: 'root' })
 export class LinksService {
@@ -27,8 +29,12 @@ export class LinksService {
   // Owner-side
   // ============================================================================
 
-  listLinks(): Observable<Link[]> {
-    return listLinks(this.httpClient, '').pipe(map((r) => r.body.items));
+  listLinks(params?: {
+    status?: LinkStatusFilter;
+    limit?: number;
+    offset?: number;
+  }): Observable<ListLinksResponse> {
+    return listLinks(this.httpClient, '', params).pipe(map((r) => r.body));
   }
 
   getLink(id: string): Observable<LinkDetail> {

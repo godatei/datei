@@ -36,13 +36,10 @@ export class LinkPickerDialogComponent {
 
   protected readonly listResource = resource({
     params: () => ({}),
-    loader: () => firstValueFrom(this.linksService.listLinks()),
+    loader: () => firstValueFrom(this.linksService.listLinks({ status: 'active' })),
   });
 
-  // Only active links accept new dateien — revoked links are terminal.
-  protected readonly availableLinks = computed(() =>
-    (this.listResource.value() ?? []).filter((l) => !l.revokedAt),
-  );
+  protected readonly availableLinks = computed(() => this.listResource.value()?.items ?? []);
 
   protected readonly model = signal({ linkId: '' });
   protected readonly pickerForm = form(

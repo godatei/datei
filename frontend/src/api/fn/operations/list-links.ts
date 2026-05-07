@@ -10,11 +10,29 @@ import { RequestBuilder } from '../../request-builder';
 import { ListLinksResponse } from '../../models/list-links-response';
 
 export interface ListLinks$Params {
+
+/**
+ * Filter by link status; omit to return all
+ */
+  status?: 'active' | 'expired' | 'revoked';
+
+/**
+ * Maximum number of results
+ */
+  limit?: number;
+
+/**
+ * Number of results to skip
+ */
+  offset?: number;
 }
 
 export function listLinks(http: HttpClient, rootUrl: string, params?: ListLinks$Params, context?: HttpContext): Observable<StrictHttpResponse<ListLinksResponse>> {
   const rb = new RequestBuilder(rootUrl, listLinks.PATH, 'get');
   if (params) {
+    rb.query('status', params.status, {});
+    rb.query('limit', params.limit, {});
+    rb.query('offset', params.offset, {});
   }
 
   return http.request(

@@ -13,6 +13,27 @@ const (
 	BearerHttpAuthenticationScopes bearerHttpAuthenticationContextKey = "bearerHttpAuthentication.Scopes"
 )
 
+// Defines values for ListLinksParamsStatus.
+const (
+	Active  ListLinksParamsStatus = "active"
+	Expired ListLinksParamsStatus = "expired"
+	Revoked ListLinksParamsStatus = "revoked"
+)
+
+// Valid indicates whether the value is a known member of the ListLinksParamsStatus enum.
+func (e ListLinksParamsStatus) Valid() bool {
+	switch e {
+	case Active:
+		return true
+	case Expired:
+		return true
+	case Revoked:
+		return true
+	default:
+		return false
+	}
+}
+
 // AddDateiToLinkRequest defines model for AddDateiToLinkRequest.
 type AddDateiToLinkRequest struct {
 	// DateiId ID of the datei to add to the link
@@ -220,7 +241,7 @@ type ListLinksResponse struct {
 	// Items Array of Link objects
 	Items []Link `json:"items"`
 
-	// Total Total number of items
+	// Total Total number of items matching the filter (before pagination)
 	Total int `json:"total"`
 }
 
@@ -447,6 +468,21 @@ type ListDateiParams struct {
 type GetDateiThumbnailParams struct {
 	IfNoneMatch *string `json:"If-None-Match,omitempty"`
 }
+
+// ListLinksParams defines parameters for ListLinks.
+type ListLinksParams struct {
+	// Status Filter by link status; omit to return all
+	Status *ListLinksParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+
+	// Limit Maximum number of results
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of results to skip
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// ListLinksParamsStatus defines parameters for ListLinks.
+type ListLinksParamsStatus string
 
 // ListPublicLinkDateienParams defines parameters for ListPublicLinkDateien.
 type ListPublicLinkDateienParams struct {

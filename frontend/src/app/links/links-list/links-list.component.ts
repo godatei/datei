@@ -10,29 +10,21 @@ import {
 } from '@angular/core';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { MatButtonModule } from '@angular/material/button';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import type { Link } from '~/api/models/link';
-import { LinksService } from '~/frontend/services/links.service';
+import { LinksService, type LinkStatusFilter } from '~/frontend/services/links.service';
 import {
   LinkFormDialogComponent,
   LinkFormDialogData,
 } from '~/frontend/links/link-form-dialog/link-form-dialog.component';
-
-export type LinkStatus = 'active' | 'expired' | 'revoked';
-
-export function statusOf(link: Link): LinkStatus {
-  if (link.revokedAt) return 'revoked';
-  if (link.expiresAt && new Date(link.expiresAt).getTime() <= Date.now()) return 'expired';
-  return 'active';
-}
 
 @Component({
   selector: 'app-links-list',
@@ -41,10 +33,10 @@ export function statusOf(link: Link): LinkStatus {
   imports: [
     DatePipe,
     MatButtonModule,
+    MatChipsModule,
     MatIconModule,
     MatMenuModule,
     MatTableModule,
-    MatTabsModule,
     MatTooltipModule,
     RouterLink,
   ],
@@ -55,45 +47,15 @@ export class LinksListComponent {
   private readonly dialog = inject(MatDialog);
   private readonly clipboard = inject(Clipboard);
 
+  protected readonly selectedTab = signal<LinkStatusFilter>('active');
   protected readonly refresh = signal(0);
+
   protected readonly listResource = resource({
-    params: () => ({ refresh: this.refresh() }),
-    loader: () => firstValueFrom(this.linksService.listLinks()),
+    params: () => ({ status: this.selectedTab(), refresh: this.refresh() }),
+    loader: ({ params }) => firstValueFrom(this.linksService.listLinks({ status: params.status })),
   });
 
-  private readonly allLinks = computed(() => this.listResource.value() ?? []);
-  protected readonly activeLinks = computed(() =>
-    this.allLinks().filter((l) => statusOf(l) === 'active'),
-  );
-  protected readonly expiredLinks = computed(() =>
-    this.allLinks().filter((l) => statusOf(l) === 'expired'),
-  );
-  protected readonly revokedLinks = computed(() =>
-    this.allLinks().filter((l) => statusOf(l) === 'revoked'),
-  );
-
-  protected readonly selectedTab = signal<LinkStatus>('active');
-  protected readonly selectedTabIndex = computed(() => {
-    switch (this.selectedTab()) {
-      case 'active':
-        return 0;
-      case 'expired':
-        return 1;
-      case 'revoked':
-        return 2;
-    }
-  });
-  protected readonly allLinksTotal = computed(() => this.allLinks().length);
-  private readonly visibleLinks = computed(() => {
-    switch (this.selectedTab()) {
-      case 'active':
-        return this.activeLinks();
-      case 'expired':
-        return this.expiredLinks();
-      case 'revoked':
-        return this.revokedLinks();
-    }
-  });
+  protected readonly visibleLinks = computed(() => this.listResource.value()?.items ?? []);
 
   private readonly revealedCodes = signal<ReadonlySet<string>>(new Set());
 
@@ -123,9 +85,8 @@ export class LinksListComponent {
     });
   }
 
-  protected onTabChange(index: number): void {
-    const tab: LinkStatus = index === 1 ? 'expired' : index === 2 ? 'revoked' : 'active';
-    this.selectedTab.set(tab);
+  protected onFilterChange(value: LinkStatusFilter): void {
+    this.selectedTab.set(value);
   }
 
   protected shareUrl(link: Link): string {
