@@ -1,11 +1,14 @@
 package webdav
 
 import (
+	"errors"
+	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/httprate"
 	"github.com/godatei/datei/internal/authn"
+	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/users"
 )
 
@@ -34,9 +37,14 @@ func BasicAuthMiddleware(userSvc *users.UserService) func(http.Handler) http.Han
 
 			out, err := userSvc.ValidateCredentials(r.Context(), email, password)
 			if err != nil {
-				if limited := failLimiter.RespondOnLimit(w, r, ip); !limited {
-					w.Header().Set("WWW-Authenticate", `Basic realm="Datei WebDAV"`)
-					http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				if errors.Is(err, dateierrors.ErrInvalidCredentials) {
+					if limited := failLimiter.RespondOnLimit(w, r, ip); !limited {
+						w.Header().Set("WWW-Authenticate", `Basic realm="Datei WebDAV"`)
+						http.Error(w, "Unauthorized", http.StatusUnauthorized)
+					}
+				} else {
+					slog.ErrorContext(r.Context(), "failed to validate webdav credentials", "error", err)
+					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 				}
 				return
 			}
