@@ -214,6 +214,9 @@ func (fs *dateiFS) OpenFile(ctx context.Context, name string, flag int, _ os.Fil
 	existing, lookupErr := fs.findChild(ctx, parentID, base)
 	var existingID *uuid.UUID
 	if lookupErr == nil {
+		if existing.IsDirectory {
+			return nil, os.ErrInvalid
+		}
 		existingID = &existing.Id
 	} else if !errors.Is(lookupErr, os.ErrNotExist) {
 		return nil, lookupErr
