@@ -20,10 +20,7 @@ func BasicAuthMiddleware(userSvc *users.UserService) func(http.Handler) http.Han
 				return
 			}
 
-			out, err := userSvc.Login(r.Context(), users.LoginInput{
-				Email:    email,
-				Password: password,
-			})
+			out, err := userSvc.ValidateCredentials(r.Context(), email, password)
 			if err != nil {
 				w.Header().Set("WWW-Authenticate", `Basic realm="Datei WebDAV"`)
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -35,12 +32,12 @@ func BasicAuthMiddleware(userSvc *users.UserService) func(http.Handler) http.Han
 				return
 			}
 
-			info, err := authn.FromTokenString(out.Token)
-			if err != nil {
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				return
+			info := authn.AuthInfo{
+				UserID:        out.UserID,
+				Name:          out.Name,
+				Email:         out.Email,
+				EmailVerified: out.EmailVerified,
 			}
-
 			r = r.WithContext(authn.NewContext(r.Context(), info))
 			next.ServeHTTP(w, r)
 		})
