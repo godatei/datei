@@ -31,9 +31,9 @@ func (fi *fileInfo) ModTime() time.Time { return fi.modTime }
 func (fi *fileInfo) Sys() any           { return nil }
 func (fi *fileInfo) Mode() os.FileMode {
 	if fi.isDir {
-		return os.ModeDir | 0o555
+		return os.ModeDir | 0o755
 	}
-	return 0o444
+	return 0o644
 }
 
 func rootInfo() *fileInfo {
