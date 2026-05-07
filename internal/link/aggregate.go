@@ -2,9 +2,11 @@ package link
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
+	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/events"
 	"github.com/google/uuid"
 )
@@ -137,7 +139,7 @@ func (a *Aggregate) AddDatei(dateiID uuid.UUID, now time.Time) error {
 		return errors.New("invalid datei id")
 	}
 	if _, exists := a.DateiIDs[dateiID]; exists {
-		return errors.New("datei already added to link")
+		return fmt.Errorf("datei already added to link: %w", dateierrors.ErrLinkDateiAlreadyAdded)
 	}
 
 	a.recordEvent(LinkDateiAddedEvent{
@@ -153,7 +155,7 @@ func (a *Aggregate) RemoveDatei(dateiID uuid.UUID, now time.Time) error {
 		return err
 	}
 	if _, exists := a.DateiIDs[dateiID]; !exists {
-		return errors.New("datei not part of link")
+		return fmt.Errorf("datei not part of link: %w", dateierrors.ErrLinkDateiNotShared)
 	}
 
 	a.recordEvent(LinkDateiRemovedEvent{
@@ -193,10 +195,10 @@ func (a *Aggregate) checkActive(action string) error {
 // validators (required, non-whitespace-only, max length) at the domain layer.
 func validateName(name string) error {
 	if strings.TrimSpace(name) == "" {
-		return errors.New("name cannot be empty or whitespace")
+		return fmt.Errorf("name cannot be empty: %w", dateierrors.ErrInvalidInput)
 	}
 	if len(name) > linkNameMaxLen {
-		return errors.New("name exceeds maximum length")
+		return fmt.Errorf("name exceeds %d chars: %w", linkNameMaxLen, dateierrors.ErrInvalidInput)
 	}
 	return nil
 }

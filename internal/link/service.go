@@ -215,10 +215,6 @@ func (s *Service) AddDateiToLink(ctx context.Context, linkID, dateiID uuid.UUID)
 		return nil, err
 	}
 
-	if _, exists := agg.DateiIDs[dateiID]; exists {
-		return nil, dateierrors.ErrLinkDateiAlreadyAdded
-	}
-
 	if err := agg.AddDatei(dateiID, time.Now()); err != nil {
 		return nil, err
 	}
@@ -236,7 +232,7 @@ func (s *Service) RemoveDateiFromLink(ctx context.Context, linkID, dateiID uuid.
 	}
 
 	if err := agg.RemoveDatei(dateiID, time.Now()); err != nil {
-		return dateierrors.ErrLinkDateiNotShared
+		return err
 	}
 	return s.repository.Save(ctx, agg)
 }
