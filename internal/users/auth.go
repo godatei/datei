@@ -117,7 +117,10 @@ type ValidateCredentialsOutput struct {
 // ValidateCredentials verifies email/password without generating a JWT or
 // recording a login event. Use this for protocol-level auth (e.g. WebDAV
 // Basic Auth) where a login event per request would be too noisy.
-func (s *UserService) ValidateCredentials(ctx context.Context, email, password string) (*ValidateCredentialsOutput, error) {
+func (s *UserService) ValidateCredentials(
+	ctx context.Context,
+	email, password string,
+) (*ValidateCredentialsOutput, error) {
 	user, err := s.verifyCredentials(ctx, email, password)
 	if err != nil {
 		return nil, err
