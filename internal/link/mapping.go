@@ -6,13 +6,12 @@ import (
 	"github.com/godatei/datei/pkg/api"
 )
 
-// MapProjectionToAPI converts a db.LinkProjection plus its top-level dateien
-// and computed counts into an api.Link.
-func MapProjectionToAPI(p *db.LinkProjection, dateien []db.DateiProjection, fileCount, folderCount int) *api.Link {
+// MapProjectionToLink converts a db.LinkProjection plus computed counts into
+// the list-shape api.Link (no dateien).
+func MapProjectionToLink(p *db.LinkProjection, fileCount, folderCount int) *api.Link {
 	if p == nil {
 		return nil
 	}
-
 	return &api.Link{
 		Id:          p.ID,
 		OwnerId:     p.OwnerID,
@@ -21,7 +20,6 @@ func MapProjectionToAPI(p *db.LinkProjection, dateien []db.DateiProjection, file
 		Code:        p.Code,
 		ExpiresAt:   p.ExpiresAt,
 		RevokedAt:   p.RevokedAt,
-		Dateien:     datei.MapProjectionSliceToAPI(dateien),
 		FileCount:   fileCount,
 		FolderCount: folderCount,
 		CreatedAt:   p.CreatedAt,
@@ -29,14 +27,14 @@ func MapProjectionToAPI(p *db.LinkProjection, dateien []db.DateiProjection, file
 	}
 }
 
-// MapAggregateToAPI converts an in-memory Aggregate plus its top-level dateien
-// and computed counts into an api.Link, used after a Save to avoid refetching
-// the link_projection row we just wrote.
-func MapAggregateToAPI(a *Aggregate, dateien []db.DateiProjection, fileCount, folderCount int) *api.Link {
+// MapAggregateToLinkDetail converts an in-memory Aggregate plus its top-level
+// dateien and computed counts into the detail-shape api.LinkDetail, used after
+// a Save to avoid refetching the link_projection row we just wrote.
+func MapAggregateToLinkDetail(a *Aggregate, dateien []db.DateiProjection, fileCount, folderCount int) *api.LinkDetail {
 	if a == nil {
 		return nil
 	}
-	return &api.Link{
+	return &api.LinkDetail{
 		Id:          a.ID,
 		OwnerId:     a.OwnerID,
 		Name:        a.Name,

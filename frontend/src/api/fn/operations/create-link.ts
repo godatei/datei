@@ -8,13 +8,13 @@ import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
 import { CreateLinkRequest } from '../../models/create-link-request';
-import { Link } from '../../models/link';
+import { LinkDetail } from '../../models/link-detail';
 
 export interface CreateLink$Params {
       body: CreateLinkRequest
 }
 
-export function createLink(http: HttpClient, rootUrl: string, params: CreateLink$Params, context?: HttpContext): Observable<StrictHttpResponse<Link>> {
+export function createLink(http: HttpClient, rootUrl: string, params: CreateLink$Params, context?: HttpContext): Observable<StrictHttpResponse<LinkDetail>> {
   const rb = new RequestBuilder(rootUrl, createLink.PATH, 'post');
   if (params) {
     rb.body(params.body, 'application/json');
@@ -25,7 +25,7 @@ export function createLink(http: HttpClient, rootUrl: string, params: CreateLink
   ).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
-      return r as StrictHttpResponse<Link>;
+      return r as StrictHttpResponse<LinkDetail>;
     })
   );
 }

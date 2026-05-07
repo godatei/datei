@@ -16,6 +16,6 @@ post:
       content:
         application/json:
           schema:
-            $ref: '../components/schemas/Link.yaml'
+            $ref: '../components/schemas/LinkDetail.yaml'
     '404':
       description: Link not found

@@ -65,6 +65,8 @@ export type { ListLinks$Params as ListLinks$Params } from './fn/operations/list-
 export { listLinks as listLinks } from './fn/operations/list-links';
 export type { CreateLink$Params as CreateLink$Params } from './fn/operations/create-link';
 export { createLink as createLink } from './fn/operations/create-link';
+export type { GetLink$Params as GetLink$Params } from './fn/operations/get-link';
+export { getLink as getLink } from './fn/operations/get-link';
 export type { RevokeLink$Params as RevokeLink$Params } from './fn/operations/revoke-link';
 export { revokeLink as revokeLink } from './fn/operations/revoke-link';
 export type { UpdateLink$Params as UpdateLink$Params } from './fn/operations/update-link';

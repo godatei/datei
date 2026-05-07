@@ -5,6 +5,7 @@ import {
   addDateiToLink,
   createLink,
   downloadPublicLinkDatei,
+  getLink,
   listLinks,
   listPublicLinkDateien,
   removeDateiFromLink,
@@ -14,6 +15,7 @@ import {
 } from '~/api/functions';
 import type { CreateLinkRequest } from '~/api/models/create-link-request';
 import type { Link } from '~/api/models/link';
+import type { LinkDetail } from '~/api/models/link-detail';
 import type { ListPublicLinkDateienResponse } from '~/api/models/list-public-link-dateien-response';
 import type { UpdateLinkRequest } from '~/api/models/update-link-request';
 
@@ -29,11 +31,15 @@ export class LinksService {
     return listLinks(this.httpClient, '').pipe(map((r) => r.body.items));
   }
 
-  createLink(body: CreateLinkRequest): Observable<Link> {
+  getLink(id: string): Observable<LinkDetail> {
+    return getLink(this.httpClient, '', { id }).pipe(map((r) => r.body));
+  }
+
+  createLink(body: CreateLinkRequest): Observable<LinkDetail> {
     return createLink(this.httpClient, '', { body }).pipe(map((r) => r.body));
   }
 
-  updateLink(id: string, body: UpdateLinkRequest): Observable<Link> {
+  updateLink(id: string, body: UpdateLinkRequest): Observable<LinkDetail> {
     return updateLink(this.httpClient, '', { id, body }).pipe(map((r) => r.body));
   }
 
@@ -41,11 +47,11 @@ export class LinksService {
     return revokeLink(this.httpClient, '', { id }).pipe(map(() => undefined));
   }
 
-  rotateAccessToken(id: string): Observable<Link> {
+  rotateAccessToken(id: string): Observable<LinkDetail> {
     return rotateLinkAccessToken(this.httpClient, '', { id }).pipe(map((r) => r.body));
   }
 
-  addDatei(linkId: string, dateiId: string): Observable<Link> {
+  addDatei(linkId: string, dateiId: string): Observable<LinkDetail> {
     return addDateiToLink(this.httpClient, '', { id: linkId, body: { dateiId } }).pipe(
       map((r) => r.body),
     );

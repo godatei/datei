@@ -153,9 +153,17 @@ export class LinksListComponent {
     window.open(this.shareUrl(link), '_blank', 'noopener');
   }
 
-  protected openEditDialog(link: Link): void {
+  protected async openEditDialog(link: Link): Promise<void> {
+    let detail;
+    try {
+      detail = await firstValueFrom(this.linksService.getLink(link.id));
+    } catch (e) {
+      console.error(e);
+      this.snackBar.open('Failed to open link', 'Dismiss', { duration: 4000 });
+      return;
+    }
     const ref = this.dialog.open(LinkFormDialogComponent, {
-      data: { mode: 'edit', link } satisfies LinkFormDialogData,
+      data: { mode: 'edit', link: detail } satisfies LinkFormDialogData,
     });
     ref.afterClosed().subscribe((updated) => {
       if (updated) {

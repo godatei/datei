@@ -137,6 +137,42 @@ type Link struct {
 	// CreatedAt Creation timestamp
 	CreatedAt time.Time `json:"createdAt"`
 
+	// ExpiresAt Expiration timestamp; null if the link never expires
+	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
+
+	// FileCount Total number of files reachable in the shared subtree (excluding trashed)
+	FileCount int `json:"fileCount"`
+
+	// FolderCount Total number of folders reachable in the shared subtree (excluding trashed)
+	FolderCount int `json:"folderCount"`
+
+	// Id Unique identifier
+	Id openapi_types.UUID `json:"id"`
+
+	// Name Display name of the link
+	Name string `json:"name"`
+
+	// OwnerId User ID of the owner
+	OwnerId openapi_types.UUID `json:"ownerId"`
+
+	// RevokedAt Revocation timestamp; null if the link is active
+	RevokedAt *time.Time `json:"revokedAt,omitempty"`
+
+	// UpdatedAt Last update timestamp
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+// LinkDetail defines model for LinkDetail.
+type LinkDetail struct {
+	// AccessToken Opaque URL slug used to access the link publicly
+	AccessToken string `json:"accessToken"`
+
+	// Code Optional plain-text code required to view; null if no code is set
+	Code *string `json:"code,omitempty"`
+
+	// CreatedAt Creation timestamp
+	CreatedAt time.Time `json:"createdAt"`
+
 	// Dateien Top-level dateien shared by the link
 	Dateien []Datei `json:"dateien"`
 

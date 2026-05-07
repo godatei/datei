@@ -12,6 +12,7 @@ export type { DisableMfaRequest } from './models/disable-mfa-request';
 export type { EnableMfaRequest } from './models/enable-mfa-request';
 export type { EnableMfaResponse } from './models/enable-mfa-response';
 export type { Link } from './models/link';
+export type { LinkDetail } from './models/link-detail';
 export type { ListDateiResponse } from './models/list-datei-response';
 export type { ListEmailsResponse } from './models/list-emails-response';
 export type { ListLinksResponse } from './models/list-links-response';

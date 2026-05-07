@@ -8,14 +8,14 @@ import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
 import { AddDateiToLinkRequest } from '../../models/add-datei-to-link-request';
-import { Link } from '../../models/link';
+import { LinkDetail } from '../../models/link-detail';
 
 export interface AddDateiToLink$Params {
   id: string;
       body: AddDateiToLinkRequest
 }
 
-export function addDateiToLink(http: HttpClient, rootUrl: string, params: AddDateiToLink$Params, context?: HttpContext): Observable<StrictHttpResponse<Link>> {
+export function addDateiToLink(http: HttpClient, rootUrl: string, params: AddDateiToLink$Params, context?: HttpContext): Observable<StrictHttpResponse<LinkDetail>> {
   const rb = new RequestBuilder(rootUrl, addDateiToLink.PATH, 'post');
   if (params) {
     rb.path('id', params.id, {});
@@ -27,7 +27,7 @@ export function addDateiToLink(http: HttpClient, rootUrl: string, params: AddDat
   ).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
-      return r as StrictHttpResponse<Link>;
+      return r as StrictHttpResponse<LinkDetail>;
     })
   );
 }

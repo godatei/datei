@@ -11,13 +11,13 @@ import { MatListModule } from '@angular/material/list';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
 import type { Datei } from '~/api/models/datei';
-import type { Link } from '~/api/models/link';
+import type { LinkDetail } from '~/api/models/link-detail';
 import type { UpdateLinkRequest } from '~/api/models/update-link-request';
 import { LinksService } from '~/frontend/services/links.service';
 
 export type LinkFormDialogData =
   | { mode: 'create'; dateiIds: string[]; defaultName?: string }
-  | { mode: 'edit'; link: Link };
+  | { mode: 'edit'; link: LinkDetail };
 
 interface LinkFormModel {
   name: string;
@@ -44,7 +44,9 @@ interface LinkFormModel {
 })
 export class LinkFormDialogComponent {
   protected readonly data = inject<LinkFormDialogData>(MAT_DIALOG_DATA);
-  private readonly dialogRef = inject(MatDialogRef<LinkFormDialogComponent, Link | undefined>);
+  private readonly dialogRef = inject(
+    MatDialogRef<LinkFormDialogComponent, LinkDetail | undefined>,
+  );
   private readonly linksService = inject(LinksService);
   private readonly snackBar = inject(MatSnackBar);
 
@@ -54,7 +56,7 @@ export class LinkFormDialogComponent {
 
   // Capture mode-specific payload up front so the rest of the class can use the
   // simpler `this.isEdit` boolean without re-narrowing `this.data` everywhere.
-  private readonly editLink: Link | null = this.data.mode === 'edit' ? this.data.link : null;
+  private readonly editLink: LinkDetail | null = this.data.mode === 'edit' ? this.data.link : null;
   private readonly createDateiIds: string[] = this.data.mode === 'create' ? this.data.dateiIds : [];
   private readonly defaultName: string | undefined =
     this.data.mode === 'create' ? this.data.defaultName : undefined;
@@ -111,7 +113,7 @@ export class LinkFormDialogComponent {
     };
   }
 
-  private async submitCreate(): Promise<Link> {
+  private async submitCreate(): Promise<LinkDetail> {
     const v = this.model();
     return firstValueFrom(
       this.linksService.createLink({
@@ -123,7 +125,7 @@ export class LinkFormDialogComponent {
     );
   }
 
-  private async submitEdit(): Promise<Link> {
+  private async submitEdit(): Promise<LinkDetail> {
     const v = this.model();
     const body: UpdateLinkRequest = { name: v.name.trim() };
 

@@ -7,7 +7,7 @@ import { filter, map } from 'rxjs/operators';
 import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
-import { Link } from '../../models/link';
+import { LinkDetail } from '../../models/link-detail';
 import { UpdateLinkRequest } from '../../models/update-link-request';
 
 export interface UpdateLink$Params {
@@ -15,7 +15,7 @@ export interface UpdateLink$Params {
       body: UpdateLinkRequest
 }
 
-export function updateLink(http: HttpClient, rootUrl: string, params: UpdateLink$Params, context?: HttpContext): Observable<StrictHttpResponse<Link>> {
+export function updateLink(http: HttpClient, rootUrl: string, params: UpdateLink$Params, context?: HttpContext): Observable<StrictHttpResponse<LinkDetail>> {
   const rb = new RequestBuilder(rootUrl, updateLink.PATH, 'patch');
   if (params) {
     rb.path('id', params.id, {});
@@ -27,7 +27,7 @@ export function updateLink(http: HttpClient, rootUrl: string, params: UpdateLink
   ).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
-      return r as StrictHttpResponse<Link>;
+      return r as StrictHttpResponse<LinkDetail>;
     })
   );
 }

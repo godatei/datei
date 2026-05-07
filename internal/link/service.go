@@ -64,7 +64,7 @@ type CreateLinkInput struct {
 	DateiIDs  []uuid.UUID
 }
 
-func (s *Service) CreateLink(ctx context.Context, input CreateLinkInput) (*api.Link, error) {
+func (s *Service) CreateLink(ctx context.Context, input CreateLinkInput) (*api.LinkDetail, error) {
 	userID := authn.RequireContext(ctx).UserID
 
 	queries := db.New(s.db)
@@ -95,7 +95,7 @@ func (s *Service) CreateLink(ctx context.Context, input CreateLinkInput) (*api.L
 		return nil, err
 	}
 
-	return s.aggregateToAPI(ctx, agg)
+	return s.aggregateToLinkDetail(ctx, agg)
 }
 
 type ListLinksOutput struct {
@@ -114,15 +114,11 @@ func (s *Service) ListLinks(ctx context.Context) (*ListLinksOutput, error) {
 
 	items := make([]api.Link, 0, len(projections))
 	for i := range projections {
-		dateien, err := queries.ListDateienByLink(ctx, projections[i].ID)
-		if err != nil {
-			return nil, err
-		}
 		counts, err := queries.CountLinkContents(ctx, projections[i].ID)
 		if err != nil {
 			return nil, err
 		}
-		mapped := MapProjectionToAPI(&projections[i], dateien, int(counts.FileCount), int(counts.FolderCount))
+		mapped := MapProjectionToLink(&projections[i], int(counts.FileCount), int(counts.FolderCount))
 		if mapped != nil {
 			items = append(items, *mapped)
 		}
@@ -140,7 +136,7 @@ type UpdateLinkInput struct {
 	ClearCode       bool
 }
 
-func (s *Service) UpdateLink(ctx context.Context, input UpdateLinkInput) (*api.Link, error) {
+func (s *Service) UpdateLink(ctx context.Context, input UpdateLinkInput) (*api.LinkDetail, error) {
 	agg, err := s.loadOwnedAggregate(ctx, input.ID)
 	if err != nil {
 		return nil, err
@@ -177,10 +173,18 @@ func (s *Service) UpdateLink(ctx context.Context, input UpdateLinkInput) (*api.L
 		return nil, err
 	}
 
-	return s.aggregateToAPI(ctx, agg)
+	return s.aggregateToLinkDetail(ctx, agg)
 }
 
-func (s *Service) RotateAccessToken(ctx context.Context, id uuid.UUID) (*api.Link, error) {
+func (s *Service) GetLink(ctx context.Context, id uuid.UUID) (*api.LinkDetail, error) {
+	agg, err := s.loadOwnedAggregate(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return s.aggregateToLinkDetail(ctx, agg)
+}
+
+func (s *Service) RotateAccessToken(ctx context.Context, id uuid.UUID) (*api.LinkDetail, error) {
 	agg, err := s.loadOwnedAggregate(ctx, id)
 	if err != nil {
 		return nil, err
@@ -198,10 +202,10 @@ func (s *Service) RotateAccessToken(ctx context.Context, id uuid.UUID) (*api.Lin
 		return nil, err
 	}
 
-	return s.aggregateToAPI(ctx, agg)
+	return s.aggregateToLinkDetail(ctx, agg)
 }
 
-func (s *Service) AddDateiToLink(ctx context.Context, linkID, dateiID uuid.UUID) (*api.Link, error) {
+func (s *Service) AddDateiToLink(ctx context.Context, linkID, dateiID uuid.UUID) (*api.LinkDetail, error) {
 	agg, err := s.loadOwnedAggregate(ctx, linkID)
 	if err != nil {
 		return nil, err
@@ -222,7 +226,7 @@ func (s *Service) AddDateiToLink(ctx context.Context, linkID, dateiID uuid.UUID)
 		return nil, err
 	}
 
-	return s.aggregateToAPI(ctx, agg)
+	return s.aggregateToLinkDetail(ctx, agg)
 }
 
 func (s *Service) RemoveDateiFromLink(ctx context.Context, linkID, dateiID uuid.UUID) error {
@@ -395,10 +399,7 @@ func (s *Service) loadOwnedAggregate(ctx context.Context, id uuid.UUID) (*Aggreg
 	return agg, nil
 }
 
-// aggregateToAPI maps an in-memory aggregate plus a fresh dateien-and-counts
-// query into the API shape, avoiding an extra round-trip to refetch the
-// link_projection (which we just wrote).
-func (s *Service) aggregateToAPI(ctx context.Context, agg *Aggregate) (*api.Link, error) {
+func (s *Service) aggregateToLinkDetail(ctx context.Context, agg *Aggregate) (*api.LinkDetail, error) {
 	queries := db.New(s.db)
 	dateien, err := queries.ListDateienByLink(ctx, agg.ID)
 	if err != nil {
@@ -408,5 +409,5 @@ func (s *Service) aggregateToAPI(ctx context.Context, agg *Aggregate) (*api.Link
 	if err != nil {
 		return nil, err
 	}
-	return MapAggregateToAPI(agg, dateien, int(counts.FileCount), int(counts.FolderCount)), nil
+	return MapAggregateToLinkDetail(agg, dateien, int(counts.FileCount), int(counts.FolderCount)), nil
 }

@@ -1,3 +1,25 @@
+get:
+  operationId: GetLink
+  summary: Get a single link with its top-level dateien
+  security:
+    - bearerHttpAuthentication: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: Link
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/LinkDetail.yaml'
+    '404':
+      description: Link not found
+
 patch:
   operationId: UpdateLink
   summary: Update a link
@@ -22,7 +44,7 @@ patch:
       content:
         application/json:
           schema:
-            $ref: '../components/schemas/Link.yaml'
+            $ref: '../components/schemas/LinkDetail.yaml'
     '400':
       description: Invalid request
     '404':

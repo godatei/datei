@@ -4,7 +4,6 @@ required:
   - ownerId
   - name
   - accessToken
-  - dateien
   - fileCount
   - folderCount
   - createdAt
@@ -38,11 +37,6 @@ properties:
     format: date-time
     nullable: true
     description: Revocation timestamp; null if the link is active
-  dateien:
-    type: array
-    items:
-      $ref: './Datei.yaml'
-    description: Top-level dateien shared by the link
   fileCount:
     type: integer
     description: Total number of files reachable in the shared subtree (excluding trashed)

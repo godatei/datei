@@ -48,6 +48,21 @@ func (s *server) CreateLink(
 	return CreateLink201JSONResponse(*result), nil
 }
 
+// GetLink implements [StrictServerInterface].
+func (s *server) GetLink(
+	ctx context.Context,
+	request GetLinkRequestObject,
+) (GetLinkResponseObject, error) {
+	result, err := s.linkService.GetLink(ctx, request.Id)
+	if err != nil {
+		if errors.Is(err, dateierrors.ErrLinkNotFound) {
+			return GetLink404Response{}, nil
+		}
+		return nil, err
+	}
+	return GetLink200JSONResponse(*result), nil
+}
+
 // UpdateLink implements [StrictServerInterface].
 func (s *server) UpdateLink(
 	ctx context.Context,
