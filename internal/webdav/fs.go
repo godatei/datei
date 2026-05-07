@@ -85,12 +85,17 @@ func (fs *dateiFS) Mkdir(ctx context.Context, name string, _ os.FileMode) error 
 	if err != nil {
 		return err
 	}
+	if base == "" {
+		return os.ErrInvalid
+	}
 	var parentID *uuid.UUID
 	if parent != nil {
 		parentID = &parent.Id
 	}
 	if _, err := fs.findChild(ctx, parentID, base); err == nil {
 		return os.ErrExist
+	} else if !errors.Is(err, os.ErrNotExist) {
+		return err
 	}
 	_, err = fs.service.CreateDatei(ctx, datei.CreateDateiInput{
 		ParentID: parentID,
@@ -130,6 +135,8 @@ func (fs *dateiFS) Rename(ctx context.Context, oldName, newName string) error {
 
 	if _, err := fs.findChild(ctx, newParentID, newBase); err == nil {
 		return os.ErrExist
+	} else if !errors.Is(err, os.ErrNotExist) {
+		return err
 	}
 
 	sameParent := (proj.ParentId == nil && newParentID == nil) ||
