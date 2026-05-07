@@ -21,7 +21,7 @@ type dateiFS struct {
 }
 
 // NewHandler returns a webdav.Handler that serves the Datei file system.
-// It must be mounted at /dav (or with the same prefix passed here).
+// It must be mounted at /dav.
 func NewHandler(service *datei.Service) *xdav.Handler {
 	return &xdav.Handler{
 		Prefix:     "/dav",
