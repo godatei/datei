@@ -65,10 +65,6 @@ type CreateLinkInput struct {
 }
 
 func (s *Service) CreateLink(ctx context.Context, input CreateLinkInput) (*api.Link, error) {
-	if err := validateName(input.Name); err != nil {
-		return nil, dateierrors.ErrInvalidInput
-	}
-
 	userID := authn.RequireContext(ctx).UserID
 
 	queries := db.New(s.db)
@@ -145,14 +141,6 @@ type UpdateLinkInput struct {
 }
 
 func (s *Service) UpdateLink(ctx context.Context, input UpdateLinkInput) (*api.Link, error) {
-	// If the request explicitly addresses the name, it must be a valid value;
-	// silently ignoring an empty/whitespace name would be a contract violation.
-	if input.Name != nil {
-		if err := validateName(*input.Name); err != nil {
-			return nil, dateierrors.ErrInvalidInput
-		}
-	}
-
 	agg, err := s.loadOwnedAggregate(ctx, input.ID)
 	if err != nil {
 		return nil, err
