@@ -144,8 +144,6 @@ type UpdateLinkInput struct {
 }
 
 func (s *Service) UpdateLink(ctx context.Context, input UpdateLinkInput) (*api.Link, error) {
-	userID := authn.RequireContext(ctx).UserID
-
 	// If the request explicitly addresses the name, it must be a valid value;
 	// silently ignoring an empty/whitespace name would be a contract violation.
 	if input.Name != nil {
@@ -154,7 +152,7 @@ func (s *Service) UpdateLink(ctx context.Context, input UpdateLinkInput) (*api.L
 		}
 	}
 
-	agg, err := s.loadOwnedAggregate(ctx, input.ID, userID)
+	agg, err := s.loadOwnedAggregate(ctx, input.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -194,9 +192,7 @@ func (s *Service) UpdateLink(ctx context.Context, input UpdateLinkInput) (*api.L
 }
 
 func (s *Service) RotateAccessToken(ctx context.Context, id uuid.UUID) (*api.Link, error) {
-	userID := authn.RequireContext(ctx).UserID
-
-	agg, err := s.loadOwnedAggregate(ctx, id, userID)
+	agg, err := s.loadOwnedAggregate(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -217,9 +213,7 @@ func (s *Service) RotateAccessToken(ctx context.Context, id uuid.UUID) (*api.Lin
 }
 
 func (s *Service) AddDateiToLink(ctx context.Context, linkID, dateiID uuid.UUID) (*api.Link, error) {
-	userID := authn.RequireContext(ctx).UserID
-
-	agg, err := s.loadOwnedAggregate(ctx, linkID, userID)
+	agg, err := s.loadOwnedAggregate(ctx, linkID)
 	if err != nil {
 		return nil, err
 	}
@@ -247,9 +241,7 @@ func (s *Service) AddDateiToLink(ctx context.Context, linkID, dateiID uuid.UUID)
 }
 
 func (s *Service) RemoveDateiFromLink(ctx context.Context, linkID, dateiID uuid.UUID) error {
-	userID := authn.RequireContext(ctx).UserID
-
-	agg, err := s.loadOwnedAggregate(ctx, linkID, userID)
+	agg, err := s.loadOwnedAggregate(ctx, linkID)
 	if err != nil {
 		return err
 	}
@@ -261,9 +253,7 @@ func (s *Service) RemoveDateiFromLink(ctx context.Context, linkID, dateiID uuid.
 }
 
 func (s *Service) RevokeLink(ctx context.Context, id uuid.UUID) error {
-	userID := authn.RequireContext(ctx).UserID
-
-	agg, err := s.loadOwnedAggregate(ctx, id, userID)
+	agg, err := s.loadOwnedAggregate(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -408,7 +398,8 @@ func (s *Service) DownloadPublicLinkDatei(
 // helpers
 // ============================================================================
 
-func (s *Service) loadOwnedAggregate(ctx context.Context, id, userID uuid.UUID) (*Aggregate, error) {
+func (s *Service) loadOwnedAggregate(ctx context.Context, id uuid.UUID) (*Aggregate, error) {
+	userID := authn.RequireContext(ctx).UserID
 	agg, err := s.repository.LoadByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, dateierrors.ErrNotFound) {
