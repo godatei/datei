@@ -37,10 +37,6 @@ get:
         application/octet-stream: {}
     '403':
       description: Code required or invalid
-      content:
-        application/json:
-          schema:
-            $ref: '../components/schemas/PublicLinkErrorResponse.yaml'
     '404':
       description: Link not found, revoked, or datei not shared
     '409':

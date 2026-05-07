@@ -116,16 +116,14 @@ export class PublicLinkViewerComponent {
       this.expiresAt.set(result.expiresAt ? new Date(result.expiresAt) : null);
       this.state.set({ kind: 'ready' });
     } catch (e) {
-      this.handleError(e);
+      this.handleError(e, candidateCode !== undefined);
     }
   }
 
-  private handleError(e: unknown): void {
+  private handleError(e: unknown, fromSubmit = false): void {
     if (e instanceof HttpErrorResponse) {
       if (e.status === 403) {
-        const code = (e.error?.code as string | undefined) ?? '';
-        const invalid = code === 'code_invalid';
-        this.state.set({ kind: 'codeRequired', invalidCode: invalid });
+        this.state.set({ kind: 'codeRequired', invalidCode: fromSubmit });
         return;
       }
       if (e.status === 404) {

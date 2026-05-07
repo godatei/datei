@@ -3,6 +3,7 @@ package link
 import (
 	"context"
 	"crypto/rand"
+	"crypto/subtle"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -291,11 +292,8 @@ func (s *Service) verifyLinkAccess(
 		return nil, dateierrors.ErrLinkExpired
 	}
 	if row.Code != nil {
-		if providedCode == "" {
+		if subtle.ConstantTimeCompare([]byte(providedCode), []byte(*row.Code)) != 1 {
 			return nil, dateierrors.ErrLinkCodeRequired
-		}
-		if providedCode != *row.Code {
-			return nil, dateierrors.ErrLinkCodeInvalid
 		}
 	}
 	return &row, nil

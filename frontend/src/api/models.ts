@@ -21,7 +21,6 @@ export type { LoginConfigResponse } from './models/login-config-response';
 export type { LoginRequest } from './models/login-request';
 export type { LoginResponse } from './models/login-response';
 export type { MfaRecoveryCodesStatusResponse } from './models/mfa-recovery-codes-status-response';
-export type { PublicLinkErrorResponse } from './models/public-link-error-response';
 export type { RegenerateMfaRecoveryCodesRequest } from './models/regenerate-mfa-recovery-codes-request';
 export type { RegenerateMfaRecoveryCodesResponse } from './models/regenerate-mfa-recovery-codes-response';
 export type { RegisterRequest } from './models/register-request';

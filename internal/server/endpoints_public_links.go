@@ -24,9 +24,7 @@ func (s *server) ListPublicLinkDateien(
 	if err != nil {
 		switch {
 		case errors.Is(err, dateierrors.ErrLinkCodeRequired):
-			return ListPublicLinkDateien403JSONResponse(api.PublicLinkErrorResponse{Code: api.CodeRequired}), nil
-		case errors.Is(err, dateierrors.ErrLinkCodeInvalid):
-			return ListPublicLinkDateien403JSONResponse(api.PublicLinkErrorResponse{Code: api.CodeInvalid}), nil
+			return ListPublicLinkDateien403Response{}, nil
 		case errors.Is(err, dateierrors.ErrLinkExpired):
 			return ListPublicLinkDateien410Response{}, nil
 		case errors.Is(err, dateierrors.ErrLinkNotFound),
@@ -61,9 +59,7 @@ func (s *server) DownloadPublicLinkDatei(
 	if err != nil {
 		switch {
 		case errors.Is(err, dateierrors.ErrLinkCodeRequired):
-			return DownloadPublicLinkDatei403JSONResponse(api.PublicLinkErrorResponse{Code: api.CodeRequired}), nil
-		case errors.Is(err, dateierrors.ErrLinkCodeInvalid):
-			return DownloadPublicLinkDatei403JSONResponse(api.PublicLinkErrorResponse{Code: api.CodeInvalid}), nil
+			return DownloadPublicLinkDatei403Response{}, nil
 		case errors.Is(err, dateierrors.ErrLinkExpired):
 			return DownloadPublicLinkDatei410Response{}, nil
 		case errors.Is(err, dateierrors.ErrIsDirectory):

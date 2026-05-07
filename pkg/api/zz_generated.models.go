@@ -13,24 +13,6 @@ const (
 	BearerHttpAuthenticationScopes bearerHttpAuthenticationContextKey = "bearerHttpAuthentication.Scopes"
 )
 
-// Defines values for PublicLinkErrorResponseCode.
-const (
-	CodeInvalid  PublicLinkErrorResponseCode = "code_invalid"
-	CodeRequired PublicLinkErrorResponseCode = "code_required"
-)
-
-// Valid indicates whether the value is a known member of the PublicLinkErrorResponseCode enum.
-func (e PublicLinkErrorResponseCode) Valid() bool {
-	switch e {
-	case CodeInvalid:
-		return true
-	case CodeRequired:
-		return true
-	default:
-		return false
-	}
-}
-
 // AddDateiToLinkRequest defines model for AddDateiToLinkRequest.
 type AddDateiToLinkRequest struct {
 	// DateiId ID of the datei to add to the link
@@ -252,15 +234,6 @@ type LoginResponse struct {
 type MFARecoveryCodesStatusResponse struct {
 	RemainingCodes int `json:"remainingCodes"`
 }
-
-// PublicLinkErrorResponse defines model for PublicLinkErrorResponse.
-type PublicLinkErrorResponse struct {
-	// Code Reason the request was rejected
-	Code PublicLinkErrorResponseCode `json:"code"`
-}
-
-// PublicLinkErrorResponseCode Reason the request was rejected
-type PublicLinkErrorResponseCode string
 
 // RegenerateMFARecoveryCodesRequest defines model for RegenerateMFARecoveryCodesRequest.
 type RegenerateMFARecoveryCodesRequest struct {
