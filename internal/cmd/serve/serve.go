@@ -27,6 +27,7 @@ import (
 	"github.com/godatei/datei/internal/server"
 	"github.com/godatei/datei/internal/storage"
 	"github.com/godatei/datei/internal/users"
+	dateiwebdav "github.com/godatei/datei/internal/webdav"
 	oapimiddleware "github.com/oapi-codegen/nethttp-middleware"
 	slogchi "github.com/samber/slog-chi"
 	"github.com/spf13/cobra"
@@ -123,9 +124,18 @@ func run(ctx context.Context, options Options) error {
 		return err
 	}
 
-	// Create the unified server implementing StrictServerInterface
-	srv := server.NewServer(db, store, dateiRepository, userRepository, linkRepository, m, ocrClient)
+	dateiSvc := datei.NewService(db, store, dateiRepository, ocrClient)
+	userSvc := users.NewUserService(db, userRepository, m)
+	linkSvc := link.NewService(db, linkRepository, dateiSvc)
+
+	srv := server.NewServer(dateiSvc, userSvc, linkSvc)
 	strictHandler := server.NewStrictHandler(srv, nil)
+
+	davHandler := dateiwebdav.NewHandler(dateiSvc)
+
+	for _, method := range []string{"PROPFIND", "PROPPATCH", "MKCOL", "COPY", "MOVE", "LOCK", "UNLOCK"} {
+		chi.RegisterMethod(method)
+	}
 
 	rootMux := chi.NewRouter()
 	rootMux.Use(chimiddleware.Recoverer)
@@ -148,6 +158,12 @@ func run(ctx context.Context, options Options) error {
 		server.HandlerWithOptions(strictHandler, server.ChiServerOptions{
 			BaseRouter: r,
 		})
+	})
+
+	rootMux.Group(func(r chi.Router) {
+		r.Use(dateiwebdav.CacheMiddleware)
+		r.Use(dateiwebdav.BasicAuthMiddleware(userSvc))
+		r.Mount("/dav", davHandler)
 	})
 
 	rootMux.Handle("/*", frontend.NewHandler())

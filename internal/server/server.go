@@ -6,11 +6,7 @@ import (
 
 	"github.com/godatei/datei/internal/datei"
 	"github.com/godatei/datei/internal/link"
-	"github.com/godatei/datei/internal/mailer"
-	"github.com/godatei/datei/internal/ocr"
-	"github.com/godatei/datei/internal/storage"
 	"github.com/godatei/datei/internal/users"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const (
@@ -26,20 +22,11 @@ type server struct {
 	linkService  *link.Service
 }
 
-func NewServer(
-	pool *pgxpool.Pool,
-	store storage.Store,
-	dateiRepo datei.Repository,
-	userRepo users.Repository,
-	linkRepo link.Repository,
-	m mailer.Mailer,
-	ocrClient *ocr.Client,
-) *server {
-	dateiSvc := datei.NewService(pool, store, dateiRepo, ocrClient)
+func NewServer(dateiSvc *datei.Service, userSvc *users.UserService, linkSvc *link.Service) *server {
 	return &server{
 		dateiService: dateiSvc,
-		userService:  users.NewUserService(pool, userRepo, m),
-		linkService:  link.NewService(pool, linkRepo, dateiSvc),
+		userService:  userSvc,
+		linkService:  linkSvc,
 	}
 }
 

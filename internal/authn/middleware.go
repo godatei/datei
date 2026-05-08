@@ -100,6 +100,20 @@ func RequireContext(ctx context.Context) AuthInfo {
 	return auth
 }
 
+// FromTokenString parses a signed JWT string and returns the AuthInfo.
+func FromTokenString(tokenString string) (AuthInfo, error) {
+	token, err := authjwt.ParseToken(tokenString)
+	if err != nil {
+		return AuthInfo{}, err
+	}
+	return extractAuthInfo(token)
+}
+
+// NewContext injects AuthInfo into ctx.
+func NewContext(ctx context.Context, info AuthInfo) context.Context {
+	return context.WithValue(ctx, contextKey{}, info)
+}
+
 func extractAuthInfo(token jwt.Token) (AuthInfo, error) {
 	sub, ok := token.Subject()
 	if !ok {

@@ -42,6 +42,7 @@ import { DragItemDirective } from './drag-row.directive';
 import { DropTargetDirective } from './drop-target.directive';
 import { SelectionDirective } from './selection.directive';
 import { SelectionItemDirective } from './selection-item.directive';
+import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
 
 @Component({
   selector: 'app-dashboard',
@@ -139,7 +140,7 @@ export class DashboardComponent {
       ref.afterClosed().subscribe(() => URL.revokeObjectURL(url));
     } catch (e) {
       console.error(e);
-      this.snackBar.open('Failed to load image', 'Dismiss', { duration: 4000 });
+      this.snackBar.open('Failed to load image', 'Dismiss', { duration: snackErrorDuration });
     }
   }
 
@@ -149,7 +150,7 @@ export class DashboardComponent {
       triggerDownload(response.body as Blob, name);
     } catch (e) {
       console.error(e);
-      this.snackBar.open('Failed to download file', 'Dismiss', { duration: 4000 });
+      this.snackBar.open('Failed to download file', 'Dismiss', { duration: snackErrorDuration });
     }
   }
 
@@ -170,7 +171,7 @@ export class DashboardComponent {
         this.refresh.update((v) => v + 1);
       } catch (e) {
         console.error(e);
-        this.snackBar.open('Failed to create folder', 'Dismiss', { duration: 4000 });
+        this.snackBar.open('Failed to create folder', 'Dismiss', { duration: snackErrorDuration });
       }
     });
   }
@@ -190,7 +191,7 @@ export class DashboardComponent {
         this.refresh.update((v) => v + 1);
       } catch (e) {
         console.error(e);
-        this.snackBar.open('Failed to rename', 'Dismiss', { duration: 4000 });
+        this.snackBar.open('Failed to rename', 'Dismiss', { duration: snackErrorDuration });
       }
     });
   }
@@ -220,14 +221,16 @@ export class DashboardComponent {
     const failed = results.filter((r) => r.status === 'rejected').length;
     if (failed > 0) {
       this.snackBar.open(`Failed to move ${failed} item(s) to trash`, 'Dismiss', {
-        duration: 4000,
+        duration: snackErrorDuration,
       });
     }
 
     if (failed !== results.length) {
       this.refresh.update((v) => v + 1);
       const moved = items.length > 1 ? `${items.length - failed} items` : items[0].name || '1 item';
-      this.snackBar.open(`Moved ${moved} to trash`, 'Dismiss', { duration: 4000 });
+      this.snackBar.open(`Moved ${moved} to trash`, 'Dismiss', {
+        duration: snackSuccessDuration,
+      });
     }
   }
 
@@ -323,7 +326,9 @@ export class DashboardComponent {
 
     const failed = results.filter((r) => r.status === 'rejected').length;
     if (failed > 0) {
-      this.snackBar.open(`Failed to move ${failed} item(s)`, 'Dismiss', { duration: 4000 });
+      this.snackBar.open(`Failed to move ${failed} item(s)`, 'Dismiss', {
+        duration: snackErrorDuration,
+      });
     }
     if (failed !== results.length) {
       this.refresh.update((v) => v + 1);

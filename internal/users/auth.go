@@ -10,6 +10,7 @@ import (
 	"github.com/godatei/datei/internal/authjwt"
 	"github.com/godatei/datei/internal/config"
 	"github.com/godatei/datei/internal/dateierrors"
+	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/mailer"
 	"github.com/godatei/datei/internal/security"
 	"github.com/google/uuid"
@@ -29,18 +30,12 @@ type LoginOutput struct {
 }
 
 func (s *UserService) Login(ctx context.Context, input LoginInput) (*LoginOutput, error) {
-	q := s.queries()
-	user, err := q.GetUserAccountByEmail(ctx, input.Email)
+	user, err := s.verifyCredentials(ctx, input.Email, input.Password)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, dateierrors.ErrInvalidCredentials
-		}
-		return nil, fmt.Errorf("failed to get user: %w", err)
+		return nil, err
 	}
 
-	if err := security.VerifyPassword(input.Password, user.PasswordHash, user.PasswordSalt); err != nil {
-		return nil, dateierrors.ErrInvalidCredentials
-	}
+	q := s.queries()
 
 	if user.MfaEnabled {
 		if input.MfaCode == nil {
@@ -109,6 +104,56 @@ func (s *UserService) Login(ctx context.Context, input LoginInput) (*LoginOutput
 	}
 
 	return &LoginOutput{Token: tokenString}, nil
+}
+
+type ValidateCredentialsOutput struct {
+	UserID        uuid.UUID
+	Name          string
+	Email         string
+	EmailVerified bool
+	RequiresMFA   bool
+}
+
+// ValidateCredentials verifies email/password without generating a JWT or
+// recording a login event. Use this for protocol-level auth (e.g. WebDAV
+// Basic Auth) where a login event per request would be too noisy.
+func (s *UserService) ValidateCredentials(
+	ctx context.Context,
+	email, password string,
+) (*ValidateCredentialsOutput, error) {
+	user, err := s.verifyCredentials(ctx, email, password)
+	if err != nil {
+		return nil, err
+	}
+	if user.MfaEnabled {
+		return &ValidateCredentialsOutput{RequiresMFA: true}, nil
+	}
+	primaryEmail, err := s.queries().GetPrimaryEmailForUser(ctx, user.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get primary email: %w", err)
+	}
+	emailVerified := !config.AuthEmailVerificationRequired() || primaryEmail.VerifiedAt != nil
+	return &ValidateCredentialsOutput{
+		UserID:        user.ID,
+		Name:          user.Name,
+		Email:         primaryEmail.Email,
+		EmailVerified: emailVerified,
+	}, nil
+}
+
+// verifyCredentials fetches the user by email and verifies the password hash.
+func (s *UserService) verifyCredentials(ctx context.Context, email, password string) (db.UserAccountProjection, error) {
+	user, err := s.queries().GetUserAccountByEmail(ctx, email)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return db.UserAccountProjection{}, dateierrors.ErrInvalidCredentials
+		}
+		return db.UserAccountProjection{}, fmt.Errorf("failed to get user: %w", err)
+	}
+	if err := security.VerifyPassword(password, user.PasswordHash, user.PasswordSalt); err != nil {
+		return db.UserAccountProjection{}, dateierrors.ErrInvalidCredentials
+	}
+	return user, nil
 }
 
 type RegisterInput struct {

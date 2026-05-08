@@ -12,7 +12,9 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Api } from '~/api/api';
+import { snackErrorDuration } from '~/frontend/constants';
 import { getDateiPath, listDatei, restoreTrash } from '~/api/functions';
 import { Datei, DateiPathItem } from '~/api/models';
 
@@ -26,6 +28,7 @@ export class RestoreDialogComponent implements OnInit {
   protected readonly data = inject<Datei>(MAT_DIALOG_DATA);
   protected readonly dialogRef = inject(MatDialogRef<RestoreDialogComponent>);
   private readonly api = inject(Api);
+  private readonly snack = inject(MatSnackBar);
 
   protected readonly navItems = signal<DateiPathItem[]>([]);
   protected readonly currentNavItem = computed(() => {
@@ -44,10 +47,17 @@ export class RestoreDialogComponent implements OnInit {
 
   public async ngOnInit(): Promise<void> {
     if (this.data.parentId) {
-      // initialize the directory picker with the original parent unless it is also trashed
-      const path = await this.api.invoke(getDateiPath, { id: this.data.parentId });
-      if (!path.some((it) => it.trashed)) {
-        this.navItems.set(path);
+      try {
+        // initialize the directory picker with the original parent unless it is also trashed
+        const path = await this.api.invoke(getDateiPath, { id: this.data.parentId });
+        if (!path.some((it) => it.trashed)) {
+          this.navItems.set(path);
+        }
+      } catch (e) {
+        console.error(e);
+        this.snack.open('Failed to load original path', 'Dismiss', {
+          duration: snackErrorDuration,
+        });
       }
     }
   }
@@ -67,11 +77,22 @@ export class RestoreDialogComponent implements OnInit {
   }
 
   protected async restore() {
-    const parent = this.currentNavItem();
-    await this.api.invoke(restoreTrash, {
-      dateiId: this.data.id,
-      body: { parentId: parent?.id ?? null },
-    });
-    this.dialogRef.close({ parent });
+    try {
+      const parent = this.currentNavItem();
+      await this.api.invoke(restoreTrash, {
+        dateiId: this.data.id,
+        body: { parentId: parent?.id ?? null },
+      });
+      this.dialogRef.close({ parent });
+    } catch (e) {
+      console.error(e);
+      this.snack.open(
+        `Failed to restore ${this.data.name ?? 'Unnamed'} in ${parent?.name ?? 'My files'}`,
+        'Dismiss',
+        {
+          duration: snackErrorDuration,
+        },
+      );
+    }
   }
 }
