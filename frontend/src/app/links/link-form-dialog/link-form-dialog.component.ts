@@ -83,6 +83,7 @@ export class LinkFormDialogComponent {
       required(p.name);
       maxLength(p.name, 255);
       pattern(p.name, /\S/);
+      pattern(p.code, /\S/);
     },
     {
       submission: {
@@ -122,7 +123,7 @@ export class LinkFormDialogComponent {
       body: {
         name: v.name.trim(),
         expiresAt: v.expiresAt ? v.expiresAt.toISOString() : undefined,
-        code: v.code.trim() === '' ? undefined : v.code,
+        code: v.code.trim() === '' ? undefined : v.code.trim(),
         dateiIds: this.createDateiIds,
       },
     });
@@ -139,7 +140,7 @@ export class LinkFormDialogComponent {
     }
 
     if (v.code.trim() !== '') {
-      body.code = v.code;
+      body.code = v.code.trim();
     } else {
       body.clearCode = true;
     }

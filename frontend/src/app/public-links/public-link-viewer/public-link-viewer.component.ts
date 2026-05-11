@@ -8,7 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { form, FormField, FormRoot, required } from '@angular/forms/signals';
+import { form, FormField, FormRoot, pattern, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -99,11 +99,12 @@ export class PublicLinkViewerComponent {
     this.codeModel,
     (p) => {
       required(p.code);
+      pattern(p.code, /\S/);
     },
     {
       submission: {
         action: async () => {
-          await this.unlockAndLoad(this.codeModel().code);
+          await this.unlockAndLoad(this.codeModel().code.trim());
         },
       },
     },
