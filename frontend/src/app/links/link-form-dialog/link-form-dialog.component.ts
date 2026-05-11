@@ -9,6 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { startOfTomorrow } from 'date-fns';
 import { Api } from '~/api/api';
 import { createLink, removeDateiFromLink, updateLink } from '~/api/functions';
 import type { Datei } from '~/api/models/datei';
@@ -73,6 +74,8 @@ export class LinkFormDialogComponent {
   private modified = false;
 
   protected readonly model = signal<LinkFormModel>(this.initialModel());
+
+  protected readonly tomorrow = startOfTomorrow();
 
   protected readonly linkForm = form(
     this.model,

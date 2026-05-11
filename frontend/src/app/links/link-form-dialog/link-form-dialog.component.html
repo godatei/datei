@@ -28,6 +28,7 @@
         <input
           matInput
           [matDatepicker]="expiryPicker"
+          [min]="tomorrow"
           [formField]="linkForm.expiresAt"
           aria-label="Expiration date"
         />

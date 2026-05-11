@@ -63,6 +63,9 @@ func (a *Aggregate) Create(
 	if err := validateName(name); err != nil {
 		return err
 	}
+	if err := validateExpiresAt(expiresAt, now); err != nil {
+		return err
+	}
 	if accessToken == "" {
 		return errors.New("access token cannot be empty")
 	}
@@ -89,6 +92,9 @@ func (a *Aggregate) Update(name string, code *string, expiresAt *time.Time, now 
 		return err
 	}
 	if err := validateName(name); err != nil {
+		return err
+	}
+	if err := validateExpiresAt(expiresAt, now); err != nil {
 		return err
 	}
 
@@ -199,6 +205,18 @@ func validateName(name string) error {
 	}
 	if len(name) > linkNameMaxLen {
 		return fmt.Errorf("name exceeds %d chars: %w", linkNameMaxLen, dateierrors.ErrInvalidInput)
+	}
+	return nil
+}
+
+// validateExpiresAt rejects expirations at or before now. A nil expiresAt
+// (meaning "never expires") is always valid.
+func validateExpiresAt(expiresAt *time.Time, now time.Time) error {
+	if expiresAt == nil {
+		return nil
+	}
+	if !expiresAt.After(now) {
+		return fmt.Errorf("expiration must be in the future: %w", dateierrors.ErrInvalidInput)
 	}
 	return nil
 }

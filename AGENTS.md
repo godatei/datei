@@ -327,6 +327,8 @@ This project uses Angular Material 21 with Material 3 theming. All UI must follo
 - Design services around a single responsibility
 - Use the `providedIn: 'root'` option for singleton services
 - Use the `inject()` function instead of constructor injection
+- Do NOT wrap the generated API client in a per-entity `*Service` class. Inject `Api` (from `~/api/api`) directly into components and call generated operation functions via `this.api.invoke(generatedFn, params)` (returns `Promise<body>`) or `this.api.invoke$Response(generatedFn, params)` (returns the full `HttpResponse`). The generated client is the contract — adding a service layer just duplicates types and rots when the OpenAPI spec changes
+- If you need a small shared helper (URL builders, formatters, predicates) that doesn't talk to the backend, put it in `frontend/src/util/` as a plain function — not a service
 
 ## Domain Knowledge
 
