@@ -16,6 +16,7 @@ func updateProjectionForLinkCreated(ctx context.Context, q *db.Queries, event *L
 		Code:      event.Code,
 		ExpiresAt: event.ExpiresAt,
 		CreatedAt: event.CreatedAt,
+		UpdatedAt: event.CreatedAt,
 	}); err != nil {
 		return fmt.Errorf("failed to insert link_projection: %w", err)
 	}
@@ -105,6 +106,7 @@ func updateProjectionForLinkOpened(ctx context.Context, q *db.Queries, event *Li
 func updateProjectionForLinkRevoked(ctx context.Context, q *db.Queries, event *LinkRevokedEvent) error {
 	if err := q.UpdateLinkProjectionRevoked(ctx, db.UpdateLinkProjectionRevokedParams{
 		RevokedAt: &event.RevokedAt,
+		UpdatedAt: event.RevokedAt,
 		ID:        event.ID,
 	}); err != nil {
 		return fmt.Errorf("failed to update link_projection revoked: %w", err)
