@@ -61,6 +61,12 @@ export class PublicLinkViewerComponent {
   private readonly code = signal<string>('');
   private readonly sessionToken = signal<string>('');
 
+  // One-shot guard: when the link's root contains exactly one folder we
+  // auto-descend so the viewer doesn't make people click through a trivial
+  // wrapper. Only fires on first arrival — if the user later clicks the
+  // breadcrumb back to root we respect that choice and stop here.
+  private autoDescended = false;
+
   protected readonly state = signal<ViewerState>({ kind: 'loading' });
   protected readonly invalidCode = computed(() => {
     const s = this.state();
@@ -129,6 +135,19 @@ export class PublicLinkViewerComponent {
       return;
     }
     await this.loadDateien(this.currentParentId());
+    this.maybeAutoDescend();
+  }
+
+  // If the link's root contains exactly one folder, auto-navigate into it.
+  // Runs at most once per page load and never when we're not at root.
+  private maybeAutoDescend(): void {
+    if (this.autoDescended) return;
+    if (this.currentParentId() !== null) return;
+    this.autoDescended = true;
+    const items = this.dataSource.data;
+    if (items.length === 1 && items[0].isDirectory) {
+      void this.navigateInto(items[0]);
+    }
   }
 
   private async loadDateien(parentId: string | null): Promise<void> {

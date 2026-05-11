@@ -49,14 +49,21 @@
         <mat-icon>delete</mat-icon>
       </button>
       <span class="grow"></span>
-      <button mat-button (click)="addToLinkForSelection()">
-        <mat-icon>add_link</mat-icon>
-        Add to public link
+      <button mat-button [matMenuTriggerFor]="selectionSharingMenu">
+        <mat-icon>person_add</mat-icon>
+        Share
+        <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
       </button>
-      <button mat-button (click)="createLinkForSelection()">
-        <mat-icon>link</mat-icon>
-        Create public link
-      </button>
+      <mat-menu #selectionSharingMenu="matMenu">
+        <button mat-menu-item (click)="createLinkForSelection()">
+          <mat-icon>link</mat-icon>
+          Create public link
+        </button>
+        <button mat-menu-item (click)="addToLinkForSelection()">
+          <mat-icon>add_link</mat-icon>
+          Add to public link
+        </button>
+      </mat-menu>
     } @else {
       <mat-chip-listbox aria-label="Filter">
         <mat-chip-option selected>All files</mat-chip-option>
@@ -110,6 +117,16 @@
             <mat-icon>edit</mat-icon>
             Rename
           </button>
+          <button mat-menu-item [matMenuTriggerFor]="rowSharingMenu">
+            <mat-icon>person_add</mat-icon>
+            Share
+          </button>
+          <button mat-menu-item (click)="trashDatei(element, $event)">
+            <mat-icon>delete</mat-icon>
+            Move to trash
+          </button>
+        </mat-menu>
+        <mat-menu #rowSharingMenu="matMenu">
           <button mat-menu-item (click)="createLinkForRow(element)">
             <mat-icon>link</mat-icon>
             Create public link
@@ -117,10 +134,6 @@
           <button mat-menu-item (click)="addToLinkForRow(element)">
             <mat-icon>add_link</mat-icon>
             Add to public link
-          </button>
-          <button mat-menu-item (click)="trashDatei(element, $event)">
-            <mat-icon>delete</mat-icon>
-            Move to trash
           </button>
         </mat-menu>
       </td>
