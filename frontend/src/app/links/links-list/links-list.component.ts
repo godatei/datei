@@ -17,14 +17,17 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { firstValueFrom } from 'rxjs';
+import { Api } from '~/api/api';
+import { getLink, listLinks, revokeLink, rotateLinkAccessToken } from '~/api/functions';
 import type { Link } from '~/api/models/link';
 import { RelativeDatePipe } from '~/frontend/pipes/relative-date.pipe';
-import { LinksService, type LinkStatusFilter } from '~/frontend/services/links.service';
 import {
   LinkFormDialogComponent,
   LinkFormDialogData,
 } from '~/frontend/links/link-form-dialog/link-form-dialog.component';
+import { buildShareUrl } from 'frontend/src/util/share-url';
+
+export type LinkStatusFilter = 'active' | 'expired' | 'revoked';
 
 @Component({
   selector: 'app-links-list',
@@ -43,7 +46,7 @@ import {
   ],
 })
 export class LinksListComponent {
-  private readonly linksService = inject(LinksService);
+  private readonly api = inject(Api);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
   private readonly clipboard = inject(Clipboard);
@@ -53,7 +56,7 @@ export class LinksListComponent {
 
   protected readonly listResource = resource({
     params: () => ({ status: this.selectedTab(), refresh: this.refresh() }),
-    loader: ({ params }) => firstValueFrom(this.linksService.listLinks({ status: params.status })),
+    loader: ({ params }) => this.api.invoke(listLinks, { status: params.status }),
   });
 
   protected readonly visibleLinks = computed(() => this.listResource.value()?.items ?? []);
@@ -99,7 +102,7 @@ export class LinksListComponent {
   }
 
   protected shareUrl(link: Link): string {
-    return this.linksService.buildShareUrl(link.accessToken);
+    return buildShareUrl(link.accessToken);
   }
 
   protected shareUrlDisplay(link: Link): string {
@@ -117,7 +120,7 @@ export class LinksListComponent {
   protected async openEditDialog(link: Link): Promise<void> {
     let detail;
     try {
-      detail = await firstValueFrom(this.linksService.getLink(link.id));
+      detail = await this.api.invoke(getLink, { id: link.id });
     } catch (e) {
       console.error(e);
       this.snackBar.open('Failed to open link', 'Dismiss', { duration: 4000 });
@@ -135,9 +138,9 @@ export class LinksListComponent {
 
   protected async rotateAccessToken(link: Link): Promise<void> {
     try {
-      const updated = await firstValueFrom(this.linksService.rotateAccessToken(link.id));
+      const updated = await this.api.invoke(rotateLinkAccessToken, { id: link.id });
       this.refresh.update((v) => v + 1);
-      const newUrl = this.linksService.buildShareUrl(updated.accessToken);
+      const newUrl = buildShareUrl(updated.accessToken);
       const snackRef = this.snackBar.open('Access token rotated', 'Copy new link', {
         duration: 6000,
       });
@@ -152,7 +155,7 @@ export class LinksListComponent {
 
   protected async revokeLink(link: Link): Promise<void> {
     try {
-      await firstValueFrom(this.linksService.revokeLink(link.id));
+      await this.api.invoke(revokeLink, { id: link.id });
       this.refresh.update((v) => v + 1);
       this.snackBar.open(`Revoked "${link.name}"`, 'OK', { duration: 3000 });
     } catch (e) {

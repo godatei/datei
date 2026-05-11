@@ -9,11 +9,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { firstValueFrom } from 'rxjs';
+import { Api } from '~/api/api';
+import { createLink, removeDateiFromLink, updateLink } from '~/api/functions';
 import type { Datei } from '~/api/models/datei';
 import type { LinkDetail } from '~/api/models/link-detail';
 import type { UpdateLinkRequest } from '~/api/models/update-link-request';
-import { LinksService } from '~/frontend/services/links.service';
 
 export type LinkFormDialogData =
   | { mode: 'create'; dateiIds: string[]; defaultName?: string }
@@ -47,7 +47,7 @@ export class LinkFormDialogComponent {
   private readonly dialogRef = inject(
     MatDialogRef<LinkFormDialogComponent, LinkDetail | undefined>,
   );
-  private readonly linksService = inject(LinksService);
+  private readonly api = inject(Api);
   private readonly snackBar = inject(MatSnackBar);
 
   protected readonly isEdit = this.data.mode === 'edit';
@@ -115,14 +115,14 @@ export class LinkFormDialogComponent {
 
   private async submitCreate(): Promise<LinkDetail> {
     const v = this.model();
-    return firstValueFrom(
-      this.linksService.createLink({
+    return this.api.invoke(createLink, {
+      body: {
         name: v.name.trim(),
         expiresAt: v.expiresAt ? v.expiresAt.toISOString() : undefined,
         code: v.code.trim() === '' ? undefined : v.code,
         dateiIds: this.createDateiIds,
-      }),
-    );
+      },
+    });
   }
 
   private async submitEdit(): Promise<LinkDetail> {
@@ -142,7 +142,7 @@ export class LinkFormDialogComponent {
     }
 
     // submitEdit is only invoked when isEdit, which is equivalent to editLink !== null.
-    return firstValueFrom(this.linksService.updateLink(this.editLink!.id, body));
+    return this.api.invoke(updateLink, { id: this.editLink!.id, body });
   }
 
   protected async removeDatei(datei: Datei): Promise<void> {
@@ -151,7 +151,10 @@ export class LinkFormDialogComponent {
 
     this.removingDateiId.set(datei.id);
     try {
-      await firstValueFrom(this.linksService.removeDatei(this.editLink!.id, datei.id));
+      await this.api.invoke(removeDateiFromLink, {
+        id: this.editLink!.id,
+        dateiId: datei.id,
+      });
       this.sharedDateien.update((items) => items.filter((d) => d.id !== datei.id));
       this.modified = true;
     } catch (e) {

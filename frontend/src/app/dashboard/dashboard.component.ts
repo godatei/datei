@@ -13,6 +13,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Api } from 'frontend/src/api/api';
 import {
+  addDateiToLink,
   createDatei,
   deleteDatei,
   downloadDatei,
@@ -33,10 +34,9 @@ import {
   LinkFormDialogData,
 } from '~/frontend/links/link-form-dialog/link-form-dialog.component';
 import { LinkPickerDialogComponent } from '~/frontend/links/link-picker-dialog/link-picker-dialog.component';
-import { LinksService } from '~/frontend/services/links.service';
 import type { Link } from '~/api/models/link';
-import { firstValueFrom } from 'rxjs';
 import { triggerDownload } from 'frontend/src/util/download';
+import { buildShareUrl } from 'frontend/src/util/share-url';
 import { DragDropDirective, DropEvent } from './drag-drop.directive';
 import { DragPreviewDirective } from './drag-preview.directive';
 import { DragItemDirective } from './drag-row.directive';
@@ -73,7 +73,6 @@ export class DashboardComponent {
   private readonly sanitizer = inject(DomSanitizer);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly linksService = inject(LinksService);
 
   private readonly refresh = signal(0);
   private readonly queryParams = toSignal(this.route.queryParamMap);
@@ -256,7 +255,7 @@ export class DashboardComponent {
     });
     ref.afterClosed().subscribe((link) => {
       if (!link) return;
-      const shareUrl = this.linksService.buildShareUrl(link.accessToken);
+      const shareUrl = buildShareUrl(link.accessToken);
       const snackRef = this.snackBar.open(`Public link "${link.name}" created`, 'Copy link', {
         duration: 6000,
       });
@@ -284,7 +283,9 @@ export class DashboardComponent {
     ref.afterClosed().subscribe(async (link: Link | undefined) => {
       if (!link) return;
       const results = await Promise.allSettled(
-        dateiIds.map((dateiId) => firstValueFrom(this.linksService.addDatei(link.id, dateiId))),
+        dateiIds.map((dateiId) =>
+          this.api.invoke(addDateiToLink, { id: link.id, body: { dateiId } }),
+        ),
       );
       const failed = results.filter((r) => r.status === 'rejected').length;
       const added = results.length - failed;

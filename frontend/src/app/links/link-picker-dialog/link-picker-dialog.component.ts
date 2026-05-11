@@ -12,9 +12,9 @@ import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatRadioModule } from '@angular/material/radio';
-import { firstValueFrom } from 'rxjs';
+import { Api } from '~/api/api';
+import { listLinks } from '~/api/functions';
 import type { Link } from '~/api/models/link';
-import { LinksService } from '~/frontend/services/links.service';
 
 @Component({
   selector: 'app-link-picker-dialog',
@@ -32,11 +32,11 @@ import { LinksService } from '~/frontend/services/links.service';
 })
 export class LinkPickerDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<LinkPickerDialogComponent, Link | undefined>);
-  private readonly linksService = inject(LinksService);
+  private readonly api = inject(Api);
 
   protected readonly listResource = resource({
     params: () => ({}),
-    loader: () => firstValueFrom(this.linksService.listLinks({ status: 'active' })),
+    loader: () => this.api.invoke(listLinks, { status: 'active' }),
   });
 
   protected readonly availableLinks = computed(() => this.listResource.value()?.items ?? []);

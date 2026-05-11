@@ -17,9 +17,9 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { ActivatedRoute } from '@angular/router';
 import { isPast } from 'date-fns';
-import { firstValueFrom } from 'rxjs';
+import { Api } from '~/api/api';
+import { downloadPublicLinkDatei, listPublicLinkDateien } from '~/api/functions';
 import type { Datei } from '~/api/models/datei';
-import { LinksService } from '~/frontend/services/links.service';
 import { RelativeDatePipe } from '~/frontend/pipes/relative-date.pipe';
 import { triggerDownload } from 'frontend/src/util/download';
 import { formatBytes } from 'frontend/src/util/format-bytes';
@@ -49,7 +49,7 @@ type ViewerState =
 })
 export class PublicLinkViewerComponent {
   private readonly route = inject(ActivatedRoute);
-  private readonly linksService = inject(LinksService);
+  private readonly api = inject(Api);
   private readonly snackBar = inject(MatSnackBar);
 
   private readonly paramMap = toSignal(this.route.paramMap);
@@ -112,9 +112,11 @@ export class PublicLinkViewerComponent {
     if (!token) return;
     const code = candidateCode ?? (this.code() === '' ? undefined : this.code());
     try {
-      const result = await firstValueFrom(
-        this.linksService.listPublicDateien(token, parentId ?? undefined, code),
-      );
+      const result = await this.api.invoke(listPublicLinkDateien, {
+        accessToken: token,
+        parentId: parentId ?? undefined,
+        'X-Datei-Link-Code': code,
+      });
       if (candidateCode !== undefined) this.code.set(candidateCode);
       this.dataSource.data = result.items;
       this.linkName.set(result.name);
@@ -164,14 +166,12 @@ export class PublicLinkViewerComponent {
     const token = this.accessToken();
     if (!token) return;
     try {
-      const blob = await firstValueFrom(
-        this.linksService.downloadPublicDatei(
-          token,
-          item.id,
-          this.code() === '' ? undefined : this.code(),
-        ),
-      );
-      triggerDownload(blob, item.name ?? 'download');
+      const response = await this.api.invoke$Response(downloadPublicLinkDatei, {
+        accessToken: token,
+        dateiId: item.id,
+        'X-Datei-Link-Code': this.code() === '' ? undefined : this.code(),
+      });
+      triggerDownload(response.body as unknown as Blob, item.name ?? 'download');
     } catch (e) {
       if (
         e instanceof HttpErrorResponse &&
