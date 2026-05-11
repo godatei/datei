@@ -1,3 +1,3 @@
-export function buildShareUrl(accessToken: string): string {
-  return `${window.location.origin}/share/${accessToken}`;
+export function buildShareUrl(key: string): string {
+  return `${window.location.origin}/share/${key}`;
 }

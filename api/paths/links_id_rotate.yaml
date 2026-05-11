@@ -1,6 +1,6 @@
 post:
-  operationId: RotateLinkAccessToken
-  summary: Generate a new access token, invalidating the old URL
+  operationId: RotateLinkKey
+  summary: Generate a new key, invalidating the old share URL
   security:
     - bearerHttpAuthentication: []
   parameters:
@@ -12,7 +12,7 @@ post:
         format: uuid
   responses:
     '200':
-      description: Link with new access token
+      description: Link with new key
       content:
         application/json:
           schema:

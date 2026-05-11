@@ -16,7 +16,7 @@ export const routes: Routes = [
   { path: 'register', canActivate: [publicOnlyGuard], component: RegisterComponent },
   { path: 'forgot', canActivate: [publicOnlyGuard], component: ForgotComponent },
   {
-    path: 'share/:accessToken',
+    path: 'share/:key',
     loadComponent: () =>
       import('~/frontend/public-links/public-link-viewer/public-link-viewer.component').then(
         (m) => m.PublicLinkViewerComponent,

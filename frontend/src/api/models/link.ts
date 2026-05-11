@@ -4,11 +4,6 @@
 export interface Link {
 
   /**
-   * Opaque URL slug used to access the link publicly
-   */
-  accessToken: string;
-
-  /**
    * Optional plain-text code required to view; null if no code is set
    */
   code?: string | null;
@@ -39,9 +34,19 @@ export interface Link {
   id: string;
 
   /**
+   * Opaque URL slug used to access the link publicly
+   */
+  key: string;
+
+  /**
    * Display name of the link
    */
   name: string;
+
+  /**
+   * Number of times the link has been successfully unlocked (lifetime)
+   */
+  openCount: number;
 
   /**
    * User ID of the owner

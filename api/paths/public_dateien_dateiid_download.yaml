@@ -1,26 +1,15 @@
 get:
   operationId: DownloadPublicLinkDatei
-  summary: Download a datei via a public link
-  security: []
+  summary: Download a datei via the unlocked public link
+  security:
+    - publicLinkBearerAuthentication: []
   parameters:
-    - name: accessToken
-      in: path
-      required: true
-      schema:
-        type: string
     - name: dateiId
       in: path
       required: true
       schema:
         type: string
         format: uuid
-    - name: X-Datei-Link-Code
-      in: header
-      required: false
-      description: Plain-text code used to unlock the link when one is configured
-      schema:
-        type: string
-        maxLength: 128
   responses:
     '200':
       description: File content
@@ -35,11 +24,11 @@ get:
             type: string
       content:
         application/octet-stream: {}
+    '401':
+      description: Token missing or expired
     '403':
-      description: Code required or invalid
+      description: Link state changed since unlock (revoked, expired) or datei not shared
     '404':
-      description: Link not found, revoked, or datei not shared
+      description: Datei not found in the link's shared scope
     '409':
       description: Datei is a directory
-    '410':
-      description: Link expired

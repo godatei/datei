@@ -1,6 +1,6 @@
 -- name: InsertLinkProjection :exec
 INSERT INTO link_projection
- (id, owner_id, name, access_token, code, expires_at, created_at, updated_at)
+ (id, owner_id, name, key, code, expires_at, created_at, updated_at)
  VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
 
 -- name: UpdateLinkProjection :exec
@@ -8,8 +8,8 @@ UPDATE link_projection
  SET name = $1, code = $2, expires_at = $3, updated_at = $4
  WHERE id = $5;
 
--- name: UpdateLinkProjectionAccessToken :exec
-UPDATE link_projection SET access_token = $1, updated_at = $2 WHERE id = $3;
+-- name: UpdateLinkProjectionKey :exec
+UPDATE link_projection SET key = $1, updated_at = $2 WHERE id = $3;
 
 -- name: TouchLinkProjection :exec
 UPDATE link_projection SET updated_at = $1 WHERE id = $2;
@@ -17,14 +17,28 @@ UPDATE link_projection SET updated_at = $1 WHERE id = $2;
 -- name: UpdateLinkProjectionRevoked :exec
 UPDATE link_projection SET revoked_at = $1, updated_at = $2 WHERE id = $3;
 
+-- name: IncrementLinkProjectionOpenCount :exec
+-- Atomic counter increment driven by the public unlock endpoint. Each
+-- successful unlock counts as one access.
+UPDATE link_projection SET open_count = open_count + 1, updated_at = $1 WHERE id = $2;
+
 -- name: GetLinkProjectionByID :one
 SELECT * FROM link_projection WHERE id = $1;
 
--- name: GetLinkProjectionByAccessToken :one
+-- name: GetLinkProjectionWithOwnerByID :one
+-- Variant of GetLinkProjectionByID that also returns the owner's display name
+-- in one round-trip. Used by the public list/download endpoints to populate
+-- the response shape without a second user lookup.
 SELECT l.*, u.name AS owner_name
 FROM link_projection l
 INNER JOIN user_account_projection u ON u.id = l.owner_id
-WHERE l.access_token = $1;
+WHERE l.id = $1;
+
+-- name: GetLinkProjectionByKey :one
+SELECT l.*, u.name AS owner_name
+FROM link_projection l
+INNER JOIN user_account_projection u ON u.id = l.owner_id
+WHERE l.key = $1;
 
 -- name: ListLinkProjectionsByOwner :many
 -- status filter values: 'active', 'expired', 'revoked', or '' to return all.
@@ -91,7 +105,9 @@ SELECT EXISTS(
 
 -- name: CountLinkContents :one
 -- Recursively counts files and folders reachable from the link's shared roots,
--- including the shared roots themselves. Trashed dateien are excluded.
+-- including the shared roots themselves. Trashed dateien are excluded. Also
+-- returns the link's lifetime open count so the response includes everything
+-- the owner needs in a single round-trip.
 WITH RECURSIVE
 roots AS (
   SELECT d.id, d.is_directory
@@ -109,5 +125,6 @@ descendants(id, is_directory) AS (
 )
 SELECT
   COALESCE(SUM(CASE WHEN is_directory THEN 0 ELSE 1 END), 0)::bigint AS file_count,
-  COALESCE(SUM(CASE WHEN is_directory THEN 1 ELSE 0 END), 0)::bigint AS folder_count
+  COALESCE(SUM(CASE WHEN is_directory THEN 1 ELSE 0 END), 0)::bigint AS folder_count,
+  (SELECT lp.open_count FROM link_projection lp WHERE lp.id = $1) AS open_count
 FROM descendants;

@@ -9,21 +9,13 @@ import { RequestBuilder } from '../../request-builder';
 
 
 export interface DownloadPublicLinkDatei$Params {
-  accessToken: string;
   dateiId: string;
-
-/**
- * Plain-text code used to unlock the link when one is configured
- */
-  'X-Datei-Link-Code'?: string;
 }
 
 export function downloadPublicLinkDatei(http: HttpClient, rootUrl: string, params: DownloadPublicLinkDatei$Params, context?: HttpContext): Observable<StrictHttpResponse<any>> {
   const rb = new RequestBuilder(rootUrl, downloadPublicLinkDatei.PATH, 'get');
   if (params) {
-    rb.path('accessToken', params.accessToken, {});
     rb.path('dateiId', params.dateiId, {});
-    rb.header('X-Datei-Link-Code', params['X-Datei-Link-Code'], {});
   }
 
   return http.request(
@@ -36,4 +28,4 @@ export function downloadPublicLinkDatei(http: HttpClient, rootUrl: string, param
   );
 }
 
-downloadPublicLinkDatei.PATH = '/api/v1/public/links/{accessToken}/dateien/{dateiId}/download';
+downloadPublicLinkDatei.PATH = '/api/v1/public/dateien/{dateiId}/download';

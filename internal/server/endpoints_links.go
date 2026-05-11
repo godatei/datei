@@ -131,19 +131,19 @@ func (s *server) RevokeLink(
 	return RevokeLink204Response{}, nil
 }
 
-// RotateLinkAccessToken implements [StrictServerInterface].
-func (s *server) RotateLinkAccessToken(
+// RotateLinkKey implements [StrictServerInterface].
+func (s *server) RotateLinkKey(
 	ctx context.Context,
-	request RotateLinkAccessTokenRequestObject,
-) (RotateLinkAccessTokenResponseObject, error) {
-	result, err := s.linkService.RotateAccessToken(ctx, request.Id)
+	request RotateLinkKeyRequestObject,
+) (RotateLinkKeyResponseObject, error) {
+	result, err := s.linkService.RotateKey(ctx, request.Id)
 	if err != nil {
 		if errors.Is(err, dateierrors.ErrLinkNotFound) {
-			return RotateLinkAccessToken404Response{}, nil
+			return RotateLinkKey404Response{}, nil
 		}
 		return nil, err
 	}
-	return RotateLinkAccessToken200JSONResponse(*result), nil
+	return RotateLinkKey200JSONResponse(*result), nil
 }
 
 // AddDateiToLink implements [StrictServerInterface].

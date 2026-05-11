@@ -9,12 +9,12 @@ import { RequestBuilder } from '../../request-builder';
 
 import { LinkDetail } from '../../models/link-detail';
 
-export interface RotateLinkAccessToken$Params {
+export interface RotateLinkKey$Params {
   id: string;
 }
 
-export function rotateLinkAccessToken(http: HttpClient, rootUrl: string, params: RotateLinkAccessToken$Params, context?: HttpContext): Observable<StrictHttpResponse<LinkDetail>> {
-  const rb = new RequestBuilder(rootUrl, rotateLinkAccessToken.PATH, 'post');
+export function rotateLinkKey(http: HttpClient, rootUrl: string, params: RotateLinkKey$Params, context?: HttpContext): Observable<StrictHttpResponse<LinkDetail>> {
+  const rb = new RequestBuilder(rootUrl, rotateLinkKey.PATH, 'post');
   if (params) {
     rb.path('id', params.id, {});
   }
@@ -29,4 +29,4 @@ export function rotateLinkAccessToken(http: HttpClient, rootUrl: string, params:
   );
 }
 
-rotateLinkAccessToken.PATH = '/api/v1/links/{id}/rotate';
+rotateLinkKey.PATH = '/api/v1/links/{id}/rotate';

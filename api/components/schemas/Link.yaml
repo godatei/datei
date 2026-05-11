@@ -3,9 +3,10 @@ required:
   - id
   - ownerId
   - name
-  - accessToken
+  - key
   - fileCount
   - folderCount
+  - openCount
   - createdAt
   - updatedAt
 properties:
@@ -20,7 +21,7 @@ properties:
   name:
     type: string
     description: Display name of the link
-  accessToken:
+  key:
     type: string
     description: Opaque URL slug used to access the link publicly
   code:
@@ -43,6 +44,9 @@ properties:
   folderCount:
     type: integer
     description: Total number of folders reachable in the shared subtree (excluding trashed)
+  openCount:
+    type: integer
+    description: Number of times the link has been successfully unlocked (lifetime)
   createdAt:
     type: string
     format: date-time

@@ -255,7 +255,7 @@ export class DashboardComponent {
     });
     ref.afterClosed().subscribe((link) => {
       if (!link) return;
-      const shareUrl = buildShareUrl(link.accessToken);
+      const shareUrl = buildShareUrl(link.key);
       const snackRef = this.snackBar.open(`Public link "${link.name}" created`, 'Copy link', {
         duration: 6000,
       });

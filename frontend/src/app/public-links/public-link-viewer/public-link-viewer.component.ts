@@ -1,4 +1,4 @@
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpContext, HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -18,9 +18,10 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { ActivatedRoute } from '@angular/router';
 import { isPast } from 'date-fns';
 import { Api } from '~/api/api';
-import { downloadPublicLinkDatei, listPublicLinkDateien } from '~/api/functions';
+import { downloadPublicLinkDatei, listPublicLinkDateien, unlockPublicLink } from '~/api/functions';
 import type { Datei } from '~/api/models/datei';
 import { RelativeDatePipe } from '~/frontend/pipes/relative-date.pipe';
+import { PUBLIC_LINK_TOKEN } from '~/frontend/public-links/public-link-token.interceptor';
 import { triggerDownload } from 'frontend/src/util/download';
 import { formatBytes } from 'frontend/src/util/format-bytes';
 
@@ -53,9 +54,13 @@ export class PublicLinkViewerComponent {
   private readonly snackBar = inject(MatSnackBar);
 
   private readonly paramMap = toSignal(this.route.paramMap);
-  protected readonly accessToken = computed(() => this.paramMap()?.get('accessToken') ?? '');
+  protected readonly key = computed(() => this.paramMap()?.get('key') ?? '');
 
+  // Stored after a successful unlock. Re-used to re-unlock if the JWT expires
+  // mid-session without bouncing the user back to the code prompt.
   private readonly code = signal<string>('');
+  private readonly sessionToken = signal<string>('');
+
   protected readonly state = signal<ViewerState>({ kind: 'loading' });
   protected readonly invalidCode = computed(() => {
     const s = this.state();
@@ -92,7 +97,7 @@ export class PublicLinkViewerComponent {
     {
       submission: {
         action: async () => {
-          await this.loadDateien(this.currentParentId(), this.codeModel().code);
+          await this.unlockAndLoad(this.codeModel().code);
         },
       },
     },
@@ -100,35 +105,60 @@ export class PublicLinkViewerComponent {
 
   constructor() {
     effect(() => {
-      const token = this.accessToken();
-      if (token) {
-        void this.loadDateien(null);
+      const key = this.key();
+      if (key) {
+        void this.unlockAndLoad();
       }
     });
   }
 
-  private async loadDateien(parentId: string | null, candidateCode?: string): Promise<void> {
-    const token = this.accessToken();
-    if (!token) return;
-    const code = candidateCode ?? (this.code() === '' ? undefined : this.code());
+  // unlockAndLoad attempts an unlock (optionally with a candidate code) and,
+  // on success, fetches the current folder. On 403 it transitions to the code
+  // prompt.
+  private async unlockAndLoad(candidateCode?: string): Promise<void> {
+    if (!this.key()) return;
     try {
-      const result = await this.api.invoke(listPublicLinkDateien, {
-        accessToken: token,
-        parentId: parentId ?? undefined,
-        'X-Datei-Link-Code': code,
+      const result = await this.api.invoke(unlockPublicLink, {
+        key: this.key(),
+        body: candidateCode !== undefined ? { code: candidateCode } : undefined,
       });
+      this.sessionToken.set(result.token);
       if (candidateCode !== undefined) this.code.set(candidateCode);
+    } catch (e) {
+      this.handleUnlockError(e, candidateCode !== undefined);
+      return;
+    }
+    await this.loadDateien(this.currentParentId());
+  }
+
+  private async loadDateien(parentId: string | null): Promise<void> {
+    try {
+      const result = await this.api.invoke(
+        listPublicLinkDateien,
+        { parentId: parentId ?? undefined },
+        this.linkContext(),
+      );
       this.dataSource.data = result.items;
       this.linkName.set(result.name);
       this.ownerName.set(result.ownerName);
       this.expiresAt.set(result.expiresAt ? new Date(result.expiresAt) : null);
       this.state.set({ kind: 'ready' });
     } catch (e) {
-      this.handleError(e, candidateCode !== undefined);
+      if (e instanceof HttpErrorResponse && e.status === 401) {
+        // Session JWT expired or the server restarted; transparently re-unlock
+        // with the cached code (if any) so the user doesn't see a flicker.
+        await this.unlockAndLoad(this.code() === '' ? undefined : this.code());
+        return;
+      }
+      this.handleAccessError(e);
     }
   }
 
-  private handleError(e: unknown, fromSubmit = false): void {
+  private linkContext(): HttpContext {
+    return new HttpContext().set(PUBLIC_LINK_TOKEN, this.sessionToken());
+  }
+
+  private handleUnlockError(e: unknown, fromSubmit: boolean): void {
     if (e instanceof HttpErrorResponse) {
       if (e.status === 403) {
         this.state.set({ kind: 'codeRequired', invalidCode: fromSubmit });
@@ -140,6 +170,24 @@ export class PublicLinkViewerComponent {
       }
       if (e.status === 410) {
         this.state.set({ kind: 'expired' });
+        return;
+      }
+    }
+    console.error(e);
+    this.state.set({ kind: 'error', message: 'Failed to load shared files' });
+  }
+
+  // Errors from list/download after a successful unlock. 403 here means the
+  // link's state changed (revoked / expired / out-of-scope datei), not "code
+  // missing"; the unlock path is the only place that produces a code-prompt.
+  private handleAccessError(e: unknown): void {
+    if (e instanceof HttpErrorResponse) {
+      if (e.status === 403) {
+        this.state.set({ kind: 'expired' });
+        return;
+      }
+      if (e.status === 404) {
+        this.state.set({ kind: 'notFound' });
         return;
       }
     }
@@ -163,21 +211,20 @@ export class PublicLinkViewerComponent {
       void this.navigateInto(item);
       return;
     }
-    const token = this.accessToken();
-    if (!token) return;
     try {
-      const response = await this.api.invoke$Response(downloadPublicLinkDatei, {
-        accessToken: token,
-        dateiId: item.id,
-        'X-Datei-Link-Code': this.code() === '' ? undefined : this.code(),
-      });
+      const response = await this.api.invoke$Response(
+        downloadPublicLinkDatei,
+        { dateiId: item.id },
+        this.linkContext(),
+      );
       triggerDownload(response.body as unknown as Blob, item.name ?? 'download');
     } catch (e) {
-      if (
-        e instanceof HttpErrorResponse &&
-        (e.status === 403 || e.status === 410 || e.status === 404)
-      ) {
-        this.handleError(e);
+      if (e instanceof HttpErrorResponse && e.status === 401) {
+        await this.unlockAndLoad(this.code() === '' ? undefined : this.code());
+        return;
+      }
+      if (e instanceof HttpErrorResponse && (e.status === 403 || e.status === 404)) {
+        this.handleAccessError(e);
         return;
       }
       console.error(e);

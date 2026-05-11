@@ -110,15 +110,16 @@ type LinkEvent struct {
 }
 
 type LinkProjection struct {
-	ID          uuid.UUID  `db:"id"`
-	OwnerID     uuid.UUID  `db:"owner_id"`
-	Name        string     `db:"name"`
-	AccessToken string     `db:"access_token"`
-	Code        *string    `db:"code"`
-	ExpiresAt   *time.Time `db:"expires_at"`
-	RevokedAt   *time.Time `db:"revoked_at"`
-	CreatedAt   time.Time  `db:"created_at"`
-	UpdatedAt   time.Time  `db:"updated_at"`
+	ID        uuid.UUID  `db:"id"`
+	OwnerID   uuid.UUID  `db:"owner_id"`
+	Name      string     `db:"name"`
+	Key       string     `db:"key"`
+	Code      *string    `db:"code"`
+	ExpiresAt *time.Time `db:"expires_at"`
+	RevokedAt *time.Time `db:"revoked_at"`
+	CreatedAt time.Time  `db:"created_at"`
+	UpdatedAt time.Time  `db:"updated_at"`
+	OpenCount int64      `db:"open_count"`
 }
 
 type UserAccountEmailProjection struct {

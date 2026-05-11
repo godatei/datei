@@ -49,10 +49,11 @@ func NewEventStore(pool *pgxpool.Pool) *events.PostgresEventStore {
 func init() {
 	events.RegisterEvent("LinkCreated", func() events.DomainEvent { return &LinkCreatedEvent{} })
 	events.RegisterEvent("LinkUpdated", func() events.DomainEvent { return &LinkUpdatedEvent{} })
-	events.RegisterEvent("LinkAccessTokenRotated", func() events.DomainEvent { return &LinkAccessTokenRotatedEvent{} })
+	events.RegisterEvent("LinkKeyRotated", func() events.DomainEvent { return &LinkKeyRotatedEvent{} })
 	events.RegisterEvent("LinkDateiAdded", func() events.DomainEvent { return &LinkDateiAddedEvent{} })
 	events.RegisterEvent("LinkDateiRemoved", func() events.DomainEvent { return &LinkDateiRemovedEvent{} })
 	events.RegisterEvent("LinkRevoked", func() events.DomainEvent { return &LinkRevokedEvent{} })
+	events.RegisterEvent("LinkOpened", func() events.DomainEvent { return &LinkOpenedEvent{} })
 }
 
 // ============================================================================
@@ -60,14 +61,14 @@ func init() {
 // ============================================================================
 
 type LinkCreatedEvent struct {
-	ID          uuid.UUID   `json:"id"`
-	OwnerID     uuid.UUID   `json:"owner_id"`
-	Name        string      `json:"name"`
-	AccessToken string      `json:"access_token"`
-	Code        *string     `json:"code,omitempty"`
-	ExpiresAt   *time.Time  `json:"expires_at,omitempty"`
-	DateiIDs    []uuid.UUID `json:"datei_ids"`
-	CreatedAt   time.Time   `json:"created_at"`
+	ID        uuid.UUID   `json:"id"`
+	OwnerID   uuid.UUID   `json:"owner_id"`
+	Name      string      `json:"name"`
+	Key       string      `json:"key"`
+	Code      *string     `json:"code,omitempty"`
+	ExpiresAt *time.Time  `json:"expires_at,omitempty"`
+	DateiIDs  []uuid.UUID `json:"datei_ids"`
+	CreatedAt time.Time   `json:"created_at"`
 }
 
 func (e LinkCreatedEvent) EventType() string   { return "LinkCreated" }
@@ -76,7 +77,7 @@ func (e LinkCreatedEvent) ApplyTo(a *Aggregate) {
 	a.ID = e.ID
 	a.OwnerID = e.OwnerID
 	a.Name = e.Name
-	a.AccessToken = e.AccessToken
+	a.Key = e.Key
 	a.Code = e.Code
 	a.ExpiresAt = e.ExpiresAt
 	a.CreatedAt = e.CreatedAt
@@ -110,17 +111,17 @@ func (e LinkUpdatedEvent) ApplyTo(a *Aggregate) {
 	a.UpdatedAt = e.UpdatedAt
 }
 
-type LinkAccessTokenRotatedEvent struct {
-	ID             uuid.UUID `json:"id"`
-	OldAccessToken string    `json:"old_access_token"`
-	NewAccessToken string    `json:"new_access_token"`
-	RotatedAt      time.Time `json:"rotated_at"`
+type LinkKeyRotatedEvent struct {
+	ID        uuid.UUID `json:"id"`
+	OldKey    string    `json:"old_key"`
+	NewKey    string    `json:"new_key"`
+	RotatedAt time.Time `json:"rotated_at"`
 }
 
-func (e LinkAccessTokenRotatedEvent) EventType() string   { return "LinkAccessTokenRotated" }
-func (e LinkAccessTokenRotatedEvent) StreamID() uuid.UUID { return e.ID }
-func (e LinkAccessTokenRotatedEvent) ApplyTo(a *Aggregate) {
-	a.AccessToken = e.NewAccessToken
+func (e LinkKeyRotatedEvent) EventType() string   { return "LinkKeyRotated" }
+func (e LinkKeyRotatedEvent) StreamID() uuid.UUID { return e.ID }
+func (e LinkKeyRotatedEvent) ApplyTo(a *Aggregate) {
+	a.Key = e.NewKey
 	a.UpdatedAt = e.RotatedAt
 }
 
@@ -148,6 +149,17 @@ func (e LinkDateiRemovedEvent) StreamID() uuid.UUID { return e.ID }
 func (e LinkDateiRemovedEvent) ApplyTo(a *Aggregate) {
 	delete(a.DateiIDs, e.DateiID)
 	a.UpdatedAt = e.RemovedAt
+}
+
+type LinkOpenedEvent struct {
+	ID       uuid.UUID `json:"id"`
+	OpenedAt time.Time `json:"opened_at"`
+}
+
+func (e LinkOpenedEvent) EventType() string   { return "LinkOpened" }
+func (e LinkOpenedEvent) StreamID() uuid.UUID { return e.ID }
+func (e LinkOpenedEvent) ApplyTo(a *Aggregate) {
+	a.OpenCount++
 }
 
 type LinkRevokedEvent struct {

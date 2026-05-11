@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	BearerHttpAuthenticationScopes bearerHttpAuthenticationContextKey = "bearerHttpAuthentication.Scopes"
+	BearerHttpAuthenticationScopes       bearerHttpAuthenticationContextKey       = "bearerHttpAuthentication.Scopes"
+	PublicLinkBearerAuthenticationScopes publicLinkBearerAuthenticationContextKey = "publicLinkBearerAuthentication.Scopes"
 )
 
 // Defines values for ListLinksParamsStatus.
@@ -149,9 +150,6 @@ type EnableMFAResponse struct {
 
 // Link defines model for Link.
 type Link struct {
-	// AccessToken Opaque URL slug used to access the link publicly
-	AccessToken string `json:"accessToken"`
-
 	// Code Optional plain-text code required to view; null if no code is set
 	Code *string `json:"code,omitempty"`
 
@@ -170,8 +168,14 @@ type Link struct {
 	// Id Unique identifier
 	Id openapi_types.UUID `json:"id"`
 
+	// Key Opaque URL slug used to access the link publicly
+	Key string `json:"key"`
+
 	// Name Display name of the link
 	Name string `json:"name"`
+
+	// OpenCount Number of times the link has been successfully unlocked (lifetime)
+	OpenCount int `json:"openCount"`
 
 	// OwnerId User ID of the owner
 	OwnerId openapi_types.UUID `json:"ownerId"`
@@ -185,9 +189,6 @@ type Link struct {
 
 // LinkDetail defines model for LinkDetail.
 type LinkDetail struct {
-	// AccessToken Opaque URL slug used to access the link publicly
-	AccessToken string `json:"accessToken"`
-
 	// Code Optional plain-text code required to view; null if no code is set
 	Code *string `json:"code,omitempty"`
 
@@ -209,8 +210,14 @@ type LinkDetail struct {
 	// Id Unique identifier
 	Id openapi_types.UUID `json:"id"`
 
+	// Key Opaque URL slug used to access the link publicly
+	Key string `json:"key"`
+
 	// Name Display name of the link
 	Name string `json:"name"`
+
+	// OpenCount Number of times the link has been successfully unlocked (lifetime)
+	OpenCount int `json:"openCount"`
 
 	// OwnerId User ID of the owner
 	OwnerId openapi_types.UUID `json:"ownerId"`
@@ -377,6 +384,21 @@ type TrashedDatei struct {
 	UpdatedBy *openapi_types.UUID `json:"updatedBy,omitempty"`
 }
 
+// UnlockPublicLinkRequest defines model for UnlockPublicLinkRequest.
+type UnlockPublicLinkRequest struct {
+	// Code Plain-text code required when the link is configured with one
+	Code *string `json:"code,omitempty"`
+}
+
+// UnlockPublicLinkResponse defines model for UnlockPublicLinkResponse.
+type UnlockPublicLinkResponse struct {
+	// ExpiresAt When the issued token expires (capped at the link's own expiration)
+	ExpiresAt time.Time `json:"expiresAt"`
+
+	// Token Short-lived JWT to authorize subsequent list/download calls for this link
+	Token string `json:"token"`
+}
+
 // UpdateDateiRequest defines model for UpdateDateiRequest.
 type UpdateDateiRequest struct {
 	// Name New name for the Datei (optional)
@@ -452,6 +474,9 @@ type UserResponse struct {
 // bearerHttpAuthenticationContextKey is the context key for bearerHttpAuthentication security scheme
 type bearerHttpAuthenticationContextKey string
 
+// publicLinkBearerAuthenticationContextKey is the context key for publicLinkBearerAuthentication security scheme
+type publicLinkBearerAuthenticationContextKey string
+
 // ListDateiParams defines parameters for ListDatei.
 type ListDateiParams struct {
 	// ParentId Parent directory ID (omit for root)
@@ -488,15 +513,6 @@ type ListLinksParamsStatus string
 type ListPublicLinkDateienParams struct {
 	// ParentId When set, list children of this folder (must be inside the link's shared scope); when omitted, list the top-level shared dateien
 	ParentId *openapi_types.UUID `form:"parentId,omitempty" json:"parentId,omitempty"`
-
-	// XDateiLinkCode Plain-text code used to unlock the link when one is configured
-	XDateiLinkCode *string `json:"X-Datei-Link-Code,omitempty"`
-}
-
-// DownloadPublicLinkDateiParams defines parameters for DownloadPublicLinkDatei.
-type DownloadPublicLinkDateiParams struct {
-	// XDateiLinkCode Plain-text code used to unlock the link when one is configured
-	XDateiLinkCode *string `json:"X-Datei-Link-Code,omitempty"`
 }
 
 // ListTrashParams defines parameters for ListTrash.
@@ -543,6 +559,9 @@ type UpdateLinkJSONRequestBody = UpdateLinkRequest
 
 // AddDateiToLinkJSONRequestBody defines body for AddDateiToLink for application/json ContentType.
 type AddDateiToLinkJSONRequestBody = AddDateiToLinkRequest
+
+// UnlockPublicLinkJSONRequestBody defines body for UnlockPublicLink for application/json ContentType.
+type UnlockPublicLinkJSONRequestBody = UnlockPublicLinkRequest
 
 // AddEmailJSONRequestBody defines body for AddEmail for application/json ContentType.
 type AddEmailJSONRequestBody = AddEmailRequest

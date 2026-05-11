@@ -30,21 +30,25 @@ descendants(id, is_directory) AS (
 )
 SELECT
   COALESCE(SUM(CASE WHEN is_directory THEN 0 ELSE 1 END), 0)::bigint AS file_count,
-  COALESCE(SUM(CASE WHEN is_directory THEN 1 ELSE 0 END), 0)::bigint AS folder_count
+  COALESCE(SUM(CASE WHEN is_directory THEN 1 ELSE 0 END), 0)::bigint AS folder_count,
+  (SELECT lp.open_count FROM link_projection lp WHERE lp.id = $1) AS open_count
 FROM descendants
 `
 
 type CountLinkContentsRow struct {
 	FileCount   int64 `db:"file_count"`
 	FolderCount int64 `db:"folder_count"`
+	OpenCount   int64 `db:"open_count"`
 }
 
 // Recursively counts files and folders reachable from the link's shared roots,
-// including the shared roots themselves. Trashed dateien are excluded.
-func (q *Queries) CountLinkContents(ctx context.Context, linkID uuid.UUID) (CountLinkContentsRow, error) {
-	row := q.db.QueryRow(ctx, countLinkContents, linkID)
+// including the shared roots themselves. Trashed dateien are excluded. Also
+// returns the link's lifetime open count so the response includes everything
+// the owner needs in a single round-trip.
+func (q *Queries) CountLinkContents(ctx context.Context, id uuid.UUID) (CountLinkContentsRow, error) {
+	row := q.db.QueryRow(ctx, countLinkContents, id)
 	var i CountLinkContentsRow
-	err := row.Scan(&i.FileCount, &i.FolderCount)
+	err := row.Scan(&i.FileCount, &i.FolderCount, &i.OpenCount)
 	return i, err
 }
 
@@ -88,46 +92,8 @@ func (q *Queries) DeleteLinkDateiProjection(ctx context.Context, arg DeleteLinkD
 	return err
 }
 
-const getLinkProjectionByAccessToken = `-- name: GetLinkProjectionByAccessToken :one
-SELECT l.id, l.owner_id, l.name, l.access_token, l.code, l.expires_at, l.revoked_at, l.created_at, l.updated_at, u.name AS owner_name
-FROM link_projection l
-INNER JOIN user_account_projection u ON u.id = l.owner_id
-WHERE l.access_token = $1
-`
-
-type GetLinkProjectionByAccessTokenRow struct {
-	ID          uuid.UUID  `db:"id"`
-	OwnerID     uuid.UUID  `db:"owner_id"`
-	Name        string     `db:"name"`
-	AccessToken string     `db:"access_token"`
-	Code        *string    `db:"code"`
-	ExpiresAt   *time.Time `db:"expires_at"`
-	RevokedAt   *time.Time `db:"revoked_at"`
-	CreatedAt   time.Time  `db:"created_at"`
-	UpdatedAt   time.Time  `db:"updated_at"`
-	OwnerName   string     `db:"owner_name"`
-}
-
-func (q *Queries) GetLinkProjectionByAccessToken(ctx context.Context, accessToken string) (GetLinkProjectionByAccessTokenRow, error) {
-	row := q.db.QueryRow(ctx, getLinkProjectionByAccessToken, accessToken)
-	var i GetLinkProjectionByAccessTokenRow
-	err := row.Scan(
-		&i.ID,
-		&i.OwnerID,
-		&i.Name,
-		&i.AccessToken,
-		&i.Code,
-		&i.ExpiresAt,
-		&i.RevokedAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.OwnerName,
-	)
-	return i, err
-}
-
 const getLinkProjectionByID = `-- name: GetLinkProjectionByID :one
-SELECT id, owner_id, name, access_token, code, expires_at, revoked_at, created_at, updated_at FROM link_projection WHERE id = $1
+SELECT id, owner_id, name, key, code, expires_at, revoked_at, created_at, updated_at, open_count FROM link_projection WHERE id = $1
 `
 
 func (q *Queries) GetLinkProjectionByID(ctx context.Context, id uuid.UUID) (LinkProjection, error) {
@@ -137,14 +103,114 @@ func (q *Queries) GetLinkProjectionByID(ctx context.Context, id uuid.UUID) (Link
 		&i.ID,
 		&i.OwnerID,
 		&i.Name,
-		&i.AccessToken,
+		&i.Key,
 		&i.Code,
 		&i.ExpiresAt,
 		&i.RevokedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.OpenCount,
 	)
 	return i, err
+}
+
+const getLinkProjectionByKey = `-- name: GetLinkProjectionByKey :one
+SELECT l.id, l.owner_id, l.name, l.key, l.code, l.expires_at, l.revoked_at, l.created_at, l.updated_at, l.open_count, u.name AS owner_name
+FROM link_projection l
+INNER JOIN user_account_projection u ON u.id = l.owner_id
+WHERE l.key = $1
+`
+
+type GetLinkProjectionByKeyRow struct {
+	ID        uuid.UUID  `db:"id"`
+	OwnerID   uuid.UUID  `db:"owner_id"`
+	Name      string     `db:"name"`
+	Key       string     `db:"key"`
+	Code      *string    `db:"code"`
+	ExpiresAt *time.Time `db:"expires_at"`
+	RevokedAt *time.Time `db:"revoked_at"`
+	CreatedAt time.Time  `db:"created_at"`
+	UpdatedAt time.Time  `db:"updated_at"`
+	OpenCount int64      `db:"open_count"`
+	OwnerName string     `db:"owner_name"`
+}
+
+func (q *Queries) GetLinkProjectionByKey(ctx context.Context, key string) (GetLinkProjectionByKeyRow, error) {
+	row := q.db.QueryRow(ctx, getLinkProjectionByKey, key)
+	var i GetLinkProjectionByKeyRow
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.Name,
+		&i.Key,
+		&i.Code,
+		&i.ExpiresAt,
+		&i.RevokedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.OpenCount,
+		&i.OwnerName,
+	)
+	return i, err
+}
+
+const getLinkProjectionWithOwnerByID = `-- name: GetLinkProjectionWithOwnerByID :one
+SELECT l.id, l.owner_id, l.name, l.key, l.code, l.expires_at, l.revoked_at, l.created_at, l.updated_at, l.open_count, u.name AS owner_name
+FROM link_projection l
+INNER JOIN user_account_projection u ON u.id = l.owner_id
+WHERE l.id = $1
+`
+
+type GetLinkProjectionWithOwnerByIDRow struct {
+	ID        uuid.UUID  `db:"id"`
+	OwnerID   uuid.UUID  `db:"owner_id"`
+	Name      string     `db:"name"`
+	Key       string     `db:"key"`
+	Code      *string    `db:"code"`
+	ExpiresAt *time.Time `db:"expires_at"`
+	RevokedAt *time.Time `db:"revoked_at"`
+	CreatedAt time.Time  `db:"created_at"`
+	UpdatedAt time.Time  `db:"updated_at"`
+	OpenCount int64      `db:"open_count"`
+	OwnerName string     `db:"owner_name"`
+}
+
+// Variant of GetLinkProjectionByID that also returns the owner's display name
+// in one round-trip. Used by the public list/download endpoints to populate
+// the response shape without a second user lookup.
+func (q *Queries) GetLinkProjectionWithOwnerByID(ctx context.Context, id uuid.UUID) (GetLinkProjectionWithOwnerByIDRow, error) {
+	row := q.db.QueryRow(ctx, getLinkProjectionWithOwnerByID, id)
+	var i GetLinkProjectionWithOwnerByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.Name,
+		&i.Key,
+		&i.Code,
+		&i.ExpiresAt,
+		&i.RevokedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.OpenCount,
+		&i.OwnerName,
+	)
+	return i, err
+}
+
+const incrementLinkProjectionOpenCount = `-- name: IncrementLinkProjectionOpenCount :exec
+UPDATE link_projection SET open_count = open_count + 1, updated_at = $1 WHERE id = $2
+`
+
+type IncrementLinkProjectionOpenCountParams struct {
+	UpdatedAt time.Time `db:"updated_at"`
+	ID        uuid.UUID `db:"id"`
+}
+
+// Atomic counter increment driven by the public unlock endpoint. Each
+// successful unlock counts as one access.
+func (q *Queries) IncrementLinkProjectionOpenCount(ctx context.Context, arg IncrementLinkProjectionOpenCountParams) error {
+	_, err := q.db.Exec(ctx, incrementLinkProjectionOpenCount, arg.UpdatedAt, arg.ID)
+	return err
 }
 
 const insertLinkDateiProjection = `-- name: InsertLinkDateiProjection :exec
@@ -166,19 +232,19 @@ func (q *Queries) InsertLinkDateiProjection(ctx context.Context, arg InsertLinkD
 
 const insertLinkProjection = `-- name: InsertLinkProjection :exec
 INSERT INTO link_projection
- (id, owner_id, name, access_token, code, expires_at, created_at, updated_at)
+ (id, owner_id, name, key, code, expires_at, created_at, updated_at)
  VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 `
 
 type InsertLinkProjectionParams struct {
-	ID          uuid.UUID  `db:"id"`
-	OwnerID     uuid.UUID  `db:"owner_id"`
-	Name        string     `db:"name"`
-	AccessToken string     `db:"access_token"`
-	Code        *string    `db:"code"`
-	ExpiresAt   *time.Time `db:"expires_at"`
-	CreatedAt   time.Time  `db:"created_at"`
-	UpdatedAt   time.Time  `db:"updated_at"`
+	ID        uuid.UUID  `db:"id"`
+	OwnerID   uuid.UUID  `db:"owner_id"`
+	Name      string     `db:"name"`
+	Key       string     `db:"key"`
+	Code      *string    `db:"code"`
+	ExpiresAt *time.Time `db:"expires_at"`
+	CreatedAt time.Time  `db:"created_at"`
+	UpdatedAt time.Time  `db:"updated_at"`
 }
 
 func (q *Queries) InsertLinkProjection(ctx context.Context, arg InsertLinkProjectionParams) error {
@@ -186,7 +252,7 @@ func (q *Queries) InsertLinkProjection(ctx context.Context, arg InsertLinkProjec
 		arg.ID,
 		arg.OwnerID,
 		arg.Name,
-		arg.AccessToken,
+		arg.Key,
 		arg.Code,
 		arg.ExpiresAt,
 		arg.CreatedAt,
@@ -277,7 +343,7 @@ func (q *Queries) ListDateienByLink(ctx context.Context, linkID uuid.UUID) ([]Da
 }
 
 const listLinkProjectionsByOwner = `-- name: ListLinkProjectionsByOwner :many
-SELECT id, owner_id, name, access_token, code, expires_at, revoked_at, created_at, updated_at FROM link_projection
+SELECT id, owner_id, name, key, code, expires_at, revoked_at, created_at, updated_at, open_count FROM link_projection
  WHERE owner_id = $1
    AND CASE $2::text
      WHEN 'active'  THEN revoked_at IS NULL AND (expires_at IS NULL OR expires_at > NOW())
@@ -315,12 +381,13 @@ func (q *Queries) ListLinkProjectionsByOwner(ctx context.Context, arg ListLinkPr
 			&i.ID,
 			&i.OwnerID,
 			&i.Name,
-			&i.AccessToken,
+			&i.Key,
 			&i.Code,
 			&i.ExpiresAt,
 			&i.RevokedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.OpenCount,
 		); err != nil {
 			return nil, err
 		}
@@ -371,18 +438,18 @@ func (q *Queries) UpdateLinkProjection(ctx context.Context, arg UpdateLinkProjec
 	return err
 }
 
-const updateLinkProjectionAccessToken = `-- name: UpdateLinkProjectionAccessToken :exec
-UPDATE link_projection SET access_token = $1, updated_at = $2 WHERE id = $3
+const updateLinkProjectionKey = `-- name: UpdateLinkProjectionKey :exec
+UPDATE link_projection SET key = $1, updated_at = $2 WHERE id = $3
 `
 
-type UpdateLinkProjectionAccessTokenParams struct {
-	AccessToken string    `db:"access_token"`
-	UpdatedAt   time.Time `db:"updated_at"`
-	ID          uuid.UUID `db:"id"`
+type UpdateLinkProjectionKeyParams struct {
+	Key       string    `db:"key"`
+	UpdatedAt time.Time `db:"updated_at"`
+	ID        uuid.UUID `db:"id"`
 }
 
-func (q *Queries) UpdateLinkProjectionAccessToken(ctx context.Context, arg UpdateLinkProjectionAccessTokenParams) error {
-	_, err := q.db.Exec(ctx, updateLinkProjectionAccessToken, arg.AccessToken, arg.UpdatedAt, arg.ID)
+func (q *Queries) UpdateLinkProjectionKey(ctx context.Context, arg UpdateLinkProjectionKeyParams) error {
+	_, err := q.db.Exec(ctx, updateLinkProjectionKey, arg.Key, arg.UpdatedAt, arg.ID)
 	return err
 }
 

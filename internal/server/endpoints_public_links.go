@@ -6,29 +6,60 @@ import (
 	"fmt"
 
 	"github.com/godatei/datei/internal/dateierrors"
+	"github.com/godatei/datei/internal/link"
 	"github.com/godatei/datei/pkg/api"
 )
 
-// ListPublicLinkDateien implements [StrictServerInterface].
+// UnlockPublicLink implements [StrictServerInterface]. It is the only
+// unauthenticated endpoint in this file; success returns a short-lived JWT
+// that the viewer presents on subsequent list/download calls.
+func (s *server) UnlockPublicLink(
+	ctx context.Context,
+	request UnlockPublicLinkRequestObject,
+) (UnlockPublicLinkResponseObject, error) {
+	code := ""
+	if request.Body != nil && request.Body.Code != nil {
+		code = *request.Body.Code
+	}
+
+	result, err := s.linkService.UnlockLink(ctx, request.Key, code)
+	if err != nil {
+		switch {
+		case errors.Is(err, dateierrors.ErrLinkCodeRequired):
+			return UnlockPublicLink403Response{}, nil
+		case errors.Is(err, dateierrors.ErrLinkExpired):
+			return UnlockPublicLink410Response{}, nil
+		case errors.Is(err, dateierrors.ErrLinkNotFound),
+			errors.Is(err, dateierrors.ErrLinkRevoked):
+			return UnlockPublicLink404Response{}, nil
+		default:
+			return nil, err
+		}
+	}
+
+	return UnlockPublicLink200JSONResponse(api.UnlockPublicLinkResponse{
+		Token:     result.Token,
+		ExpiresAt: result.ExpiresAt,
+	}), nil
+}
+
+// ListPublicLinkDateien implements [StrictServerInterface]. The link UUID is
+// extracted from the public-link session JWT by the auth middleware and read
+// here from ctx.
 func (s *server) ListPublicLinkDateien(
 	ctx context.Context,
 	request ListPublicLinkDateienRequestObject,
 ) (ListPublicLinkDateienResponseObject, error) {
-	code := ""
-	if request.Params.XDateiLinkCode != nil {
-		code = *request.Params.XDateiLinkCode
-	}
+	linkID := link.RequireLinkIDFromContext(ctx)
 
-	result, err := s.linkService.ListPublicLinkDateien(ctx, request.AccessToken, request.Params.ParentId, code)
+	result, err := s.linkService.ListPublicLinkDateien(ctx, linkID, request.Params.ParentId)
 	if err != nil {
 		switch {
-		case errors.Is(err, dateierrors.ErrLinkCodeRequired):
-			return ListPublicLinkDateien403Response{}, nil
-		case errors.Is(err, dateierrors.ErrLinkExpired):
-			return ListPublicLinkDateien410Response{}, nil
-		case errors.Is(err, dateierrors.ErrLinkNotFound),
+		case errors.Is(err, dateierrors.ErrLinkExpired),
 			errors.Is(err, dateierrors.ErrLinkRevoked),
 			errors.Is(err, dateierrors.ErrLinkDateiNotShared):
+			return ListPublicLinkDateien403Response{}, nil
+		case errors.Is(err, dateierrors.ErrLinkNotFound):
 			return ListPublicLinkDateien404Response{}, nil
 		default:
 			return nil, err
@@ -48,23 +79,18 @@ func (s *server) DownloadPublicLinkDatei(
 	ctx context.Context,
 	request DownloadPublicLinkDateiRequestObject,
 ) (DownloadPublicLinkDateiResponseObject, error) {
-	code := ""
-	if request.Params.XDateiLinkCode != nil {
-		code = *request.Params.XDateiLinkCode
-	}
+	linkID := link.RequireLinkIDFromContext(ctx)
 
-	result, err := s.linkService.DownloadPublicLinkDatei(ctx, request.AccessToken, request.DateiId, code)
+	result, err := s.linkService.DownloadPublicLinkDatei(ctx, linkID, request.DateiId)
 	if err != nil {
 		switch {
-		case errors.Is(err, dateierrors.ErrLinkCodeRequired):
-			return DownloadPublicLinkDatei403Response{}, nil
-		case errors.Is(err, dateierrors.ErrLinkExpired):
-			return DownloadPublicLinkDatei410Response{}, nil
 		case errors.Is(err, dateierrors.ErrIsDirectory):
 			return DownloadPublicLinkDatei409Response{}, nil
-		case errors.Is(err, dateierrors.ErrLinkNotFound),
+		case errors.Is(err, dateierrors.ErrLinkExpired),
 			errors.Is(err, dateierrors.ErrLinkRevoked),
-			errors.Is(err, dateierrors.ErrLinkDateiNotShared),
+			errors.Is(err, dateierrors.ErrLinkDateiNotShared):
+			return DownloadPublicLinkDatei403Response{}, nil
+		case errors.Is(err, dateierrors.ErrLinkNotFound),
 			errors.Is(err, dateierrors.ErrNotFound):
 			return DownloadPublicLinkDatei404Response{}, nil
 		default:

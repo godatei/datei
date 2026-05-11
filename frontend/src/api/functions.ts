@@ -71,12 +71,14 @@ export type { RevokeLink$Params as RevokeLink$Params } from './fn/operations/rev
 export { revokeLink as revokeLink } from './fn/operations/revoke-link';
 export type { UpdateLink$Params as UpdateLink$Params } from './fn/operations/update-link';
 export { updateLink as updateLink } from './fn/operations/update-link';
-export type { RotateLinkAccessToken$Params as RotateLinkAccessToken$Params } from './fn/operations/rotate-link-access-token';
-export { rotateLinkAccessToken as rotateLinkAccessToken } from './fn/operations/rotate-link-access-token';
+export type { RotateLinkKey$Params as RotateLinkKey$Params } from './fn/operations/rotate-link-key';
+export { rotateLinkKey as rotateLinkKey } from './fn/operations/rotate-link-key';
 export type { AddDateiToLink$Params as AddDateiToLink$Params } from './fn/operations/add-datei-to-link';
 export { addDateiToLink as addDateiToLink } from './fn/operations/add-datei-to-link';
 export type { RemoveDateiFromLink$Params as RemoveDateiFromLink$Params } from './fn/operations/remove-datei-from-link';
 export { removeDateiFromLink as removeDateiFromLink } from './fn/operations/remove-datei-from-link';
+export type { UnlockPublicLink$Params as UnlockPublicLink$Params } from './fn/operations/unlock-public-link';
+export { unlockPublicLink as unlockPublicLink } from './fn/operations/unlock-public-link';
 export type { ListPublicLinkDateien$Params as ListPublicLinkDateien$Params } from './fn/operations/list-public-link-dateien';
 export { listPublicLinkDateien as listPublicLinkDateien } from './fn/operations/list-public-link-dateien';
 export type { DownloadPublicLinkDatei$Params as DownloadPublicLinkDatei$Params } from './fn/operations/download-public-link-datei';

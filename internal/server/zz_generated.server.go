@@ -81,15 +81,18 @@ type ServerInterface interface {
 	// Remove a datei from a link
 	// (DELETE /api/v1/links/{id}/dateien/{dateiId})
 	RemoveDateiFromLink(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, dateiId openapi_types.UUID)
-	// Generate a new access token, invalidating the old URL
+	// Generate a new key, invalidating the old share URL
 	// (POST /api/v1/links/{id}/rotate)
-	RotateLinkAccessToken(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
-	// List dateien shared via a public link
-	// (GET /api/v1/public/links/{accessToken}/dateien)
-	ListPublicLinkDateien(w http.ResponseWriter, r *http.Request, accessToken string, params ListPublicLinkDateienParams)
-	// Download a datei via a public link
-	// (GET /api/v1/public/links/{accessToken}/dateien/{dateiId}/download)
-	DownloadPublicLinkDatei(w http.ResponseWriter, r *http.Request, accessToken string, dateiId openapi_types.UUID, params DownloadPublicLinkDateiParams)
+	RotateLinkKey(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// List dateien shared via the unlocked public link
+	// (GET /api/v1/public/dateien)
+	ListPublicLinkDateien(w http.ResponseWriter, r *http.Request, params ListPublicLinkDateienParams)
+	// Download a datei via the unlocked public link
+	// (GET /api/v1/public/dateien/{dateiId}/download)
+	DownloadPublicLinkDatei(w http.ResponseWriter, r *http.Request, dateiId openapi_types.UUID)
+	// Unlock a public link and obtain a session JWT
+	// (POST /api/v1/public/links/{key}/unlock)
+	UnlockPublicLink(w http.ResponseWriter, r *http.Request, key string)
 	// List user emails
 	// (GET /api/v1/settings/emails)
 	ListEmails(w http.ResponseWriter, r *http.Request)
@@ -258,21 +261,27 @@ func (_ Unimplemented) RemoveDateiFromLink(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Generate a new access token, invalidating the old URL
+// Generate a new key, invalidating the old share URL
 // (POST /api/v1/links/{id}/rotate)
-func (_ Unimplemented) RotateLinkAccessToken(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+func (_ Unimplemented) RotateLinkKey(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// List dateien shared via a public link
-// (GET /api/v1/public/links/{accessToken}/dateien)
-func (_ Unimplemented) ListPublicLinkDateien(w http.ResponseWriter, r *http.Request, accessToken string, params ListPublicLinkDateienParams) {
+// List dateien shared via the unlocked public link
+// (GET /api/v1/public/dateien)
+func (_ Unimplemented) ListPublicLinkDateien(w http.ResponseWriter, r *http.Request, params ListPublicLinkDateienParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Download a datei via a public link
-// (GET /api/v1/public/links/{accessToken}/dateien/{dateiId}/download)
-func (_ Unimplemented) DownloadPublicLinkDatei(w http.ResponseWriter, r *http.Request, accessToken string, dateiId openapi_types.UUID, params DownloadPublicLinkDateiParams) {
+// Download a datei via the unlocked public link
+// (GET /api/v1/public/dateien/{dateiId}/download)
+func (_ Unimplemented) DownloadPublicLinkDatei(w http.ResponseWriter, r *http.Request, dateiId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Unlock a public link and obtain a session JWT
+// (POST /api/v1/public/links/{key}/unlock)
+func (_ Unimplemented) UnlockPublicLink(w http.ResponseWriter, r *http.Request, key string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -972,8 +981,8 @@ func (siw *ServerInterfaceWrapper) RemoveDateiFromLink(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r)
 }
 
-// RotateLinkAccessToken operation middleware
-func (siw *ServerInterfaceWrapper) RotateLinkAccessToken(w http.ResponseWriter, r *http.Request) {
+// RotateLinkKey operation middleware
+func (siw *ServerInterfaceWrapper) RotateLinkKey(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 	_ = err
@@ -994,7 +1003,7 @@ func (siw *ServerInterfaceWrapper) RotateLinkAccessToken(w http.ResponseWriter, 
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.RotateLinkAccessToken(w, r, id)
+		siw.Handler.RotateLinkKey(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1010,14 +1019,11 @@ func (siw *ServerInterfaceWrapper) ListPublicLinkDateien(w http.ResponseWriter, 
 	var err error
 	_ = err
 
-	// ------------- Path parameter "accessToken" -------------
-	var accessToken string
+	ctx := r.Context()
 
-	err = runtime.BindStyledParameterWithOptions("simple", "accessToken", chi.URLParam(r, "accessToken"), &accessToken, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accessToken", Err: err})
-		return
-	}
+	ctx = context.WithValue(ctx, PublicLinkBearerAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params ListPublicLinkDateienParams
@@ -1035,29 +1041,8 @@ func (siw *ServerInterfaceWrapper) ListPublicLinkDateien(w http.ResponseWriter, 
 		return
 	}
 
-	headers := r.Header
-
-	// ------------- Optional header parameter "X-Datei-Link-Code" -------------
-	if valueList, found := headers[http.CanonicalHeaderKey("X-Datei-Link-Code")]; found {
-		var XDateiLinkCode string
-		n := len(valueList)
-		if n != 1 {
-			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Datei-Link-Code", Count: n})
-			return
-		}
-
-		err = runtime.BindStyledParameterWithOptions("simple", "X-Datei-Link-Code", valueList[0], &XDateiLinkCode, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""})
-		if err != nil {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Datei-Link-Code", Err: err})
-			return
-		}
-
-		params.XDateiLinkCode = &XDateiLinkCode
-
-	}
-
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListPublicLinkDateien(w, r, accessToken, params)
+		siw.Handler.ListPublicLinkDateien(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1073,15 +1058,6 @@ func (siw *ServerInterfaceWrapper) DownloadPublicLinkDatei(w http.ResponseWriter
 	var err error
 	_ = err
 
-	// ------------- Path parameter "accessToken" -------------
-	var accessToken string
-
-	err = runtime.BindStyledParameterWithOptions("simple", "accessToken", chi.URLParam(r, "accessToken"), &accessToken, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accessToken", Err: err})
-		return
-	}
-
 	// ------------- Path parameter "dateiId" -------------
 	var dateiId openapi_types.UUID
 
@@ -1091,32 +1067,40 @@ func (siw *ServerInterfaceWrapper) DownloadPublicLinkDatei(w http.ResponseWriter
 		return
 	}
 
-	// Parameter object where we will unmarshal all parameters from the context
-	var params DownloadPublicLinkDateiParams
+	ctx := r.Context()
 
-	headers := r.Header
+	ctx = context.WithValue(ctx, PublicLinkBearerAuthenticationScopes, []string{})
 
-	// ------------- Optional header parameter "X-Datei-Link-Code" -------------
-	if valueList, found := headers[http.CanonicalHeaderKey("X-Datei-Link-Code")]; found {
-		var XDateiLinkCode string
-		n := len(valueList)
-		if n != 1 {
-			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Datei-Link-Code", Count: n})
-			return
-		}
+	r = r.WithContext(ctx)
 
-		err = runtime.BindStyledParameterWithOptions("simple", "X-Datei-Link-Code", valueList[0], &XDateiLinkCode, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""})
-		if err != nil {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Datei-Link-Code", Err: err})
-			return
-		}
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DownloadPublicLinkDatei(w, r, dateiId)
+	}))
 
-		params.XDateiLinkCode = &XDateiLinkCode
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
 
+	handler.ServeHTTP(w, r)
+}
+
+// UnlockPublicLink operation middleware
+func (siw *ServerInterfaceWrapper) UnlockPublicLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "key" -------------
+	var key string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "key", chi.URLParam(r, "key"), &key, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "key", Err: err})
+		return
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DownloadPublicLinkDatei(w, r, accessToken, dateiId, params)
+		siw.Handler.UnlockPublicLink(w, r, key)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1763,13 +1747,16 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Delete(options.BaseURL+"/api/v1/links/{id}/dateien/{dateiId}", wrapper.RemoveDateiFromLink)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/api/v1/links/{id}/rotate", wrapper.RotateLinkAccessToken)
+		r.Post(options.BaseURL+"/api/v1/links/{id}/rotate", wrapper.RotateLinkKey)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/api/v1/public/links/{accessToken}/dateien", wrapper.ListPublicLinkDateien)
+		r.Get(options.BaseURL+"/api/v1/public/dateien", wrapper.ListPublicLinkDateien)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/api/v1/public/links/{accessToken}/dateien/{dateiId}/download", wrapper.DownloadPublicLinkDatei)
+		r.Get(options.BaseURL+"/api/v1/public/dateien/{dateiId}/download", wrapper.DownloadPublicLinkDatei)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/public/links/{key}/unlock", wrapper.UnlockPublicLink)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v1/settings/emails", wrapper.ListEmails)
@@ -2452,17 +2439,17 @@ func (response RemoveDateiFromLink404Response) VisitRemoveDateiFromLinkResponse(
 	return nil
 }
 
-type RotateLinkAccessTokenRequestObject struct {
+type RotateLinkKeyRequestObject struct {
 	Id openapi_types.UUID `json:"id"`
 }
 
-type RotateLinkAccessTokenResponseObject interface {
-	VisitRotateLinkAccessTokenResponse(w http.ResponseWriter) error
+type RotateLinkKeyResponseObject interface {
+	VisitRotateLinkKeyResponse(w http.ResponseWriter) error
 }
 
-type RotateLinkAccessToken200JSONResponse LinkDetail
+type RotateLinkKey200JSONResponse LinkDetail
 
-func (response RotateLinkAccessToken200JSONResponse) VisitRotateLinkAccessTokenResponse(w http.ResponseWriter) error {
+func (response RotateLinkKey200JSONResponse) VisitRotateLinkKeyResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -2474,17 +2461,16 @@ func (response RotateLinkAccessToken200JSONResponse) VisitRotateLinkAccessTokenR
 	return err
 }
 
-type RotateLinkAccessToken404Response struct {
+type RotateLinkKey404Response struct {
 }
 
-func (response RotateLinkAccessToken404Response) VisitRotateLinkAccessTokenResponse(w http.ResponseWriter) error {
+func (response RotateLinkKey404Response) VisitRotateLinkKeyResponse(w http.ResponseWriter) error {
 	w.WriteHeader(404)
 	return nil
 }
 
 type ListPublicLinkDateienRequestObject struct {
-	AccessToken string `json:"accessToken"`
-	Params      ListPublicLinkDateienParams
+	Params ListPublicLinkDateienParams
 }
 
 type ListPublicLinkDateienResponseObject interface {
@@ -2505,6 +2491,14 @@ func (response ListPublicLinkDateien200JSONResponse) VisitListPublicLinkDateienR
 	return err
 }
 
+type ListPublicLinkDateien401Response struct {
+}
+
+func (response ListPublicLinkDateien401Response) VisitListPublicLinkDateienResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
 type ListPublicLinkDateien403Response struct {
 }
 
@@ -2521,18 +2515,8 @@ func (response ListPublicLinkDateien404Response) VisitListPublicLinkDateienRespo
 	return nil
 }
 
-type ListPublicLinkDateien410Response struct {
-}
-
-func (response ListPublicLinkDateien410Response) VisitListPublicLinkDateienResponse(w http.ResponseWriter) error {
-	w.WriteHeader(410)
-	return nil
-}
-
 type DownloadPublicLinkDateiRequestObject struct {
-	AccessToken string             `json:"accessToken"`
-	DateiId     openapi_types.UUID `json:"dateiId"`
-	Params      DownloadPublicLinkDateiParams
+	DateiId openapi_types.UUID `json:"dateiId"`
 }
 
 type DownloadPublicLinkDateiResponseObject interface {
@@ -2567,6 +2551,14 @@ func (response DownloadPublicLinkDatei200ApplicationoctetStreamResponse) VisitDo
 	return err
 }
 
+type DownloadPublicLinkDatei401Response struct {
+}
+
+func (response DownloadPublicLinkDatei401Response) VisitDownloadPublicLinkDateiResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
 type DownloadPublicLinkDatei403Response struct {
 }
 
@@ -2591,10 +2583,49 @@ func (response DownloadPublicLinkDatei409Response) VisitDownloadPublicLinkDateiR
 	return nil
 }
 
-type DownloadPublicLinkDatei410Response struct {
+type UnlockPublicLinkRequestObject struct {
+	Key  string `json:"key"`
+	Body *UnlockPublicLinkJSONRequestBody
 }
 
-func (response DownloadPublicLinkDatei410Response) VisitDownloadPublicLinkDateiResponse(w http.ResponseWriter) error {
+type UnlockPublicLinkResponseObject interface {
+	VisitUnlockPublicLinkResponse(w http.ResponseWriter) error
+}
+
+type UnlockPublicLink200JSONResponse UnlockPublicLinkResponse
+
+func (response UnlockPublicLink200JSONResponse) VisitUnlockPublicLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnlockPublicLink403Response struct {
+}
+
+func (response UnlockPublicLink403Response) VisitUnlockPublicLinkResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type UnlockPublicLink404Response struct {
+}
+
+func (response UnlockPublicLink404Response) VisitUnlockPublicLinkResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type UnlockPublicLink410Response struct {
+}
+
+func (response UnlockPublicLink410Response) VisitUnlockPublicLinkResponse(w http.ResponseWriter) error {
 	w.WriteHeader(410)
 	return nil
 }
@@ -3137,15 +3168,18 @@ type StrictServerInterface interface {
 	// Remove a datei from a link
 	// (DELETE /api/v1/links/{id}/dateien/{dateiId})
 	RemoveDateiFromLink(ctx context.Context, request RemoveDateiFromLinkRequestObject) (RemoveDateiFromLinkResponseObject, error)
-	// Generate a new access token, invalidating the old URL
+	// Generate a new key, invalidating the old share URL
 	// (POST /api/v1/links/{id}/rotate)
-	RotateLinkAccessToken(ctx context.Context, request RotateLinkAccessTokenRequestObject) (RotateLinkAccessTokenResponseObject, error)
-	// List dateien shared via a public link
-	// (GET /api/v1/public/links/{accessToken}/dateien)
+	RotateLinkKey(ctx context.Context, request RotateLinkKeyRequestObject) (RotateLinkKeyResponseObject, error)
+	// List dateien shared via the unlocked public link
+	// (GET /api/v1/public/dateien)
 	ListPublicLinkDateien(ctx context.Context, request ListPublicLinkDateienRequestObject) (ListPublicLinkDateienResponseObject, error)
-	// Download a datei via a public link
-	// (GET /api/v1/public/links/{accessToken}/dateien/{dateiId}/download)
+	// Download a datei via the unlocked public link
+	// (GET /api/v1/public/dateien/{dateiId}/download)
 	DownloadPublicLinkDatei(ctx context.Context, request DownloadPublicLinkDateiRequestObject) (DownloadPublicLinkDateiResponseObject, error)
+	// Unlock a public link and obtain a session JWT
+	// (POST /api/v1/public/links/{key}/unlock)
+	UnlockPublicLink(ctx context.Context, request UnlockPublicLinkRequestObject) (UnlockPublicLinkResponseObject, error)
 	// List user emails
 	// (GET /api/v1/settings/emails)
 	ListEmails(ctx context.Context, request ListEmailsRequestObject) (ListEmailsResponseObject, error)
@@ -3758,25 +3792,25 @@ func (sh *strictHandler) RemoveDateiFromLink(w http.ResponseWriter, r *http.Requ
 	}
 }
 
-// RotateLinkAccessToken operation middleware
-func (sh *strictHandler) RotateLinkAccessToken(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
-	var request RotateLinkAccessTokenRequestObject
+// RotateLinkKey operation middleware
+func (sh *strictHandler) RotateLinkKey(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request RotateLinkKeyRequestObject
 
 	request.Id = id
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.RotateLinkAccessToken(ctx, request.(RotateLinkAccessTokenRequestObject))
+		return sh.ssi.RotateLinkKey(ctx, request.(RotateLinkKeyRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "RotateLinkAccessToken")
+		handler = middleware(handler, "RotateLinkKey")
 	}
 
 	response, err := handler(r.Context(), w, r, request)
 
 	if err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(RotateLinkAccessTokenResponseObject); ok {
-		if err := validResponse.VisitRotateLinkAccessTokenResponse(w); err != nil {
+	} else if validResponse, ok := response.(RotateLinkKeyResponseObject); ok {
+		if err := validResponse.VisitRotateLinkKeyResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -3785,10 +3819,9 @@ func (sh *strictHandler) RotateLinkAccessToken(w http.ResponseWriter, r *http.Re
 }
 
 // ListPublicLinkDateien operation middleware
-func (sh *strictHandler) ListPublicLinkDateien(w http.ResponseWriter, r *http.Request, accessToken string, params ListPublicLinkDateienParams) {
+func (sh *strictHandler) ListPublicLinkDateien(w http.ResponseWriter, r *http.Request, params ListPublicLinkDateienParams) {
 	var request ListPublicLinkDateienRequestObject
 
-	request.AccessToken = accessToken
 	request.Params = params
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
@@ -3812,12 +3845,10 @@ func (sh *strictHandler) ListPublicLinkDateien(w http.ResponseWriter, r *http.Re
 }
 
 // DownloadPublicLinkDatei operation middleware
-func (sh *strictHandler) DownloadPublicLinkDatei(w http.ResponseWriter, r *http.Request, accessToken string, dateiId openapi_types.UUID, params DownloadPublicLinkDateiParams) {
+func (sh *strictHandler) DownloadPublicLinkDatei(w http.ResponseWriter, r *http.Request, dateiId openapi_types.UUID) {
 	var request DownloadPublicLinkDateiRequestObject
 
-	request.AccessToken = accessToken
 	request.DateiId = dateiId
-	request.Params = params
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.DownloadPublicLinkDatei(ctx, request.(DownloadPublicLinkDateiRequestObject))
@@ -3832,6 +3863,42 @@ func (sh *strictHandler) DownloadPublicLinkDatei(w http.ResponseWriter, r *http.
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(DownloadPublicLinkDateiResponseObject); ok {
 		if err := validResponse.VisitDownloadPublicLinkDateiResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UnlockPublicLink operation middleware
+func (sh *strictHandler) UnlockPublicLink(w http.ResponseWriter, r *http.Request, key string) {
+	var request UnlockPublicLinkRequestObject
+
+	request.Key = key
+
+	var body UnlockPublicLinkJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+	} else {
+		request.Body = &body
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UnlockPublicLink(ctx, request.(UnlockPublicLinkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UnlockPublicLink")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UnlockPublicLinkResponseObject); ok {
+		if err := validResponse.VisitUnlockPublicLinkResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -4343,85 +4410,89 @@ func (sh *strictHandler) RestoreTrash(w http.ResponseWriter, r *http.Request, da
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"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",
+	"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",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

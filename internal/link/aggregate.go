@@ -17,16 +17,17 @@ const linkNameMaxLen = 255
 type Aggregate struct {
 	events.Base[Aggregate, LinkEvent]
 
-	ID          uuid.UUID
-	OwnerID     uuid.UUID
-	Name        string
-	AccessToken string
-	Code        *string
-	ExpiresAt   *time.Time
-	RevokedAt   *time.Time
-	DateiIDs    map[uuid.UUID]struct{}
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID        uuid.UUID
+	OwnerID   uuid.UUID
+	Name      string
+	Key       string
+	Code      *string
+	ExpiresAt *time.Time
+	RevokedAt *time.Time
+	DateiIDs  map[uuid.UUID]struct{}
+	OpenCount int64
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 func (a *Aggregate) AggregateID() uuid.UUID { return a.ID }
@@ -48,7 +49,7 @@ func (a *Aggregate) Create(
 	id uuid.UUID,
 	ownerID uuid.UUID,
 	name string,
-	accessToken string,
+	key string,
 	code *string,
 	expiresAt *time.Time,
 	dateiIDs []uuid.UUID,
@@ -66,19 +67,19 @@ func (a *Aggregate) Create(
 	if err := validateExpiresAt(expiresAt, now); err != nil {
 		return err
 	}
-	if accessToken == "" {
-		return errors.New("access token cannot be empty")
+	if key == "" {
+		return errors.New("key cannot be empty")
 	}
 
 	a.recordEvent(LinkCreatedEvent{
-		ID:          id,
-		OwnerID:     ownerID,
-		Name:        name,
-		AccessToken: accessToken,
-		Code:        code,
-		ExpiresAt:   expiresAt,
-		DateiIDs:    dateiIDs,
-		CreatedAt:   now,
+		ID:        id,
+		OwnerID:   ownerID,
+		Name:      name,
+		Key:       key,
+		Code:      code,
+		ExpiresAt: expiresAt,
+		DateiIDs:  dateiIDs,
+		CreatedAt: now,
 	})
 	return nil
 }
@@ -117,22 +118,22 @@ func (a *Aggregate) Update(name string, code *string, expiresAt *time.Time, now 
 	return nil
 }
 
-func (a *Aggregate) RotateAccessToken(newToken string, now time.Time) error {
-	if err := a.checkActive("rotate access token"); err != nil {
+func (a *Aggregate) RotateKey(newKey string, now time.Time) error {
+	if err := a.checkActive("rotate key"); err != nil {
 		return err
 	}
-	if newToken == "" {
-		return errors.New("access token cannot be empty")
+	if newKey == "" {
+		return errors.New("key cannot be empty")
 	}
-	if newToken == a.AccessToken {
-		return errors.New("new access token is same as current access token")
+	if newKey == a.Key {
+		return errors.New("new key is same as current key")
 	}
 
-	a.recordEvent(LinkAccessTokenRotatedEvent{
-		ID:             a.ID,
-		OldAccessToken: a.AccessToken,
-		NewAccessToken: newToken,
-		RotatedAt:      now,
+	a.recordEvent(LinkKeyRotatedEvent{
+		ID:        a.ID,
+		OldKey:    a.Key,
+		NewKey:    newKey,
+		RotatedAt: now,
 	})
 	return nil
 }
@@ -168,6 +169,21 @@ func (a *Aggregate) RemoveDatei(dateiID uuid.UUID, now time.Time) error {
 		ID:        a.ID,
 		DateiID:   dateiID,
 		RemovedAt: now,
+	})
+	return nil
+}
+
+// RecordOpen is invoked by the unlock endpoint after the key + code check
+// succeeds. The event is the source of truth for the open counter; the
+// projection handler increments link_projection.open_count in the same
+// transaction.
+func (a *Aggregate) RecordOpen(now time.Time) error {
+	if err := a.checkActive("record open"); err != nil {
+		return err
+	}
+	a.recordEvent(LinkOpenedEvent{
+		ID:       a.ID,
+		OpenedAt: now,
 	})
 	return nil
 }

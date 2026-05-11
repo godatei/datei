@@ -9,13 +9,13 @@ import (
 
 func updateProjectionForLinkCreated(ctx context.Context, q *db.Queries, event *LinkCreatedEvent) error {
 	if err := q.InsertLinkProjection(ctx, db.InsertLinkProjectionParams{
-		ID:          event.ID,
-		OwnerID:     event.OwnerID,
-		Name:        event.Name,
-		AccessToken: event.AccessToken,
-		Code:        event.Code,
-		ExpiresAt:   event.ExpiresAt,
-		CreatedAt:   event.CreatedAt,
+		ID:        event.ID,
+		OwnerID:   event.OwnerID,
+		Name:      event.Name,
+		Key:       event.Key,
+		Code:      event.Code,
+		ExpiresAt: event.ExpiresAt,
+		CreatedAt: event.CreatedAt,
 	}); err != nil {
 		return fmt.Errorf("failed to insert link_projection: %w", err)
 	}
@@ -46,15 +46,15 @@ func updateProjectionForLinkUpdated(ctx context.Context, q *db.Queries, event *L
 	return nil
 }
 
-func updateProjectionForLinkAccessTokenRotated(
-	ctx context.Context, q *db.Queries, event *LinkAccessTokenRotatedEvent,
+func updateProjectionForLinkKeyRotated(
+	ctx context.Context, q *db.Queries, event *LinkKeyRotatedEvent,
 ) error {
-	if err := q.UpdateLinkProjectionAccessToken(ctx, db.UpdateLinkProjectionAccessTokenParams{
-		AccessToken: event.NewAccessToken,
-		UpdatedAt:   event.RotatedAt,
-		ID:          event.ID,
+	if err := q.UpdateLinkProjectionKey(ctx, db.UpdateLinkProjectionKeyParams{
+		Key:       event.NewKey,
+		UpdatedAt: event.RotatedAt,
+		ID:        event.ID,
 	}); err != nil {
-		return fmt.Errorf("failed to update link_projection access_token: %w", err)
+		return fmt.Errorf("failed to update link_projection key: %w", err)
 	}
 	return nil
 }
@@ -88,6 +88,16 @@ func updateProjectionForLinkDateiRemoved(ctx context.Context, q *db.Queries, eve
 		ID:        event.ID,
 	}); err != nil {
 		return fmt.Errorf("failed to touch link_projection: %w", err)
+	}
+	return nil
+}
+
+func updateProjectionForLinkOpened(ctx context.Context, q *db.Queries, event *LinkOpenedEvent) error {
+	if err := q.IncrementLinkProjectionOpenCount(ctx, db.IncrementLinkProjectionOpenCountParams{
+		UpdatedAt: event.OpenedAt,
+		ID:        event.ID,
+	}); err != nil {
+		return fmt.Errorf("failed to increment link_projection open_count: %w", err)
 	}
 	return nil
 }

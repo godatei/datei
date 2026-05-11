@@ -42,13 +42,18 @@ func NewService(
 // now we cap at a generous value to avoid surprises.
 const publicListChildrenLimit = 1000
 
-// generateAccessToken returns a 12-byte random token encoded as base64-url
-// (16 ASCII characters), suitable for use as a URL slug. 96 bits of entropy
-// keeps tokens unguessable while keeping share URLs reasonably short.
-func generateAccessToken() (string, error) {
+// publicLinkSessionTTL is the default lifetime for the JWT issued by Unlock.
+// The actual `exp` is the minimum of (now + this) and the link's own
+// expiration, so a near-expiring link issues a correspondingly shorter JWT.
+const publicLinkSessionTTL = time.Hour
+
+// generateKey returns a 12-byte random key encoded as base64-url (16 ASCII
+// characters), suitable for use as a URL slug. 96 bits of entropy keeps keys
+// unguessable while keeping share URLs reasonably short.
+func generateKey() (string, error) {
 	var b [12]byte
 	if _, err := rand.Read(b[:]); err != nil {
-		return "", fmt.Errorf("failed to generate access token: %w", err)
+		return "", fmt.Errorf("failed to generate key: %w", err)
 	}
 	return base64.RawURLEncoding.EncodeToString(b[:]), nil
 }
@@ -78,7 +83,7 @@ func (s *Service) CreateLink(ctx context.Context, input CreateLinkInput) (*api.L
 		}
 	}
 
-	token, err := generateAccessToken()
+	key, err := generateKey()
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +92,7 @@ func (s *Service) CreateLink(ctx context.Context, input CreateLinkInput) (*api.L
 	now := time.Now()
 
 	agg := &Aggregate{}
-	if err := agg.Create(id, userID, input.Name, token, input.Code, input.ExpiresAt, input.DateiIDs, now); err != nil {
+	if err := agg.Create(id, userID, input.Name, key, input.Code, input.ExpiresAt, input.DateiIDs, now); err != nil {
 		return nil, err
 	}
 
@@ -144,7 +149,7 @@ func (s *Service) ListLinks(ctx context.Context, input ListLinksInput) (*ListLin
 		if err != nil {
 			return nil, err
 		}
-		mapped := MapProjectionToLink(&projections[i], int(c.FileCount), int(c.FolderCount))
+		mapped := MapProjectionToLink(&projections[i], int(c.FileCount), int(c.FolderCount), int(c.OpenCount))
 		if mapped != nil {
 			items = append(items, *mapped)
 		}
@@ -210,18 +215,18 @@ func (s *Service) GetLink(ctx context.Context, id uuid.UUID) (*api.LinkDetail, e
 	return s.aggregateToLinkDetail(ctx, agg)
 }
 
-func (s *Service) RotateAccessToken(ctx context.Context, id uuid.UUID) (*api.LinkDetail, error) {
+func (s *Service) RotateKey(ctx context.Context, id uuid.UUID) (*api.LinkDetail, error) {
 	agg, err := s.loadOwnedAggregate(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	token, err := generateAccessToken()
+	key, err := generateKey()
 	if err != nil {
 		return nil, err
 	}
 
-	if err := agg.RotateAccessToken(token, time.Now()); err != nil {
+	if err := agg.RotateKey(key, time.Now()); err != nil {
 		return nil, err
 	}
 	if err := s.repository.Save(ctx, agg); err != nil {
@@ -283,34 +288,54 @@ func (s *Service) RevokeLink(ctx context.Context, id uuid.UUID) error {
 // Public-side operations
 // ============================================================================
 
-// verifyLinkAccess looks up a link by access token and validates that the
-// caller is allowed to read its contents. Returns the projection + owner name
-// on success.
-func (s *Service) verifyLinkAccess(
-	ctx context.Context,
-	accessToken string,
-	providedCode string,
-) (*db.GetLinkProjectionByAccessTokenRow, error) {
-	queries := db.New(s.db)
+// UnlockOutput is returned to the viewer after a successful unlock; the token
+// is used as a Bearer credential on subsequent list/download calls.
+type UnlockOutput struct {
+	Token     string
+	ExpiresAt time.Time
+}
 
-	row, err := queries.GetLinkProjectionByAccessToken(ctx, accessToken)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, dateierrors.ErrLinkNotFound
-	} else if err != nil {
+// UnlockLink validates the key + optional code, records a LinkOpenedEvent
+// (which the projection handler turns into an atomic open_count++), and issues
+// a short-lived JWT bound to the link's UUID.
+func (s *Service) UnlockLink(ctx context.Context, key, code string) (*UnlockOutput, error) {
+	row, err := s.lookupLinkByKey(ctx, key)
+	if err != nil {
 		return nil, err
 	}
-	if row.RevokedAt != nil {
-		return nil, dateierrors.ErrLinkRevoked
-	}
-	if row.ExpiresAt != nil && row.ExpiresAt.Before(time.Now()) {
-		return nil, dateierrors.ErrLinkExpired
-	}
 	if row.Code != nil {
-		if subtle.ConstantTimeCompare([]byte(providedCode), []byte(*row.Code)) != 1 {
+		if subtle.ConstantTimeCompare([]byte(code), []byte(*row.Code)) != 1 {
 			return nil, dateierrors.ErrLinkCodeRequired
 		}
 	}
-	return &row, nil
+
+	now := time.Now()
+
+	agg, err := s.repository.LoadByID(ctx, row.ID)
+	if err != nil {
+		if errors.Is(err, dateierrors.ErrNotFound) {
+			return nil, dateierrors.ErrLinkNotFound
+		}
+		return nil, err
+	}
+	if err := agg.RecordOpen(now); err != nil {
+		return nil, err
+	}
+	if err := s.repository.Save(ctx, agg); err != nil {
+		return nil, err
+	}
+
+	exp := now.Add(publicLinkSessionTTL)
+	if row.ExpiresAt != nil && row.ExpiresAt.Before(exp) {
+		exp = *row.ExpiresAt
+	}
+
+	token, err := signSessionToken(row.ID, now, exp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign public-link token: %w", err)
+	}
+
+	return &UnlockOutput{Token: token, ExpiresAt: exp}, nil
 }
 
 // ListPublicLinkDateienOutput holds a public link's display name, owner name,
@@ -322,17 +347,15 @@ type ListPublicLinkDateienOutput struct {
 	Items     []api.Datei
 }
 
-// ListPublicLinkDateien returns the dateien visible to a public viewer.
-// When parentID is nil, the link's top-level shared dateien are returned;
-// otherwise the children of the parent are returned (the parent must be in
-// the link's shared scope).
+// ListPublicLinkDateien returns the dateien visible to a public viewer after
+// unlock. The link ID is read from the JWT context — the caller does not pass
+// a key or code.
 func (s *Service) ListPublicLinkDateien(
 	ctx context.Context,
-	accessToken string,
+	linkID uuid.UUID,
 	parentID *uuid.UUID,
-	code string,
 ) (*ListPublicLinkDateienOutput, error) {
-	row, err := s.verifyLinkAccess(ctx, accessToken, code)
+	row, err := s.verifyLinkActive(ctx, linkID)
 	if err != nil {
 		return nil, err
 	}
@@ -382,11 +405,9 @@ func (s *Service) ListPublicLinkDateien(
 
 func (s *Service) DownloadPublicLinkDatei(
 	ctx context.Context,
-	accessToken string,
-	dateiID uuid.UUID,
-	code string,
+	linkID, dateiID uuid.UUID,
 ) (*datei.DownloadDateiOutput, error) {
-	row, err := s.verifyLinkAccess(ctx, accessToken, code)
+	row, err := s.verifyLinkActive(ctx, linkID)
 	if err != nil {
 		return nil, err
 	}
@@ -425,6 +446,47 @@ func (s *Service) loadOwnedAggregate(ctx context.Context, id uuid.UUID) (*Aggreg
 	return agg, nil
 }
 
+// lookupLinkByKey returns the projection row for unlock; it checks the link is
+// not revoked and not past its expiration. Code is verified by the caller.
+func (s *Service) lookupLinkByKey(ctx context.Context, key string) (*db.GetLinkProjectionByKeyRow, error) {
+	queries := db.New(s.db)
+	row, err := queries.GetLinkProjectionByKey(ctx, key)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, dateierrors.ErrLinkNotFound
+	} else if err != nil {
+		return nil, err
+	}
+	if row.RevokedAt != nil {
+		return nil, dateierrors.ErrLinkRevoked
+	}
+	if row.ExpiresAt != nil && row.ExpiresAt.Before(time.Now()) {
+		return nil, dateierrors.ErrLinkExpired
+	}
+	return &row, nil
+}
+
+// verifyLinkActive re-validates the link's current state on every list/download
+// call so that revoke and expire take effect within JWT lifetime. Returns the
+// join row that includes the owner's display name.
+func (s *Service) verifyLinkActive(
+	ctx context.Context, linkID uuid.UUID,
+) (*db.GetLinkProjectionWithOwnerByIDRow, error) {
+	queries := db.New(s.db)
+	row, err := queries.GetLinkProjectionWithOwnerByID(ctx, linkID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, dateierrors.ErrLinkNotFound
+	} else if err != nil {
+		return nil, err
+	}
+	if row.RevokedAt != nil {
+		return nil, dateierrors.ErrLinkRevoked
+	}
+	if row.ExpiresAt != nil && row.ExpiresAt.Before(time.Now()) {
+		return nil, dateierrors.ErrLinkExpired
+	}
+	return &row, nil
+}
+
 func (s *Service) aggregateToLinkDetail(ctx context.Context, agg *Aggregate) (*api.LinkDetail, error) {
 	queries := db.New(s.db)
 	dateien, err := queries.ListDateienByLink(ctx, agg.ID)
@@ -435,5 +497,7 @@ func (s *Service) aggregateToLinkDetail(ctx context.Context, agg *Aggregate) (*a
 	if err != nil {
 		return nil, err
 	}
-	return MapAggregateToLinkDetail(agg, dateien, int(counts.FileCount), int(counts.FolderCount)), nil
+	return MapAggregateToLinkDetail(
+		agg, dateien, int(counts.FileCount), int(counts.FolderCount), int(counts.OpenCount),
+	), nil
 }

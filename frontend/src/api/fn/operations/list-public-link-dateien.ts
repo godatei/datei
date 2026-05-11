@@ -10,25 +10,17 @@ import { RequestBuilder } from '../../request-builder';
 import { ListPublicLinkDateienResponse } from '../../models/list-public-link-dateien-response';
 
 export interface ListPublicLinkDateien$Params {
-  accessToken: string;
 
 /**
  * When set, list children of this folder (must be inside the link's shared scope); when omitted, list the top-level shared dateien
  */
   parentId?: string;
-
-/**
- * Plain-text code used to unlock the link when one is configured
- */
-  'X-Datei-Link-Code'?: string;
 }
 
-export function listPublicLinkDateien(http: HttpClient, rootUrl: string, params: ListPublicLinkDateien$Params, context?: HttpContext): Observable<StrictHttpResponse<ListPublicLinkDateienResponse>> {
+export function listPublicLinkDateien(http: HttpClient, rootUrl: string, params?: ListPublicLinkDateien$Params, context?: HttpContext): Observable<StrictHttpResponse<ListPublicLinkDateienResponse>> {
   const rb = new RequestBuilder(rootUrl, listPublicLinkDateien.PATH, 'get');
   if (params) {
-    rb.path('accessToken', params.accessToken, {});
     rb.query('parentId', params.parentId, {});
-    rb.header('X-Datei-Link-Code', params['X-Datei-Link-Code'], {});
   }
 
   return http.request(
@@ -41,4 +33,4 @@ export function listPublicLinkDateien(http: HttpClient, rootUrl: string, params:
   );
 }
 
-listPublicLinkDateien.PATH = '/api/v1/public/links/{accessToken}/dateien';
+listPublicLinkDateien.PATH = '/api/v1/public/dateien';

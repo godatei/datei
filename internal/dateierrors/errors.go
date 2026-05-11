@@ -26,6 +26,7 @@ var (
 	ErrLinkDateiNotShared    = errors.New("datei not in link scope")
 	ErrLinkDateiAlreadyAdded = errors.New("datei already added to link")
 	ErrLinkForbidden         = errors.New("link operation forbidden")
+	ErrLinkUnauthorized      = errors.New("link session token missing, invalid, or expired")
 
 	// User / auth errors
 	ErrInvalidCredentials      = errors.New("invalid credentials")

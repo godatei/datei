@@ -5,11 +5,14 @@ import { provideRouter } from '@angular/router';
 import { routes } from '~/frontend/app.routes';
 import { tokenInterceptor } from '~/frontend/services/auth.service';
 import { errorInterceptor } from '~/frontend/services/error.interceptor';
+import { publicLinkTokenInterceptor } from '~/frontend/public-links/public-link-token.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([tokenInterceptor, errorInterceptor])),
+    provideHttpClient(
+      withInterceptors([tokenInterceptor, publicLinkTokenInterceptor, errorInterceptor]),
+    ),
   ],
 };

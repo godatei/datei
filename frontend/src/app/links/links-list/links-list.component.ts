@@ -18,7 +18,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Api } from '~/api/api';
-import { getLink, listLinks, revokeLink, rotateLinkAccessToken } from '~/api/functions';
+import { getLink, listLinks, revokeLink, rotateLinkKey } from '~/api/functions';
 import type { Link } from '~/api/models/link';
 import { RelativeDatePipe } from '~/frontend/pipes/relative-date.pipe';
 import {
@@ -87,8 +87,18 @@ export class LinksListComponent {
   protected readonly dataSource = new MatTableDataSource<Link>([]);
   protected readonly displayedColumns = computed(() =>
     this.selectedTab() === 'revoked'
-      ? ['icon', 'name', 'contents', 'createdAt', 'expiresAt', 'code']
-      : ['icon', 'name', 'contents', 'createdAt', 'expiresAt', 'code', 'shareUrl', 'actions'],
+      ? ['icon', 'name', 'contents', 'opens', 'createdAt', 'expiresAt', 'code']
+      : [
+          'icon',
+          'name',
+          'contents',
+          'opens',
+          'createdAt',
+          'expiresAt',
+          'code',
+          'shareUrl',
+          'actions',
+        ],
   );
 
   constructor() {
@@ -102,7 +112,7 @@ export class LinksListComponent {
   }
 
   protected shareUrl(link: Link): string {
-    return buildShareUrl(link.accessToken);
+    return buildShareUrl(link.key);
   }
 
   protected shareUrlDisplay(link: Link): string {
@@ -138,10 +148,10 @@ export class LinksListComponent {
 
   protected async rotateAccessToken(link: Link): Promise<void> {
     try {
-      const updated = await this.api.invoke(rotateLinkAccessToken, { id: link.id });
+      const updated = await this.api.invoke(rotateLinkKey, { id: link.id });
       this.refresh.update((v) => v + 1);
-      const newUrl = buildShareUrl(updated.accessToken);
-      const snackRef = this.snackBar.open('Access token rotated', 'Copy new link', {
+      const newUrl = buildShareUrl(updated.key);
+      const snackRef = this.snackBar.open('Link regenerated', 'Copy new link', {
         duration: 6000,
       });
       snackRef.onAction().subscribe(() => {
@@ -149,7 +159,7 @@ export class LinksListComponent {
       });
     } catch (e) {
       console.error(e);
-      this.snackBar.open('Failed to rotate access token', 'Dismiss', { duration: 4000 });
+      this.snackBar.open('Failed to regenerate link', 'Dismiss', { duration: 4000 });
     }
   }
 

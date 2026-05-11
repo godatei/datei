@@ -1,0 +1,12 @@
+type: object
+required:
+  - token
+  - expiresAt
+properties:
+  token:
+    type: string
+    description: Short-lived JWT to authorize subsequent list/download calls for this link
+  expiresAt:
+    type: string
+    format: date-time
+    description: When the issued token expires (capped at the link's own expiration)

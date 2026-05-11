@@ -1,13 +1,9 @@
 get:
   operationId: ListPublicLinkDateien
-  summary: List dateien shared via a public link
-  security: []
+  summary: List dateien shared via the unlocked public link
+  security:
+    - publicLinkBearerAuthentication: []
   parameters:
-    - name: accessToken
-      in: path
-      required: true
-      schema:
-        type: string
     - name: parentId
       in: query
       required: false
@@ -15,13 +11,6 @@ get:
       schema:
         type: string
         format: uuid
-    - name: X-Datei-Link-Code
-      in: header
-      required: false
-      description: Plain-text code used to unlock the link when one is configured
-      schema:
-        type: string
-        maxLength: 128
   responses:
     '200':
       description: List of dateien accessible via this link
@@ -29,9 +18,9 @@ get:
         application/json:
           schema:
             $ref: '../components/schemas/ListPublicLinkDateienResponse.yaml'
+    '401':
+      description: Token missing or expired
     '403':
-      description: Code required or invalid
+      description: Link state changed since unlock (revoked, expired) or datei not shared
     '404':
-      description: Link not found, revoked, or datei not shared
-    '410':
-      description: Link expired
+      description: Datei not found in the link's shared scope

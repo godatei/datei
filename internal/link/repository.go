@@ -45,14 +45,16 @@ func updateProjection(ctx context.Context, q *db.Queries, event events.DomainEve
 		return updateProjectionForLinkCreated(ctx, q, &e)
 	case LinkUpdatedEvent:
 		return updateProjectionForLinkUpdated(ctx, q, &e)
-	case LinkAccessTokenRotatedEvent:
-		return updateProjectionForLinkAccessTokenRotated(ctx, q, &e)
+	case LinkKeyRotatedEvent:
+		return updateProjectionForLinkKeyRotated(ctx, q, &e)
 	case LinkDateiAddedEvent:
 		return updateProjectionForLinkDateiAdded(ctx, q, &e)
 	case LinkDateiRemovedEvent:
 		return updateProjectionForLinkDateiRemoved(ctx, q, &e)
 	case LinkRevokedEvent:
 		return updateProjectionForLinkRevoked(ctx, q, &e)
+	case LinkOpenedEvent:
+		return updateProjectionForLinkOpened(ctx, q, &e)
 	default:
 		return fmt.Errorf("unknown link event type: %s", event.EventType())
 	}

@@ -29,6 +29,8 @@ export type { ResetPasswordRequest } from './models/reset-password-request';
 export type { RestoreDateiRequest } from './models/restore-datei-request';
 export type { SetupMfaResponse } from './models/setup-mfa-response';
 export type { TrashedDatei } from './models/trashed-datei';
+export type { UnlockPublicLinkRequest } from './models/unlock-public-link-request';
+export type { UnlockPublicLinkResponse } from './models/unlock-public-link-response';
 export type { UpdateDateiRequest } from './models/update-datei-request';
 export type { UpdateDateiWithFileRequest } from './models/update-datei-with-file-request';
 export type { UpdateLinkRequest } from './models/update-link-request';
