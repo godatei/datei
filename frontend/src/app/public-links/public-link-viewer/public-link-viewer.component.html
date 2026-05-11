@@ -74,20 +74,20 @@
     }
 
     @case ('ready') {
-      <nav aria-label="Breadcrumb" class="flex flex-wrap items-center gap-1 mat-font-label-lg">
+      <nav aria-label="Breadcrumb" class="flex items-center gap-1 flex-wrap mat-font-label-lg">
         @for (item of path(); track $index; let last = $last; let i = $index) {
           @if (i > 0) {
             <mat-icon aria-hidden="true" class="mat-text-on-surface-variant"
               >chevron_right</mat-icon
             >
           }
-          @if (last) {
-            <span aria-current="page">{{ item.name }}</span>
-          } @else {
-            <button mat-button (click)="navigateToBreadcrumb(i)">
-              {{ item.name }}
-            </button>
-          }
+          <button
+            mat-button
+            (click)="navigateToBreadcrumb(i)"
+            [attr.aria-current]="last ? 'page' : null"
+          >
+            {{ item.name }}
+          </button>
         }
       </nav>
 
