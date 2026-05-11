@@ -4,26 +4,6 @@ SELECT * FROM datei_projection WHERE id = $1;
 -- name: CountDateiProjectionsByIDs :one
 SELECT COUNT(*)::int FROM datei_projection WHERE id = ANY($1::uuid[]);
 
--- name: CountDateiProjectionsByIDsOwnedBy :one
--- Counts dateien from the given set that the specified user owns
--- (permission_type = 'owner'). Used by the link service so create/add-datei
--- can't be tricked into sharing another user's files.
-SELECT COUNT(*)::int
-FROM datei_projection d
-INNER JOIN datei_permission_projection p ON p.datei_id = d.id
-WHERE d.id = ANY($1::uuid[])
-  AND p.user_account_id = $2
-  AND p.permission_type = 'owner';
-
--- name: IsDateiOwnedBy :one
--- Single-id ownership predicate, same semantics as CountDateiProjectionsByIDsOwnedBy.
-SELECT EXISTS(
-  SELECT 1 FROM datei_permission_projection
-   WHERE datei_id = $1
-     AND user_account_id = $2
-     AND permission_type = 'owner'
-);
-
 -- name: ListDateiProjections :many
 SELECT * FROM datei_projection ORDER BY created_at DESC;
 

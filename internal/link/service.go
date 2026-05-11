@@ -74,12 +74,7 @@ func (s *Service) CreateLink(ctx context.Context, input CreateLinkInput) (*api.L
 
 	queries := db.New(s.db)
 	if len(input.DateiIDs) > 0 {
-		count, err := queries.CountDateiProjectionsByIDsOwnedBy(
-			ctx, db.CountDateiProjectionsByIDsOwnedByParams{
-				Column1:       input.DateiIDs,
-				UserAccountID: &userID,
-			},
-		)
+		count, err := queries.CountDateiProjectionsByIDs(ctx, input.DateiIDs)
 		if err != nil {
 			return nil, err
 		}
@@ -242,23 +237,17 @@ func (s *Service) RotateKey(ctx context.Context, id uuid.UUID) (*api.LinkDetail,
 }
 
 func (s *Service) AddDateiToLink(ctx context.Context, linkID, dateiID uuid.UUID) (*api.LinkDetail, error) {
-	userID := authn.RequireContext(ctx).UserID
-
 	agg, err := s.loadOwnedAggregate(ctx, linkID)
 	if err != nil {
 		return nil, err
 	}
 
 	queries := db.New(s.db)
-	owned, err := queries.IsDateiOwnedBy(ctx, db.IsDateiOwnedByParams{
-		DateiID:       dateiID,
-		UserAccountID: &userID,
-	})
-	if err != nil {
+	if _, err := queries.GetDateiProjectionByID(ctx, dateiID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, dateierrors.ErrInvalidInput
+		}
 		return nil, err
-	}
-	if !owned {
-		return nil, dateierrors.ErrInvalidInput
 	}
 
 	if err := agg.AddDatei(dateiID, time.Now()); err != nil {
