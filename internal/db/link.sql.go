@@ -92,28 +92,6 @@ func (q *Queries) DeleteLinkDateiProjection(ctx context.Context, arg DeleteLinkD
 	return err
 }
 
-const getLinkProjectionByID = `-- name: GetLinkProjectionByID :one
-SELECT id, owner_id, name, key, code, expires_at, revoked_at, created_at, updated_at, open_count FROM link_projection WHERE id = $1
-`
-
-func (q *Queries) GetLinkProjectionByID(ctx context.Context, id uuid.UUID) (LinkProjection, error) {
-	row := q.db.QueryRow(ctx, getLinkProjectionByID, id)
-	var i LinkProjection
-	err := row.Scan(
-		&i.ID,
-		&i.OwnerID,
-		&i.Name,
-		&i.Key,
-		&i.Code,
-		&i.ExpiresAt,
-		&i.RevokedAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.OpenCount,
-	)
-	return i, err
-}
-
 const getLinkProjectionByKey = `-- name: GetLinkProjectionByKey :one
 SELECT l.id, l.owner_id, l.name, l.key, l.code, l.expires_at, l.revoked_at, l.created_at, l.updated_at, l.open_count, u.name AS owner_name
 FROM link_projection l
@@ -175,9 +153,9 @@ type GetLinkProjectionWithOwnerByIDRow struct {
 	OwnerName string     `db:"owner_name"`
 }
 
-// Variant of GetLinkProjectionByID that also returns the owner's display name
-// in one round-trip. Used by the public list/download endpoints to populate
-// the response shape without a second user lookup.
+// Returns the link projection joined with the owner's display name in one
+// round-trip. Used by the public list/download endpoints to populate the
+// response shape without a second user lookup.
 func (q *Queries) GetLinkProjectionWithOwnerByID(ctx context.Context, id uuid.UUID) (GetLinkProjectionWithOwnerByIDRow, error) {
 	row := q.db.QueryRow(ctx, getLinkProjectionWithOwnerByID, id)
 	var i GetLinkProjectionWithOwnerByIDRow

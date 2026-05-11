@@ -146,7 +146,7 @@ export class LinksListComponent {
     });
   }
 
-  protected async rotateAccessToken(link: Link): Promise<void> {
+  protected async regenerateLink(link: Link): Promise<void> {
     try {
       const updated = await this.api.invoke(rotateLinkKey, { id: link.id });
       this.refresh.update((v) => v + 1);

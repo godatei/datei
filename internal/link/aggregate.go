@@ -24,10 +24,18 @@ type Aggregate struct {
 	Code      *string
 	ExpiresAt *time.Time
 	RevokedAt *time.Time
-	DateiIDs  map[uuid.UUID]struct{}
+	dateiIDs  map[uuid.UUID]struct{}
 	OpenCount int64
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+// HasDatei reports whether the given datei is part of the link's shared set.
+// The set is private so callers can't mutate aggregate state outside of
+// commands.
+func (a *Aggregate) HasDatei(id uuid.UUID) bool {
+	_, ok := a.dateiIDs[id]
+	return ok
 }
 
 func (a *Aggregate) AggregateID() uuid.UUID { return a.ID }
@@ -95,9 +103,6 @@ func (a *Aggregate) Update(name string, code *string, expiresAt *time.Time, now 
 	if err := validateName(name); err != nil {
 		return err
 	}
-	if err := validateExpiresAt(expiresAt, now); err != nil {
-		return err
-	}
 
 	nameSame := name == a.Name
 	codeSame := (a.Code == nil && code == nil) ||
@@ -106,6 +111,14 @@ func (a *Aggregate) Update(name string, code *string, expiresAt *time.Time, now 
 		(a.ExpiresAt != nil && expiresAt != nil && a.ExpiresAt.Equal(*expiresAt))
 	if nameSame && codeSame && expirySame {
 		return nil
+	}
+
+	// Only enforce the future-expiry rule when the field is actually changing,
+	// otherwise renaming an already-expired link would be impossible.
+	if !expirySame {
+		if err := validateExpiresAt(expiresAt, now); err != nil {
+			return err
+		}
 	}
 
 	a.recordEvent(LinkUpdatedEvent{
@@ -145,7 +158,7 @@ func (a *Aggregate) AddDatei(dateiID uuid.UUID, now time.Time) error {
 	if dateiID == uuid.Nil {
 		return errors.New("invalid datei id")
 	}
-	if _, exists := a.DateiIDs[dateiID]; exists {
+	if _, exists := a.dateiIDs[dateiID]; exists {
 		return fmt.Errorf("datei already added to link: %w", dateierrors.ErrLinkDateiAlreadyAdded)
 	}
 
@@ -161,7 +174,7 @@ func (a *Aggregate) RemoveDatei(dateiID uuid.UUID, now time.Time) error {
 	if err := a.checkActive("remove datei"); err != nil {
 		return err
 	}
-	if _, exists := a.DateiIDs[dateiID]; !exists {
+	if _, exists := a.dateiIDs[dateiID]; !exists {
 		return fmt.Errorf("datei not part of link: %w", dateierrors.ErrLinkDateiNotShared)
 	}
 

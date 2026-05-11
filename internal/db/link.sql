@@ -22,13 +22,10 @@ UPDATE link_projection SET revoked_at = $1, updated_at = $2 WHERE id = $3;
 -- successful unlock counts as one access.
 UPDATE link_projection SET open_count = open_count + 1, updated_at = $1 WHERE id = $2;
 
--- name: GetLinkProjectionByID :one
-SELECT * FROM link_projection WHERE id = $1;
-
 -- name: GetLinkProjectionWithOwnerByID :one
--- Variant of GetLinkProjectionByID that also returns the owner's display name
--- in one round-trip. Used by the public list/download endpoints to populate
--- the response shape without a second user lookup.
+-- Returns the link projection joined with the owner's display name in one
+-- round-trip. Used by the public list/download endpoints to populate the
+-- response shape without a second user lookup.
 SELECT l.*, u.name AS owner_name
 FROM link_projection l
 INNER JOIN user_account_projection u ON u.id = l.owner_id

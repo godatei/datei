@@ -230,6 +230,10 @@ export class PublicLinkViewerComponent {
       void this.navigateInto(item);
       return;
     }
+    await this.downloadWithRetry(item, false);
+  }
+
+  private async downloadWithRetry(item: Datei, retried: boolean): Promise<void> {
     try {
       const response = await this.api.invoke$Response(
         downloadPublicLinkDatei,
@@ -238,8 +242,14 @@ export class PublicLinkViewerComponent {
       );
       triggerDownload(response.body as unknown as Blob, item.name ?? 'download');
     } catch (e) {
-      if (e instanceof HttpErrorResponse && e.status === 401) {
+      if (e instanceof HttpErrorResponse && e.status === 401 && !retried) {
+        // Session JWT expired mid-session — re-unlock with the cached code (if
+        // any) and retry once. The `retried` guard prevents loops if the
+        // re-unlock also returns a token the server immediately rejects.
         await this.unlockAndLoad(this.code() === '' ? undefined : this.code());
+        if (this.sessionToken()) {
+          await this.downloadWithRetry(item, true);
+        }
         return;
       }
       if (e instanceof HttpErrorResponse && (e.status === 403 || e.status === 404)) {

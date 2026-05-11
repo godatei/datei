@@ -82,11 +82,11 @@ func (e LinkCreatedEvent) ApplyTo(a *Aggregate) {
 	a.ExpiresAt = e.ExpiresAt
 	a.CreatedAt = e.CreatedAt
 	a.UpdatedAt = e.CreatedAt
-	if a.DateiIDs == nil {
-		a.DateiIDs = make(map[uuid.UUID]struct{}, len(e.DateiIDs))
+	if a.dateiIDs == nil {
+		a.dateiIDs = make(map[uuid.UUID]struct{}, len(e.DateiIDs))
 	}
 	for _, id := range e.DateiIDs {
-		a.DateiIDs[id] = struct{}{}
+		a.dateiIDs[id] = struct{}{}
 	}
 }
 
@@ -134,7 +134,7 @@ type LinkDateiAddedEvent struct {
 func (e LinkDateiAddedEvent) EventType() string   { return "LinkDateiAdded" }
 func (e LinkDateiAddedEvent) StreamID() uuid.UUID { return e.ID }
 func (e LinkDateiAddedEvent) ApplyTo(a *Aggregate) {
-	a.DateiIDs[e.DateiID] = struct{}{}
+	a.dateiIDs[e.DateiID] = struct{}{}
 	a.UpdatedAt = e.AddedAt
 }
 
@@ -147,7 +147,7 @@ type LinkDateiRemovedEvent struct {
 func (e LinkDateiRemovedEvent) EventType() string   { return "LinkDateiRemoved" }
 func (e LinkDateiRemovedEvent) StreamID() uuid.UUID { return e.ID }
 func (e LinkDateiRemovedEvent) ApplyTo(a *Aggregate) {
-	delete(a.DateiIDs, e.DateiID)
+	delete(a.dateiIDs, e.DateiID)
 	a.UpdatedAt = e.RemovedAt
 }
 
@@ -160,6 +160,7 @@ func (e LinkOpenedEvent) EventType() string   { return "LinkOpened" }
 func (e LinkOpenedEvent) StreamID() uuid.UUID { return e.ID }
 func (e LinkOpenedEvent) ApplyTo(a *Aggregate) {
 	a.OpenCount++
+	a.UpdatedAt = e.OpenedAt
 }
 
 type LinkRevokedEvent struct {

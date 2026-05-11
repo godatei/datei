@@ -171,12 +171,13 @@ CREATE TABLE link_projection (
   id UUID PRIMARY KEY,
   owner_id UUID NOT NULL REFERENCES user_account_projection(id) ON DELETE RESTRICT,
   name TEXT NOT NULL,
-  access_token TEXT NOT NULL UNIQUE,
+  key TEXT NOT NULL UNIQUE,
   -- Plain-text shared secret (intentional; the value is displayed back to the
   -- owner so they can share it with viewers out-of-band).
   code TEXT,
   expires_at TIMESTAMPTZ,
   revoked_at TIMESTAMPTZ,
+  open_count BIGINT NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL,
   updated_at TIMESTAMPTZ NOT NULL,
   CONSTRAINT ck_link_projection_name_length CHECK (length(name) BETWEEN 1 AND 255),

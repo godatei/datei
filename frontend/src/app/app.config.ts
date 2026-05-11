@@ -11,6 +11,9 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
+    // tokenInterceptor skips `/api/v1/public/*`, so publicLinkTokenInterceptor
+    // can safely set the Authorization header on those routes without being
+    // overwritten. errorInterceptor runs last so it sees the final response.
     provideHttpClient(
       withInterceptors([tokenInterceptor, publicLinkTokenInterceptor, errorInterceptor]),
     ),

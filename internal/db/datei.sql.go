@@ -23,6 +23,30 @@ func (q *Queries) CountDateiProjectionsByIDs(ctx context.Context, dollar_1 []uui
 	return column_1, err
 }
 
+const countDateiProjectionsByIDsOwnedBy = `-- name: CountDateiProjectionsByIDsOwnedBy :one
+SELECT COUNT(*)::int
+FROM datei_projection d
+INNER JOIN datei_permission_projection p ON p.datei_id = d.id
+WHERE d.id = ANY($1::uuid[])
+  AND p.user_account_id = $2
+  AND p.permission_type = 'owner'
+`
+
+type CountDateiProjectionsByIDsOwnedByParams struct {
+	Column1       []uuid.UUID `db:"column_1"`
+	UserAccountID *uuid.UUID  `db:"user_account_id"`
+}
+
+// Counts dateien from the given set that the specified user owns
+// (permission_type = 'owner'). Used by the link service so create/add-datei
+// can't be tricked into sharing another user's files.
+func (q *Queries) CountDateiProjectionsByIDsOwnedBy(ctx context.Context, arg CountDateiProjectionsByIDsOwnedByParams) (int32, error) {
+	row := q.db.QueryRow(ctx, countDateiProjectionsByIDsOwnedBy, arg.Column1, arg.UserAccountID)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const countDateiProjectionsByParent = `-- name: CountDateiProjectionsByParent :one
 SELECT COUNT(*) FROM datei_projection WHERE parent_id = $1 AND trashed_at IS NULL
 `
@@ -330,6 +354,28 @@ func (q *Queries) InsertDateiProjection(ctx context.Context, arg InsertDateiProj
 		arg.UpdatedAt,
 	)
 	return err
+}
+
+const isDateiOwnedBy = `-- name: IsDateiOwnedBy :one
+SELECT EXISTS(
+  SELECT 1 FROM datei_permission_projection
+   WHERE datei_id = $1
+     AND user_account_id = $2
+     AND permission_type = 'owner'
+)
+`
+
+type IsDateiOwnedByParams struct {
+	DateiID       uuid.UUID  `db:"datei_id"`
+	UserAccountID *uuid.UUID `db:"user_account_id"`
+}
+
+// Single-id ownership predicate, same semantics as CountDateiProjectionsByIDsOwnedBy.
+func (q *Queries) IsDateiOwnedBy(ctx context.Context, arg IsDateiOwnedByParams) (bool, error) {
+	row := q.db.QueryRow(ctx, isDateiOwnedBy, arg.DateiID, arg.UserAccountID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
 }
 
 const listDateiProjections = `-- name: ListDateiProjections :many
