@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
   signal,
@@ -15,11 +16,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { isPast } from 'date-fns';
 import { Api } from '~/api/api';
 import { downloadPublicLinkDatei, listPublicLinkDateien, unlockPublicLink } from '~/api/functions';
 import type { Datei } from '~/api/models/datei';
+import { ImagePreviewComponent } from '~/frontend/components/image-preview.component';
 import { RelativeDatePipe } from '~/frontend/pipes/relative-date.pipe';
 import { PUBLIC_LINK_TOKEN } from '~/frontend/public-links/public-link-token.interceptor';
 import { triggerDownload } from 'frontend/src/util/download';
@@ -45,6 +48,7 @@ type ViewerState =
     MatTableModule,
     FormField,
     FormRoot,
+    ImagePreviewComponent,
     RelativeDatePipe,
   ],
 })
@@ -52,6 +56,7 @@ export class PublicLinkViewerComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(Api);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly sanitizer = inject(DomSanitizer);
 
   private readonly paramMap = toSignal(this.route.paramMap);
   protected readonly key = computed(() => this.paramMap()?.get('key') ?? '');
@@ -77,6 +82,7 @@ export class PublicLinkViewerComponent {
     return s.kind === 'error' ? s.message : '';
   });
   protected readonly dataSource = new MatTableDataSource<Datei>([]);
+  private readonly items = signal<Datei[]>([]);
   protected readonly linkName = signal<string>('');
   protected readonly ownerName = signal<string>('');
   protected readonly expiresAt = signal<Date | null>(null);
@@ -93,6 +99,22 @@ export class PublicLinkViewerComponent {
     const p = this.path();
     return p[p.length - 1]?.id ?? null;
   });
+
+  // singleFile is set when the link's root contains exactly one non-directory
+  // item; the viewer renders a focused file card instead of the table.
+  protected readonly singleFile = computed(() => {
+    if (this.currentParentId() !== null) return null;
+    const items = this.items();
+    if (items.length === 1 && !items[0].isDirectory) return items[0];
+    return null;
+  });
+
+  // Object URL + SafeUrl for the inline image preview. The blob itself is
+  // retained so the Download button can hand it to triggerDownload without a
+  // second network round-trip.
+  private previewObjectUrl: string | null = null;
+  private previewBlob: Blob | null = null;
+  protected readonly previewUrl = signal<SafeUrl | null>(null);
 
   protected readonly codeModel = signal({ code: '' });
   protected readonly codeForm = form(
@@ -117,6 +139,17 @@ export class PublicLinkViewerComponent {
         void this.unlockAndLoad();
       }
     });
+    // Lazily load the inline image preview when the link resolves to a single
+    // image file. Effect re-runs are no-op'd by the `previewBlob` guard.
+    effect(() => {
+      const file = this.singleFile();
+      if (file && isImageMime(file.mimeType)) {
+        void this.loadSinglePreview(file);
+      } else if (!file) {
+        this.clearPreview();
+      }
+    });
+    inject(DestroyRef).onDestroy(() => this.clearPreview());
   }
 
   // unlockAndLoad attempts an unlock (optionally with a candidate code) and,
@@ -145,7 +178,7 @@ export class PublicLinkViewerComponent {
     if (this.autoDescended) return;
     if (this.currentParentId() !== null) return;
     this.autoDescended = true;
-    const items = this.dataSource.data;
+    const items = this.items();
     if (items.length === 1 && items[0].isDirectory) {
       void this.navigateInto(items[0]);
     }
@@ -158,6 +191,7 @@ export class PublicLinkViewerComponent {
         { parentId: parentId ?? undefined },
         this.linkContext(),
       );
+      this.items.set(result.items);
       this.dataSource.data = result.items;
       this.linkName.set(result.name);
       this.ownerName.set(result.ownerName);
@@ -172,6 +206,36 @@ export class PublicLinkViewerComponent {
       }
       this.handleAccessError(e);
     }
+  }
+
+  private async loadSinglePreview(file: Datei): Promise<void> {
+    if (this.previewBlob) return;
+    try {
+      const response = await this.api.invoke$Response(
+        downloadPublicLinkDatei,
+        { dateiId: file.id },
+        this.linkContext(),
+      );
+      const blob = response.body as unknown as Blob;
+      const url = URL.createObjectURL(blob);
+      this.previewBlob = blob;
+      this.previewObjectUrl = url;
+      this.previewUrl.set(this.sanitizer.bypassSecurityTrustUrl(url));
+    } catch (e) {
+      // Preview is best-effort; the user can still click Download to get the
+      // file. We swallow errors here so a failed preview load doesn't poison
+      // the rest of the page state.
+      console.error(e);
+    }
+  }
+
+  private clearPreview(): void {
+    if (this.previewObjectUrl) {
+      URL.revokeObjectURL(this.previewObjectUrl);
+      this.previewObjectUrl = null;
+    }
+    this.previewBlob = null;
+    this.previewUrl.set(null);
   }
 
   private linkContext(): HttpContext {
@@ -231,6 +295,11 @@ export class PublicLinkViewerComponent {
       void this.navigateInto(item);
       return;
     }
+    // Reuse the preview blob if we already fetched it for inline rendering.
+    if (this.previewBlob && this.singleFile()?.id === item.id) {
+      triggerDownload(this.previewBlob, item.name ?? 'download');
+      return;
+    }
     await this.downloadWithRetry(item, false);
   }
 
@@ -263,4 +332,9 @@ export class PublicLinkViewerComponent {
   }
 
   protected readonly formatBytes = formatBytes;
+  protected readonly isImageMime = isImageMime;
+}
+
+function isImageMime(mime: string | null | undefined): boolean {
+  return mime != null && mime.startsWith('image/');
 }

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { SafeUrl } from '@angular/platform-browser';
+import { ImagePreviewComponent } from '~/frontend/components/image-preview.component';
 
 export interface ImagePreviewDialogData {
   src: SafeUrl;
@@ -12,7 +13,7 @@ export interface ImagePreviewDialogData {
   selector: 'app-image-preview-dialog',
   templateUrl: './image-preview-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatDialogModule, MatButtonModule],
+  imports: [MatDialogModule, MatButtonModule, ImagePreviewComponent],
 })
 export class ImagePreviewDialogComponent {
   protected readonly data = inject<ImagePreviewDialogData>(MAT_DIALOG_DATA);
