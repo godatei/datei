@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"errors"
-	"log/slog"
 
 	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/users"
@@ -24,7 +23,6 @@ func (s *server) Login(ctx context.Context, request LoginRequestObject) (LoginRe
 		if errors.Is(err, dateierrors.ErrMFAInvalidCode) {
 			return Login401Response{}, nil
 		}
-		slog.Error("login error", "error", err)
 		return nil, err
 	}
 
@@ -59,7 +57,6 @@ func (s *server) Register(ctx context.Context, request RegisterRequestObject) (R
 		if errors.Is(err, dateierrors.ErrInvalidInput) || errors.Is(err, dateierrors.ErrEmailAlreadyInUse) {
 			return Register400Response{}, nil
 		}
-		slog.Error("register error", "error", err)
 		return nil, err
 	}
 
