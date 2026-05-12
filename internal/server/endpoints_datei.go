@@ -149,10 +149,14 @@ func (s *server) DownloadDatei(
 ) (DownloadDateiResponseObject, error) {
 	result, err := s.dateiService.DownloadDatei(ctx, request.Id)
 	if err != nil {
-		if err == dateierrors.ErrIsDirectory {
+		switch {
+		case errors.Is(err, dateierrors.ErrIsDirectory):
 			return DownloadDatei409Response{}, nil
+		case errors.Is(err, dateierrors.ErrNotFound), errors.Is(err, dateierrors.ErrNoContent):
+			return DownloadDatei404Response{}, nil
+		default:
+			return nil, err
 		}
-		return nil, err
 	}
 
 	return DownloadDatei200ApplicationoctetStreamResponse{
