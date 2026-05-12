@@ -38,7 +38,7 @@
       <span>Datei</span>
       <span class="grow shrink basis-auto"></span>
       <button mat-button [matMenuTriggerFor]="userMenu">
-        <mat-icon>account_circle</mat-icon>
+        <app-user-avatar [name]="userName()" size="sm" class="mr-1" />
         {{ userName() }}
       </button>
       <mat-menu #userMenu="matMenu">

@@ -8,12 +8,7 @@
     <div class="animate-pulse mat-bg-surface-container mat-corner-md h-24"></div>
   } @else if (user(); as u) {
     <div class="flex items-center gap-4">
-      <div
-        class="flex items-center justify-center w-16 h-16 mat-corner-full mat-bg-primary-container mat-text-on-primary-container mat-font-headline-sm shrink-0"
-        aria-hidden="true"
-      >
-        {{ initials(u.name) }}
-      </div>
+      <app-user-avatar [name]="u.name" size="lg" />
       <div class="flex flex-col min-w-0">
         <h2 class="mat-font-headline-sm m-0 truncate">{{ u.name }}</h2>
         <span class="mat-font-body-md mat-text-on-surface-variant truncate">{{

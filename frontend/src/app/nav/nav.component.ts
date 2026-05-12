@@ -10,6 +10,7 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '~/frontend/services/auth.service';
+import { UserAvatarComponent } from '~/frontend/users/user-avatar.component';
 
 @Component({
   selector: 'app-nav',
@@ -25,6 +26,7 @@ import { AuthService } from '~/frontend/services/auth.service';
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
+    UserAvatarComponent,
   ],
 })
 export class NavComponent {

@@ -13,7 +13,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AdminUsersService } from '~/frontend/services/admin-users.service';
 import { AuthService } from '~/frontend/services/auth.service';
-import { initials } from '~/frontend/users/initials';
+import { UserAvatarComponent } from '~/frontend/users/user-avatar.component';
 import { createAdminUserPort, UserSnapshot } from '~/frontend/users/user-data.port';
 import { UserEmailsComponent } from '~/frontend/users/user-emails.component';
 import { UserPasswordComponent } from '~/frontend/users/user-password.component';
@@ -30,6 +30,7 @@ import { AdminRoleComponent } from './admin-role.component';
     MatCardModule,
     MatIconModule,
     RouterLink,
+    UserAvatarComponent,
     UserProfileComponent,
     UserEmailsComponent,
     UserPasswordComponent,
@@ -77,9 +78,5 @@ export class AdminUserDetailComponent implements OnInit {
       },
       error: () => this.loading.set(false),
     });
-  }
-
-  initials(name: string) {
-    return initials(name);
   }
 }
