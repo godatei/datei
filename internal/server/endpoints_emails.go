@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"errors"
-	"log/slog"
 
 	"github.com/godatei/datei/internal/authn"
 	"github.com/godatei/datei/internal/dateierrors"
@@ -19,7 +18,6 @@ func (s *server) ListEmails(
 
 	emails, err := s.userService.ListEmails(ctx, authInfo.UserID)
 	if err != nil {
-		slog.Error("list emails error", "error", err)
 		return nil, err
 	}
 
@@ -40,7 +38,6 @@ func (s *server) AddEmail(
 		if errors.Is(err, dateierrors.ErrEmailAlreadyInUse) || errors.Is(err, dateierrors.ErrInvalidInput) {
 			return AddEmail400Response{}, nil
 		}
-		slog.Error("add email error", "error", err)
 		return nil, err
 	}
 
@@ -61,7 +58,6 @@ func (s *server) RemoveEmail(
 		if errors.Is(err, dateierrors.ErrInvalidInput) {
 			return RemoveEmail400Response{}, nil
 		}
-		slog.Error("remove email error", "error", err)
 		return nil, err
 	}
 
@@ -82,7 +78,6 @@ func (s *server) SetPrimaryEmail(
 		if errors.Is(err, dateierrors.ErrInvalidInput) {
 			return SetPrimaryEmail400Response{}, nil
 		}
-		slog.Error("set primary email error", "error", err)
 		return nil, err
 	}
 

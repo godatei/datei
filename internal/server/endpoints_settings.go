@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"errors"
-	"log/slog"
 
 	"github.com/godatei/datei/internal/authn"
 	"github.com/godatei/datei/internal/dateierrors"
@@ -19,7 +18,6 @@ func (s *server) GetCurrentUser(
 
 	user, err := s.userService.GetUser(ctx, authInfo.UserID)
 	if err != nil {
-		slog.Error("get current user error", "error", err)
 		return nil, err
 	}
 
@@ -44,13 +42,11 @@ func (s *server) UpdateUser(ctx context.Context, request UpdateUserRequestObject
 		if errors.Is(err, dateierrors.ErrInvalidInput) {
 			return UpdateUser400Response{}, nil
 		}
-		slog.Error("update user error", "error", err)
 		return nil, err
 	}
 
 	user, err := s.userService.GetUser(ctx, authInfo.UserID)
 	if err != nil {
-		slog.Error("failed to get updated user", "error", err)
 		return nil, err
 	}
 
@@ -71,7 +67,6 @@ func (s *server) UpdateUserEmail(
 		if errors.Is(err, dateierrors.ErrInvalidInput) {
 			return UpdateUserEmail400Response{}, nil
 		}
-		slog.Error("update user email error", "error", err)
 		return nil, err
 	}
 
@@ -85,7 +80,6 @@ func (s *server) RequestEmailVerification(
 	authInfo := authn.RequireContext(ctx)
 
 	if err := s.userService.RequestEmailVerification(ctx, authInfo.UserID); err != nil {
-		slog.Error("request email verification error", "error", err)
 		return nil, err
 	}
 
@@ -106,7 +100,6 @@ func (s *server) ConfirmEmailVerification(
 		if errors.Is(err, dateierrors.ErrEmailMismatch) {
 			return ConfirmEmailVerification403Response{}, nil
 		}
-		slog.Error("confirm email verification error", "error", err)
 		return nil, err
 	}
 
@@ -122,7 +115,6 @@ func (s *server) SetupMFA(ctx context.Context, _ SetupMFARequestObject) (SetupMF
 		if errors.Is(err, dateierrors.ErrMFAAlreadyEnabled) {
 			return SetupMFA403Response{}, nil
 		}
-		slog.Error("setup MFA error", "error", err)
 		return nil, err
 	}
 
@@ -146,7 +138,6 @@ func (s *server) EnableMFA(ctx context.Context, request EnableMFARequestObject) 
 			errors.Is(err, dateierrors.ErrMFANotSetUp) {
 			return EnableMFA403Response{}, nil
 		}
-		slog.Error("enable MFA error", "error", err)
 		return nil, err
 	}
 
@@ -166,7 +157,6 @@ func (s *server) DisableMFA(ctx context.Context, request DisableMFARequestObject
 			errors.Is(err, dateierrors.ErrMFANotEnabled) {
 			return DisableMFA403Response{}, nil
 		}
-		slog.Error("disable MFA error", "error", err)
 		return nil, err
 	}
 
@@ -188,7 +178,6 @@ func (s *server) RegenerateMFARecoveryCodes(
 			errors.Is(err, dateierrors.ErrMFANotEnabled) {
 			return RegenerateMFARecoveryCodes403Response{}, nil
 		}
-		slog.Error("regenerate recovery codes error", "error", err)
 		return nil, err
 	}
 
@@ -205,7 +194,6 @@ func (s *server) GetMFARecoveryCodesStatus(
 
 	count, err := s.userService.GetMFARecoveryCodesStatus(ctx, authInfo.UserID)
 	if err != nil {
-		slog.Error("get MFA recovery codes status error", "error", err)
 		return nil, err
 	}
 
@@ -228,7 +216,6 @@ func (s *server) ConfirmResetPassword(
 		if errors.Is(err, dateierrors.ErrInvalidInput) {
 			return ConfirmResetPassword400Response{}, nil
 		}
-		slog.Error("confirm reset password error", "error", err)
 		return nil, err
 	}
 
