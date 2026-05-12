@@ -12,6 +12,7 @@ import {
   PasswordConfirmComponent,
   passwordConfirmSchema,
 } from '~/frontend/auth/password-confirm/password-confirm.component';
+import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
 import { AdminUsersService } from '~/frontend/services/admin-users.service';
 
 @Component({
@@ -61,11 +62,11 @@ export class AdminCreateUserDialogComponent {
             const created = await firstValueFrom(
               this.admin.createUser({ name, email, password, isAdmin }),
             );
-            this.snackBar.open('User created', 'OK', { duration: 3000 });
+            this.snackBar.open('User created', 'OK', { duration: snackSuccessDuration });
             this.dialogRef.close(created);
           } catch {
             this.snackBar.open('Failed to create user. Email may already be in use.', 'OK', {
-              duration: 4000,
+              duration: snackErrorDuration,
             });
           }
         },

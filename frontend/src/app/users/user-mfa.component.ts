@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
+import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
 import type { MfaSetupData, UserDataPort } from './user-data.port';
 
 @Component({
@@ -53,10 +54,10 @@ export class UserMfaComponent {
             this.recoveryCodes.set(data.recoveryCodes);
             this.enableModel.set({ code: '' });
             this.enableForm().reset();
-            this.snackBar.open('MFA enabled', 'OK', { duration: 3000 });
+            this.snackBar.open('MFA enabled', 'OK', { duration: snackSuccessDuration });
             this.changed.emit();
           } catch {
-            this.snackBar.open('Invalid verification code', 'OK', { duration: 3000 });
+            this.snackBar.open('Invalid verification code', 'OK', { duration: snackErrorDuration });
           }
         },
       },
@@ -76,10 +77,10 @@ export class UserMfaComponent {
             await firstValueFrom(this.port().disableMfa(this.disableModel().password));
             this.disableModel.set({ password: '' });
             this.disableForm().reset();
-            this.snackBar.open('MFA disabled', 'OK', { duration: 3000 });
+            this.snackBar.open('MFA disabled', 'OK', { duration: snackSuccessDuration });
             this.changed.emit();
           } catch {
-            this.snackBar.open('Invalid password', 'OK', { duration: 3000 });
+            this.snackBar.open('Invalid password', 'OK', { duration: snackErrorDuration });
           }
         },
       },
@@ -97,7 +98,7 @@ export class UserMfaComponent {
         },
         error: () => {
           this.loading.set(false);
-          this.snackBar.open('Failed to set up MFA', 'OK', { duration: 3000 });
+          this.snackBar.open('Failed to set up MFA', 'OK', { duration: snackErrorDuration });
         },
       });
   }
@@ -106,7 +107,7 @@ export class UserMfaComponent {
     const secret = this.setupData()?.secret;
     if (secret) {
       this.clipboard.copy(secret);
-      this.snackBar.open('Secret copied', 'OK', { duration: 2000 });
+      this.snackBar.open('Secret copied', 'OK', { duration: snackSuccessDuration });
     }
   }
 
@@ -114,7 +115,7 @@ export class UserMfaComponent {
     const codes = this.recoveryCodes();
     if (codes) {
       this.clipboard.copy(codes.join('\n'));
-      this.snackBar.open('Recovery codes copied', 'OK', { duration: 2000 });
+      this.snackBar.open('Recovery codes copied', 'OK', { duration: snackSuccessDuration });
     }
   }
 }

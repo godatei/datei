@@ -1,8 +1,8 @@
 <mat-card>
-  <mat-card-header><mat-card-title>Two-Factor Authentication</mat-card-title></mat-card-header>
+  <mat-card-header><mat-card-title>Multi-Factor Authentication</mat-card-title></mat-card-header>
   <mat-card-content>
     @if (mfaEnabled()) {
-      <p class="mat-font-body-md mb-4">Two-factor authentication is enabled for this user.</p>
+      <p class="mat-font-body-md mb-4">Multi-factor authentication is enabled for this user.</p>
       <button mat-button color="warn" (click)="disable()" [disabled]="loading()">
         Disable MFA
       </button>

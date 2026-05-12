@@ -16,15 +16,7 @@
         Unarchive user
       </button>
     } @else {
-      <button
-        mat-flat-button
-        (click)="toggle()"
-        [disabled]="loading()"
-        style="
-          --mat-button-filled-container-color: var(--mat-sys-error);
-          --mat-button-filled-label-text-color: var(--mat-sys-on-error);
-        "
-      >
+      <button mat-flat-button class="btn-error" (click)="toggle()" [disabled]="loading()">
         <mat-icon>archive</mat-icon>
         Archive user
       </button>

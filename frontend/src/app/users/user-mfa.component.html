@@ -1,5 +1,5 @@
 <mat-card>
-  <mat-card-header><mat-card-title>Two-Factor Authentication</mat-card-title></mat-card-header>
+  <mat-card-header><mat-card-title>Multi-Factor Authentication</mat-card-title></mat-card-header>
   <mat-card-content>
     <p class="mat-font-body-md mat-text-on-surface-variant mb-4">
       Add an extra layer of security to the account
@@ -54,9 +54,9 @@
         Set up MFA
       </button>
     } @else {
-      <p>Two-factor authentication is enabled.</p>
+      <p>Multi-factor authentication is enabled.</p>
       <div class="border p-4 mt-4 mat-corner-sm" style="border-color: var(--mat-sys-error)">
-        <p class="mat-font-label-lg mat-text-error mb-3">Disable two-factor authentication</p>
+        <p class="mat-font-label-lg mat-text-error mb-3">Disable multi-factor authentication</p>
         <form class="flex flex-col gap-2" [formRoot]="disableForm">
           <mat-form-field class="w-full" appearance="outline">
             <mat-label>Password</mat-label>

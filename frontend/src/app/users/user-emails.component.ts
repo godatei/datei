@@ -10,6 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
 import type { UserEmail } from '~/api/models/user-email';
+import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
 import type { UserDataPort } from './user-data.port';
 
 @Component({
@@ -52,10 +53,10 @@ export class UserEmailsComponent implements OnInit {
             await firstValueFrom(this.port().addEmail(value));
             this.addEmailModel.set({ email: '' });
             this.addEmailForm().reset();
-            this.snackBar.open('Email added', 'OK', { duration: 3000 });
+            this.snackBar.open('Email added', 'OK', { duration: snackSuccessDuration });
             this.loadEmails();
           } catch {
-            this.snackBar.open('Failed to add email', 'OK', { duration: 3000 });
+            this.snackBar.open('Failed to add email', 'OK', { duration: snackErrorDuration });
           }
         },
       },
@@ -72,12 +73,12 @@ export class UserEmailsComponent implements OnInit {
       .removeEmail(emailId)
       .subscribe({
         next: () => {
-          this.snackBar.open('Email removed', 'OK', { duration: 3000 });
+          this.snackBar.open('Email removed', 'OK', { duration: snackSuccessDuration });
           this.loadEmails();
         },
         error: () => {
           this.loading.set(false);
-          this.snackBar.open('Failed to remove email', 'OK', { duration: 3000 });
+          this.snackBar.open('Failed to remove email', 'OK', { duration: snackErrorDuration });
         },
       });
   }
@@ -88,12 +89,12 @@ export class UserEmailsComponent implements OnInit {
       .setPrimaryEmail(emailId)
       .subscribe({
         next: () => {
-          this.snackBar.open('Primary email updated', 'OK', { duration: 3000 });
+          this.snackBar.open('Primary email updated', 'OK', { duration: snackSuccessDuration });
           this.loadEmails();
         },
         error: () => {
           this.loading.set(false);
-          this.snackBar.open('Failed to set primary email', 'OK', { duration: 3000 });
+          this.snackBar.open('Failed to set primary email', 'OK', { duration: snackErrorDuration });
         },
       });
   }

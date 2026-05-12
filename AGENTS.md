@@ -324,6 +324,7 @@ This project uses Angular Material 21 with Material 3 theming. All UI must follo
 - Do not write arrow functions in templates (they are not supported).
 - Use ICU pluralization (`{count, plural, =1 {1 item} other {{{ count }} items}}`) for count-dependent copy, not inline ternaries.
 - Render form-field validation as `<mat-error>` inside the `<mat-form-field>`, not a standalone `<p class="mat-text-error">` outside it.
+- Use self-closing tags for custom elements with no content (`<mat-divider />`, not `<mat-divider></mat-divider>`). Native elements like `<div>` cannot be self-closed in Angular templates — keep the explicit closing tag.
 
 ### Services
 

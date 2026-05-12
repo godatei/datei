@@ -10,6 +10,7 @@ import {
 import { MatCardModule } from '@angular/material/card';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
 import { AdminUsersService } from '~/frontend/services/admin-users.service';
 
 @Component({
@@ -45,14 +46,16 @@ export class AdminRoleComponent {
         this.snackBar.open(
           value ? 'Granted administrator access' : 'Revoked administrator access',
           'OK',
-          { duration: 3000 },
+          { duration: snackSuccessDuration },
         );
         this.changed.emit();
       },
       error: () => {
         this.loading.set(false);
         this.checked.set(previous);
-        this.snackBar.open('Failed to update administrator access', 'OK', { duration: 3000 });
+        this.snackBar.open('Failed to update administrator access', 'OK', {
+          duration: snackErrorDuration,
+        });
       },
     });
   }

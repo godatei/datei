@@ -14,6 +14,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
+import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
 import type { UserDataPort } from './user-data.port';
 
 @Component({
@@ -56,10 +57,10 @@ export class UserProfileComponent {
           const { name } = this.model();
           try {
             await firstValueFrom(this.port().updateName(name));
-            this.snackBar.open('Profile updated', 'OK', { duration: 3000 });
+            this.snackBar.open('Profile updated', 'OK', { duration: snackSuccessDuration });
             this.changed.emit();
           } catch {
-            this.snackBar.open('Failed to update profile', 'OK', { duration: 3000 });
+            this.snackBar.open('Failed to update profile', 'OK', { duration: snackErrorDuration });
           }
         },
       },

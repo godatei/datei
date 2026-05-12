@@ -10,6 +10,7 @@ import {
   PasswordConfirmComponent,
   passwordConfirmSchema,
 } from '~/frontend/auth/password-confirm/password-confirm.component';
+import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
 import type { UserDataPort } from './user-data.port';
 
 @Component({
@@ -56,7 +57,7 @@ export class UserPasswordComponent {
             this.model.set({ currentPassword: '', password: '', confirmPassword: '' });
             this.passwordForm().reset();
             this.snackBar.open(requiresCurrent ? 'Password changed' : 'Password reset', 'OK', {
-              duration: 3000,
+              duration: snackSuccessDuration,
             });
           } catch {
             this.snackBar.open(
@@ -64,7 +65,7 @@ export class UserPasswordComponent {
                 ? 'Failed to change password. Check your current password.'
                 : 'Failed to reset password',
               'OK',
-              { duration: 3000 },
+              { duration: snackErrorDuration },
             );
           }
         },

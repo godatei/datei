@@ -11,6 +11,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
 import { AdminUsersService } from '~/frontend/services/admin-users.service';
 
 @Component({
@@ -50,13 +51,13 @@ export class AdminArchiveComponent {
       next: () => {
         this.loading.set(false);
         this.currentlyArchived.set(true);
-        const ref = this.snackBar.open('User archived', 'Undo', { duration: 5000 });
+        const ref = this.snackBar.open('User archived', 'Undo', { duration: snackSuccessDuration });
         ref.onAction().subscribe(() => this.runUnarchive());
         this.changed.emit();
       },
       error: () => {
         this.loading.set(false);
-        this.snackBar.open('Failed to archive user', 'OK', { duration: 3000 });
+        this.snackBar.open('Failed to archive user', 'OK', { duration: snackErrorDuration });
       },
     });
   }
@@ -67,12 +68,12 @@ export class AdminArchiveComponent {
       next: () => {
         this.loading.set(false);
         this.currentlyArchived.set(false);
-        this.snackBar.open('User unarchived', 'OK', { duration: 3000 });
+        this.snackBar.open('User unarchived', 'OK', { duration: snackSuccessDuration });
         this.changed.emit();
       },
       error: () => {
         this.loading.set(false);
-        this.snackBar.open('Failed to unarchive user', 'OK', { duration: 3000 });
+        this.snackBar.open('Failed to unarchive user', 'OK', { duration: snackErrorDuration });
       },
     });
   }

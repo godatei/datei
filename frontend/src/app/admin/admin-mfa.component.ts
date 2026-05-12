@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, input, output, signal } fro
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
 import { AdminUsersService } from '~/frontend/services/admin-users.service';
 
 @Component({
@@ -25,12 +26,12 @@ export class AdminMfaComponent {
     this.admin.disableMfa(this.userId()).subscribe({
       next: () => {
         this.loading.set(false);
-        this.snackBar.open('MFA disabled', 'OK', { duration: 3000 });
+        this.snackBar.open('MFA disabled', 'OK', { duration: snackSuccessDuration });
         this.changed.emit();
       },
       error: () => {
         this.loading.set(false);
-        this.snackBar.open('Failed to disable MFA', 'OK', { duration: 3000 });
+        this.snackBar.open('Failed to disable MFA', 'OK', { duration: snackErrorDuration });
       },
     });
   }
