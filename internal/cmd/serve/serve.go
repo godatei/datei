@@ -124,7 +124,22 @@ func run(ctx context.Context, options Options) error {
 	userSvc := users.NewUserService(db, userRepository, m)
 
 	srv := server.NewServer(dateiSvc, userSvc)
-	strictHandler := server.NewStrictHandler(srv, nil)
+	strictHandler := server.NewStrictHandlerWithOptions(srv, nil, server.StrictHTTPServerOptions{
+		RequestErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+			slog.InfoContext(r.Context(), "request validation/decoding error",
+				"error", err,
+				"request_id", chimiddleware.GetReqID(r.Context()),
+			)
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		},
+		ResponseErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+			slog.ErrorContext(r.Context(), "unhandled error",
+				"error", err,
+				"request_id", chimiddleware.GetReqID(r.Context()),
+			)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		},
+	})
 
 	davHandler := dateiwebdav.NewHandler(dateiSvc)
 

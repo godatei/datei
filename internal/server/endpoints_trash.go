@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"errors"
-	"log/slog"
 
 	"github.com/godatei/datei/internal/datei"
 	"github.com/godatei/datei/internal/dateierrors"
@@ -92,7 +91,6 @@ func (s *server) RestoreTrash(
 			errors.Is(err, dateierrors.ErrParentTrashed), errors.Is(err, dateierrors.ErrCycleDetected):
 			return RestoreTrash400Response{}, nil
 		default:
-			slog.Error("endpoint error", "error", err)
 			return nil, err
 		}
 	}

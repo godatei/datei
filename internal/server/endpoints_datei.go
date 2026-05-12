@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"strings"
 
 	"github.com/godatei/datei/internal/datei"
@@ -35,7 +34,7 @@ func (s *server) ListDatei(
 		Offset:   offset,
 	})
 	if err != nil {
-		return ListDatei400Response{}, err
+		return nil, err
 	}
 
 	response := api.ListDateiResponse{
@@ -121,8 +120,7 @@ func (s *server) CreateDatei(
 		case errors.Is(err, dateierrors.ErrParentTrashed):
 			return CreateDatei400JSONResponse{Message: "parent directory is trashed"}, nil
 		default:
-			slog.Error("endpoint error", "error", err)
-			return CreateDatei400JSONResponse{Message: err.Error()}, nil
+			return nil, err
 		}
 	}
 
@@ -151,11 +149,14 @@ func (s *server) DownloadDatei(
 ) (DownloadDateiResponseObject, error) {
 	result, err := s.dateiService.DownloadDatei(ctx, request.Id)
 	if err != nil {
-		if err == dateierrors.ErrIsDirectory {
+		switch {
+		case errors.Is(err, dateierrors.ErrIsDirectory):
 			return DownloadDatei409Response{}, nil
+		case errors.Is(err, dateierrors.ErrNotFound), errors.Is(err, dateierrors.ErrNoContent):
+			return DownloadDatei404Response{}, nil
+		default:
+			return nil, err
 		}
-		slog.Error("download error", "error", err)
-		return DownloadDatei404Response{}, nil
 	}
 
 	return DownloadDatei200ApplicationoctetStreamResponse{
@@ -265,8 +266,7 @@ func (s *server) UpdateDatei(
 			errors.Is(err, dateierrors.ErrCycleDetected):
 			return UpdateDatei400Response{}, nil
 		default:
-			slog.Error("endpoint error", "error", err)
-			return UpdateDatei400Response{}, nil
+			return nil, err
 		}
 	}
 
