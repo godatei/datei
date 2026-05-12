@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AdminUsersService } from '~/frontend/services/admin-users.service';
@@ -26,6 +27,7 @@ import { AdminRoleComponent } from './admin-role.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     MatButtonModule,
+    MatCardModule,
     MatIconModule,
     RouterLink,
     UserProfileComponent,

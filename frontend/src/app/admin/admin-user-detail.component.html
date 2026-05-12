@@ -22,6 +22,21 @@
       </div>
     </div>
 
+    @if (isSelf()) {
+      <mat-card>
+        <mat-card-content class="flex items-start gap-3">
+          <mat-icon class="mat-text-primary">info</mat-icon>
+          <div>
+            <p class="mat-font-body-md m-0">You're viewing your own account.</p>
+            <p class="mat-font-body-sm mat-text-on-surface-variant m-0">
+              Use <a routerLink="/settings">Settings</a> to change your password. Role and archive
+              controls are hidden to prevent locking yourself out.
+            </p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
     <app-user-profile [port]="port()" [name]="u.name" (changed)="load()" />
     <app-user-emails [port]="port()" />
     @if (!isSelf()) {
