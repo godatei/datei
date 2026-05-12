@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"errors"
-	"log/slog"
 
 	"github.com/godatei/datei/internal/authn"
 	"github.com/godatei/datei/internal/dateierrors"
@@ -29,7 +28,6 @@ func (s *server) ListUsersAdmin(
 
 	rows, err := s.userService.ListUsers(ctx)
 	if err != nil {
-		slog.Error("list users error", "error", err)
 		return nil, err
 	}
 
@@ -61,7 +59,6 @@ func (s *server) CreateUserAdmin(
 		if errors.Is(err, dateierrors.ErrEmailAlreadyInUse) || errors.Is(err, dateierrors.ErrInvalidInput) {
 			return CreateUserAdmin400Response{}, nil
 		}
-		slog.Error("admin create user error", "error", err)
 		return nil, err
 	}
 	return CreateUserAdmin201JSONResponse(users.ToAdminUserListItem(row)), nil
@@ -83,7 +80,6 @@ func (s *server) GetUserAdmin(
 		if errors.Is(err, dateierrors.ErrNotFound) {
 			return GetUserAdmin404Response{}, nil
 		}
-		slog.Error("get user admin error", "error", err)
 		return nil, err
 	}
 	return GetUserAdmin200JSONResponse(users.ToAdminUserListItem(row)), nil
@@ -118,7 +114,6 @@ func (s *server) UpdateUserAdmin(
 		if errors.Is(err, dateierrors.ErrInvalidInput) {
 			return UpdateUserAdmin400Response{}, nil
 		}
-		slog.Error("admin update user error", "error", err)
 		return nil, err
 	}
 	return UpdateUserAdmin204Response{}, nil
@@ -145,7 +140,6 @@ func (s *server) ResetUserPasswordAdmin(
 		if errors.Is(err, dateierrors.ErrInvalidInput) {
 			return ResetUserPasswordAdmin400Response{}, nil
 		}
-		slog.Error("admin reset password error", "error", err)
 		return nil, err
 	}
 	return ResetUserPasswordAdmin204Response{}, nil
@@ -164,7 +158,6 @@ func (s *server) ListUserEmailsAdmin(
 
 	rows, err := s.userService.AdminListEmails(ctx, request.Id)
 	if err != nil {
-		slog.Error("admin list emails error", "error", err)
 		return nil, err
 	}
 	return ListUserEmailsAdmin200JSONResponse(api.ListEmailsResponse{
@@ -187,7 +180,6 @@ func (s *server) AddUserEmailAdmin(
 		if errors.Is(err, dateierrors.ErrEmailAlreadyInUse) || errors.Is(err, dateierrors.ErrInvalidInput) {
 			return AddUserEmailAdmin400Response{}, nil
 		}
-		slog.Error("admin add email error", "error", err)
 		return nil, err
 	}
 	return AddUserEmailAdmin204Response{}, nil
@@ -211,7 +203,6 @@ func (s *server) RemoveUserEmailAdmin(
 		if errors.Is(err, dateierrors.ErrInvalidInput) {
 			return RemoveUserEmailAdmin400Response{}, nil
 		}
-		slog.Error("admin remove email error", "error", err)
 		return nil, err
 	}
 	return RemoveUserEmailAdmin204Response{}, nil
@@ -235,7 +226,6 @@ func (s *server) SetPrimaryUserEmailAdmin(
 		if errors.Is(err, dateierrors.ErrInvalidInput) {
 			return SetPrimaryUserEmailAdmin400Response{}, nil
 		}
-		slog.Error("admin set primary email error", "error", err)
 		return nil, err
 	}
 	return SetPrimaryUserEmailAdmin204Response{}, nil
@@ -259,7 +249,6 @@ func (s *server) DisableUserMFAAdmin(
 		if errors.Is(err, dateierrors.ErrMFANotEnabled) {
 			return DisableUserMFAAdmin403Response{}, nil
 		}
-		slog.Error("admin disable mfa error", "error", err)
 		return nil, err
 	}
 	return DisableUserMFAAdmin204Response{}, nil
@@ -281,7 +270,6 @@ func (s *server) ArchiveUserAdmin(
 	}
 
 	if err := s.userService.AdminArchiveUser(ctx, request.Id); err != nil {
-		slog.Error("admin archive user error", "error", err)
 		return nil, err
 	}
 	return ArchiveUserAdmin204Response{}, nil
@@ -299,7 +287,6 @@ func (s *server) UnarchiveUserAdmin(
 	}
 
 	if err := s.userService.AdminUnarchiveUser(ctx, request.Id); err != nil {
-		slog.Error("admin unarchive user error", "error", err)
 		return nil, err
 	}
 	return UnarchiveUserAdmin204Response{}, nil
