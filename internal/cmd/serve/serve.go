@@ -129,7 +129,10 @@ func run(ctx context.Context, options Options) error {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		},
 		ResponseErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
-			slog.ErrorContext(r.Context(), "unhandled error", "error", err)
+			slog.ErrorContext(r.Context(), "unhandled error",
+				"error", err,
+				"request_id", chimiddleware.GetReqID(r.Context()),
+			)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		},
 	})
