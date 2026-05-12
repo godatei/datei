@@ -71,7 +71,7 @@ func (s *UserService) AdminCreateUser(
 	}
 
 	q := s.queries()
-	if _, err := q.GetUserAccountByEmail(ctx, input.Email); err == nil {
+	if _, err := q.GetUserAccountEmailByEmail(ctx, input.Email); err == nil {
 		return db.ListUserAccountProjectionsRow{}, dateierrors.ErrEmailAlreadyInUse
 	} else if !errors.Is(err, pgx.ErrNoRows) {
 		return db.ListUserAccountProjectionsRow{}, fmt.Errorf("failed to check existing user: %w", err)
@@ -171,7 +171,7 @@ func (s *UserService) AdminListEmails(
 
 func (s *UserService) AdminAddEmail(ctx context.Context, userID uuid.UUID, email string) error {
 	q := s.queries()
-	_, err := q.GetUserAccountByEmail(ctx, email)
+	_, err := q.GetUserAccountEmailByEmail(ctx, email)
 	if err == nil {
 		return dateierrors.ErrEmailAlreadyInUse
 	}

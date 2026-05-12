@@ -75,7 +75,7 @@ type UpdateUserEmailInput struct {
 func (s *UserService) UpdateUserEmail(ctx context.Context, input UpdateUserEmailInput) error {
 	q := s.queries()
 
-	_, err := q.GetUserAccountByEmail(ctx, input.NewEmail)
+	_, err := q.GetUserAccountEmailByEmail(ctx, input.NewEmail)
 	if err == nil {
 		return dateierrors.ErrEmailAlreadyInUse
 	}
@@ -158,7 +158,7 @@ type AddEmailInput struct {
 
 func (s *UserService) AddEmail(ctx context.Context, input AddEmailInput) error {
 	q := s.queries()
-	_, err := q.GetUserAccountByEmail(ctx, input.Email)
+	_, err := q.GetUserAccountEmailByEmail(ctx, input.Email)
 	if err == nil {
 		return dateierrors.ErrEmailAlreadyInUse
 	}

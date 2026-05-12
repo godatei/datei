@@ -177,7 +177,7 @@ func (s *UserService) Register(ctx context.Context, input RegisterInput) error {
 	}
 
 	q := s.queries()
-	_, err := q.GetUserAccountByEmail(ctx, input.Email)
+	_, err := q.GetUserAccountEmailByEmail(ctx, input.Email)
 	if err == nil {
 		return dateierrors.ErrEmailAlreadyInUse
 	}
