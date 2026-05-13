@@ -11,14 +11,16 @@ export class UserAvatarComponent {
   readonly size = input<'sm' | 'md' | 'lg'>('md');
 
   readonly letters = computed(() => initials(this.name()));
-  readonly sizeClasses = computed(() => {
+  readonly classes = computed(() => {
+    const base =
+      'inline-flex items-center justify-center mat-corner-full mat-bg-primary-container mat-text-on-primary-container shrink-0 select-none align-middle';
     switch (this.size()) {
       case 'sm':
-        return 'w-8 h-8 mat-font-title-sm';
+        return `${base} w-8 h-8 mat-font-title-sm`;
       case 'lg':
-        return 'w-16 h-16 mat-font-headline-sm';
+        return `${base} w-16 h-16 mat-font-headline-sm`;
       default:
-        return 'w-12 h-12 mat-font-title-md';
+        return `${base} w-12 h-12 mat-font-title-md`;
     }
   });
 }

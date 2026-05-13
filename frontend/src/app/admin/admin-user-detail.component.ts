@@ -1,17 +1,11 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  OnInit,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, resource } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { AdminUsersService } from '~/frontend/services/admin-users.service';
+import { Api } from '~/api/api';
+import { getUserAdmin } from '~/api/functions';
 import { AuthService } from '~/frontend/services/auth.service';
 import { UserAvatarComponent } from '~/frontend/users/user-avatar.component';
 import { createAdminUserPort, UserSnapshot } from '~/frontend/users/user-data.port';
@@ -40,8 +34,8 @@ import { AdminRoleComponent } from './admin-role.component';
   ],
   templateUrl: './admin-user-detail.component.html',
 })
-export class AdminUserDetailComponent implements OnInit {
-  private readonly admin = inject(AdminUsersService);
+export class AdminUserDetailComponent {
+  private readonly api = inject(Api);
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
 
@@ -49,34 +43,25 @@ export class AdminUserDetailComponent implements OnInit {
   readonly userId = computed(() => this.params()?.get('id') ?? '');
   readonly isSelf = computed(() => this.auth.getClaims()?.sub === this.userId());
 
-  readonly user = signal<UserSnapshot | undefined>(undefined);
-  readonly primaryEmail = signal<string | null>(null);
-  readonly loading = signal(true);
+  protected readonly userResource = resource({
+    params: () => ({ id: this.userId() }),
+    loader: async ({ params }) => {
+      if (!params.id) return undefined;
+      return this.api.invoke(getUserAdmin, { id: params.id });
+    },
+  });
 
-  readonly port = computed(() => createAdminUserPort(this.admin, this.userId()));
+  readonly user = computed<UserSnapshot | undefined>(() => {
+    const u = this.userResource.value();
+    if (!u) return undefined;
+    return { name: u.name, isAdmin: u.isAdmin, mfaEnabled: u.mfaEnabled, archived: u.archived };
+  });
+  readonly primaryEmail = computed(() => this.userResource.value()?.primaryEmail ?? null);
+  readonly loading = computed(() => this.userResource.isLoading());
 
-  ngOnInit() {
-    this.load();
-  }
+  readonly port = computed(() => createAdminUserPort(this.api, this.userId()));
 
   load() {
-    const id = this.userId();
-    if (!id) {
-      this.loading.set(false);
-      return;
-    }
-    this.admin.getUser(id).subscribe({
-      next: (u) => {
-        this.user.set({
-          name: u.name,
-          isAdmin: u.isAdmin,
-          mfaEnabled: u.mfaEnabled,
-          archived: u.archived,
-        });
-        this.primaryEmail.set(u.primaryEmail ?? null);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
+    this.userResource.reload();
   }
 }

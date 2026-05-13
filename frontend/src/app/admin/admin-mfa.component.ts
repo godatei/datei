@@ -2,8 +2,9 @@ import { ChangeDetectionStrategy, Component, inject, input, output, signal } fro
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { Api } from '~/api/api';
+import { disableUserMfaAdmin } from '~/api/functions';
 import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
-import { AdminUsersService } from '~/frontend/services/admin-users.service';
 
 @Component({
   selector: 'app-admin-mfa',
@@ -12,7 +13,7 @@ import { AdminUsersService } from '~/frontend/services/admin-users.service';
   templateUrl: './admin-mfa.component.html',
 })
 export class AdminMfaComponent {
-  private readonly admin = inject(AdminUsersService);
+  private readonly api = inject(Api);
   private readonly snackBar = inject(MatSnackBar);
 
   readonly userId = input.required<string>();
@@ -21,18 +22,16 @@ export class AdminMfaComponent {
 
   readonly loading = signal(false);
 
-  disable() {
+  async disable() {
     this.loading.set(true);
-    this.admin.disableMfa(this.userId()).subscribe({
-      next: () => {
-        this.loading.set(false);
-        this.snackBar.open('MFA disabled', 'OK', { duration: snackSuccessDuration });
-        this.changed.emit();
-      },
-      error: () => {
-        this.loading.set(false);
-        this.snackBar.open('Failed to disable MFA', 'OK', { duration: snackErrorDuration });
-      },
-    });
+    try {
+      await this.api.invoke(disableUserMfaAdmin, { id: this.userId() });
+      this.snackBar.open('MFA disabled', 'OK', { duration: snackSuccessDuration });
+      this.changed.emit();
+    } catch {
+      this.snackBar.open('Failed to disable MFA', 'OK', { duration: snackErrorDuration });
+    } finally {
+      this.loading.set(false);
+    }
   }
 }

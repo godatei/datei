@@ -3,7 +3,7 @@ import {
   Component,
   computed,
   inject,
-  OnInit,
+  resource,
   signal,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,8 +14,9 @@ import { MatRippleModule } from '@angular/material/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
+import { Api } from '~/api/api';
+import { listUsersAdmin } from '~/api/functions';
 import type { AdminUserListItem } from '~/api/models/admin-user-list-item';
-import { AdminUsersService } from '~/frontend/services/admin-users.service';
 import { initials } from '~/frontend/users/initials';
 import { AdminCreateUserDialogComponent } from './admin-create-user-dialog.component';
 
@@ -33,14 +34,22 @@ import { AdminCreateUserDialogComponent } from './admin-create-user-dialog.compo
   ],
   templateUrl: './admin-users-list.component.html',
 })
-export class AdminUsersListComponent implements OnInit {
-  private readonly admin = inject(AdminUsersService);
+export class AdminUsersListComponent {
+  private readonly api = inject(Api);
   private readonly dialog = inject(MatDialog);
 
-  readonly users = signal<AdminUserListItem[]>([]);
-  readonly loading = signal(true);
-  readonly error = signal(false);
   readonly filter = signal<'all' | 'admins' | 'users' | 'archived'>('all');
+
+  protected readonly usersResource = resource({
+    loader: async () => {
+      const res = await this.api.invoke(listUsersAdmin, undefined);
+      return res.users;
+    },
+  });
+
+  readonly users = computed<AdminUserListItem[]>(() => this.usersResource.value() ?? []);
+  readonly loading = computed(() => this.usersResource.isLoading());
+  readonly error = computed(() => this.usersResource.error() !== undefined);
 
   readonly visibleUsers = computed(() => {
     const f = this.filter();
@@ -51,24 +60,6 @@ export class AdminUsersListComponent implements OnInit {
     return all;
   });
 
-  ngOnInit() {
-    this.load();
-  }
-
-  private load() {
-    this.loading.set(true);
-    this.admin.listUsers().subscribe({
-      next: (users) => {
-        this.users.set(users);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.loading.set(false);
-        this.error.set(true);
-      },
-    });
-  }
-
   openCreate() {
     const ref = this.dialog.open<
       AdminCreateUserDialogComponent,
@@ -76,7 +67,7 @@ export class AdminUsersListComponent implements OnInit {
       AdminUserListItem | undefined
     >(AdminCreateUserDialogComponent, { width: '480px' });
     ref.afterClosed().subscribe((created) => {
-      if (created) this.load();
+      if (created) this.usersResource.reload();
     });
   }
 

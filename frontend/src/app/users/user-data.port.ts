@@ -1,6 +1,16 @@
-import { map, Observable, tap } from 'rxjs';
+import { from, map, Observable, tap } from 'rxjs';
+import { Api } from '~/api/api';
+import {
+  addUserEmailAdmin,
+  disableUserMfaAdmin,
+  getUserAdmin,
+  listUserEmailsAdmin,
+  removeUserEmailAdmin,
+  resetUserPasswordAdmin,
+  setPrimaryUserEmailAdmin,
+  updateUserAdmin,
+} from '~/api/functions';
 import type { UserEmail } from '~/api/models/user-email';
-import { AdminUsersService } from '~/frontend/services/admin-users.service';
 import { AuthService } from '~/frontend/services/auth.service';
 import { SettingsService } from '~/frontend/services/settings.service';
 
@@ -58,10 +68,10 @@ export function createSelfUserPort(settings: SettingsService, auth: AuthService)
   };
 }
 
-export function createAdminUserPort(admin: AdminUsersService, userId: string): UserDataPort {
+export function createAdminUserPort(api: Api, userId: string): UserDataPort {
   return {
     load: () =>
-      admin.getUser(userId).pipe(
+      from(api.invoke(getUserAdmin, { id: userId })).pipe(
         map((u) => ({
           name: u.name,
           isAdmin: u.isAdmin,
@@ -69,19 +79,32 @@ export function createAdminUserPort(admin: AdminUsersService, userId: string): U
           archived: u.archived,
         })),
       ),
-    listEmails: () => admin.listEmails(userId),
-    updateName: (name) => admin.updateUser(userId, { name }),
+    listEmails: () =>
+      from(api.invoke(listUserEmailsAdmin, { id: userId })).pipe(map((r) => r.emails)),
+    updateName: (name) =>
+      from(api.invoke(updateUserAdmin, { id: userId, body: { name } })).pipe(map(() => undefined)),
     // Admin reset ignores currentPassword.
-    changePassword: ({ password }) => admin.resetPassword(userId, password),
-    addEmail: (e) => admin.addEmail(userId, e),
-    removeEmail: (id) => admin.removeEmail(userId, id),
-    setPrimaryEmail: (id) => admin.setPrimaryEmail(userId, id),
+    changePassword: ({ password }) =>
+      from(api.invoke(resetUserPasswordAdmin, { id: userId, body: { password } })).pipe(
+        map(() => undefined),
+      ),
+    addEmail: (email) =>
+      from(api.invoke(addUserEmailAdmin, { id: userId, body: { email } })).pipe(
+        map(() => undefined),
+      ),
+    removeEmail: (emailId) =>
+      from(api.invoke(removeUserEmailAdmin, { id: userId, emailId })).pipe(map(() => undefined)),
+    setPrimaryEmail: (emailId) =>
+      from(api.invoke(setPrimaryUserEmailAdmin, { id: userId, emailId })).pipe(
+        map(() => undefined),
+      ),
     startMfaSetup: () => {
       throw new Error('startMfaSetup is not available in admin mode');
     },
     enableMfa: () => {
       throw new Error('enableMfa is not available in admin mode');
     },
-    disableMfa: () => admin.disableMfa(userId),
+    disableMfa: () =>
+      from(api.invoke(disableUserMfaAdmin, { id: userId })).pipe(map(() => undefined)),
   };
 }

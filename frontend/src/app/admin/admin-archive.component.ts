@@ -11,8 +11,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { Api } from '~/api/api';
+import { archiveUserAdmin, unarchiveUserAdmin } from '~/api/functions';
 import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
-import { AdminUsersService } from '~/frontend/services/admin-users.service';
 
 @Component({
   selector: 'app-admin-archive',
@@ -21,7 +22,7 @@ import { AdminUsersService } from '~/frontend/services/admin-users.service';
   templateUrl: './admin-archive.component.html',
 })
 export class AdminArchiveComponent {
-  private readonly admin = inject(AdminUsersService);
+  private readonly api = inject(Api);
   private readonly snackBar = inject(MatSnackBar);
 
   readonly userId = input.required<string>();
@@ -45,36 +46,32 @@ export class AdminArchiveComponent {
     }
   }
 
-  private runArchive() {
+  private async runArchive() {
     this.loading.set(true);
-    this.admin.archive(this.userId()).subscribe({
-      next: () => {
-        this.loading.set(false);
-        this.currentlyArchived.set(true);
-        const ref = this.snackBar.open('User archived', 'Undo', { duration: snackSuccessDuration });
-        ref.onAction().subscribe(() => this.runUnarchive());
-        this.changed.emit();
-      },
-      error: () => {
-        this.loading.set(false);
-        this.snackBar.open('Failed to archive user', 'OK', { duration: snackErrorDuration });
-      },
-    });
+    try {
+      await this.api.invoke(archiveUserAdmin, { id: this.userId() });
+      this.currentlyArchived.set(true);
+      const ref = this.snackBar.open('User archived', 'Undo', { duration: snackSuccessDuration });
+      ref.onAction().subscribe(() => this.runUnarchive());
+      this.changed.emit();
+    } catch {
+      this.snackBar.open('Failed to archive user', 'OK', { duration: snackErrorDuration });
+    } finally {
+      this.loading.set(false);
+    }
   }
 
-  private runUnarchive() {
+  private async runUnarchive() {
     this.loading.set(true);
-    this.admin.unarchive(this.userId()).subscribe({
-      next: () => {
-        this.loading.set(false);
-        this.currentlyArchived.set(false);
-        this.snackBar.open('User unarchived', 'OK', { duration: snackSuccessDuration });
-        this.changed.emit();
-      },
-      error: () => {
-        this.loading.set(false);
-        this.snackBar.open('Failed to unarchive user', 'OK', { duration: snackErrorDuration });
-      },
-    });
+    try {
+      await this.api.invoke(unarchiveUserAdmin, { id: this.userId() });
+      this.currentlyArchived.set(false);
+      this.snackBar.open('User unarchived', 'OK', { duration: snackSuccessDuration });
+      this.changed.emit();
+    } catch {
+      this.snackBar.open('Failed to unarchive user', 'OK', { duration: snackErrorDuration });
+    } finally {
+      this.loading.set(false);
+    }
   }
 }

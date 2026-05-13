@@ -6,14 +6,14 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { firstValueFrom } from 'rxjs';
+import { Api } from '~/api/api';
+import { createUserAdmin } from '~/api/functions';
 import type { AdminUserListItem } from '~/api/models/admin-user-list-item';
 import {
   PasswordConfirmComponent,
   passwordConfirmSchema,
 } from '~/frontend/auth/password-confirm/password-confirm.component';
 import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
-import { AdminUsersService } from '~/frontend/services/admin-users.service';
 
 @Component({
   selector: 'app-admin-create-user-dialog',
@@ -32,7 +32,7 @@ import { AdminUsersService } from '~/frontend/services/admin-users.service';
   templateUrl: './admin-create-user-dialog.component.html',
 })
 export class AdminCreateUserDialogComponent {
-  private readonly admin = inject(AdminUsersService);
+  private readonly api = inject(Api);
   private readonly dialogRef = inject(
     MatDialogRef<AdminCreateUserDialogComponent, AdminUserListItem>,
   );
@@ -59,9 +59,9 @@ export class AdminCreateUserDialogComponent {
         action: async () => {
           const { name, email, password, isAdmin } = this.model();
           try {
-            const created = await firstValueFrom(
-              this.admin.createUser({ name, email, password, isAdmin }),
-            );
+            const created = await this.api.invoke(createUserAdmin, {
+              body: { name, email, password, isAdmin },
+            });
             this.snackBar.open('User created', 'OK', { duration: snackSuccessDuration });
             this.dialogRef.close(created);
           } catch {
