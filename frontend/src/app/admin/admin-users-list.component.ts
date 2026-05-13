@@ -9,15 +9,16 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
-import { MatRippleModule } from '@angular/material/core';
+import { MatListModule } from '@angular/material/list';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import { Api } from '~/api/api';
 import { listUsersAdmin } from '~/api/functions';
 import type { AdminUserListItem } from '~/api/models/admin-user-list-item';
-import { initials } from '~/frontend/users/initials';
+import { UserAvatarComponent } from '~/frontend/users/user-avatar.component';
 import { AdminCreateUserDialogComponent } from './admin-create-user-dialog.component';
 
 @Component({
@@ -27,10 +28,12 @@ import { AdminCreateUserDialogComponent } from './admin-create-user-dialog.compo
     MatButtonModule,
     MatCardModule,
     MatChipsModule,
+    MatDividerModule,
     MatIconModule,
-    MatRippleModule,
+    MatListModule,
     MatTooltipModule,
     RouterLink,
+    UserAvatarComponent,
   ],
   templateUrl: './admin-users-list.component.html',
 })
@@ -69,9 +72,5 @@ export class AdminUsersListComponent {
     ref.afterClosed().subscribe((created) => {
       if (created) this.usersResource.reload();
     });
-  }
-
-  initials(name: string) {
-    return initials(name);
   }
 }

@@ -11,9 +11,9 @@
   </div>
 
   @if (loading()) {
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div class="flex flex-col gap-2">
       @for (i of [0, 1, 2, 3, 4, 5]; track i) {
-        <div class="animate-pulse mat-bg-surface-container mat-corner-md h-22"></div>
+        <div class="animate-pulse mat-bg-surface-container mat-corner-md h-16"></div>
       }
     </div>
   } @else if (error()) {
@@ -31,63 +31,36 @@
       <mat-chip-option value="archived">Archived</mat-chip-option>
     </mat-chip-listbox>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      @for (user of visibleUsers(); track user.id) {
-        <a
-          [routerLink]="['/admin/users', user.id]"
-          class="block focus-visible:outline focus-visible:outline-offset-2 mat-corner-md no-underline"
-          style="outline-color: var(--mat-sys-primary)"
-        >
-          <mat-card
-            appearance="outlined"
-            matRipple
-            class="cursor-pointer relative transition-colors hover:mat-bg-surface-container"
-          >
-            <!-- TODO: surface per-user usage details (storage used, file count, last activity) inside this card in a future iteration. -->
-            <div class="absolute top-3 right-3 z-10 flex items-center gap-1">
-              @if (user.mfaEnabled) {
-                <mat-icon
-                  class="mat-text-on-surface-variant"
-                  aria-label="MFA enabled"
-                  matTooltip="MFA enabled"
-                  >security</mat-icon
-                >
-              }
-              @if (user.archived) {
-                <mat-icon
-                  aria-label="Archived"
-                  matTooltip="Archived"
-                  [style.color]="'var(--mat-sys-outline)'"
-                  >archive</mat-icon
-                >
-              }
-            </div>
-            <mat-card-header>
-              <div
-                mat-card-avatar
-                class="flex items-center justify-center mat-font-title-sm"
-                [class.mat-bg-primary-container]="!user.archived"
-                [class.mat-text-on-primary-container]="!user.archived"
-                [class.mat-bg-disabled]="user.archived"
-                [class.mat-text-on-surface-variant]="user.archived"
-                aria-hidden="true"
+    <mat-nav-list>
+      @for (user of visibleUsers(); track user.id; let last = $last) {
+        <a mat-list-item [routerLink]="['/admin/users', user.id]">
+          <app-user-avatar matListItemAvatar [name]="user.name" size="sm" />
+          <span matListItemTitle [class.mat-text-on-surface-variant]="user.archived">{{
+            user.name
+          }}</span>
+          <span matListItemLine class="mat-text-on-surface-variant">{{
+            user.isAdmin ? 'Administrator' : 'Member'
+          }}</span>
+          <div matListItemMeta class="flex items-center gap-1 pr-2">
+            @if (user.mfaEnabled) {
+              <mat-icon
+                class="mat-text-on-surface-variant"
+                aria-label="MFA enabled"
+                matTooltip="MFA enabled"
+                >security</mat-icon
               >
-                {{ initials(user.name) }}
-              </div>
-              <mat-card-title
-                class="truncate mat-font-title-md"
-                [style.color]="user.archived ? 'var(--mat-sys-outline)' : null"
-                >{{ user.name }}</mat-card-title
+            }
+            @if (user.archived) {
+              <mat-icon
+                class="mat-text-on-surface-variant"
+                aria-label="Archived"
+                matTooltip="Archived"
+                >archive</mat-icon
               >
-              <mat-card-subtitle
-                class="truncate mat-font-body-sm"
-                [style.color]="user.archived ? 'var(--mat-sys-outline)' : null"
-                >{{ user.isAdmin ? 'Administrator' : 'Member' }}</mat-card-subtitle
-              >
-            </mat-card-header>
-          </mat-card>
+            }
+          </div>
         </a>
       }
-    </div>
+    </mat-nav-list>
   }
 </div>
