@@ -3,5 +3,14 @@
 
 import { AdminUserListItem } from '../models/admin-user-list-item';
 export interface ListAdminUsersResponse {
-  users: Array<AdminUserListItem>;
+
+  /**
+   * Array of users
+   */
+  items: Array<AdminUserListItem>;
+
+  /**
+   * Total number of users (before pagination)
+   */
+  total: number;
 }

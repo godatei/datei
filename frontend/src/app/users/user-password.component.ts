@@ -11,7 +11,7 @@ import {
   passwordConfirmSchema,
 } from '~/frontend/auth/password-confirm/password-confirm.component';
 import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
-import type { UserDataPort } from './user-data.port';
+import type { BaseUserPort } from './user-data.port';
 
 @Component({
   selector: 'app-user-password',
@@ -31,7 +31,7 @@ import type { UserDataPort } from './user-data.port';
 export class UserPasswordComponent {
   private readonly snackBar = inject(MatSnackBar);
 
-  readonly port = input.required<UserDataPort>();
+  readonly port = input.required<BaseUserPort>();
   /** When true the form requires the user's existing password (self-service). */
   readonly requireCurrentPassword = input.required<boolean>();
 

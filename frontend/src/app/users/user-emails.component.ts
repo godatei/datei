@@ -11,7 +11,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
 import type { UserEmail } from '~/api/models/user-email';
 import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
-import type { UserDataPort } from './user-data.port';
+import type { BaseUserPort } from './user-data.port';
 
 @Component({
   selector: 'app-user-emails',
@@ -33,7 +33,7 @@ import type { UserDataPort } from './user-data.port';
 export class UserEmailsComponent implements OnInit {
   private readonly snackBar = inject(MatSnackBar);
 
-  readonly port = input.required<UserDataPort>();
+  readonly port = input.required<BaseUserPort>();
 
   readonly emails = signal<UserEmail[]>([]);
   readonly loading = signal(false);

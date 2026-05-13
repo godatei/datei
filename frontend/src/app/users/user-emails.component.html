@@ -45,13 +45,13 @@
         <mat-label>Add email address</mat-label>
         <input matInput [formField]="addEmailForm.email" type="email" />
         @let errs = addEmailForm.email().errors();
-        @if (errs.length > 0) {
-          @if (errs[0].kind === 'required') {
-            <mat-error>Email is required</mat-error>
-          } @else if (errs[0].kind === 'email') {
-            <mat-error>Enter a valid email address</mat-error>
+        <mat-error>
+          @if (errs[0]?.kind === 'email') {
+            Enter a valid email address
+          } @else if (errs[0]?.kind === 'required') {
+            Email is required
           }
-        }
+        </mat-error>
       </mat-form-field>
       <button
         mat-flat-button

@@ -90,7 +90,11 @@ SELECT
 FROM user_account_projection ua
 LEFT JOIN user_account_email_projection ue
   ON ue.user_account_id = ua.id AND ue.is_primary = true
-ORDER BY (ua.archived_at IS NOT NULL), NOT ua.is_admin, ua.name ASC;
+ORDER BY (ua.archived_at IS NOT NULL), NOT ua.is_admin, ua.name ASC
+LIMIT $1 OFFSET $2;
+
+-- name: CountUserAccountProjections :one
+SELECT COUNT(*) FROM user_account_projection;
 
 -- name: GetUserAccountByEmail :one
 SELECT ua.* FROM user_account_projection ua

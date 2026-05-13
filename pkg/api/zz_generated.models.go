@@ -61,8 +61,13 @@ type AdminResetPasswordRequest struct {
 
 // AdminUpdateUserRequest defines model for AdminUpdateUserRequest.
 type AdminUpdateUserRequest struct {
+	// Enabled When false the account is archived (disabled). Setting true unarchives it.
+	Enabled *bool   `json:"enabled,omitempty"`
 	IsAdmin *bool   `json:"isAdmin,omitempty"`
 	Name    *string `json:"name,omitempty"`
+
+	// PrimaryEmailId Promote this email to be the user's primary email.
+	PrimaryEmailId *openapi_types.UUID `json:"primaryEmailId,omitempty"`
 }
 
 // AdminUserListItem defines model for AdminUserListItem.
@@ -263,7 +268,11 @@ type LinkDetail struct {
 
 // ListAdminUsersResponse defines model for ListAdminUsersResponse.
 type ListAdminUsersResponse struct {
-	Users []AdminUserListItem `json:"users"`
+	// Items Array of users
+	Items []AdminUserListItem `json:"items"`
+
+	// Total Total number of users (before pagination)
+	Total int `json:"total"`
 }
 
 // ListDateiResponse defines model for ListDateiResponse.
@@ -514,6 +523,15 @@ type bearerHttpAuthenticationContextKey string
 
 // publicLinkBearerAuthenticationContextKey is the context key for publicLinkBearerAuthentication security scheme
 type publicLinkBearerAuthenticationContextKey string
+
+// ListUsersAdminParams defines parameters for ListUsersAdmin.
+type ListUsersAdminParams struct {
+	// Limit Maximum number of results
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of results to skip
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
 
 // ListDateiParams defines parameters for ListDatei.
 type ListDateiParams struct {

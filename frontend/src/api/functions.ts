@@ -55,14 +55,8 @@ export type { AddUserEmailAdmin$Params as AddUserEmailAdmin$Params } from './fn/
 export { addUserEmailAdmin as addUserEmailAdmin } from './fn/operations/add-user-email-admin';
 export type { RemoveUserEmailAdmin$Params as RemoveUserEmailAdmin$Params } from './fn/operations/remove-user-email-admin';
 export { removeUserEmailAdmin as removeUserEmailAdmin } from './fn/operations/remove-user-email-admin';
-export type { SetPrimaryUserEmailAdmin$Params as SetPrimaryUserEmailAdmin$Params } from './fn/operations/set-primary-user-email-admin';
-export { setPrimaryUserEmailAdmin as setPrimaryUserEmailAdmin } from './fn/operations/set-primary-user-email-admin';
 export type { DisableUserMfaAdmin$Params as DisableUserMfaAdmin$Params } from './fn/operations/disable-user-mfa-admin';
 export { disableUserMfaAdmin as disableUserMfaAdmin } from './fn/operations/disable-user-mfa-admin';
-export type { ArchiveUserAdmin$Params as ArchiveUserAdmin$Params } from './fn/operations/archive-user-admin';
-export { archiveUserAdmin as archiveUserAdmin } from './fn/operations/archive-user-admin';
-export type { UnarchiveUserAdmin$Params as UnarchiveUserAdmin$Params } from './fn/operations/unarchive-user-admin';
-export { unarchiveUserAdmin as unarchiveUserAdmin } from './fn/operations/unarchive-user-admin';
 export type { ListTrash$Params as ListTrash$Params } from './fn/operations/list-trash';
 export { listTrash as listTrash } from './fn/operations/list-trash';
 export type { ListTrashChildren$Params as ListTrashChildren$Params } from './fn/operations/list-trash-children';

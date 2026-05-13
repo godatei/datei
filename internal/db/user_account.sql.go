@@ -24,6 +24,17 @@ func (q *Queries) CountUnusedMFARecoveryCodes(ctx context.Context, userAccountID
 	return column_1, err
 }
 
+const countUserAccountProjections = `-- name: CountUserAccountProjections :one
+SELECT COUNT(*) FROM user_account_projection
+`
+
+func (q *Queries) CountUserAccountProjections(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countUserAccountProjections)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const deleteAllMFARecoveryCodesProjection = `-- name: DeleteAllMFARecoveryCodesProjection :exec
 DELETE FROM user_account_mfa_recovery_code_projection
 WHERE user_account_id = $1
@@ -322,7 +333,13 @@ FROM user_account_projection ua
 LEFT JOIN user_account_email_projection ue
   ON ue.user_account_id = ua.id AND ue.is_primary = true
 ORDER BY (ua.archived_at IS NOT NULL), NOT ua.is_admin, ua.name ASC
+LIMIT $1 OFFSET $2
 `
+
+type ListUserAccountProjectionsParams struct {
+	Limit  int32 `db:"limit"`
+	Offset int32 `db:"offset"`
+}
 
 type ListUserAccountProjectionsRow struct {
 	ID                     uuid.UUID  `db:"id"`
@@ -336,8 +353,8 @@ type ListUserAccountProjectionsRow struct {
 	PrimaryEmailVerifiedAt *time.Time `db:"primary_email_verified_at"`
 }
 
-func (q *Queries) ListUserAccountProjections(ctx context.Context) ([]ListUserAccountProjectionsRow, error) {
-	rows, err := q.db.Query(ctx, listUserAccountProjections)
+func (q *Queries) ListUserAccountProjections(ctx context.Context, arg ListUserAccountProjectionsParams) ([]ListUserAccountProjectionsRow, error) {
+	rows, err := q.db.Query(ctx, listUserAccountProjections, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

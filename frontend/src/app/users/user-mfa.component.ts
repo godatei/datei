@@ -9,7 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
 import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
-import type { MfaSetupData, UserDataPort } from './user-data.port';
+import type { MfaSetupData, SelfUserPort } from './user-data.port';
 
 @Component({
   selector: 'app-user-mfa',
@@ -30,7 +30,7 @@ export class UserMfaComponent {
   private readonly snackBar = inject(MatSnackBar);
   private readonly clipboard = inject(Clipboard);
 
-  readonly port = input.required<UserDataPort>();
+  readonly port = input.required<SelfUserPort>();
   readonly mfaEnabled = input.required<boolean>();
   readonly changed = output<void>();
 

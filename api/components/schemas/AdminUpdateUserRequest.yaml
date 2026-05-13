@@ -4,3 +4,10 @@ properties:
     type: string
   isAdmin:
     type: boolean
+  enabled:
+    type: boolean
+    description: When false the account is archived (disabled). Setting true unarchives it.
+  primaryEmailId:
+    type: string
+    format: uuid
+    description: Promote this email to be the user's primary email.

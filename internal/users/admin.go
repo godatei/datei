@@ -14,13 +14,39 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (s *UserService) ListUsers(ctx context.Context) ([]db.ListUserAccountProjectionsRow, error) {
+type ListUsersInput struct {
+	Limit  int
+	Offset int
+}
+
+type ListUsersOutput struct {
+	Items []db.ListUserAccountProjectionsRow
+	Total int
+}
+
+func (s *UserService) ListUsers(ctx context.Context, input ListUsersInput) (*ListUsersOutput, error) {
 	q := s.queries()
-	rows, err := q.ListUserAccountProjections(ctx)
+
+	limit := int32(input.Limit)
+	if limit <= 0 {
+		limit = 100
+	}
+	offset := int32(max(input.Offset, 0))
+
+	total, err := q.CountUserAccountProjections(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to count users: %w", err)
+	}
+
+	rows, err := q.ListUserAccountProjections(ctx, db.ListUserAccountProjectionsParams{
+		Limit:  limit,
+		Offset: offset,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list users: %w", err)
 	}
-	return rows, nil
+
+	return &ListUsersOutput{Items: rows, Total: int(total)}, nil
 }
 
 func (s *UserService) GetUserForAdmin(
@@ -102,12 +128,36 @@ func (s *UserService) AdminCreateUser(
 }
 
 type AdminUpdateUserInput struct {
-	UserID  uuid.UUID
-	Name    *string
-	IsAdmin *bool
+	UserID         uuid.UUID
+	Name           *string
+	IsAdmin        *bool
+	Enabled        *bool
+	PrimaryEmailID *uuid.UUID
 }
 
 func (s *UserService) AdminUpdateUser(ctx context.Context, input AdminUpdateUserInput) error {
+	q := s.queries()
+
+	// Validate primaryEmailId belongs to this user before loading the aggregate,
+	// and find the current primary so the aggregate command has both IDs.
+	var currentPrimaryID uuid.UUID
+	if input.PrimaryEmailID != nil {
+		email, err := q.GetEmailByID(ctx, db.GetEmailByIDParams{ID: *input.PrimaryEmailID, UserAccountID: input.UserID})
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return dateierrors.ErrNotFound
+			}
+			return fmt.Errorf("failed to get email: %w", err)
+		}
+		if !email.IsPrimary {
+			primary, err := q.GetPrimaryEmailForUser(ctx, input.UserID)
+			if err != nil {
+				return fmt.Errorf("failed to get primary email: %w", err)
+			}
+			currentPrimaryID = primary.ID
+		}
+	}
+
 	agg, err := s.repository.LoadByID(ctx, input.UserID)
 	if err != nil {
 		return fmt.Errorf("failed to load user: %w", err)
@@ -121,6 +171,22 @@ func (s *UserService) AdminUpdateUser(ctx context.Context, input AdminUpdateUser
 	}
 	if input.IsAdmin != nil {
 		if err := agg.SetAdmin(*input.IsAdmin, now); err != nil {
+			return dateierrors.ErrInvalidInput
+		}
+	}
+	if input.Enabled != nil {
+		if *input.Enabled {
+			if err := agg.Unarchive(now); err != nil {
+				return dateierrors.ErrInvalidInput
+			}
+		} else {
+			if err := agg.Archive(now); err != nil {
+				return dateierrors.ErrInvalidInput
+			}
+		}
+	}
+	if input.PrimaryEmailID != nil && currentPrimaryID != uuid.Nil {
+		if err := agg.SetPrimaryEmail(currentPrimaryID, *input.PrimaryEmailID, now); err != nil {
 			return dateierrors.ErrInvalidInput
 		}
 	}
@@ -218,36 +284,6 @@ func (s *UserService) AdminRemoveEmail(ctx context.Context, userID, emailID uuid
 	return nil
 }
 
-func (s *UserService) AdminSetPrimaryEmail(ctx context.Context, userID, emailID uuid.UUID) error {
-	q := s.queries()
-	email, err := q.GetEmailByID(ctx, db.GetEmailByIDParams{ID: emailID, UserAccountID: userID})
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return dateierrors.ErrNotFound
-		}
-		return fmt.Errorf("failed to get email: %w", err)
-	}
-	if email.IsPrimary {
-		return nil
-	}
-	primary, err := q.GetPrimaryEmailForUser(ctx, userID)
-	if err != nil {
-		return fmt.Errorf("failed to get primary email: %w", err)
-	}
-
-	agg, err := s.repository.LoadByID(ctx, userID)
-	if err != nil {
-		return fmt.Errorf("failed to load user: %w", err)
-	}
-	if err := agg.SetPrimaryEmail(primary.ID, emailID, time.Now()); err != nil {
-		return dateierrors.ErrInvalidInput
-	}
-	if err := s.repository.Save(ctx, agg); err != nil {
-		return fmt.Errorf("failed to save user: %w", err)
-	}
-	return nil
-}
-
 func (s *UserService) AdminDisableMFA(ctx context.Context, userID uuid.UUID) error {
 	q := s.queries()
 	user, err := q.GetUserAccountByID(ctx, userID)
@@ -270,34 +306,6 @@ func (s *UserService) AdminDisableMFA(ctx context.Context, userID uuid.UUID) err
 	}
 	if err := s.repository.Save(ctx, agg); err != nil {
 		return fmt.Errorf("failed to disable MFA: %w", err)
-	}
-	return nil
-}
-
-func (s *UserService) AdminArchiveUser(ctx context.Context, userID uuid.UUID) error {
-	agg, err := s.repository.LoadByID(ctx, userID)
-	if err != nil {
-		return fmt.Errorf("failed to load user: %w", err)
-	}
-	if err := agg.Archive(time.Now()); err != nil {
-		return dateierrors.ErrInvalidInput
-	}
-	if err := s.repository.Save(ctx, agg); err != nil {
-		return fmt.Errorf("failed to save user: %w", err)
-	}
-	return nil
-}
-
-func (s *UserService) AdminUnarchiveUser(ctx context.Context, userID uuid.UUID) error {
-	agg, err := s.repository.LoadByID(ctx, userID)
-	if err != nil {
-		return fmt.Errorf("failed to load user: %w", err)
-	}
-	if err := agg.Unarchive(time.Now()); err != nil {
-		return dateierrors.ErrInvalidInput
-	}
-	if err := s.repository.Save(ctx, agg); err != nil {
-		return fmt.Errorf("failed to save user: %w", err)
 	}
 	return nil
 }

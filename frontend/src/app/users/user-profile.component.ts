@@ -15,7 +15,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
 import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
-import type { UserDataPort } from './user-data.port';
+import type { BaseUserPort } from './user-data.port';
 
 @Component({
   selector: 'app-user-profile',
@@ -34,7 +34,7 @@ import type { UserDataPort } from './user-data.port';
 export class UserProfileComponent {
   private readonly snackBar = inject(MatSnackBar);
 
-  readonly port = input.required<UserDataPort>();
+  readonly port = input.required<BaseUserPort>();
   readonly name = input.required<string>();
   readonly changed = output<void>();
 

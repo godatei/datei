@@ -53,12 +53,8 @@ paths:
     $ref: ./paths/admin_users_id_emails.yaml
   /api/v1/admin/users/{id}/emails/{emailId}:
     $ref: ./paths/admin_users_id_emails_emailid.yaml
-  /api/v1/admin/users/{id}/emails/{emailId}/primary:
-    $ref: ./paths/admin_users_id_emails_emailid_primary.yaml
   /api/v1/admin/users/{id}/mfa/disable:
     $ref: ./paths/admin_users_id_mfa_disable.yaml
-  /api/v1/admin/users/{id}/archive:
-    $ref: ./paths/admin_users_id_archive.yaml
 
   # Datei (authentication required)
   /api/v1/trash:

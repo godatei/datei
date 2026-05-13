@@ -10,11 +10,23 @@ import { RequestBuilder } from '../../request-builder';
 import { ListAdminUsersResponse } from '../../models/list-admin-users-response';
 
 export interface ListUsersAdmin$Params {
+
+/**
+ * Maximum number of results
+ */
+  limit?: number;
+
+/**
+ * Number of results to skip
+ */
+  offset?: number;
 }
 
 export function listUsersAdmin(http: HttpClient, rootUrl: string, params?: ListUsersAdmin$Params, context?: HttpContext): Observable<StrictHttpResponse<ListAdminUsersResponse>> {
   const rb = new RequestBuilder(rootUrl, listUsersAdmin.PATH, 'get');
   if (params) {
+    rb.query('limit', params.limit, {});
+    rb.query('offset', params.offset, {});
   }
 
   return http.request(

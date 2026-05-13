@@ -6,18 +6,17 @@ import (
 
 	"github.com/godatei/datei/internal/authn"
 	"github.com/godatei/datei/internal/dateierrors"
-	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/users"
 	"github.com/godatei/datei/pkg/api"
 )
 
 func (s *server) requireAdmin(ctx context.Context) (authn.AuthInfo, error) {
-	return authn.RequireAdmin(ctx, db.New(s.pool))
+	return authn.RequireAdmin(ctx)
 }
 
 // ListUsersAdmin implements [StrictServerInterface].
 func (s *server) ListUsersAdmin(
-	ctx context.Context, _ ListUsersAdminRequestObject,
+	ctx context.Context, request ListUsersAdminRequestObject,
 ) (ListUsersAdminResponseObject, error) {
 	if _, err := s.requireAdmin(ctx); err != nil {
 		if errors.Is(err, dateierrors.ErrForbidden) {
@@ -26,16 +25,28 @@ func (s *server) ListUsersAdmin(
 		return nil, err
 	}
 
-	rows, err := s.userService.ListUsers(ctx)
+	limit := 0
+	offset := 0
+	if request.Params.Limit != nil && *request.Params.Limit > 0 {
+		limit = *request.Params.Limit
+	}
+	if request.Params.Offset != nil && *request.Params.Offset > 0 {
+		offset = *request.Params.Offset
+	}
+
+	result, err := s.userService.ListUsers(ctx, users.ListUsersInput{Limit: limit, Offset: offset})
 	if err != nil {
 		return nil, err
 	}
 
-	items := make([]api.AdminUserListItem, len(rows))
-	for i := range rows {
-		items[i] = users.ToAdminUserListItem(rows[i])
+	items := make([]api.AdminUserListItem, len(result.Items))
+	for i := range result.Items {
+		items[i] = users.ToAdminUserListItem(result.Items[i])
 	}
-	return ListUsersAdmin200JSONResponse(api.ListAdminUsersResponse{Users: items}), nil
+	return ListUsersAdmin200JSONResponse(api.ListAdminUsersResponse{
+		Items: items,
+		Total: result.Total,
+	}), nil
 }
 
 // CreateUserAdmin implements [StrictServerInterface].
@@ -98,14 +109,23 @@ func (s *server) UpdateUserAdmin(
 	}
 
 	// An admin must not be able to demote themselves — they would lose access mid-call
-	// and could lock the system out if they're the last admin.
-	if request.Body.IsAdmin != nil && !*request.Body.IsAdmin && auth.UserID == request.Id {
-		return UpdateUserAdmin400Response{}, nil
+	// and could lock the system out if they're the last admin. The same reasoning
+	// applies to disabling their own account.
+	if auth.UserID == request.Id {
+		if request.Body.IsAdmin != nil && !*request.Body.IsAdmin {
+			return UpdateUserAdmin400Response{}, nil
+		}
+		if request.Body.Enabled != nil && !*request.Body.Enabled {
+			return UpdateUserAdmin400Response{}, nil
+		}
 	}
 
-	input := users.AdminUpdateUserInput{UserID: request.Id, Name: request.Body.Name}
-	if request.Body.IsAdmin != nil {
-		input.IsAdmin = request.Body.IsAdmin
+	input := users.AdminUpdateUserInput{
+		UserID:         request.Id,
+		Name:           request.Body.Name,
+		IsAdmin:        request.Body.IsAdmin,
+		Enabled:        request.Body.Enabled,
+		PrimaryEmailID: request.Body.PrimaryEmailId,
 	}
 	if err := s.userService.AdminUpdateUser(ctx, input); err != nil {
 		if errors.Is(err, dateierrors.ErrNotFound) {
@@ -208,29 +228,6 @@ func (s *server) RemoveUserEmailAdmin(
 	return RemoveUserEmailAdmin204Response{}, nil
 }
 
-// SetPrimaryUserEmailAdmin implements [StrictServerInterface].
-func (s *server) SetPrimaryUserEmailAdmin(
-	ctx context.Context, request SetPrimaryUserEmailAdminRequestObject,
-) (SetPrimaryUserEmailAdminResponseObject, error) {
-	if _, err := s.requireAdmin(ctx); err != nil {
-		if errors.Is(err, dateierrors.ErrForbidden) {
-			return SetPrimaryUserEmailAdmin403Response{}, nil
-		}
-		return nil, err
-	}
-
-	if err := s.userService.AdminSetPrimaryEmail(ctx, request.Id, request.EmailId); err != nil {
-		if errors.Is(err, dateierrors.ErrNotFound) {
-			return SetPrimaryUserEmailAdmin404Response{}, nil
-		}
-		if errors.Is(err, dateierrors.ErrInvalidInput) {
-			return SetPrimaryUserEmailAdmin400Response{}, nil
-		}
-		return nil, err
-	}
-	return SetPrimaryUserEmailAdmin204Response{}, nil
-}
-
 // DisableUserMFAAdmin implements [StrictServerInterface].
 func (s *server) DisableUserMFAAdmin(
 	ctx context.Context, request DisableUserMFAAdminRequestObject,
@@ -252,42 +249,4 @@ func (s *server) DisableUserMFAAdmin(
 		return nil, err
 	}
 	return DisableUserMFAAdmin204Response{}, nil
-}
-
-// ArchiveUserAdmin implements [StrictServerInterface].
-func (s *server) ArchiveUserAdmin(
-	ctx context.Context, request ArchiveUserAdminRequestObject,
-) (ArchiveUserAdminResponseObject, error) {
-	if _, err := s.requireAdmin(ctx); err != nil {
-		if errors.Is(err, dateierrors.ErrForbidden) {
-			return ArchiveUserAdmin403Response{}, nil
-		}
-		return nil, err
-	}
-
-	if info, err := authn.FromContext(ctx); err == nil && info.UserID == request.Id {
-		return ArchiveUserAdmin403Response{}, nil
-	}
-
-	if err := s.userService.AdminArchiveUser(ctx, request.Id); err != nil {
-		return nil, err
-	}
-	return ArchiveUserAdmin204Response{}, nil
-}
-
-// UnarchiveUserAdmin implements [StrictServerInterface].
-func (s *server) UnarchiveUserAdmin(
-	ctx context.Context, request UnarchiveUserAdminRequestObject,
-) (UnarchiveUserAdminResponseObject, error) {
-	if _, err := s.requireAdmin(ctx); err != nil {
-		if errors.Is(err, dateierrors.ErrForbidden) {
-			return UnarchiveUserAdmin403Response{}, nil
-		}
-		return nil, err
-	}
-
-	if err := s.userService.AdminUnarchiveUser(ctx, request.Id); err != nil {
-		return nil, err
-	}
-	return UnarchiveUserAdmin204Response{}, nil
 }

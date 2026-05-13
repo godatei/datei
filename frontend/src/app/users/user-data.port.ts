@@ -2,12 +2,10 @@ import { from, map, Observable, tap } from 'rxjs';
 import { Api } from '~/api/api';
 import {
   addUserEmailAdmin,
-  disableUserMfaAdmin,
   getUserAdmin,
   listUserEmailsAdmin,
   removeUserEmailAdmin,
   resetUserPasswordAdmin,
-  setPrimaryUserEmailAdmin,
   updateUserAdmin,
 } from '~/api/functions';
 import type { UserEmail } from '~/api/models/user-email';
@@ -26,7 +24,7 @@ export interface MfaSetupData {
   qrCodeUrl: string;
 }
 
-export interface UserDataPort {
+export interface BaseUserPort {
   load(): Observable<UserSnapshot>;
   listEmails(): Observable<UserEmail[]>;
   updateName(name: string): Observable<void>;
@@ -34,13 +32,15 @@ export interface UserDataPort {
   addEmail(email: string): Observable<void>;
   removeEmail(emailId: string): Observable<void>;
   setPrimaryEmail(emailId: string): Observable<void>;
-  // MFA self flow — only used by `app-user-mfa`. Admin-side disable lives in `app-admin-mfa`.
+}
+
+export interface SelfUserPort extends BaseUserPort {
   startMfaSetup(): Observable<MfaSetupData>;
   enableMfa(code: string): Observable<{ recoveryCodes: string[] }>;
   disableMfa(password: string): Observable<void>;
 }
 
-export function createSelfUserPort(settings: SettingsService, auth: AuthService): UserDataPort {
+export function createSelfUserPort(settings: SettingsService, auth: AuthService): SelfUserPort {
   return {
     load: () =>
       settings.getCurrentUser().pipe(
@@ -68,7 +68,7 @@ export function createSelfUserPort(settings: SettingsService, auth: AuthService)
   };
 }
 
-export function createAdminUserPort(api: Api, userId: string): UserDataPort {
+export function createAdminUserPort(api: Api, userId: string): BaseUserPort {
   return {
     load: () =>
       from(api.invoke(getUserAdmin, { id: userId })).pipe(
@@ -95,16 +95,8 @@ export function createAdminUserPort(api: Api, userId: string): UserDataPort {
     removeEmail: (emailId) =>
       from(api.invoke(removeUserEmailAdmin, { id: userId, emailId })).pipe(map(() => undefined)),
     setPrimaryEmail: (emailId) =>
-      from(api.invoke(setPrimaryUserEmailAdmin, { id: userId, emailId })).pipe(
+      from(api.invoke(updateUserAdmin, { id: userId, body: { primaryEmailId: emailId } })).pipe(
         map(() => undefined),
       ),
-    startMfaSetup: () => {
-      throw new Error('startMfaSetup is not available in admin mode');
-    },
-    enableMfa: () => {
-      throw new Error('enableMfa is not available in admin mode');
-    },
-    disableMfa: () =>
-      from(api.invoke(disableUserMfaAdmin, { id: userId })).pipe(map(() => undefined)),
   };
 }
