@@ -43,7 +43,7 @@
     "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@angular-eslint/builder": "21.3.1",
+    "@angular-eslint/builder": "21.4.0",
     "@angular/build": "^21.1.4",
     "@angular/cli": "^21.1.4",
     "@angular/compiler-cli": "^21.1.0",
@@ -51,7 +51,7 @@
     "@eslint/js": "^10.0.0",
     "@redocly/cli": "^2.19.2",
     "@tailwindcss/postcss": "^4.2.4",
-    "angular-eslint": "21.3.1",
+    "angular-eslint": "21.4.0",
     "eslint": "^10.0.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
