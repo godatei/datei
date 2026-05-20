@@ -291,13 +291,13 @@ export class DashboardComponent {
         this.snackBar.open(
           `Added ${added} ${added === 1 ? 'item' : 'items'} to "${link.name}"`,
           'OK',
-          { duration: 3000 },
+          { duration: snackSuccessDuration },
         );
       } else {
         this.snackBar.open(
           `Added ${added} of ${results.length} items; ${failed} failed`,
           'Dismiss',
-          { duration: 4000 },
+          { duration: snackErrorDuration },
         );
       }
       this.selection().clear();

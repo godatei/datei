@@ -20,6 +20,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { Api } from '~/api/api';
 import { getLink, listLinks, revokeLink, rotateLinkKey } from '~/api/functions';
 import type { Link } from '~/api/models/link';
+import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
 import { RelativeDatePipe } from '~/frontend/pipes/relative-date.pipe';
 import {
   LinkFormDialogComponent,
@@ -78,9 +79,9 @@ export class LinksListComponent {
     });
     if (wasRevealed) return;
     if (this.clipboard.copy(link.code)) {
-      this.snackBar.open('Code copied', 'OK', { duration: 2000 });
+      this.snackBar.open('Code copied', 'OK', { duration: snackSuccessDuration });
     } else {
-      this.snackBar.open('Failed to copy', 'Dismiss', { duration: 3000 });
+      this.snackBar.open('Failed to copy', 'Dismiss', { duration: snackErrorDuration });
     }
   }
 
@@ -121,9 +122,9 @@ export class LinksListComponent {
 
   protected copyShareUrl(link: Link): void {
     if (this.clipboard.copy(this.shareUrl(link))) {
-      this.snackBar.open('Share URL copied', 'OK', { duration: 2000 });
+      this.snackBar.open('Share URL copied', 'OK', { duration: snackSuccessDuration });
     } else {
-      this.snackBar.open('Failed to copy', 'Dismiss', { duration: 3000 });
+      this.snackBar.open('Failed to copy', 'Dismiss', { duration: snackErrorDuration });
     }
   }
 
@@ -133,7 +134,7 @@ export class LinksListComponent {
       detail = await this.api.invoke(getLink, { id: link.id });
     } catch (e) {
       console.error(e);
-      this.snackBar.open('Failed to open link', 'Dismiss', { duration: 4000 });
+      this.snackBar.open('Failed to open link', 'Dismiss', { duration: snackErrorDuration });
       return;
     }
     const ref = this.dialog.open(LinkFormDialogComponent, {
@@ -159,7 +160,7 @@ export class LinksListComponent {
       });
     } catch (e) {
       console.error(e);
-      this.snackBar.open('Failed to regenerate link', 'Dismiss', { duration: 4000 });
+      this.snackBar.open('Failed to regenerate link', 'Dismiss', { duration: snackErrorDuration });
     }
   }
 
@@ -167,10 +168,10 @@ export class LinksListComponent {
     try {
       await this.api.invoke(revokeLink, { id: link.id });
       this.refresh.update((v) => v + 1);
-      this.snackBar.open(`Revoked "${link.name}"`, 'OK', { duration: 3000 });
+      this.snackBar.open(`Revoked "${link.name}"`, 'OK', { duration: snackSuccessDuration });
     } catch (e) {
       console.error(e);
-      this.snackBar.open('Failed to revoke link', 'Dismiss', { duration: 4000 });
+      this.snackBar.open('Failed to revoke link', 'Dismiss', { duration: snackErrorDuration });
     }
   }
 }
