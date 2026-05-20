@@ -206,7 +206,7 @@ func (a *Aggregate) Revoke(now time.Time) error {
 		return errors.New("cannot revoke: link not created")
 	}
 	if a.RevokedAt != nil {
-		return errors.New("link already revoked")
+		return fmt.Errorf("link already revoked: %w", dateierrors.ErrLinkRevoked)
 	}
 
 	a.recordEvent(LinkRevokedEvent{
@@ -221,7 +221,7 @@ func (a *Aggregate) checkActive(action string) error {
 		return errors.New("cannot " + action + ": link not created")
 	}
 	if a.RevokedAt != nil {
-		return errors.New("cannot " + action + ": link revoked")
+		return fmt.Errorf("cannot %s: %w", action, dateierrors.ErrLinkRevoked)
 	}
 	return nil
 }

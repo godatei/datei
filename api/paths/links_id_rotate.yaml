@@ -17,5 +17,7 @@ post:
         application/json:
           schema:
             $ref: '../components/schemas/LinkDetail.yaml'
+    '403':
+      description: Link revoked
     '404':
       description: Link not found

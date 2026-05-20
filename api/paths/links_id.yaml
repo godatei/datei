@@ -47,6 +47,8 @@ patch:
             $ref: '../components/schemas/LinkDetail.yaml'
     '400':
       description: Invalid request
+    '403':
+      description: Link revoked
     '404':
       description: Link not found
 
@@ -65,5 +67,7 @@ delete:
   responses:
     '204':
       description: Link revoked
+    '403':
+      description: Link already revoked
     '404':
       description: Link not found

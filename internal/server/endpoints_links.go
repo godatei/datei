@@ -107,6 +107,8 @@ func (s *server) UpdateLink(
 		switch {
 		case errors.Is(err, dateierrors.ErrLinkNotFound):
 			return UpdateLink404Response{}, nil
+		case errors.Is(err, dateierrors.ErrLinkRevoked):
+			return UpdateLink403Response{}, nil
 		case errors.Is(err, dateierrors.ErrInvalidInput):
 			return UpdateLink400Response{}, nil
 		default:
@@ -123,10 +125,14 @@ func (s *server) RevokeLink(
 ) (RevokeLinkResponseObject, error) {
 	err := s.linkService.RevokeLink(ctx, request.Id)
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrLinkNotFound) {
+		switch {
+		case errors.Is(err, dateierrors.ErrLinkNotFound):
 			return RevokeLink404Response{}, nil
+		case errors.Is(err, dateierrors.ErrLinkRevoked):
+			return RevokeLink403Response{}, nil
+		default:
+			return nil, err
 		}
-		return nil, err
 	}
 	return RevokeLink204Response{}, nil
 }
@@ -138,10 +144,14 @@ func (s *server) RotateLinkKey(
 ) (RotateLinkKeyResponseObject, error) {
 	result, err := s.linkService.RotateKey(ctx, request.Id)
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrLinkNotFound) {
+		switch {
+		case errors.Is(err, dateierrors.ErrLinkNotFound):
 			return RotateLinkKey404Response{}, nil
+		case errors.Is(err, dateierrors.ErrLinkRevoked):
+			return RotateLinkKey403Response{}, nil
+		default:
+			return nil, err
 		}
-		return nil, err
 	}
 	return RotateLinkKey200JSONResponse(*result), nil
 }
@@ -160,6 +170,8 @@ func (s *server) AddDateiToLink(
 		switch {
 		case errors.Is(err, dateierrors.ErrLinkNotFound):
 			return AddDateiToLink404Response{}, nil
+		case errors.Is(err, dateierrors.ErrLinkRevoked):
+			return AddDateiToLink403Response{}, nil
 		case errors.Is(err, dateierrors.ErrLinkDateiAlreadyAdded):
 			return AddDateiToLink409Response{}, nil
 		case errors.Is(err, dateierrors.ErrInvalidInput):
@@ -181,6 +193,8 @@ func (s *server) RemoveDateiFromLink(
 		switch {
 		case errors.Is(err, dateierrors.ErrLinkNotFound):
 			return RemoveDateiFromLink404Response{}, nil
+		case errors.Is(err, dateierrors.ErrLinkRevoked):
+			return RemoveDateiFromLink403Response{}, nil
 		case errors.Is(err, dateierrors.ErrLinkDateiNotShared):
 			return RemoveDateiFromLink400Response{}, nil
 		default:

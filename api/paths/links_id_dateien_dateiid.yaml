@@ -21,5 +21,7 @@ delete:
       description: Datei removed
     '400':
       description: Datei is not part of this link
+    '403':
+      description: Link revoked
     '404':
       description: Link not found
