@@ -23,10 +23,10 @@ import { Api } from '~/api/api';
 import { downloadPublicLinkDatei, listPublicLinkDateien, unlockPublicLink } from '~/api/functions';
 import type { Datei } from '~/api/models/datei';
 import { ImagePreviewComponent } from '~/frontend/components/image-preview.component';
+import { BytesPipe } from '~/frontend/pipes/bytes.pipe';
 import { RelativeDatePipe } from '~/frontend/pipes/relative-date.pipe';
 import { PUBLIC_LINK_TOKEN } from '~/frontend/public-links/public-link-token.interceptor';
 import { triggerDownload } from 'frontend/src/util/download';
-import { formatBytes } from 'frontend/src/util/format-bytes';
 
 type ViewerState =
   | { kind: 'loading' }
@@ -48,6 +48,7 @@ type ViewerState =
     MatTableModule,
     FormField,
     FormRoot,
+    BytesPipe,
     ImagePreviewComponent,
     RelativeDatePipe,
   ],
@@ -330,8 +331,6 @@ export class PublicLinkViewerComponent {
       this.snackBar.open('Failed to download', 'Dismiss', { duration: 4000 });
     }
   }
-
-  protected readonly formatBytes = formatBytes;
 }
 
 function isImageMime(mime: string | null | undefined): boolean {

@@ -35,6 +35,7 @@ import {
 } from '~/frontend/links/link-form-dialog/link-form-dialog.component';
 import { LinkPickerDialogComponent } from '~/frontend/links/link-picker-dialog/link-picker-dialog.component';
 import type { Link } from '~/api/models/link';
+import { BytesPipe } from '~/frontend/pipes/bytes.pipe';
 import { triggerDownload } from 'frontend/src/util/download';
 import { buildShareUrl } from 'frontend/src/util/share-url';
 import { DragDropDirective, DropEvent } from './drag-drop.directive';
@@ -56,6 +57,7 @@ import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
     MatChipsModule,
     MatTableModule,
     DatePipe,
+    BytesPipe,
     ThumbnailIconComponent,
     DragDropDirective,
     DragPreviewDirective,
@@ -97,9 +99,10 @@ export class DashboardComponent {
   protected readonly displayedColumns = [
     'icon',
     'name',
+    'mimeType',
+    'size',
     'createdAt',
     'updatedAt',
-    'mimeType',
     'actions',
   ];
   protected readonly selection = viewChild.required<SelectionDirective<Datei>>(SelectionDirective);
