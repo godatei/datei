@@ -164,7 +164,7 @@ export class LinksListComponent {
     }
   }
 
-  protected async revokeLink(link: Link): Promise<void> {
+  protected async revoke(link: Link): Promise<void> {
     try {
       await this.api.invoke(revokeLink, { id: link.id });
       this.refresh.update((v) => v + 1);

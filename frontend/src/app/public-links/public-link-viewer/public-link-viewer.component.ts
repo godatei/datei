@@ -33,6 +33,7 @@ type ViewerState =
   | { kind: 'codeRequired'; invalidCode?: boolean }
   | { kind: 'ready' }
   | { kind: 'expired' }
+  | { kind: 'unavailable' }
   | { kind: 'notFound' }
   | { kind: 'error'; message: string };
 
@@ -153,10 +154,7 @@ export class PublicLinkViewerComponent {
     inject(DestroyRef).onDestroy(() => this.clearPreview());
   }
 
-  // unlockAndLoad attempts an unlock (optionally with a candidate code) and,
-  // on success, fetches the current folder. On 403 it transitions to the code
-  // prompt.
-  private async unlockAndLoad(candidateCode?: string): Promise<void> {
+  private async unlockAndLoad(candidateCode?: string, retried = false): Promise<void> {
     if (!this.key()) return;
     try {
       const result = await this.api.invoke(unlockPublicLink, {
@@ -169,14 +167,13 @@ export class PublicLinkViewerComponent {
       this.handleUnlockError(e, candidateCode !== undefined);
       return;
     }
-    await this.loadDateien(this.currentParentId());
+    await this.loadDateien(this.currentParentId(), retried);
     this.maybeAutoDescend();
   }
 
-  // If the link's root contains exactly one folder, auto-navigate into it.
-  // Runs at most once per page load and never when we're not at root.
   private maybeAutoDescend(): void {
     if (this.autoDescended) return;
+    if (this.state().kind !== 'ready') return;
     if (this.currentParentId() !== null) return;
     this.autoDescended = true;
     const items = this.items();
@@ -185,7 +182,7 @@ export class PublicLinkViewerComponent {
     }
   }
 
-  private async loadDateien(parentId: string | null): Promise<void> {
+  private async loadDateien(parentId: string | null, retried = false): Promise<void> {
     try {
       const result = await this.api.invoke(
         listPublicLinkDateien,
@@ -199,10 +196,8 @@ export class PublicLinkViewerComponent {
       this.expiresAt.set(result.expiresAt ? new Date(result.expiresAt) : null);
       this.state.set({ kind: 'ready' });
     } catch (e) {
-      if (e instanceof HttpErrorResponse && e.status === 401) {
-        // Session JWT expired or the server restarted; transparently re-unlock
-        // with the cached code (if any) so the user doesn't see a flicker.
-        await this.unlockAndLoad(this.code() === '' ? undefined : this.code());
+      if (e instanceof HttpErrorResponse && e.status === 401 && !retried) {
+        await this.unlockAndLoad(this.code() === '' ? undefined : this.code(), true);
         return;
       }
       this.handleAccessError(e);
@@ -260,13 +255,10 @@ export class PublicLinkViewerComponent {
     this.state.set({ kind: 'error', message: 'Failed to load shared files' });
   }
 
-  // Errors from list/download after a successful unlock. 403 here means the
-  // link's state changed (revoked / expired / out-of-scope datei), not "code
-  // missing"; the unlock path is the only place that produces a code-prompt.
   private handleAccessError(e: unknown): void {
     if (e instanceof HttpErrorResponse) {
       if (e.status === 403) {
-        this.state.set({ kind: 'expired' });
+        this.state.set({ kind: this.isExpired() ? 'expired' : 'unavailable' });
         return;
       }
       if (e.status === 404) {

@@ -1,5 +1,5 @@
 <nav aria-label="Breadcrumb" class="flex items-center gap-1 flex-wrap mb-2 mx-5 mat-font-label-lg">
-  <button mat-button>
+  <button mat-button aria-current="page">
     <mat-icon>link</mat-icon>
     Public links
   </button>
@@ -12,7 +12,7 @@
       (change)="onFilterChange($event.value)"
       aria-label="Filter by status"
     >
-      <mat-chip-option value="active" selected>Active</mat-chip-option>
+      <mat-chip-option value="active">Active</mat-chip-option>
       <mat-chip-option value="expired">Expired</mat-chip-option>
       <mat-chip-option value="revoked">Revoked</mat-chip-option>
     </mat-chip-listbox>
@@ -129,7 +129,7 @@
             <mat-icon>autorenew</mat-icon>
             Regenerate link
           </button>
-          <button mat-menu-item (click)="revokeLink(link)">
+          <button mat-menu-item (click)="revoke(link)">
             <mat-icon>delete</mat-icon>
             Revoke
           </button>

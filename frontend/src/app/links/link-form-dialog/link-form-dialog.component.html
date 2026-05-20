@@ -63,7 +63,6 @@
                     matListItemMeta
                     type="button"
                     (click)="removeDatei(item)"
-                    [disabled]="removingDateiId() !== null"
                     [attr.aria-label]="'Remove ' + (item.name ?? 'item')"
                   >
                     <mat-icon>close</mat-icon>

@@ -473,7 +473,7 @@ func (s *Service) loadOwnedAggregate(ctx context.Context, id uuid.UUID) (*Aggreg
 
 // lookupLinkByKey returns the projection row for unlock; it checks the link is
 // not revoked and not past its expiration. Code is verified by the caller.
-func (s *Service) lookupLinkByKey(ctx context.Context, key string) (*db.GetLinkProjectionByKeyRow, error) {
+func (s *Service) lookupLinkByKey(ctx context.Context, key string) (*db.LinkProjection, error) {
 	queries := db.New(s.db)
 	row, err := queries.GetLinkProjectionByKey(ctx, key)
 	if errors.Is(err, pgx.ErrNoRows) {

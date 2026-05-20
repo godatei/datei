@@ -8,7 +8,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { startOfTomorrow } from 'date-fns';
 import { Api } from '~/api/api';
 import { createLink, removeDateiFromLink, updateLink } from '~/api/functions';
@@ -49,7 +48,6 @@ export class LinkFormDialogComponent {
     MatDialogRef<LinkFormDialogComponent, LinkDetail | undefined>,
   );
   private readonly api = inject(Api);
-  private readonly snackBar = inject(MatSnackBar);
 
   protected readonly isEdit = this.data.mode === 'edit';
   protected readonly title = this.isEdit ? 'Edit public link' : 'Create public link';
@@ -68,10 +66,9 @@ export class LinkFormDialogComponent {
   protected readonly sharedDateien = signal<Datei[]>(
     this.editLink ? [...this.editLink.dateien] : [],
   );
-  protected readonly removingDateiId = signal<string | null>(null);
-  // Tracks whether any datei was removed; used so the parent refreshes even if
-  // the user dismisses the dialog without saving the form.
-  private modified = false;
+  // Datei IDs the user removed in this dialog session. Pending until Save —
+  // Cancel/Escape/backdrop must leave the server state unchanged.
+  private readonly pendingRemovals = signal<ReadonlySet<string>>(new Set());
 
   protected readonly model = signal<LinkFormModel>(this.initialModel());
 
@@ -146,37 +143,24 @@ export class LinkFormDialogComponent {
     }
 
     // submitEdit is only invoked when isEdit, which is equivalent to editLink !== null.
-    return this.api.invoke(updateLink, { id: this.editLink!.id, body });
+    const linkID = this.editLink!.id;
+
+    // Flush the queued removals first so the link's content set matches what
+    // the dialog has been showing the user before the metadata update lands.
+    for (const dateiId of this.pendingRemovals()) {
+      await this.api.invoke(removeDateiFromLink, { id: linkID, dateiId });
+    }
+
+    return this.api.invoke(updateLink, { id: linkID, body });
   }
 
-  protected async removeDatei(datei: Datei): Promise<void> {
+  protected removeDatei(datei: Datei): void {
     if (!this.isEdit) return;
-    if (this.removingDateiId() !== null) return;
-
-    this.removingDateiId.set(datei.id);
-    try {
-      await this.api.invoke(removeDateiFromLink, {
-        id: this.editLink!.id,
-        dateiId: datei.id,
-      });
-      this.sharedDateien.update((items) => items.filter((d) => d.id !== datei.id));
-      this.modified = true;
-    } catch (e) {
-      console.error(e);
-      this.snackBar.open('Failed to remove item from link', 'Dismiss', { duration: 4000 });
-    } finally {
-      this.removingDateiId.set(null);
-    }
+    this.sharedDateien.update((items) => items.filter((d) => d.id !== datei.id));
+    this.pendingRemovals.update((s) => new Set(s).add(datei.id));
   }
 
   protected cancel(): void {
-    // If a datei was removed, signal the parent to refresh its list by closing
-    // with the original link reference (truthy). Otherwise close with undefined
-    // so the parent does not refresh unnecessarily.
-    if (this.modified && this.isEdit) {
-      this.dialogRef.close(this.editLink!);
-    } else {
-      this.dialogRef.close(undefined);
-    }
+    this.dialogRef.close(undefined);
   }
 }

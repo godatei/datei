@@ -2,7 +2,6 @@ package link
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -51,7 +50,7 @@ func OpenAPIAuthFunc() openapi3filter.AuthenticationFunc {
 		}
 		claims, err := ParseSessionToken(tokenString)
 		if err != nil {
-			return errors.Join(err, dateierrors.ErrLinkUnauthorized)
+			return err
 		}
 		ctx := context.WithValue(r.Context(), publicLinkContextKey{}, claims)
 		*r = *r.WithContext(ctx) //nolint:contextcheck // must use r.Context(), not func ctx

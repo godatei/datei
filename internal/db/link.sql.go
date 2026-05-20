@@ -93,29 +93,12 @@ func (q *Queries) DeleteLinkDateiProjection(ctx context.Context, arg DeleteLinkD
 }
 
 const getLinkProjectionByKey = `-- name: GetLinkProjectionByKey :one
-SELECT l.id, l.owner_id, l.name, l.key, l.code, l.expires_at, l.revoked_at, l.created_at, l.updated_at, l.open_count, u.name AS owner_name
-FROM link_projection l
-INNER JOIN user_account_projection u ON u.id = l.owner_id
-WHERE l.key = $1
+SELECT id, owner_id, name, key, code, expires_at, revoked_at, created_at, updated_at, open_count FROM link_projection WHERE key = $1
 `
 
-type GetLinkProjectionByKeyRow struct {
-	ID        uuid.UUID  `db:"id"`
-	OwnerID   uuid.UUID  `db:"owner_id"`
-	Name      string     `db:"name"`
-	Key       string     `db:"key"`
-	Code      *string    `db:"code"`
-	ExpiresAt *time.Time `db:"expires_at"`
-	RevokedAt *time.Time `db:"revoked_at"`
-	CreatedAt time.Time  `db:"created_at"`
-	UpdatedAt time.Time  `db:"updated_at"`
-	OpenCount int64      `db:"open_count"`
-	OwnerName string     `db:"owner_name"`
-}
-
-func (q *Queries) GetLinkProjectionByKey(ctx context.Context, key string) (GetLinkProjectionByKeyRow, error) {
+func (q *Queries) GetLinkProjectionByKey(ctx context.Context, key string) (LinkProjection, error) {
 	row := q.db.QueryRow(ctx, getLinkProjectionByKey, key)
-	var i GetLinkProjectionByKeyRow
+	var i LinkProjection
 	err := row.Scan(
 		&i.ID,
 		&i.OwnerID,
@@ -127,7 +110,6 @@ func (q *Queries) GetLinkProjectionByKey(ctx context.Context, key string) (GetLi
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.OpenCount,
-		&i.OwnerName,
 	)
 	return i, err
 }
@@ -248,7 +230,7 @@ ancestors(id, parent_id, trashed_at, depth) AS (
   SELECT d.id, d.parent_id, d.trashed_at, 0
     FROM datei_projection d
     WHERE d.id = $2
-  UNION ALL
+  UNION
   SELECT p.id, p.parent_id, p.trashed_at, a.depth + 1
     FROM datei_projection p
     INNER JOIN ancestors a ON p.id = a.parent_id

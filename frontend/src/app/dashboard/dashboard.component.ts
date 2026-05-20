@@ -1,3 +1,4 @@
+import { Clipboard } from '@angular/cdk/clipboard';
 import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, resource, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -72,6 +73,7 @@ export class DashboardComponent {
   private readonly api = inject(Api);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
+  private readonly clipboard = inject(Clipboard);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -261,7 +263,9 @@ export class DashboardComponent {
         duration: 6000,
       });
       snackRef.onAction().subscribe(() => {
-        void navigator.clipboard.writeText(shareUrl);
+        if (!this.clipboard.copy(shareUrl)) {
+          this.snackBar.open('Failed to copy', 'Dismiss', { duration: snackErrorDuration });
+        }
       });
       this.selection().clear();
     });

@@ -94,7 +94,8 @@ func (s *server) DownloadPublicLinkDatei(
 			errors.Is(err, dateierrors.ErrLinkDateiNotShared):
 			return DownloadPublicLinkDatei403Response{}, nil
 		case errors.Is(err, dateierrors.ErrLinkNotFound),
-			errors.Is(err, dateierrors.ErrNotFound):
+			errors.Is(err, dateierrors.ErrNotFound),
+			errors.Is(err, dateierrors.ErrNoContent):
 			return DownloadPublicLinkDatei404Response{}, nil
 		default:
 			return nil, err

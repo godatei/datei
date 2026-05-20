@@ -32,10 +32,10 @@ INNER JOIN user_account_projection u ON u.id = l.owner_id
 WHERE l.id = $1;
 
 -- name: GetLinkProjectionByKey :one
-SELECT l.*, u.name AS owner_name
-FROM link_projection l
-INNER JOIN user_account_projection u ON u.id = l.owner_id
-WHERE l.key = $1;
+-- Used by the unlock endpoint, which only needs the link's own row to validate
+-- key + code + expiration; the owner name is fetched separately by the
+-- authenticated list/download path that does need to render it.
+SELECT * FROM link_projection WHERE key = $1;
 
 -- name: ListLinkProjectionsByOwner :many
 -- status filter values: 'active', 'expired', 'revoked', or '' to return all.
@@ -89,7 +89,7 @@ ancestors(id, parent_id, trashed_at, depth) AS (
   SELECT d.id, d.parent_id, d.trashed_at, 0
     FROM datei_projection d
     WHERE d.id = $2
-  UNION ALL
+  UNION
   SELECT p.id, p.parent_id, p.trashed_at, a.depth + 1
     FROM datei_projection p
     INNER JOIN ancestors a ON p.id = a.parent_id

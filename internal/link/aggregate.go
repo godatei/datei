@@ -25,17 +25,8 @@ type Aggregate struct {
 	ExpiresAt *time.Time
 	RevokedAt *time.Time
 	dateiIDs  map[uuid.UUID]struct{}
-	OpenCount int64
 	CreatedAt time.Time
 	UpdatedAt time.Time
-}
-
-// HasDatei reports whether the given datei is part of the link's shared set.
-// The set is private so callers can't mutate aggregate state outside of
-// commands.
-func (a *Aggregate) HasDatei(id uuid.UUID) bool {
-	_, ok := a.dateiIDs[id]
-	return ok
 }
 
 func (a *Aggregate) AggregateID() uuid.UUID { return a.ID }

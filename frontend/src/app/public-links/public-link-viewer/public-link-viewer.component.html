@@ -56,6 +56,16 @@
       </div>
     }
 
+    @case ('unavailable') {
+      <div class="mat-bg-surface-container mat-corner-md p-6 text-center">
+        <mat-icon class="mat-text-on-surface-variant">link_off</mat-icon>
+        <h2 class="mat-font-title-md">This link is no longer available</h2>
+        <p class="mat-text-on-surface-variant mat-font-body-md mb-0">
+          It may have been revoked or its contents changed. Ask the owner for a new one.
+        </p>
+      </div>
+    }
+
     @case ('notFound') {
       <div class="mat-bg-surface-container mat-corner-md p-6 text-center">
         <mat-icon class="mat-text-on-surface-variant">link_off</mat-icon>
