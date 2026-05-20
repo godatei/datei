@@ -24,6 +24,4 @@ post:
     '403':
       description: Code missing or invalid
     '404':
-      description: Link not found or revoked
-    '410':
-      description: Link expired
+      description: Link not found, revoked, or expired

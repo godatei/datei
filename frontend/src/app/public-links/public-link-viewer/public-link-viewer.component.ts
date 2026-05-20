@@ -249,12 +249,10 @@ export class PublicLinkViewerComponent {
         this.state.set({ kind: 'codeRequired', invalidCode: fromSubmit });
         return;
       }
+      // Unlock returns 404 for not-found, revoked, and expired — the viewer
+      // doesn't try to differentiate (info-hiding posture).
       if (e.status === 404) {
         this.state.set({ kind: 'notFound' });
-        return;
-      }
-      if (e.status === 410) {
-        this.state.set({ kind: 'expired' });
         return;
       }
     }

@@ -374,6 +374,15 @@ func (s *Service) ListPublicLinkDateien(
 		}, nil
 	}
 
+	// Existence check before scope check so a missing parent returns 404
+	// (distinct from "exists but not shared", which returns 403).
+	if _, err := queries.GetDateiProjectionByID(ctx, *parentID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, dateierrors.ErrNotFound
+		}
+		return nil, err
+	}
+
 	inScope, err := queries.IsDateiInLinkScope(ctx, db.IsDateiInLinkScopeParams{
 		LinkID: row.ID,
 		ID:     *parentID,
@@ -413,6 +422,15 @@ func (s *Service) DownloadPublicLinkDatei(
 	}
 
 	queries := db.New(s.db)
+	// Existence check before scope check so a missing datei returns 404
+	// (distinct from "exists but not shared", which returns 403).
+	if _, err := queries.GetDateiProjectionByID(ctx, dateiID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, dateierrors.ErrNotFound
+		}
+		return nil, err
+	}
+
 	inScope, err := queries.IsDateiInLinkScope(ctx, db.IsDateiInLinkScopeParams{
 		LinkID: row.ID,
 		ID:     dateiID,

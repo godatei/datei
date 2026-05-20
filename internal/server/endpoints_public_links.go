@@ -27,10 +27,9 @@ func (s *server) UnlockPublicLink(
 		switch {
 		case errors.Is(err, dateierrors.ErrLinkCodeRequired):
 			return UnlockPublicLink403Response{}, nil
-		case errors.Is(err, dateierrors.ErrLinkExpired):
-			return UnlockPublicLink410Response{}, nil
 		case errors.Is(err, dateierrors.ErrLinkNotFound),
-			errors.Is(err, dateierrors.ErrLinkRevoked):
+			errors.Is(err, dateierrors.ErrLinkRevoked),
+			errors.Is(err, dateierrors.ErrLinkExpired):
 			return UnlockPublicLink404Response{}, nil
 		default:
 			return nil, err
@@ -59,7 +58,8 @@ func (s *server) ListPublicLinkDateien(
 			errors.Is(err, dateierrors.ErrLinkRevoked),
 			errors.Is(err, dateierrors.ErrLinkDateiNotShared):
 			return ListPublicLinkDateien403Response{}, nil
-		case errors.Is(err, dateierrors.ErrLinkNotFound):
+		case errors.Is(err, dateierrors.ErrLinkNotFound),
+			errors.Is(err, dateierrors.ErrNotFound):
 			return ListPublicLinkDateien404Response{}, nil
 		default:
 			return nil, err
