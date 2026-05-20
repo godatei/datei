@@ -16,9 +16,12 @@
         @for (link of availableLinks(); track link.id) {
           <mat-radio-button [value]="link.id" class="py-1">
             <span class="mat-font-body-md">{{ link.name }}</span>
-            <span class="mat-text-on-surface-variant mat-font-body-sm ml-2">
-              {{ link.folderCount }} {{ link.folderCount === 1 ? 'folder' : 'folders' }},
-              {{ link.fileCount }} {{ link.fileCount === 1 ? 'file' : 'files' }}
+            <span
+              class="mat-text-on-surface-variant mat-font-body-sm ml-2"
+              i18n="@@linkPickerContentsCounts"
+            >
+              {link.folderCount, plural, =1 {1 folder} other {{{ link.folderCount }} folders}},
+              {link.fileCount, plural, =1 {1 file} other {{{ link.fileCount }} files}}
             </span>
           </mat-radio-button>
         }

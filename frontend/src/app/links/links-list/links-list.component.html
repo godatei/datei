@@ -40,8 +40,10 @@
     </ng-container>
 
     <ng-container matColumnDef="opens">
-      <th mat-header-cell *matHeaderCellDef>Opens</th>
-      <td mat-cell *matCellDef="let link">{{ link.openCount }}</td>
+      <th mat-header-cell *matHeaderCellDef>Opened</th>
+      <td mat-cell *matCellDef="let link" i18n="@@linkOpenedCount">
+        {link.openCount, plural, =0 {never} =1 {1 time} other {{{ link.openCount }} times}}
+      </td>
     </ng-container>
 
     <ng-container matColumnDef="createdAt">
