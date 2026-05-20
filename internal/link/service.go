@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/godatei/datei/internal/authn"
@@ -71,6 +72,8 @@ type CreateLinkInput struct {
 
 func (s *Service) CreateLink(ctx context.Context, input CreateLinkInput) (*api.LinkDetail, error) {
 	userID := authn.RequireContext(ctx).UserID
+
+	input.Code = normalizeOptionalCode(input.Code)
 
 	queries := db.New(s.db)
 	if len(input.DateiIDs) > 0 {
@@ -172,6 +175,8 @@ func (s *Service) UpdateLink(ctx context.Context, input UpdateLinkInput) (*api.L
 	if err != nil {
 		return nil, err
 	}
+
+	input.Code = normalizeOptionalCode(input.Code)
 
 	// Build the absolute desired state from the input. Fields the request
 	// did not address fall back to the aggregate's current value.
@@ -518,4 +523,15 @@ func (s *Service) aggregateToLinkDetail(ctx context.Context, agg *Aggregate) (*a
 	return MapAggregateToLinkDetail(
 		agg, dateien, int(counts.FileCount), int(counts.FolderCount), int(counts.OpenCount),
 	), nil
+}
+
+func normalizeOptionalCode(code *string) *string {
+	if code == nil {
+		return nil
+	}
+	trimmed := strings.TrimSpace(*code)
+	if trimmed == "" {
+		return nil
+	}
+	return &trimmed
 }
