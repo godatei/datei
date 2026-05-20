@@ -41,18 +41,20 @@ func (s *server) UnlockPublicLink(
 	}), nil
 }
 
-// ListPublicLinkDateien implements [StrictServerInterface]. The link UUID is
-// extracted from the public-link session JWT by the auth middleware and read
-// here from ctx.
+// ListPublicLinkDateien implements [StrictServerInterface]. The session claims
+// are extracted from the public-link JWT by the auth middleware and read here
+// from ctx.
 func (s *server) ListPublicLinkDateien(
 	ctx context.Context,
 	request ListPublicLinkDateienRequestObject,
 ) (ListPublicLinkDateienResponseObject, error) {
-	linkID := link.RequireLinkIDFromContext(ctx)
+	session := link.RequirePublicLinkSessionFromContext(ctx)
 
-	result, err := s.linkService.ListPublicLinkDateien(ctx, linkID, request.Params.ParentId)
+	result, err := s.linkService.ListPublicLinkDateien(ctx, session, request.Params.ParentId)
 	if err != nil {
 		switch {
+		case errors.Is(err, dateierrors.ErrLinkUnauthorized):
+			return ListPublicLinkDateien401Response{}, nil
 		case errors.Is(err, dateierrors.ErrLinkExpired),
 			errors.Is(err, dateierrors.ErrLinkRevoked),
 			errors.Is(err, dateierrors.ErrLinkDateiNotShared):
@@ -78,13 +80,15 @@ func (s *server) DownloadPublicLinkDatei(
 	ctx context.Context,
 	request DownloadPublicLinkDateiRequestObject,
 ) (DownloadPublicLinkDateiResponseObject, error) {
-	linkID := link.RequireLinkIDFromContext(ctx)
+	session := link.RequirePublicLinkSessionFromContext(ctx)
 
-	result, err := s.linkService.DownloadPublicLinkDatei(ctx, linkID, request.DateiId)
+	result, err := s.linkService.DownloadPublicLinkDatei(ctx, session, request.DateiId)
 	if err != nil {
 		switch {
 		case errors.Is(err, dateierrors.ErrIsDirectory):
 			return DownloadPublicLinkDatei409Response{}, nil
+		case errors.Is(err, dateierrors.ErrLinkUnauthorized):
+			return DownloadPublicLinkDatei401Response{}, nil
 		case errors.Is(err, dateierrors.ErrLinkExpired),
 			errors.Is(err, dateierrors.ErrLinkRevoked),
 			errors.Is(err, dateierrors.ErrLinkDateiNotShared):

@@ -1,6 +1,8 @@
 package link
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"sync"
@@ -19,19 +21,39 @@ import (
 // same signing secret.
 const publicLinkTokenKind = "public_link"
 
+// linkFingerprintClaim binds the issued JWT to the link's key+code at the
+// moment of unlock. Any change to either (key rotation, code set/change/clear)
+// flips the fingerprint and invalidates stale sessions before `exp`.
+const linkFingerprintClaim = "link_fp"
+
 // secret is loaded once from the same auth JWT secret used for owner login;
 // the `kind` claim distinguishes the two token populations.
 var secret = sync.OnceValue(config.AuthJWTSecret)
 
+// LinkFingerprint returns the SHA-256 fingerprint of a link's secret material
+// (key + code), encoded as base64-url. The fingerprint is what's embedded in
+// the JWT and compared on every authenticated public-link call. Code is nil
+// when the link has no code.
+func LinkFingerprint(key string, code *string) string {
+	codeBytes := ""
+	if code != nil {
+		codeBytes = *code
+	}
+	h := sha256.Sum256([]byte(key + "\x00" + codeBytes))
+	return base64.RawURLEncoding.EncodeToString(h[:])
+}
+
 // signSessionToken builds and signs a public-link session JWT whose subject
-// is the link UUID.
-func signSessionToken(linkID uuid.UUID, iat, exp time.Time) (string, error) {
+// is the link UUID and whose fingerprint claim binds the token to the link's
+// current key+code.
+func signSessionToken(linkID uuid.UUID, fingerprint string, iat, exp time.Time) (string, error) {
 	token, err := jwt.NewBuilder().
 		IssuedAt(iat).
 		NotBefore(iat).
 		Expiration(exp).
 		Subject(linkID.String()).
 		Claim(authjwt.KindKey, publicLinkTokenKind).
+		Claim(linkFingerprintClaim, fingerprint).
 		Build()
 	if err != nil {
 		return "", err
@@ -43,29 +65,38 @@ func signSessionToken(linkID uuid.UUID, iat, exp time.Time) (string, error) {
 	return string(signed), nil
 }
 
-// ParseSessionToken verifies the signature, expiration, and `kind` claim, and
-// returns the link UUID encoded in the subject. Use this from the middleware
-// that gates the public list/download endpoints.
-func ParseSessionToken(tokenString string) (uuid.UUID, error) {
+// SessionClaims is the verified payload of a public-link JWT.
+type SessionClaims struct {
+	LinkID      uuid.UUID
+	Fingerprint string
+}
+
+// ParseSessionToken verifies the signature, expiration, `kind` claim, and
+// pulls out the link UUID and the fingerprint the token was issued for.
+func ParseSessionToken(tokenString string) (SessionClaims, error) {
 	token, err := jwt.ParseString(
 		tokenString,
 		jwt.WithKey(jwa.HS256(), secret()),
 		jwt.WithValidate(true),
 	)
 	if err != nil {
-		return uuid.Nil, dateierrors.ErrLinkUnauthorized
+		return SessionClaims{}, dateierrors.ErrLinkUnauthorized
 	}
 	var kind string
 	if err := token.Get(authjwt.KindKey, &kind); err != nil || kind != publicLinkTokenKind {
-		return uuid.Nil, dateierrors.ErrLinkUnauthorized
+		return SessionClaims{}, dateierrors.ErrLinkUnauthorized
 	}
 	sub, ok := token.Subject()
 	if !ok {
-		return uuid.Nil, dateierrors.ErrLinkUnauthorized
+		return SessionClaims{}, dateierrors.ErrLinkUnauthorized
 	}
 	id, err := uuid.Parse(sub)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("invalid link id in token: %w", errors.Join(err, dateierrors.ErrLinkUnauthorized))
+		return SessionClaims{}, fmt.Errorf("invalid link id in token: %w", errors.Join(err, dateierrors.ErrLinkUnauthorized))
 	}
-	return id, nil
+	var fingerprint string
+	if err := token.Get(linkFingerprintClaim, &fingerprint); err != nil || fingerprint == "" {
+		return SessionClaims{}, dateierrors.ErrLinkUnauthorized
+	}
+	return SessionClaims{LinkID: id, Fingerprint: fingerprint}, nil
 }

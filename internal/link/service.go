@@ -336,7 +336,7 @@ func (s *Service) UnlockLink(ctx context.Context, key, code string) (*UnlockOutp
 		exp = *row.ExpiresAt
 	}
 
-	token, err := signSessionToken(row.ID, now, exp)
+	token, err := signSessionToken(row.ID, LinkFingerprint(row.Key, row.Code), now, exp)
 	if err != nil {
 		return nil, fmt.Errorf("failed to sign public-link token: %w", err)
 	}
@@ -354,14 +354,14 @@ type ListPublicLinkDateienOutput struct {
 }
 
 // ListPublicLinkDateien returns the dateien visible to a public viewer after
-// unlock. The link ID is read from the JWT context — the caller does not pass
-// a key or code.
+// unlock. The session (link ID + token-bound key) is read from the JWT context
+// — the caller does not pass a key or code.
 func (s *Service) ListPublicLinkDateien(
 	ctx context.Context,
-	linkID uuid.UUID,
+	session SessionClaims,
 	parentID *uuid.UUID,
 ) (*ListPublicLinkDateienOutput, error) {
-	row, err := s.verifyLinkActive(ctx, linkID)
+	row, err := s.verifyLinkActive(ctx, session.LinkID, session.Fingerprint)
 	if err != nil {
 		return nil, err
 	}
@@ -420,9 +420,10 @@ func (s *Service) ListPublicLinkDateien(
 
 func (s *Service) DownloadPublicLinkDatei(
 	ctx context.Context,
-	linkID, dateiID uuid.UUID,
+	session SessionClaims,
+	dateiID uuid.UUID,
 ) (*datei.DownloadDateiOutput, error) {
-	row, err := s.verifyLinkActive(ctx, linkID)
+	row, err := s.verifyLinkActive(ctx, session.LinkID, session.Fingerprint)
 	if err != nil {
 		return nil, err
 	}
@@ -490,10 +491,13 @@ func (s *Service) lookupLinkByKey(ctx context.Context, key string) (*db.GetLinkP
 }
 
 // verifyLinkActive re-validates the link's current state on every list/download
-// call so that revoke and expire take effect within JWT lifetime. Returns the
-// join row that includes the owner's display name.
+// call so that revoke, expire, key rotation, and code change take effect within
+// JWT lifetime. The token's fingerprint is recomputed from the projection's
+// current (key, code) and compared — a mismatch means the link's secret
+// material has changed since unlock and the session must be re-established.
+// Returns the join row that includes the owner's display name.
 func (s *Service) verifyLinkActive(
-	ctx context.Context, linkID uuid.UUID,
+	ctx context.Context, linkID uuid.UUID, tokenFingerprint string,
 ) (*db.GetLinkProjectionWithOwnerByIDRow, error) {
 	queries := db.New(s.db)
 	row, err := queries.GetLinkProjectionWithOwnerByID(ctx, linkID)
@@ -507,6 +511,10 @@ func (s *Service) verifyLinkActive(
 	}
 	if row.ExpiresAt != nil && row.ExpiresAt.Before(time.Now()) {
 		return nil, dateierrors.ErrLinkExpired
+	}
+	currentFingerprint := LinkFingerprint(row.Key, row.Code)
+	if subtle.ConstantTimeCompare([]byte(tokenFingerprint), []byte(currentFingerprint)) != 1 {
+		return nil, dateierrors.ErrLinkUnauthorized
 	}
 	return &row, nil
 }

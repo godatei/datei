@@ -8,7 +8,6 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/godatei/datei/internal/dateierrors"
-	"github.com/google/uuid"
 )
 
 // SecuritySchemeName is the OpenAPI security scheme name used to gate the
@@ -18,25 +17,25 @@ const SecuritySchemeName = "publicLinkBearerAuthentication"
 
 type publicLinkContextKey struct{}
 
-// LinkIDFromContext returns the link UUID bound to the public-link session
-// token attached to this request.
-func LinkIDFromContext(ctx context.Context) (uuid.UUID, bool) {
-	id, ok := ctx.Value(publicLinkContextKey{}).(uuid.UUID)
-	return id, ok
+// PublicLinkSessionFromContext returns the public-link session claims attached
+// to this request by the auth middleware.
+func PublicLinkSessionFromContext(ctx context.Context) (SessionClaims, bool) {
+	s, ok := ctx.Value(publicLinkContextKey{}).(SessionClaims)
+	return s, ok
 }
 
-// RequireLinkIDFromContext panics if no link session is present in ctx. Use
-// this after the public-link auth middleware has run.
-func RequireLinkIDFromContext(ctx context.Context) uuid.UUID {
-	id, ok := LinkIDFromContext(ctx)
+// RequirePublicLinkSessionFromContext panics if no public-link session is
+// present in ctx. Use this after the public-link auth middleware has run.
+func RequirePublicLinkSessionFromContext(ctx context.Context) SessionClaims {
+	s, ok := PublicLinkSessionFromContext(ctx)
 	if !ok {
 		panic("no public link session in context")
 	}
-	return id
+	return s
 }
 
 // OpenAPIAuthFunc returns an openapi3filter.AuthenticationFunc that validates
-// the public-link session JWT and attaches the link UUID to the request
+// the public-link session JWT and attaches the parsed claims to the request
 // context. The dispatcher in serve.go routes the SecuritySchemeName above to
 // this function.
 func OpenAPIAuthFunc() openapi3filter.AuthenticationFunc {
@@ -50,11 +49,11 @@ func OpenAPIAuthFunc() openapi3filter.AuthenticationFunc {
 		if tokenString == authHeader {
 			return fmt.Errorf("invalid Authorization header format: %w", dateierrors.ErrLinkUnauthorized)
 		}
-		linkID, err := ParseSessionToken(tokenString)
+		claims, err := ParseSessionToken(tokenString)
 		if err != nil {
 			return errors.Join(err, dateierrors.ErrLinkUnauthorized)
 		}
-		ctx := context.WithValue(r.Context(), publicLinkContextKey{}, linkID)
+		ctx := context.WithValue(r.Context(), publicLinkContextKey{}, claims)
 		*r = *r.WithContext(ctx) //nolint:contextcheck // must use r.Context(), not func ctx
 		return nil
 	}
