@@ -12,17 +12,6 @@ import (
 	"github.com/google/uuid"
 )
 
-const countDateiProjectionsByIDs = `-- name: CountDateiProjectionsByIDs :one
-SELECT COUNT(*)::int FROM datei_projection WHERE id = ANY($1::uuid[])
-`
-
-func (q *Queries) CountDateiProjectionsByIDs(ctx context.Context, dollar_1 []uuid.UUID) (int32, error) {
-	row := q.db.QueryRow(ctx, countDateiProjectionsByIDs, dollar_1)
-	var column_1 int32
-	err := row.Scan(&column_1)
-	return column_1, err
-}
-
 const countDateiProjectionsByParent = `-- name: CountDateiProjectionsByParent :one
 SELECT COUNT(*) FROM datei_projection WHERE parent_id = $1 AND trashed_at IS NULL
 `
@@ -54,6 +43,21 @@ func (q *Queries) CountTrashedDatei(ctx context.Context) (int64, error) {
 	var count int64
 	err := row.Scan(&count)
 	return count, err
+}
+
+const countUntrashedDateiByIDs = `-- name: CountUntrashedDateiByIDs :one
+SELECT COUNT(*)::int FROM datei_projection
+ WHERE id = ANY($1::uuid[]) AND trashed_at IS NULL
+`
+
+// Counts how many of the given UUIDs refer to dateien that exist AND are not
+// trashed. Callers compare against len(input) to reject requests that point
+// at missing or trashed rows.
+func (q *Queries) CountUntrashedDateiByIDs(ctx context.Context, dollar_1 []uuid.UUID) (int32, error) {
+	row := q.db.QueryRow(ctx, countUntrashedDateiByIDs, dollar_1)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
 }
 
 const deleteDateiPermissionProjection = `-- name: DeleteDateiPermissionProjection :exec

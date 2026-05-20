@@ -77,7 +77,7 @@ func (s *Service) CreateLink(ctx context.Context, input CreateLinkInput) (*api.L
 
 	queries := db.New(s.db)
 	if len(input.DateiIDs) > 0 {
-		count, err := queries.CountDateiProjectionsByIDs(ctx, input.DateiIDs)
+		count, err := queries.CountUntrashedDateiByIDs(ctx, input.DateiIDs)
 		if err != nil {
 			return nil, err
 		}
@@ -248,11 +248,12 @@ func (s *Service) AddDateiToLink(ctx context.Context, linkID, dateiID uuid.UUID)
 	}
 
 	queries := db.New(s.db)
-	if _, err := queries.GetDateiProjectionByID(ctx, dateiID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, dateierrors.ErrInvalidInput
-		}
+	count, err := queries.CountUntrashedDateiByIDs(ctx, []uuid.UUID{dateiID})
+	if err != nil {
 		return nil, err
+	}
+	if count != 1 {
+		return nil, dateierrors.ErrInvalidInput
 	}
 
 	if err := agg.AddDatei(dateiID, time.Now()); err != nil {
