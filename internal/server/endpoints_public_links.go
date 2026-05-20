@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/link"
@@ -101,7 +100,7 @@ func (s *server) DownloadPublicLinkDatei(
 	return DownloadPublicLinkDatei200ApplicationoctetStreamResponse{
 		Body: result.Reader,
 		Headers: DownloadPublicLinkDatei200ResponseHeaders{
-			ContentDisposition: fmt.Sprintf(`attachment; filename="%v"`, result.ContentFileName),
+			ContentDisposition: attachmentDisposition(result.ContentFileName),
 			ContentType:        result.ContentType,
 		},
 		ContentLength: result.ContentLength,
