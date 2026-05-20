@@ -5,7 +5,6 @@ import { formatDistanceToNow } from 'date-fns';
 export class RelativeDatePipe implements PipeTransform {
   transform(value: Date | string | null | undefined): string {
     if (!value) return '';
-    const date = typeof value === 'string' ? new Date(value) : value;
-    return formatDistanceToNow(date, { addSuffix: true });
+    return formatDistanceToNow(value, { addSuffix: true });
   }
 }

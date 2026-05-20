@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/godatei/datei/internal/authjwt"
 	"github.com/godatei/datei/internal/config"
 	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/google/uuid"
@@ -17,8 +18,6 @@ import (
 // unlock endpoint, distinguishing it from regular auth tokens that share the
 // same signing secret.
 const publicLinkTokenKind = "public_link"
-
-const tokenKindClaim = "kind"
 
 // secret is loaded once from the same auth JWT secret used for owner login;
 // the `kind` claim distinguishes the two token populations.
@@ -32,7 +31,7 @@ func signSessionToken(linkID uuid.UUID, iat, exp time.Time) (string, error) {
 		NotBefore(iat).
 		Expiration(exp).
 		Subject(linkID.String()).
-		Claim(tokenKindClaim, publicLinkTokenKind).
+		Claim(authjwt.KindKey, publicLinkTokenKind).
 		Build()
 	if err != nil {
 		return "", err
@@ -48,8 +47,8 @@ func signSessionToken(linkID uuid.UUID, iat, exp time.Time) (string, error) {
 // returns the link UUID encoded in the subject. Use this from the middleware
 // that gates the public list/download endpoints.
 func ParseSessionToken(tokenString string) (uuid.UUID, error) {
-	token, err := jwt.Parse(
-		[]byte(tokenString),
+	token, err := jwt.ParseString(
+		tokenString,
 		jwt.WithKey(jwa.HS256(), secret()),
 		jwt.WithValidate(true),
 	)
@@ -57,7 +56,7 @@ func ParseSessionToken(tokenString string) (uuid.UUID, error) {
 		return uuid.Nil, dateierrors.ErrLinkUnauthorized
 	}
 	var kind string
-	if err := token.Get(tokenKindClaim, &kind); err != nil || kind != publicLinkTokenKind {
+	if err := token.Get(authjwt.KindKey, &kind); err != nil || kind != publicLinkTokenKind {
 		return uuid.Nil, dateierrors.ErrLinkUnauthorized
 	}
 	sub, ok := token.Subject()

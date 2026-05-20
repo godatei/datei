@@ -332,7 +332,6 @@ export class PublicLinkViewerComponent {
   }
 
   protected readonly formatBytes = formatBytes;
-  protected readonly isImageMime = isImageMime;
 }
 
 function isImageMime(mime: string | null | undefined): boolean {
