@@ -3,6 +3,9 @@ package dateierrors
 import "errors"
 
 var (
+	// Generic input-validation error, shared across all domains.
+	ErrInvalidInput = errors.New("invalid input")
+
 	ErrIsDirectory          = errors.New("cannot download directory")
 	ErrNotFound             = errors.New("datei not found")
 	ErrNoContent            = errors.New("datei has no content")
@@ -15,9 +18,17 @@ var (
 	ErrCycleDetected        = errors.New("cannot move directory into its own subtree")
 	ErrNotInTrash           = errors.New("datei is not in trash")
 
+	// Link / public-share errors
+	ErrLinkNotFound          = errors.New("link not found")
+	ErrLinkExpired           = errors.New("link expired")
+	ErrLinkRevoked           = errors.New("link revoked")
+	ErrLinkCodeRequired      = errors.New("link code required or invalid")
+	ErrLinkDateiNotShared    = errors.New("datei not in link scope")
+	ErrLinkDateiAlreadyAdded = errors.New("datei already added to link")
+	ErrLinkUnauthorized      = errors.New("link session token missing, invalid, or expired")
+
 	// User / auth errors
 	ErrInvalidCredentials      = errors.New("invalid credentials")
-	ErrInvalidInput            = errors.New("invalid input")
 	ErrEmailAlreadyInUse       = errors.New("email already in use")
 	ErrRegistrationDisabled    = errors.New("registration is disabled")
 	ErrCurrentPasswordRequired = errors.New("current password required")

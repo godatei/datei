@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -35,6 +36,7 @@ import { snackSuccessDuration } from '~/frontend/constants';
   imports: [
     DatePipe,
     MatButtonModule,
+    MatChipsModule,
     MatIconModule,
     MatMenuModule,
     MatTableModule,

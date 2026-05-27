@@ -1,0 +1,37 @@
+<h2 mat-dialog-title>Add to public link</h2>
+<form [formRoot]="pickerForm" class="block w-md max-w-full">
+  <mat-dialog-content>
+    @if (listResource.isLoading()) {
+      <p class="mat-text-on-surface-variant">Loading…</p>
+    } @else if (availableLinks().length === 0) {
+      <p class="mat-text-on-surface-variant">
+        You don't have any active public links yet. Create one from the Files page first.
+      </p>
+    } @else {
+      <mat-radio-group
+        [formField]="pickerForm.linkId"
+        aria-label="Select a public link"
+        class="flex flex-col"
+      >
+        @for (link of availableLinks(); track link.id) {
+          <mat-radio-button [value]="link.id" class="py-1">
+            <span class="mat-font-body-md">{{ link.name }}</span>
+            <span
+              class="mat-text-on-surface-variant mat-font-body-sm ml-2"
+              i18n="@@linkPickerContentsCounts"
+            >
+              {link.folderCount, plural, =1 {1 folder} other {{{ link.folderCount }} folders}},
+              {link.fileCount, plural, =1 {1 file} other {{{ link.fileCount }} files}}
+            </span>
+          </mat-radio-button>
+        }
+      </mat-radio-group>
+    }
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="cancel()">Cancel</button>
+    <button mat-button color="primary" type="submit" [disabled]="pickerForm().invalid()">
+      Add
+    </button>
+  </mat-dialog-actions>
+</form>

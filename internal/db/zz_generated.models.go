@@ -94,6 +94,34 @@ type DateiProjection struct {
 	TrashedBy     *uuid.UUID  `db:"trashed_by"`
 }
 
+type LinkDateiProjection struct {
+	LinkID  uuid.UUID `db:"link_id"`
+	DateiID uuid.UUID `db:"datei_id"`
+	AddedAt time.Time `db:"added_at"`
+}
+
+type LinkEvent struct {
+	ID            int64     `db:"id"`
+	StreamID      uuid.UUID `db:"stream_id"`
+	StreamVersion int32     `db:"stream_version"`
+	EventType     string    `db:"event_type"`
+	EventData     []byte    `db:"event_data"`
+	CreatedAt     time.Time `db:"created_at"`
+}
+
+type LinkProjection struct {
+	ID        uuid.UUID  `db:"id"`
+	OwnerID   uuid.UUID  `db:"owner_id"`
+	Name      string     `db:"name"`
+	Key       string     `db:"key"`
+	Code      *string    `db:"code"`
+	ExpiresAt *time.Time `db:"expires_at"`
+	RevokedAt *time.Time `db:"revoked_at"`
+	CreatedAt time.Time  `db:"created_at"`
+	UpdatedAt time.Time  `db:"updated_at"`
+	OpenCount int64      `db:"open_count"`
+}
+
 type UserAccountEmailProjection struct {
 	ID            uuid.UUID  `db:"id"`
 	UserAccountID uuid.UUID  `db:"user_account_id"`

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"strings"
 
@@ -162,7 +161,7 @@ func (s *server) DownloadDatei(
 	return DownloadDatei200ApplicationoctetStreamResponse{
 		Body: result.Reader,
 		Headers: DownloadDatei200ResponseHeaders{
-			ContentDisposition: fmt.Sprintf(`attachment; filename="%v"`, result.ContentFileName),
+			ContentDisposition: attachmentDisposition(result.ContentFileName),
 			ContentType:        result.ContentType,
 		},
 		ContentLength: result.ContentLength,

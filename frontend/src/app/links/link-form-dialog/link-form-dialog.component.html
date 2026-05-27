@@ -1,0 +1,95 @@
+<h2 mat-dialog-title>{{ title }}</h2>
+<form [formRoot]="linkForm" class="block w-md max-w-full">
+  <mat-dialog-content>
+    <div class="flex flex-col gap-2 pt-2">
+      @if (!isEdit) {
+        <p class="mat-text-on-surface-variant mat-font-body-md">
+          Sharing {dateiCount(), plural, =1 {1 item} other {{{ dateiCount() }} items}}.
+        </p>
+      }
+
+      <mat-form-field appearance="outline">
+        <mat-label>Link name</mat-label>
+        <input matInput [formField]="linkForm.name" autocomplete="off" aria-label="Link name" />
+        @let nameErrs = linkForm.name().errors();
+        @if (nameErrs.length > 0) {
+          @if (nameErrs[0].kind === 'required') {
+            <mat-error>Name is required</mat-error>
+          } @else if (nameErrs[0].kind === 'maxLength') {
+            <mat-error>Name must be 255 characters or fewer</mat-error>
+          } @else if (nameErrs[0].kind === 'pattern') {
+            <mat-error>Name cannot be only spaces</mat-error>
+          }
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Expires (optional)</mat-label>
+        <input
+          matInput
+          [matDatepicker]="expiryPicker"
+          [min]="tomorrow"
+          [formField]="linkForm.expiresAt"
+          aria-label="Expiration date"
+        />
+        <mat-hint>Leave blank for never</mat-hint>
+        <mat-datepicker-toggle matIconSuffix [for]="expiryPicker"></mat-datepicker-toggle>
+        <mat-datepicker #expiryPicker></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Code (optional)</mat-label>
+        <input matInput [formField]="linkForm.code" autocomplete="off" aria-label="code" />
+        <mat-hint>Viewers must enter this code to see the contents</mat-hint>
+      </mat-form-field>
+
+      @if (isEdit) {
+        <div class="flex flex-col gap-1 mt-4">
+          <h3 class="mat-font-title-sm mb-0">Shared items</h3>
+          @if (sharedDateien().length === 0) {
+            <p class="mat-text-on-surface-variant mat-font-body-sm">
+              No items in this link. Add items from the Files page.
+            </p>
+          } @else {
+            <mat-list>
+              @for (item of sharedDateien(); track item.id) {
+                <mat-list-item>
+                  <mat-icon matListItemIcon>
+                    {{ item.isDirectory ? 'folder' : 'description' }}
+                  </mat-icon>
+                  <span matListItemTitle>{{ item.name }}</span>
+                  <button
+                    matIconButton
+                    matListItemMeta
+                    type="button"
+                    (click)="removeDatei(item)"
+                    [attr.aria-label]="'Remove ' + (item.name ?? 'item')"
+                  >
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </mat-list-item>
+              }
+            </mat-list>
+          }
+        </div>
+      }
+
+      @if (errorMessage()) {
+        <p class="mat-text-error mat-font-body-sm">{{ errorMessage() }}</p>
+      }
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="cancel()" [disabled]="linkForm().submitting()">
+      Cancel
+    </button>
+    <button
+      mat-button
+      color="primary"
+      type="submit"
+      [disabled]="linkForm().invalid() || linkForm().submitting()"
+    >
+      {{ submitLabel }}
+    </button>
+  </mat-dialog-actions>
+</form>

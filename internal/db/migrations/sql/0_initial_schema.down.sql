@@ -1,5 +1,8 @@
 -- Datei: Rollback Initial Database Schema
 
+DROP TABLE IF EXISTS link_datei_projection CASCADE;
+DROP TABLE IF EXISTS link_projection CASCADE;
+DROP TABLE IF EXISTS link_event CASCADE;
 DROP TABLE IF EXISTS datei_permission_projection CASCADE;
 DROP TABLE IF EXISTS datei_projection CASCADE;
 DROP TABLE IF EXISTS user_account_event CASCADE;

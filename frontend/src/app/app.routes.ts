@@ -16,6 +16,13 @@ export const routes: Routes = [
   { path: 'register', canActivate: [publicOnlyGuard], component: RegisterComponent },
   { path: 'forgot', canActivate: [publicOnlyGuard], component: ForgotComponent },
   {
+    path: 'share/:key',
+    loadComponent: () =>
+      import('~/frontend/public-links/public-link-viewer/public-link-viewer.component').then(
+        (m) => m.PublicLinkViewerComponent,
+      ),
+  },
+  {
     path: '',
     canActivate: [jwtParamRedirectGuard, authGuard],
     children: [

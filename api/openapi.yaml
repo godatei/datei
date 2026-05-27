@@ -59,10 +59,36 @@ paths:
     $ref: './paths/datei_id_thumbnail.yaml'
   /api/v1/datei/{id}/path:
     $ref: './paths/datei_id_path.yaml'
+
+  # Links (authentication required)
+  /api/v1/links:
+    $ref: ./paths/links.yaml
+  /api/v1/links/{id}:
+    $ref: ./paths/links_id.yaml
+  /api/v1/links/{id}/rotate:
+    $ref: ./paths/links_id_rotate.yaml
+  /api/v1/links/{id}/dateien:
+    $ref: ./paths/links_id_dateien.yaml
+  /api/v1/links/{id}/dateien/{dateiId}:
+    $ref: ./paths/links_id_dateien_dateiid.yaml
+
+  # Public Links (unlock is unauthenticated; list/download require the JWT
+  # returned by unlock as a Bearer credential)
+  /api/v1/public/links/{key}/unlock:
+    $ref: ./paths/public_links_key_unlock.yaml
+  /api/v1/public/dateien:
+    $ref: ./paths/public_dateien.yaml
+  /api/v1/public/dateien/{dateiId}/download:
+    $ref: ./paths/public_dateien_dateiid_download.yaml
 components:
   securitySchemes:
     bearerHttpAuthentication:
       description: Bearer token using a JWT
+      type: http
+      scheme: Bearer
+      bearerFormat: JWT
+    publicLinkBearerAuthentication:
+      description: Short-lived JWT obtained from POST /api/v1/public/links/{key}/unlock
       type: http
       scheme: Bearer
       bearerFormat: JWT

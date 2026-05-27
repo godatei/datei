@@ -1,0 +1,23 @@
+post:
+  operationId: RotateLinkKey
+  summary: Generate a new key, invalidating the old share URL
+  security:
+    - bearerHttpAuthentication: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: Link with new key
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/LinkDetail.yaml'
+    '403':
+      description: Link revoked
+    '404':
+      description: Link not found

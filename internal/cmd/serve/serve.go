@@ -21,6 +21,7 @@ import (
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/db/migrations"
 	"github.com/godatei/datei/internal/frontend"
+	"github.com/godatei/datei/internal/link"
 	"github.com/godatei/datei/internal/mailer"
 	"github.com/godatei/datei/internal/ocr"
 	"github.com/godatei/datei/internal/server"
@@ -99,6 +100,9 @@ func run(ctx context.Context, options Options) error {
 	userEventStore := users.NewEventStore(db)
 	userRepository := users.NewRepository(db, userEventStore)
 
+	linkEventStore := link.NewEventStore(db)
+	linkRepository := link.NewRepository(db, linkEventStore)
+
 	// Create mailer
 	var m mailer.Mailer
 	mc := config.Mailer()
@@ -122,8 +126,9 @@ func run(ctx context.Context, options Options) error {
 
 	dateiSvc := datei.NewService(db, store, dateiRepository, ocrClient)
 	userSvc := users.NewUserService(db, userRepository, m)
+	linkSvc := link.NewService(db, linkRepository, dateiSvc)
 
-	srv := server.NewServer(dateiSvc, userSvc)
+	srv := server.NewServer(dateiSvc, userSvc, linkSvc)
 	strictHandler := server.NewStrictHandlerWithOptions(srv, nil, server.StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
 			slog.InfoContext(r.Context(), "request validation/decoding error",
@@ -153,12 +158,22 @@ func run(ctx context.Context, options Options) error {
 	rootMux.Use(chimiddleware.RealIP)
 	rootMux.Use(slogchi.New(slog.Default()))
 
-	// API routes: OpenAPI validator handles auth via security schemes in the spec
+	// API routes: OpenAPI validator handles auth via security schemes in the spec.
+	// We dispatch by scheme name because both the owner auth and the public-link
+	// session use http+Bearer but verify against different claim shapes.
+	ownerAuth := authn.OpenAPIAuthFunc()
+	publicLinkAuth := link.OpenAPIAuthFunc()
+	authDispatch := func(ctx context.Context, input *openapi3filter.AuthenticationInput) error {
+		if input.SecuritySchemeName == link.SecuritySchemeName {
+			return publicLinkAuth(ctx, input)
+		}
+		return ownerAuth(ctx, input)
+	}
 	rootMux.Group(func(r chi.Router) {
 		r.Use(oapimiddleware.OapiRequestValidatorWithOptions(swagger, &oapimiddleware.Options{
 			SilenceServersWarning: true,
 			Options: openapi3filter.Options{
-				AuthenticationFunc: authn.OpenAPIAuthFunc(),
+				AuthenticationFunc: authDispatch,
 			},
 		}))
 		r.Use(httprate.Limit(

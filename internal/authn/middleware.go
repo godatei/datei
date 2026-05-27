@@ -115,6 +115,17 @@ func NewContext(ctx context.Context, info AuthInfo) context.Context {
 }
 
 func extractAuthInfo(token jwt.Token) (AuthInfo, error) {
+	// Require the `kind` claim to be present and equal to KindUser. This is
+	// what stops a public-link session token (signed with the same secret) from
+	// being accepted here as an owner-auth token.
+	var kind string
+	if err := token.Get(authjwt.KindKey, &kind); err != nil {
+		return AuthInfo{}, errors.New("missing kind claim")
+	}
+	if kind != authjwt.KindUser {
+		return AuthInfo{}, fmt.Errorf("token kind %q not allowed", kind)
+	}
+
 	sub, ok := token.Subject()
 	if !ok {
 		return AuthInfo{}, errors.New("missing subject claim")

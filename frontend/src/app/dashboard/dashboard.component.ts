@@ -1,7 +1,9 @@
+import { Clipboard } from '@angular/cdk/clipboard';
 import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, resource, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -12,6 +14,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Api } from 'frontend/src/api/api';
 import {
+  addDateiToLink,
   createDatei,
   deleteDatei,
   downloadDatei,
@@ -27,6 +30,15 @@ import {
 } from './image-preview-dialog.component';
 import { NewFolderDialogComponent } from './new-folder-dialog.component';
 import { RenameDateiDialogComponent, RenameDateiDialogData } from './rename-datei-dialog.component';
+import {
+  LinkFormDialogComponent,
+  LinkFormDialogData,
+} from '~/frontend/links/link-form-dialog/link-form-dialog.component';
+import { LinkPickerDialogComponent } from '~/frontend/links/link-picker-dialog/link-picker-dialog.component';
+import type { Link } from '~/api/models/link';
+import { BytesPipe } from '~/frontend/pipes/bytes.pipe';
+import { triggerDownload } from 'frontend/src/util/download';
+import { buildShareUrl } from 'frontend/src/util/share-url';
 import { DragDropDirective, DropEvent } from './drag-drop.directive';
 import { DragPreviewDirective } from './drag-preview.directive';
 import { DragItemDirective } from './drag-row.directive';
@@ -43,8 +55,10 @@ import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
     MatMenuModule,
     MatIconModule,
     MatButtonModule,
+    MatChipsModule,
     MatTableModule,
     DatePipe,
+    BytesPipe,
     ThumbnailIconComponent,
     DragDropDirective,
     DragPreviewDirective,
@@ -59,6 +73,7 @@ export class DashboardComponent {
   private readonly api = inject(Api);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
+  private readonly clipboard = inject(Clipboard);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -86,9 +101,10 @@ export class DashboardComponent {
   protected readonly displayedColumns = [
     'icon',
     'name',
+    'mimeType',
+    'size',
     'createdAt',
     'updatedAt',
-    'mimeType',
     'actions',
   ];
   protected readonly selection = viewChild.required<SelectionDirective<Datei>>(SelectionDirective);
@@ -137,12 +153,7 @@ export class DashboardComponent {
   private async downloadFile(id: string, name: string): Promise<void> {
     try {
       const response = await this.api.invoke$Response(downloadDatei, { id });
-      const url = URL.createObjectURL(response.body as Blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = name;
-      a.click();
-      URL.revokeObjectURL(url);
+      triggerDownload(response.body as Blob, name);
     } catch (e) {
       console.error(e);
       this.snackBar.open('Failed to download file', 'Dismiss', { duration: snackErrorDuration });
@@ -227,6 +238,77 @@ export class DashboardComponent {
         duration: snackSuccessDuration,
       });
     }
+  }
+
+  protected createLinkForRow(row: Datei): void {
+    this.openCreateLinkDialog([row.id], row.name ?? undefined);
+  }
+
+  protected createLinkForSelection(): void {
+    const items = this.selection().selected();
+    if (items.length === 0) return;
+    const ids = items.map((i) => i.id);
+    const defaultName = items.length === 1 ? (items[0].name ?? undefined) : undefined;
+    this.openCreateLinkDialog(ids, defaultName);
+  }
+
+  private openCreateLinkDialog(dateiIds: string[], defaultName: string | undefined): void {
+    const ref = this.dialog.open(LinkFormDialogComponent, {
+      data: { mode: 'create', dateiIds, defaultName } satisfies LinkFormDialogData,
+    });
+    ref.afterClosed().subscribe((link) => {
+      if (!link) return;
+      const shareUrl = buildShareUrl(link.key);
+      const snackRef = this.snackBar.open(`Public link "${link.name}" created`, 'Copy link', {
+        duration: 6000,
+      });
+      snackRef.onAction().subscribe(() => {
+        if (!this.clipboard.copy(shareUrl)) {
+          this.snackBar.open('Failed to copy', 'Dismiss', { duration: snackErrorDuration });
+        }
+      });
+      this.selection().clear();
+    });
+  }
+
+  protected addToLinkForRow(row: Datei): void {
+    this.openLinkPickerAndAdd([row.id]);
+  }
+
+  protected addToLinkForSelection(): void {
+    const ids = this.selection()
+      .selected()
+      .map((d) => d.id);
+    if (ids.length === 0) return;
+    this.openLinkPickerAndAdd(ids);
+  }
+
+  private openLinkPickerAndAdd(dateiIds: string[]): void {
+    const ref = this.dialog.open(LinkPickerDialogComponent);
+    ref.afterClosed().subscribe(async (link: Link | undefined) => {
+      if (!link) return;
+      const results = await Promise.allSettled(
+        dateiIds.map((dateiId) =>
+          this.api.invoke(addDateiToLink, { id: link.id, body: { dateiId } }),
+        ),
+      );
+      const failed = results.filter((r) => r.status === 'rejected').length;
+      const added = results.length - failed;
+      if (failed === 0) {
+        this.snackBar.open(
+          `Added ${added} ${added === 1 ? 'item' : 'items'} to "${link.name}"`,
+          'OK',
+          { duration: snackSuccessDuration },
+        );
+      } else {
+        this.snackBar.open(
+          `Added ${added} of ${results.length} items; ${failed} failed`,
+          'Dismiss',
+          { duration: snackErrorDuration },
+        );
+      }
+      this.selection().clear();
+    });
   }
 
   protected onDrag(event: DropEvent<Datei>): void {

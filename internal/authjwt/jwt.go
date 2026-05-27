@@ -15,7 +15,14 @@ const (
 	UserEmailKey         = "email"
 	UserEmailVerifiedKey = "email_verified"
 	ActionKey            = "action"
+	KindKey              = "kind"
 )
+
+// KindUser is the value of the `kind` claim on every owner-auth token. The
+// public-link domain issues tokens with a different kind value; verifiers on
+// both sides require their own kind so the two token populations can't be
+// swapped despite sharing a signing secret.
+const KindUser = "user"
 
 var secret = sync.OnceValue(config.AuthJWTSecret)
 
@@ -26,6 +33,7 @@ func GenerateDefaultToken(userID uuid.UUID, name, email string, emailVerified bo
 		NotBefore(now).
 		Expiration(now.Add(config.AuthTokenExpiration())).
 		Subject(userID.String()).
+		Claim(KindKey, KindUser).
 		Claim(UserNameKey, name).
 		Claim(UserEmailKey, email).
 		Claim(UserEmailVerifiedKey, emailVerified).
@@ -43,6 +51,7 @@ func GenerateResetToken(userID uuid.UUID, email string) (string, error) {
 		NotBefore(now).
 		Expiration(now.Add(config.AuthResetTokenDuration())).
 		Subject(userID.String()).
+		Claim(KindKey, KindUser).
 		Claim(UserEmailKey, email).
 		Claim(UserEmailVerifiedKey, true).
 		Claim(ActionKey, string(ActionResetPassword)).
@@ -60,6 +69,7 @@ func GenerateVerificationToken(userID uuid.UUID, email string) (string, error) {
 		NotBefore(now).
 		Expiration(now.Add(config.AuthResetTokenDuration())).
 		Subject(userID.String()).
+		Claim(KindKey, KindUser).
 		Claim(UserEmailKey, email).
 		Claim(UserEmailVerifiedKey, true).
 		Claim(ActionKey, string(ActionVerifyEmail)).

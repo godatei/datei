@@ -1,0 +1,7 @@
+tr {
+  /* Material sets `background: inherit` on rows; specify a concrete value
+     here so the hover state actually shows. */
+  &:hover {
+    background: var(--mat-sys-surface-container-low);
+  }
+}

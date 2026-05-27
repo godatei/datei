@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/godatei/datei/internal/datei"
+	"github.com/godatei/datei/internal/link"
 	"github.com/godatei/datei/internal/users"
 )
 
@@ -18,12 +19,14 @@ const (
 type server struct {
 	dateiService *datei.Service
 	userService  *users.UserService
+	linkService  *link.Service
 }
 
-func NewServer(dateiSvc *datei.Service, userSvc *users.UserService) *server {
+func NewServer(dateiSvc *datei.Service, userSvc *users.UserService, linkSvc *link.Service) *server {
 	return &server{
 		dateiService: dateiSvc,
 		userService:  userSvc,
+		linkService:  linkSvc,
 	}
 }
 

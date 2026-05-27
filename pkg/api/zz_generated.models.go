@@ -10,8 +10,36 @@ import (
 )
 
 const (
-	BearerHttpAuthenticationScopes bearerHttpAuthenticationContextKey = "bearerHttpAuthentication.Scopes"
+	BearerHttpAuthenticationScopes       bearerHttpAuthenticationContextKey       = "bearerHttpAuthentication.Scopes"
+	PublicLinkBearerAuthenticationScopes publicLinkBearerAuthenticationContextKey = "publicLinkBearerAuthentication.Scopes"
 )
+
+// Defines values for ListLinksParamsStatus.
+const (
+	Active  ListLinksParamsStatus = "active"
+	Expired ListLinksParamsStatus = "expired"
+	Revoked ListLinksParamsStatus = "revoked"
+)
+
+// Valid indicates whether the value is a known member of the ListLinksParamsStatus enum.
+func (e ListLinksParamsStatus) Valid() bool {
+	switch e {
+	case Active:
+		return true
+	case Expired:
+		return true
+	case Revoked:
+		return true
+	default:
+		return false
+	}
+}
+
+// AddDateiToLinkRequest defines model for AddDateiToLinkRequest.
+type AddDateiToLinkRequest struct {
+	// DateiId ID of the datei to add to the link
+	DateiId openapi_types.UUID `json:"dateiId"`
+}
 
 // AddEmailRequest defines model for AddEmailRequest.
 type AddEmailRequest struct {
@@ -33,6 +61,21 @@ type CreateDateiRequest struct {
 
 	// ParentId Parent directory ID (omit for root)
 	ParentId *openapi_types.UUID `json:"parentId,omitempty"`
+}
+
+// CreateLinkRequest defines model for CreateLinkRequest.
+type CreateLinkRequest struct {
+	// Code Optional plain-text code required to view
+	Code *string `json:"code,omitempty"`
+
+	// DateiIds IDs of dateien to share (may be empty)
+	DateiIds []openapi_types.UUID `json:"dateiIds"`
+
+	// ExpiresAt Expiration timestamp; omit or null for "never expires"
+	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
+
+	// Name Display name of the link (mandatory, may not be blank)
+	Name string `json:"name"`
 }
 
 // Datei defines model for Datei.
@@ -105,6 +148,87 @@ type EnableMFAResponse struct {
 	RecoveryCodes []string `json:"recoveryCodes"`
 }
 
+// Link defines model for Link.
+type Link struct {
+	// Code Optional plain-text code required to view; null if no code is set
+	Code *string `json:"code,omitempty"`
+
+	// CreatedAt Creation timestamp
+	CreatedAt time.Time `json:"createdAt"`
+
+	// ExpiresAt Expiration timestamp; null if the link never expires
+	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
+
+	// FileCount Total number of files reachable in the shared subtree (excluding trashed)
+	FileCount int `json:"fileCount"`
+
+	// FolderCount Total number of folders reachable in the shared subtree (excluding trashed)
+	FolderCount int `json:"folderCount"`
+
+	// Id Unique identifier
+	Id openapi_types.UUID `json:"id"`
+
+	// Key Opaque URL slug used to access the link publicly
+	Key string `json:"key"`
+
+	// Name Display name of the link
+	Name string `json:"name"`
+
+	// OpenCount Number of times the link has been successfully unlocked (lifetime)
+	OpenCount int `json:"openCount"`
+
+	// OwnerId User ID of the owner
+	OwnerId openapi_types.UUID `json:"ownerId"`
+
+	// RevokedAt Revocation timestamp; null if the link is active
+	RevokedAt *time.Time `json:"revokedAt,omitempty"`
+
+	// UpdatedAt Last update timestamp
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+// LinkDetail defines model for LinkDetail.
+type LinkDetail struct {
+	// Code Optional plain-text code required to view; null if no code is set
+	Code *string `json:"code,omitempty"`
+
+	// CreatedAt Creation timestamp
+	CreatedAt time.Time `json:"createdAt"`
+
+	// Dateien Top-level dateien shared by the link
+	Dateien []Datei `json:"dateien"`
+
+	// ExpiresAt Expiration timestamp; null if the link never expires
+	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
+
+	// FileCount Total number of files reachable in the shared subtree (excluding trashed)
+	FileCount int `json:"fileCount"`
+
+	// FolderCount Total number of folders reachable in the shared subtree (excluding trashed)
+	FolderCount int `json:"folderCount"`
+
+	// Id Unique identifier
+	Id openapi_types.UUID `json:"id"`
+
+	// Key Opaque URL slug used to access the link publicly
+	Key string `json:"key"`
+
+	// Name Display name of the link
+	Name string `json:"name"`
+
+	// OpenCount Number of times the link has been successfully unlocked (lifetime)
+	OpenCount int `json:"openCount"`
+
+	// OwnerId User ID of the owner
+	OwnerId openapi_types.UUID `json:"ownerId"`
+
+	// RevokedAt Revocation timestamp; null if the link is active
+	RevokedAt *time.Time `json:"revokedAt,omitempty"`
+
+	// UpdatedAt Last update timestamp
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
 // ListDateiResponse defines model for ListDateiResponse.
 type ListDateiResponse struct {
 	// Items Array of Datei objects
@@ -117,6 +241,30 @@ type ListDateiResponse struct {
 // ListEmailsResponse defines model for ListEmailsResponse.
 type ListEmailsResponse struct {
 	Emails []UserEmail `json:"emails"`
+}
+
+// ListLinksResponse defines model for ListLinksResponse.
+type ListLinksResponse struct {
+	// Items Array of Link objects
+	Items []Link `json:"items"`
+
+	// Total Total number of items matching the filter (before pagination)
+	Total int `json:"total"`
+}
+
+// ListPublicLinkDateienResponse defines model for ListPublicLinkDateienResponse.
+type ListPublicLinkDateienResponse struct {
+	// ExpiresAt When the link expires; null if it never expires
+	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
+
+	// Items Array of Datei objects accessible via the public link
+	Items []Datei `json:"items"`
+
+	// Name Display name of the link
+	Name string `json:"name"`
+
+	// OwnerName Display name of the user who created the link
+	OwnerName string `json:"ownerName"`
 }
 
 // ListTrashResponse defines model for ListTrashResponse.
@@ -236,6 +384,21 @@ type TrashedDatei struct {
 	UpdatedBy *openapi_types.UUID `json:"updatedBy,omitempty"`
 }
 
+// UnlockPublicLinkRequest defines model for UnlockPublicLinkRequest.
+type UnlockPublicLinkRequest struct {
+	// Code Plain-text code required when the link is configured with one
+	Code *string `json:"code,omitempty"`
+}
+
+// UnlockPublicLinkResponse defines model for UnlockPublicLinkResponse.
+type UnlockPublicLinkResponse struct {
+	// ExpiresAt When the issued token expires (capped at the link's own expiration)
+	ExpiresAt time.Time `json:"expiresAt"`
+
+	// Token Short-lived JWT to authorize subsequent list/download calls for this link
+	Token string `json:"token"`
+}
+
 // UpdateDateiRequest defines model for UpdateDateiRequest.
 type UpdateDateiRequest struct {
 	// Name New name for the Datei (optional)
@@ -261,6 +424,24 @@ type UpdateDateiWithFileRequest struct {
 
 	// UpdateParentId Whether to move the Datei to a new parent directory
 	UpdateParentId *bool `json:"updateParentId,omitempty"`
+}
+
+// UpdateLinkRequest defines model for UpdateLinkRequest.
+type UpdateLinkRequest struct {
+	// ClearCode When true, clears the code (no code required); takes precedence over code
+	ClearCode *bool `json:"clearCode,omitempty"`
+
+	// ClearExpiration When true, clears the expiration (link never expires); takes precedence over expiresAt
+	ClearExpiration *bool `json:"clearExpiration,omitempty"`
+
+	// Code New plain-text code (only used when clearCode is false)
+	Code *string `json:"code,omitempty"`
+
+	// ExpiresAt New expiration timestamp (only used when clearExpiration is false)
+	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
+
+	// Name New display name (omit to leave unchanged; must not be blank when set)
+	Name *string `json:"name,omitempty"`
 }
 
 // UpdateUserEmailRequest defines model for UpdateUserEmailRequest.
@@ -293,6 +474,9 @@ type UserResponse struct {
 // bearerHttpAuthenticationContextKey is the context key for bearerHttpAuthentication security scheme
 type bearerHttpAuthenticationContextKey string
 
+// publicLinkBearerAuthenticationContextKey is the context key for publicLinkBearerAuthentication security scheme
+type publicLinkBearerAuthenticationContextKey string
+
 // ListDateiParams defines parameters for ListDatei.
 type ListDateiParams struct {
 	// ParentId Parent directory ID (omit for root)
@@ -308,6 +492,27 @@ type ListDateiParams struct {
 // GetDateiThumbnailParams defines parameters for GetDateiThumbnail.
 type GetDateiThumbnailParams struct {
 	IfNoneMatch *string `json:"If-None-Match,omitempty"`
+}
+
+// ListLinksParams defines parameters for ListLinks.
+type ListLinksParams struct {
+	// Status Filter by link status; omit to return all
+	Status *ListLinksParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+
+	// Limit Maximum number of results
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of results to skip
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// ListLinksParamsStatus defines parameters for ListLinks.
+type ListLinksParamsStatus string
+
+// ListPublicLinkDateienParams defines parameters for ListPublicLinkDateien.
+type ListPublicLinkDateienParams struct {
+	// ParentId When set, list children of this folder (must be inside the link's shared scope); when omitted, list the top-level shared dateien
+	ParentId *openapi_types.UUID `form:"parentId,omitempty" json:"parentId,omitempty"`
 }
 
 // ListTrashParams defines parameters for ListTrash.
@@ -345,6 +550,18 @@ type UpdateDateiFormdataRequestBody = UpdateDateiRequest
 
 // UpdateDateiMultipartRequestBody defines body for UpdateDatei for multipart/form-data ContentType.
 type UpdateDateiMultipartRequestBody = UpdateDateiWithFileRequest
+
+// CreateLinkJSONRequestBody defines body for CreateLink for application/json ContentType.
+type CreateLinkJSONRequestBody = CreateLinkRequest
+
+// UpdateLinkJSONRequestBody defines body for UpdateLink for application/json ContentType.
+type UpdateLinkJSONRequestBody = UpdateLinkRequest
+
+// AddDateiToLinkJSONRequestBody defines body for AddDateiToLink for application/json ContentType.
+type AddDateiToLinkJSONRequestBody = AddDateiToLinkRequest
+
+// UnlockPublicLinkJSONRequestBody defines body for UnlockPublicLink for application/json ContentType.
+type UnlockPublicLinkJSONRequestBody = UnlockPublicLinkRequest
 
 // AddEmailJSONRequestBody defines body for AddEmail for application/json ContentType.
 type AddEmailJSONRequestBody = AddEmailRequest
