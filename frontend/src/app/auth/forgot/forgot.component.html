@@ -19,11 +19,13 @@
             <input matInput [formField]="form.email" type="email" autocomplete="email" />
             @let emailErrs = form.email().errors();
             @if (emailErrs.length > 0) {
-              @if (emailErrs[0].kind === 'required') {
-                <mat-error>Email is required</mat-error>
-              } @else if (emailErrs[0].kind === 'email') {
-                <mat-error>Enter a valid email address</mat-error>
-              }
+              <mat-error>
+                @if (emailErrs[0].kind === 'required') {
+                  Email is required
+                } @else if (emailErrs[0].kind === 'email') {
+                  Enter a valid email address
+                }
+              </mat-error>
             }
           </mat-form-field>
 

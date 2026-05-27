@@ -1,42 +1,46 @@
 <h2 mat-dialog-title>Add user</h2>
 <form [formRoot]="createForm">
-  <mat-dialog-content class="flex flex-col gap-2">
-    <mat-form-field class="w-full" appearance="outline">
-      <mat-label>Name</mat-label>
-      <input matInput [formField]="createForm.name" />
-      @let nameErrs = createForm.name().errors();
-      @if (nameErrs.length > 0 && nameErrs[0].kind === 'required') {
-        <mat-error>Name is required</mat-error>
-      }
-    </mat-form-field>
-    <mat-form-field class="w-full" appearance="outline">
-      <mat-label>Email</mat-label>
-      <input matInput [formField]="createForm.email" type="email" autocomplete="email" />
-      @let emailErrs = createForm.email().errors();
-      @if (emailErrs.length > 0) {
-        @if (emailErrs[0].kind === 'required') {
-          <mat-error>Email is required</mat-error>
-        } @else if (emailErrs[0].kind === 'email') {
-          <mat-error>Enter a valid email address</mat-error>
+  <mat-dialog-content>
+    <div class="flex flex-col gap-3">
+      <mat-form-field class="w-full" appearance="outline">
+        <mat-label>Name</mat-label>
+        <input matInput [formField]="createForm.name" />
+        @let nameErrs = createForm.name().errors();
+        @if (nameErrs.length > 0 && nameErrs[0].kind === 'required') {
+          <mat-error>Name is required</mat-error>
         }
-      }
-    </mat-form-field>
-    <app-password-confirm
-      [password]="createForm.password"
-      [confirmPassword]="createForm.confirmPassword"
-      passwordLabel="Initial password"
-      confirmLabel="Confirm password"
-    />
-    <div
-      class="border p-4 mat-corner-sm flex flex-col gap-3 mt-2"
-      style="border-color: var(--mat-sys-error)"
-    >
-      <p class="mat-font-body-md mat-text-on-surface-variant m-0">
-        Administrators can add and manage other users.
-      </p>
-      <mat-slide-toggle [checked]="model().isAdmin" (change)="toggleAdmin($event.checked)">
-        Administrator
-      </mat-slide-toggle>
+      </mat-form-field>
+      <mat-form-field class="w-full" appearance="outline">
+        <mat-label>Email</mat-label>
+        <input matInput [formField]="createForm.email" type="email" autocomplete="email" />
+        @let emailErrs = createForm.email().errors();
+        @if (emailErrs.length > 0) {
+          <mat-error>
+            @if (emailErrs[0].kind === 'required') {
+              Email is required
+            } @else if (emailErrs[0].kind === 'email') {
+              Enter a valid email address
+            }
+          </mat-error>
+        }
+      </mat-form-field>
+      <app-password-confirm
+        [password]="createForm.password"
+        [confirmPassword]="createForm.confirmPassword"
+        passwordLabel="Initial password"
+        confirmLabel="Confirm password"
+      />
+      <div
+        class="border p-4 mat-corner-sm flex flex-col gap-2"
+        style="border-color: var(--mat-sys-error)"
+      >
+        <p class="mat-font-body-md mat-text-on-surface-variant m-0">
+          Administrators can add and manage other users.
+        </p>
+        <mat-slide-toggle [checked]="model().isAdmin" (change)="toggleAdmin($event.checked)">
+          Administrator
+        </mat-slide-toggle>
+      </div>
     </div>
   </mat-dialog-content>
   <mat-dialog-actions align="end">
