@@ -36,6 +36,7 @@ import { AdminCreateUserDialogComponent } from './admin-create-user-dialog.compo
     UserAvatarComponent,
   ],
   templateUrl: './admin-users-list.component.html',
+  styleUrl: './admin-users-list.component.css',
 })
 export class AdminUsersListComponent {
   private readonly api = inject(Api);
