@@ -39,12 +39,8 @@ func (s *server) ListUsersAdmin(
 		return nil, err
 	}
 
-	items := make([]api.AdminUserListItem, len(result.Items))
-	for i := range result.Items {
-		items[i] = users.ToAdminUserListItem(result.Items[i])
-	}
 	return ListUsersAdmin200JSONResponse(api.ListAdminUsersResponse{
-		Items: items,
+		Items: result.Items,
 		Total: result.Total,
 	}), nil
 }
@@ -60,7 +56,7 @@ func (s *server) CreateUserAdmin(
 		return nil, err
 	}
 
-	row, err := s.userService.AdminCreateUser(ctx, users.AdminCreateUserInput{
+	item, err := s.userService.AdminCreateUser(ctx, users.AdminCreateUserInput{
 		Name:     request.Body.Name,
 		Email:    string(request.Body.Email),
 		Password: request.Body.Password,
@@ -72,7 +68,7 @@ func (s *server) CreateUserAdmin(
 		}
 		return nil, err
 	}
-	return CreateUserAdmin201JSONResponse(users.ToAdminUserListItem(row)), nil
+	return CreateUserAdmin201JSONResponse(item), nil
 }
 
 // GetUserAdmin implements [StrictServerInterface].
@@ -86,14 +82,14 @@ func (s *server) GetUserAdmin(
 		return nil, err
 	}
 
-	row, err := s.userService.GetUserForAdmin(ctx, request.Id)
+	item, err := s.userService.GetUserForAdmin(ctx, request.Id)
 	if err != nil {
 		if errors.Is(err, dateierrors.ErrNotFound) {
 			return GetUserAdmin404Response{}, nil
 		}
 		return nil, err
 	}
-	return GetUserAdmin200JSONResponse(users.ToAdminUserListItem(row)), nil
+	return GetUserAdmin200JSONResponse(item), nil
 }
 
 // UpdateUserAdmin implements [StrictServerInterface].
@@ -110,12 +106,12 @@ func (s *server) UpdateUserAdmin(
 
 	// An admin must not be able to demote themselves — they would lose access mid-call
 	// and could lock the system out if they're the last admin. The same reasoning
-	// applies to disabling their own account.
+	// applies to archiving their own account.
 	if auth.UserID == request.Id {
 		if request.Body.IsAdmin != nil && !*request.Body.IsAdmin {
 			return UpdateUserAdmin400Response{}, nil
 		}
-		if request.Body.Enabled != nil && !*request.Body.Enabled {
+		if request.Body.Archived != nil && *request.Body.Archived {
 			return UpdateUserAdmin400Response{}, nil
 		}
 	}
@@ -124,7 +120,7 @@ func (s *server) UpdateUserAdmin(
 		UserID:         request.Id,
 		Name:           request.Body.Name,
 		IsAdmin:        request.Body.IsAdmin,
-		Enabled:        request.Body.Enabled,
+		Archived:       request.Body.Archived,
 		PrimaryEmailID: request.Body.PrimaryEmailId,
 	}
 	if err := s.userService.AdminUpdateUser(ctx, input); err != nil {

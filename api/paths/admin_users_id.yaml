@@ -21,7 +21,7 @@ get:
       description: Caller is not an admin
     '404':
       description: User not found
-post:
+put:
   operationId: UpdateUserAdmin
   summary: Update a user's name and/or role (admin only)
   security:

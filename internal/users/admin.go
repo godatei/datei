@@ -10,6 +10,7 @@ import (
 	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/security"
+	"github.com/godatei/datei/pkg/api"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -20,7 +21,7 @@ type ListUsersInput struct {
 }
 
 type ListUsersOutput struct {
-	Items []db.ListUserAccountProjectionsRow
+	Items []api.AdminUserListItem
 	Total int
 }
 
@@ -46,19 +47,23 @@ func (s *UserService) ListUsers(ctx context.Context, input ListUsersInput) (*Lis
 		return nil, fmt.Errorf("failed to list users: %w", err)
 	}
 
-	return &ListUsersOutput{Items: rows, Total: int(total)}, nil
+	items := make([]api.AdminUserListItem, len(rows))
+	for i := range rows {
+		items[i] = toAdminUserListItem(rows[i])
+	}
+	return &ListUsersOutput{Items: items, Total: int(total)}, nil
 }
 
 func (s *UserService) GetUserForAdmin(
 	ctx context.Context, userID uuid.UUID,
-) (db.ListUserAccountProjectionsRow, error) {
+) (api.AdminUserListItem, error) {
 	q := s.queries()
 	user, err := q.GetUserAccountByID(ctx, userID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return db.ListUserAccountProjectionsRow{}, dateierrors.ErrNotFound
+			return api.AdminUserListItem{}, dateierrors.ErrNotFound
 		}
-		return db.ListUserAccountProjectionsRow{}, fmt.Errorf("failed to get user: %w", err)
+		return api.AdminUserListItem{}, fmt.Errorf("failed to get user: %w", err)
 	}
 	primary, err := q.GetPrimaryEmailForUser(ctx, userID)
 	row := db.ListUserAccountProjectionsRow{
@@ -74,9 +79,9 @@ func (s *UserService) GetUserForAdmin(
 		row.PrimaryEmail = &primary.Email
 		row.PrimaryEmailVerifiedAt = primary.VerifiedAt
 	} else if !errors.Is(err, pgx.ErrNoRows) {
-		return db.ListUserAccountProjectionsRow{}, fmt.Errorf("failed to get primary email: %w", err)
+		return api.AdminUserListItem{}, fmt.Errorf("failed to get primary email: %w", err)
 	}
-	return row, nil
+	return toAdminUserListItem(row), nil
 }
 
 type AdminCreateUserInput struct {
@@ -88,24 +93,26 @@ type AdminCreateUserInput struct {
 
 func (s *UserService) AdminCreateUser(
 	ctx context.Context, input AdminCreateUserInput,
-) (db.ListUserAccountProjectionsRow, error) {
+) (api.AdminUserListItem, error) {
 	if input.Name == "" || input.Email == "" {
-		return db.ListUserAccountProjectionsRow{}, dateierrors.ErrInvalidInput
+		return api.AdminUserListItem{}, dateierrors.ErrInvalidInput
 	}
 	if len(input.Password) < 8 {
-		return db.ListUserAccountProjectionsRow{}, dateierrors.ErrInvalidInput
+		return api.AdminUserListItem{}, dateierrors.ErrInvalidInput
 	}
 
 	q := s.queries()
-	if _, err := q.GetUserAccountEmailByEmail(ctx, input.Email); err == nil {
-		return db.ListUserAccountProjectionsRow{}, dateierrors.ErrEmailAlreadyInUse
-	} else if !errors.Is(err, pgx.ErrNoRows) {
-		return db.ListUserAccountProjectionsRow{}, fmt.Errorf("failed to check existing user: %w", err)
+	exists, err := q.UserAccountEmailExists(ctx, input.Email)
+	if err != nil {
+		return api.AdminUserListItem{}, fmt.Errorf("failed to check existing user: %w", err)
+	}
+	if exists {
+		return api.AdminUserListItem{}, dateierrors.ErrEmailAlreadyInUse
 	}
 
 	hash, salt, err := security.HashPassword(input.Password)
 	if err != nil {
-		return db.ListUserAccountProjectionsRow{}, fmt.Errorf("failed to hash password: %w", err)
+		return api.AdminUserListItem{}, fmt.Errorf("failed to hash password: %w", err)
 	}
 
 	userID := uuid.New()
@@ -114,10 +121,10 @@ func (s *UserService) AdminCreateUser(
 	if err := agg.Register(
 		userID, input.Name, input.Email, emailID, hash, salt, input.IsAdmin, time.Now(),
 	); err != nil {
-		return db.ListUserAccountProjectionsRow{}, fmt.Errorf("failed to register: %w", err)
+		return api.AdminUserListItem{}, fmt.Errorf("failed to register: %w", err)
 	}
 	if err := s.repository.Save(ctx, agg); err != nil {
-		return db.ListUserAccountProjectionsRow{}, fmt.Errorf("failed to save user: %w", err)
+		return api.AdminUserListItem{}, fmt.Errorf("failed to save user: %w", err)
 	}
 
 	if config.AuthEmailVerificationRequired() {
@@ -131,7 +138,7 @@ type AdminUpdateUserInput struct {
 	UserID         uuid.UUID
 	Name           *string
 	IsAdmin        *bool
-	Enabled        *bool
+	Archived       *bool
 	PrimaryEmailID *uuid.UUID
 }
 
@@ -174,13 +181,14 @@ func (s *UserService) AdminUpdateUser(ctx context.Context, input AdminUpdateUser
 			return dateierrors.ErrInvalidInput
 		}
 	}
-	if input.Enabled != nil {
-		if *input.Enabled {
-			if err := agg.Unarchive(now); err != nil {
+	if input.Archived != nil {
+		currentlyArchived := agg.ArchivedAt != nil
+		if *input.Archived && !currentlyArchived {
+			if err := agg.Archive(now); err != nil {
 				return dateierrors.ErrInvalidInput
 			}
-		} else {
-			if err := agg.Archive(now); err != nil {
+		} else if !*input.Archived && currentlyArchived {
+			if err := agg.Unarchive(now); err != nil {
 				return dateierrors.ErrInvalidInput
 			}
 		}
@@ -237,12 +245,12 @@ func (s *UserService) AdminListEmails(
 
 func (s *UserService) AdminAddEmail(ctx context.Context, userID uuid.UUID, email string) error {
 	q := s.queries()
-	_, err := q.GetUserAccountEmailByEmail(ctx, email)
-	if err == nil {
-		return dateierrors.ErrEmailAlreadyInUse
-	}
-	if !errors.Is(err, pgx.ErrNoRows) {
+	exists, err := q.UserAccountEmailExists(ctx, email)
+	if err != nil {
 		return fmt.Errorf("failed to check existing email: %w", err)
+	}
+	if exists {
+		return dateierrors.ErrEmailAlreadyInUse
 	}
 
 	agg, err := s.repository.LoadByID(ctx, userID)

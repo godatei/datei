@@ -19,11 +19,23 @@
         <mat-form-field class="w-full" appearance="outline">
           <mat-label>Name</mat-label>
           <input matInput [formField]="form.name" autocomplete="name" />
+          @let nameErrs = form.name().errors();
+          @if (nameErrs.length > 0 && nameErrs[0].kind === 'required') {
+            <mat-error>Name is required</mat-error>
+          }
         </mat-form-field>
 
         <mat-form-field class="w-full" appearance="outline">
           <mat-label>Email</mat-label>
           <input matInput [formField]="form.email" type="email" autocomplete="email" />
+          @let emailErrs = form.email().errors();
+          @if (emailErrs.length > 0) {
+            @if (emailErrs[0].kind === 'required') {
+              <mat-error>Email is required</mat-error>
+            } @else if (emailErrs[0].kind === 'email') {
+              <mat-error>Enter a valid email address</mat-error>
+            }
+          }
         </mat-form-field>
 
         <app-password-confirm [password]="form.password" [confirmPassword]="form.confirmPassword" />

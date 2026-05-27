@@ -216,24 +216,6 @@ func (q *Queries) GetUserAccountByID(ctx context.Context, id uuid.UUID) (UserAcc
 	return i, err
 }
 
-const getUserAccountEmailByEmail = `-- name: GetUserAccountEmailByEmail :one
-SELECT id, user_account_id, email, verified_at, is_primary, created_at FROM user_account_email_projection WHERE email = $1
-`
-
-func (q *Queries) GetUserAccountEmailByEmail(ctx context.Context, email string) (UserAccountEmailProjection, error) {
-	row := q.db.QueryRow(ctx, getUserAccountEmailByEmail, email)
-	var i UserAccountEmailProjection
-	err := row.Scan(
-		&i.ID,
-		&i.UserAccountID,
-		&i.Email,
-		&i.VerifiedAt,
-		&i.IsPrimary,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
 const insertMFARecoveryCodeProjection = `-- name: InsertMFARecoveryCodeProjection :exec
 
 INSERT INTO user_account_mfa_recovery_code_projection (id, user_account_id, code_hash, code_salt)
@@ -559,4 +541,15 @@ func (q *Queries) UpdateUserAccountProjectionPassword(ctx context.Context, arg U
 		arg.ID,
 	)
 	return err
+}
+
+const userAccountEmailExists = `-- name: UserAccountEmailExists :one
+SELECT EXISTS(SELECT 1 FROM user_account_email_projection WHERE email = $1)
+`
+
+func (q *Queries) UserAccountEmailExists(ctx context.Context, email string) (bool, error) {
+	row := q.db.QueryRow(ctx, userAccountEmailExists, email)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
 }

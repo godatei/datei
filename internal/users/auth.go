@@ -177,12 +177,12 @@ func (s *UserService) Register(ctx context.Context, input RegisterInput) error {
 	}
 
 	q := s.queries()
-	_, err := q.GetUserAccountEmailByEmail(ctx, input.Email)
-	if err == nil {
-		return dateierrors.ErrEmailAlreadyInUse
-	}
-	if !errors.Is(err, pgx.ErrNoRows) {
+	exists, err := q.UserAccountEmailExists(ctx, input.Email)
+	if err != nil {
 		return fmt.Errorf("failed to check existing user: %w", err)
+	}
+	if exists {
+		return dateierrors.ErrEmailAlreadyInUse
 	}
 
 	passwordHash, passwordSalt, err := security.HashPassword(input.Password)

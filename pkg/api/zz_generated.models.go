@@ -61,10 +61,10 @@ type AdminResetPasswordRequest struct {
 
 // AdminUpdateUserRequest defines model for AdminUpdateUserRequest.
 type AdminUpdateUserRequest struct {
-	// Enabled When false the account is archived (disabled). Setting true unarchives it.
-	Enabled *bool   `json:"enabled,omitempty"`
-	IsAdmin *bool   `json:"isAdmin,omitempty"`
-	Name    *string `json:"name,omitempty"`
+	// Archived When true the account is archived (disabled). Setting false unarchives it.
+	Archived *bool   `json:"archived,omitempty"`
+	IsAdmin  *bool   `json:"isAdmin,omitempty"`
+	Name     *string `json:"name,omitempty"`
 
 	// PrimaryEmailId Promote this email to be the user's primary email.
 	PrimaryEmailId *openapi_types.UUID `json:"primaryEmailId,omitempty"`

@@ -44,7 +44,7 @@ export class AdminUsersListComponent {
   readonly filter = signal<'all' | 'admins' | 'users' | 'archived'>('all');
 
   protected readonly usersResource = resource({
-    loader: () => this.api.invoke(listUsersAdmin, undefined),
+    loader: () => this.api.invoke(listUsersAdmin),
   });
 
   readonly users = computed<AdminUserListItem[]>(() => this.usersResource.value()?.items ?? []);

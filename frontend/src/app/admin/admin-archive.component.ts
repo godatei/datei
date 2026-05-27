@@ -49,7 +49,7 @@ export class AdminArchiveComponent {
   private async runArchive() {
     this.loading.set(true);
     try {
-      await this.api.invoke(updateUserAdmin, { id: this.userId(), body: { enabled: false } });
+      await this.api.invoke(updateUserAdmin, { id: this.userId(), body: { archived: true } });
       this.currentlyArchived.set(true);
       const ref = this.snackBar.open('User archived', 'Undo', { duration: snackSuccessDuration });
       ref.onAction().subscribe(() => this.runUnarchive());
@@ -64,7 +64,7 @@ export class AdminArchiveComponent {
   private async runUnarchive() {
     this.loading.set(true);
     try {
-      await this.api.invoke(updateUserAdmin, { id: this.userId(), body: { enabled: true } });
+      await this.api.invoke(updateUserAdmin, { id: this.userId(), body: { archived: false } });
       this.currentlyArchived.set(false);
       this.snackBar.open('User unarchived', 'OK', { duration: snackSuccessDuration });
       this.changed.emit();

@@ -114,8 +114,8 @@ ORDER BY is_primary DESC, created_at;
 SELECT * FROM user_account_email_projection
 WHERE id = $1 AND user_account_id = $2;
 
--- name: GetUserAccountEmailByEmail :one
-SELECT * FROM user_account_email_projection WHERE email = $1;
+-- name: UserAccountEmailExists :one
+SELECT EXISTS(SELECT 1 FROM user_account_email_projection WHERE email = $1);
 
 -- name: GetUnusedMFARecoveryCodes :many
 SELECT * FROM user_account_mfa_recovery_code_projection

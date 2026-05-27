@@ -5,6 +5,10 @@ import { initials } from './initials';
   selector: 'app-user-avatar',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './user-avatar.component.html',
+  host: {
+    '[class]': 'classes()',
+    'aria-hidden': 'true',
+  },
 })
 export class UserAvatarComponent {
   readonly name = input.required<string | null | undefined>();

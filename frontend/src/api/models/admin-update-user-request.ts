@@ -4,9 +4,9 @@
 export interface AdminUpdateUserRequest {
 
   /**
-   * When false the account is archived (disabled). Setting true unarchives it.
+   * When true the account is archived (disabled). Setting false unarchives it.
    */
-  enabled?: boolean;
+  archived?: boolean;
   isAdmin?: boolean;
   name?: string;
 
