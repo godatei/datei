@@ -4,7 +4,7 @@
     <div class="flex flex-col gap-2 pt-2">
       @if (!isEdit) {
         <p class="mat-text-on-surface-variant mat-font-body-md">
-          Sharing {{ dateiCount() }} {{ dateiCount() === 1 ? 'item' : 'items' }}.
+          Sharing {dateiCount(), plural, =1 {1 item} other {{{ dateiCount() }} items}}.
         </p>
       }
 

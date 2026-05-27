@@ -245,6 +245,7 @@ HTTP Request → Server Endpoint → Service → db.Queries (read from projectio
 - Use strict type checking
 - Prefer type inference when the type is obvious
 - Avoid the `any` type; use `unknown` when type is uncertain
+- Use camelCase identifiers (`linkId`, `apiUrl`). Do NOT carry Go-style all-caps acronyms (`linkID`, `apiURL`) into TypeScript
 
 ### Angular Material (Material 3 Expressive)
 
@@ -321,6 +322,8 @@ This project uses Angular Material 21 with Material 3 theming. All UI must follo
 - Use the async pipe to handle observables
 - Do not assume globals like (`new Date()`) are available.
 - Do not write arrow functions in templates (they are not supported).
+- Use ICU pluralization (`{count, plural, =1 {1 item} other {{{ count }} items}}`) for count-dependent copy, not inline ternaries.
+- Render form-field validation as `<mat-error>` inside the `<mat-form-field>`, not a standalone `<p class="mat-text-error">` outside it.
 
 ### Services
 

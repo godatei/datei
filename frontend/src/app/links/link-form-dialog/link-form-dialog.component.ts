@@ -143,15 +143,15 @@ export class LinkFormDialogComponent {
     }
 
     // submitEdit is only invoked when isEdit, which is equivalent to editLink !== null.
-    const linkID = this.editLink!.id;
+    const linkId = this.editLink!.id;
 
     // Flush the queued removals first so the link's content set matches what
     // the dialog has been showing the user before the metadata update lands.
     for (const dateiId of this.pendingRemovals()) {
-      await this.api.invoke(removeDateiFromLink, { id: linkID, dateiId });
+      await this.api.invoke(removeDateiFromLink, { id: linkId, dateiId });
     }
 
-    return this.api.invoke(updateLink, { id: linkID, body });
+    return this.api.invoke(updateLink, { id: linkId, body });
   }
 
   protected removeDatei(datei: Datei): void {

@@ -33,10 +33,10 @@
           <mat-form-field appearance="outline">
             <mat-label>Code</mat-label>
             <input matInput [formField]="codeForm.code" autocomplete="off" />
+            @if (invalidCode()) {
+              <mat-error>Incorrect code. Please try again.</mat-error>
+            }
           </mat-form-field>
-          @if (invalidCode()) {
-            <p class="mat-text-error mat-font-body-sm mb-0">Incorrect code. Please try again.</p>
-          }
           <button
             mat-flat-button
             color="primary"
