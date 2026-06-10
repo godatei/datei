@@ -234,13 +234,13 @@ func (s *UserService) AdminResetPassword(ctx context.Context, input AdminResetPa
 
 func (s *UserService) AdminListEmails(
 	ctx context.Context, userID uuid.UUID,
-) ([]db.UserAccountEmailProjection, error) {
+) ([]api.UserEmail, error) {
 	q := s.queries()
 	rows, err := q.GetEmailsForUser(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list emails: %w", err)
 	}
-	return rows, nil
+	return MapEmailProjectionSliceToAPI(rows), nil
 }
 
 func (s *UserService) AdminAddEmail(ctx context.Context, userID uuid.UUID, email string) error {

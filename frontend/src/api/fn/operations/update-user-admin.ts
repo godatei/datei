@@ -15,7 +15,7 @@ export interface UpdateUserAdmin$Params {
 }
 
 export function updateUserAdmin(http: HttpClient, rootUrl: string, params: UpdateUserAdmin$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
-  const rb = new RequestBuilder(rootUrl, updateUserAdmin.PATH, 'put');
+  const rb = new RequestBuilder(rootUrl, updateUserAdmin.PATH, 'patch');
   if (params) {
     rb.path('id', params.id, {});
     rb.body(params.body, 'application/json');

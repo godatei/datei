@@ -7,7 +7,6 @@ import (
 	"github.com/godatei/datei/internal/datei"
 	"github.com/godatei/datei/internal/link"
 	"github.com/godatei/datei/internal/users"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const (
@@ -21,11 +20,9 @@ type server struct {
 	dateiService *datei.Service
 	userService  *users.UserService
 	linkService  *link.Service
-	pool         *pgxpool.Pool
 }
 
 func NewServer(
-	pool *pgxpool.Pool,
 	dateiSvc *datei.Service,
 	userSvc *users.UserService,
 	linkSvc *link.Service,
@@ -34,7 +31,6 @@ func NewServer(
 		dateiService: dateiSvc,
 		userService:  userSvc,
 		linkService:  linkSvc,
-		pool:         pool,
 	}
 }
 

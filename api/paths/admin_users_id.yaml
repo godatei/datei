@@ -21,9 +21,9 @@ get:
       description: Caller is not an admin
     '404':
       description: User not found
-put:
+patch:
   operationId: UpdateUserAdmin
-  summary: Update a user's name and/or role (admin only)
+  summary: Update a user's name, role, archive status, or primary email (admin only)
   security:
     - bearerHttpAuthentication: []
   parameters:

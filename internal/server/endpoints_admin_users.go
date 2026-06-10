@@ -172,12 +172,12 @@ func (s *server) ListUserEmailsAdmin(
 		return nil, err
 	}
 
-	rows, err := s.userService.AdminListEmails(ctx, request.Id)
+	emails, err := s.userService.AdminListEmails(ctx, request.Id)
 	if err != nil {
 		return nil, err
 	}
 	return ListUserEmailsAdmin200JSONResponse(api.ListEmailsResponse{
-		Emails: users.MapEmailProjectionSliceToAPI(rows),
+		Emails: emails,
 	}), nil
 }
 
