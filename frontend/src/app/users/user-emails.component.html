@@ -44,12 +44,14 @@
       <mat-form-field class="w-full" appearance="outline">
         <mat-label>Add email address</mat-label>
         <input matInput [formField]="addEmailForm.email" type="email" />
-        @let errs = addEmailForm.email().errors();
         <mat-error>
-          @if (errs[0]?.kind === 'email') {
-            Enter a valid email address
-          } @else if (errs[0]?.kind === 'required') {
-            Email is required
+          @let errs = addEmailForm.email().errors();
+          @if (errs.length > 0 && addEmailForm.email().touched()) {
+            @if (errs[0].kind === 'email') {
+              Enter a valid email address
+            } @else if (errs[0].kind === 'required') {
+              Email is required
+            }
           }
         </mat-error>
       </mat-form-field>

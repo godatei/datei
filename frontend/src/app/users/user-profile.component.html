@@ -6,10 +6,14 @@
       <mat-form-field class="w-full" appearance="outline">
         <mat-label>Name</mat-label>
         <input matInput [formField]="profileForm.name" />
-        @let nameErrs = profileForm.name().errors();
-        @if (nameErrs.length > 0 && nameErrs[0].kind === 'required') {
-          <mat-error>Name is required</mat-error>
-        }
+        <mat-error>
+          @let nameErrs = profileForm.name().errors();
+          @if (
+            nameErrs.length > 0 && nameErrs[0].kind === 'required' && profileForm.name().touched()
+          ) {
+            Name is required
+          }
+        </mat-error>
       </mat-form-field>
       <button
         mat-flat-button

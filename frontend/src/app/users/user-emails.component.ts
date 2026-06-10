@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, input, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  resource,
+  signal,
+} from '@angular/core';
 import { email, form, FormField, FormRoot, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -9,7 +17,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
-import type { UserEmail } from '~/api/models/user-email';
 import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
 import type { BaseUserPort } from './user-data.port';
 
@@ -30,13 +37,18 @@ import type { BaseUserPort } from './user-data.port';
   ],
   templateUrl: './user-emails.component.html',
 })
-export class UserEmailsComponent implements OnInit {
+export class UserEmailsComponent {
   private readonly snackBar = inject(MatSnackBar);
 
   readonly port = input.required<BaseUserPort>();
 
-  readonly emails = signal<UserEmail[]>([]);
-  readonly loading = signal(false);
+  protected readonly emailsResource = resource({
+    params: () => this.port(),
+    loader: ({ params }) => firstValueFrom(params.listEmails()),
+  });
+
+  readonly emails = computed(() => this.emailsResource.value() ?? []);
+  readonly loading = computed(() => this.emailsResource.isLoading());
 
   readonly addEmailModel = signal({ email: '' });
   readonly addEmailForm = form(
@@ -54,7 +66,7 @@ export class UserEmailsComponent implements OnInit {
             this.addEmailModel.set({ email: '' });
             this.addEmailForm().reset();
             this.snackBar.open('Email added', 'OK', { duration: snackSuccessDuration });
-            this.loadEmails();
+            this.emailsResource.reload();
           } catch {
             this.snackBar.open('Failed to add email', 'OK', { duration: snackErrorDuration });
           }
@@ -63,52 +75,23 @@ export class UserEmailsComponent implements OnInit {
     },
   );
 
-  ngOnInit() {
-    this.loadEmails();
+  async removeEmail(emailId: string) {
+    try {
+      await firstValueFrom(this.port().removeEmail(emailId));
+      this.snackBar.open('Email removed', 'OK', { duration: snackSuccessDuration });
+      this.emailsResource.reload();
+    } catch {
+      this.snackBar.open('Failed to remove email', 'OK', { duration: snackErrorDuration });
+    }
   }
 
-  removeEmail(emailId: string) {
-    this.loading.set(true);
-    this.port()
-      .removeEmail(emailId)
-      .subscribe({
-        next: () => {
-          this.snackBar.open('Email removed', 'OK', { duration: snackSuccessDuration });
-          this.loadEmails();
-        },
-        error: () => {
-          this.loading.set(false);
-          this.snackBar.open('Failed to remove email', 'OK', { duration: snackErrorDuration });
-        },
-      });
-  }
-
-  setPrimary(emailId: string) {
-    this.loading.set(true);
-    this.port()
-      .setPrimaryEmail(emailId)
-      .subscribe({
-        next: () => {
-          this.snackBar.open('Primary email updated', 'OK', { duration: snackSuccessDuration });
-          this.loadEmails();
-        },
-        error: () => {
-          this.loading.set(false);
-          this.snackBar.open('Failed to set primary email', 'OK', { duration: snackErrorDuration });
-        },
-      });
-  }
-
-  private loadEmails() {
-    this.loading.set(true);
-    this.port()
-      .listEmails()
-      .subscribe({
-        next: (emails) => {
-          this.emails.set(emails);
-          this.loading.set(false);
-        },
-        error: () => this.loading.set(false),
-      });
+  async setPrimary(emailId: string) {
+    try {
+      await firstValueFrom(this.port().setPrimaryEmail(emailId));
+      this.snackBar.open('Primary email updated', 'OK', { duration: snackSuccessDuration });
+      this.emailsResource.reload();
+    } catch {
+      this.snackBar.open('Failed to set primary email', 'OK', { duration: snackErrorDuration });
+    }
   }
 }

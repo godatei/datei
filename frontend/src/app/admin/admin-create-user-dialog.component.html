@@ -5,24 +5,28 @@
       <mat-form-field class="w-full" appearance="outline">
         <mat-label>Name</mat-label>
         <input matInput [formField]="createForm.name" />
-        @let nameErrs = createForm.name().errors();
-        @if (nameErrs.length > 0 && nameErrs[0].kind === 'required') {
-          <mat-error>Name is required</mat-error>
-        }
+        <mat-error>
+          @let nameErrs = createForm.name().errors();
+          @if (
+            nameErrs.length > 0 && nameErrs[0].kind === 'required' && createForm.name().touched()
+          ) {
+            Name is required
+          }
+        </mat-error>
       </mat-form-field>
       <mat-form-field class="w-full" appearance="outline">
         <mat-label>Email</mat-label>
         <input matInput [formField]="createForm.email" type="email" autocomplete="email" />
-        @let emailErrs = createForm.email().errors();
-        @if (emailErrs.length > 0) {
-          <mat-error>
+        <mat-error>
+          @let emailErrs = createForm.email().errors();
+          @if (emailErrs.length > 0 && createForm.email().touched()) {
             @if (emailErrs[0].kind === 'required') {
               Email is required
             } @else if (emailErrs[0].kind === 'email') {
               Enter a valid email address
             }
-          </mat-error>
-        }
+          }
+        </mat-error>
       </mat-form-field>
       <app-password-confirm
         [password]="createForm.password"

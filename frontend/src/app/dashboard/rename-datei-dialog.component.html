@@ -5,16 +5,18 @@
       <mat-form-field appearance="outline" class="w-full">
         <mat-label>Name</mat-label>
         <input #nameInput matInput [formField]="form.name" autocomplete="off" aria-label="Name" />
-        @let errs = form.name().errors();
-        @if (errs.length > 0) {
-          @if (errs[0].kind === 'required') {
-            <mat-error>Name is required</mat-error>
-          } @else if (errs[0].kind === 'maxLength') {
-            <mat-error>Name must be 255 characters or fewer</mat-error>
-          } @else if (errs[0].kind === 'pattern') {
-            <mat-error>Name cannot be only spaces</mat-error>
+        <mat-error>
+          @let errs = form.name().errors();
+          @if (errs.length > 0 && form.name().touched()) {
+            @if (errs[0].kind === 'required') {
+              Name is required
+            } @else if (errs[0].kind === 'maxLength') {
+              Name must be 255 characters or fewer
+            } @else if (errs[0].kind === 'pattern') {
+              Name cannot be only spaces
+            }
           }
-        }
+        </mat-error>
       </mat-form-field>
       @if (extensionChanged()) {
         <div class="flex items-center gap-2 mat-font-body-sm mat-text-on-surface-variant">

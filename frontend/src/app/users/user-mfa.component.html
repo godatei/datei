@@ -21,14 +21,16 @@
           <mat-form-field class="w-full" appearance="outline">
             <mat-label>Verification code</mat-label>
             <input matInput [formField]="enableForm.code" autocomplete="one-time-code" />
-            @let codeErrs = enableForm.code().errors();
-            @if (codeErrs.length > 0) {
-              @if (codeErrs[0].kind === 'required') {
-                <mat-error>Verification code is required</mat-error>
-              } @else if (codeErrs[0].kind === 'minLength') {
-                <mat-error>Code must be at least 6 characters</mat-error>
+            <mat-error>
+              @let codeErrs = enableForm.code().errors();
+              @if (codeErrs.length > 0 && enableForm.code().touched()) {
+                @if (codeErrs[0].kind === 'required') {
+                  Verification code is required
+                } @else if (codeErrs[0].kind === 'minLength') {
+                  Code must be at least 6 characters
+                }
               }
-            }
+            </mat-error>
           </mat-form-field>
           <button
             mat-flat-button
@@ -69,10 +71,16 @@
           <mat-form-field class="w-full" appearance="outline">
             <mat-label>Password</mat-label>
             <input matInput [formField]="disableForm.password" type="password" />
-            @let passwordErrs = disableForm.password().errors();
-            @if (passwordErrs.length > 0 && passwordErrs[0].kind === 'required') {
-              <mat-error>Password is required</mat-error>
-            }
+            <mat-error>
+              @let passwordErrs = disableForm.password().errors();
+              @if (
+                passwordErrs.length > 0 &&
+                passwordErrs[0].kind === 'required' &&
+                disableForm.password().touched()
+              ) {
+                Password is required
+              }
+            </mat-error>
           </mat-form-field>
           <button
             mat-button
