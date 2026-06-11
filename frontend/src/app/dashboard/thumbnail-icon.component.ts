@@ -10,9 +10,9 @@ import {
   signal,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { Api } from 'frontend/src/api/api';
-import { getDateiThumbnail } from 'frontend/src/api/functions';
-import { Datei } from 'frontend/src/api/models';
+import { Api } from '~/api/api';
+import { getDateiThumbnail } from '~/api/functions';
+import { Datei } from '~/api/models';
 
 const THUMBNAIL_MIME_TYPES = new Set([
   'application/pdf',

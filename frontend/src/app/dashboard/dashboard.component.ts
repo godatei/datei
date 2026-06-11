@@ -21,7 +21,7 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
-import { Api } from 'frontend/src/api/api';
+import { Api } from '~/api/api';
 import {
   addDateiToLink,
   createDatei,
@@ -30,8 +30,8 @@ import {
   getDateiPath,
   listDatei,
   updateDatei$FormData,
-} from 'frontend/src/api/functions';
-import { Datei } from 'frontend/src/api/models';
+} from '~/api/functions';
+import { Datei } from '~/api/models';
 import { ThumbnailIconComponent } from './thumbnail-icon.component';
 import {
   ImagePreviewDialogComponent,
@@ -46,8 +46,8 @@ import {
 import { LinkPickerDialogComponent } from '~/frontend/links/link-picker-dialog/link-picker-dialog.component';
 import type { Link } from '~/api/models/link';
 import { BytesPipe } from '~/frontend/pipes/bytes.pipe';
-import { triggerDownload } from 'frontend/src/util/download';
-import { buildShareUrl } from 'frontend/src/util/share-url';
+import { triggerDownload } from '~/util/download';
+import { buildShareUrl } from '~/util/share-url';
 import { DragDropDirective, DropEvent } from './drag-drop.directive';
 import { DragPreviewDirective } from './drag-preview.directive';
 import { DragItemDirective } from './drag-row.directive';

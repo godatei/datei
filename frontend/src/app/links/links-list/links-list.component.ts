@@ -26,7 +26,7 @@ import {
   LinkFormDialogComponent,
   LinkFormDialogData,
 } from '~/frontend/links/link-form-dialog/link-form-dialog.component';
-import { buildShareUrl } from 'frontend/src/util/share-url';
+import { buildShareUrl } from '~/util/share-url';
 
 export type LinkStatusFilter = 'active' | 'expired' | 'revoked';
 

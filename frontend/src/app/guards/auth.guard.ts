@@ -6,7 +6,7 @@ import {
   Router,
   RouterStateSnapshot,
 } from '@angular/router';
-import { never } from 'frontend/src/util/never';
+import { never } from '~/util/never';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '~/frontend/services/auth.service';
 import { SettingsService } from '~/frontend/services/settings.service';
