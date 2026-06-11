@@ -60,7 +60,7 @@ import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     MatMenuModule,
     MatIconModule,

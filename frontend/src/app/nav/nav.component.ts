@@ -15,7 +15,7 @@ import { UserAvatarComponent } from '~/frontend/users/user-avatar.component';
 @Component({
   selector: 'app-nav',
   templateUrl: './nav.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     NgOptimizedImage,
     MatToolbarModule,
