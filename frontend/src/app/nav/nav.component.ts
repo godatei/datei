@@ -1,5 +1,5 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NgOptimizedImage } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -15,6 +15,7 @@ import { UserAvatarComponent } from '~/frontend/users/user-avatar.component';
 @Component({
   selector: 'app-nav',
   templateUrl: './nav.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     NgOptimizedImage,
     MatToolbarModule,

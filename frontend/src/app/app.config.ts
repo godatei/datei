@@ -1,5 +1,5 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 
 import { routes } from '~/frontend/app.routes';
@@ -15,6 +15,7 @@ export const appConfig: ApplicationConfig = {
     // can safely set the Authorization header on those routes without being
     // overwritten. errorInterceptor runs last so it sees the final response.
     provideHttpClient(
+      withXhr(),
       withInterceptors([tokenInterceptor, publicLinkTokenInterceptor, errorInterceptor]),
     ),
   ],
