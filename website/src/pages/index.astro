@@ -1,0 +1,28 @@
+---
+import BaseLayout from '~/layouts/BaseLayout.astro';
+
+const title = 'Datei';
+const description =
+  'Datei is an open source, self-hosted file management platform.';
+---
+
+<BaseLayout title={title} description={description}>
+  <h1>{title}</h1>
+  <p>{description}</p>
+  <ul>
+    <li>
+      <a href="/docs/">Read the documentation</a>
+    </li>
+    <li>
+      <a href="/blog/">Read the blog</a>
+    </li>
+    <li>
+      <a
+        href="https://github.com/godatei/datei"
+        target="_blank"
+        rel="noopener noreferrer">
+        View the source on GitHub
+      </a>
+    </li>
+  </ul>
+</BaseLayout>

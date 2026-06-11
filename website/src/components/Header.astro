@@ -1,0 +1,30 @@
+---
+const links = [
+  {label: 'Home', href: '/'},
+  {label: 'Docs', href: '/docs/'},
+  {label: 'Blog', href: '/blog/'},
+];
+---
+
+<header>
+  <nav aria-label="Main">
+    <a href="/">Datei</a>
+    <ul>
+      {
+        links.map(link => (
+          <li>
+            <a href={link.href}>{link.label}</a>
+          </li>
+        ))
+      }
+      <li>
+        <a
+          href="https://github.com/godatei/datei"
+          target="_blank"
+          rel="noopener noreferrer">
+          GitHub
+        </a>
+      </li>
+    </ul>
+  </nav>
+</header>

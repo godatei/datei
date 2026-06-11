@@ -1,0 +1,61 @@
+---
+import {Image} from 'astro:assets';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import type {Post} from '~/types';
+import {getSortedPosts} from '~/utils/blog';
+
+export async function getStaticPaths() {
+  const posts = await getSortedPosts();
+
+  return posts.map(post => {
+    return {
+      params: {
+        slug: post.data.slug + '/',
+      },
+      props: {
+        post: post,
+      },
+    };
+  });
+}
+
+export interface Props {
+  post: Post;
+}
+
+const {post} = Astro.props;
+const {Content} = await post.rendered;
+---
+
+<BaseLayout title={post.data.title} description={post.data.description}>
+  <article>
+    <header>
+      <h1>{post.data.title}</h1>
+      <p>{post.data.description}</p>
+      <time datetime={post.data.publishDate.toISOString()}>
+        {
+          post.data.publishDate.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          })
+        }
+      </time>
+      <ul>
+        {
+          post.data.authors.map(author => (
+            <li>
+              <Image src={author.image} alt={author.name} width={48} />
+              <a href={author.gitHub} target="_blank" rel="noopener noreferrer">
+                {author.name}
+              </a>
+              ({author.role})
+            </li>
+          ))
+        }
+      </ul>
+      <Image src={post.data.image} alt={post.data.title} width={1200} />
+    </header>
+    <Content />
+  </article>
+</BaseLayout>

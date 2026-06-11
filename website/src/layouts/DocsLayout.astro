@@ -1,0 +1,20 @@
+---
+import Sidebar from '~/components/docs/Sidebar.astro';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+
+export interface Props {
+  title: string;
+  description: string;
+}
+
+const {title, description} = Astro.props;
+---
+
+<BaseLayout title={title} description={description}>
+  <aside>
+    <Sidebar />
+  </aside>
+  <article>
+    <slot />
+  </article>
+</BaseLayout>

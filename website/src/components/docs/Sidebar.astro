@@ -1,0 +1,25 @@
+---
+import {getDocHref, getDocLabel, getSortedDocs} from '~/utils/docs';
+
+const docs = await getSortedDocs();
+const currentPath = Astro.url.pathname;
+---
+
+<nav aria-label="Docs">
+  <ul>
+    {
+      docs.map(doc => {
+        const href = getDocHref(doc);
+        return (
+          <li>
+            <a
+              href={href}
+              aria-current={href === currentPath ? 'page' : undefined}>
+              {getDocLabel(doc)}
+            </a>
+          </li>
+        );
+      })
+    }
+  </ul>
+</nav>
