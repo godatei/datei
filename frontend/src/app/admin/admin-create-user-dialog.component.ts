@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { email, form, FormField, FormRoot, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -17,7 +17,6 @@ import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
 
 @Component({
   selector: 'app-admin-create-user-dialog',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     FormField,
     FormRoot,

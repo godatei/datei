@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import {
   type FieldTree,
   type SchemaPath,
@@ -27,7 +27,6 @@ export function passwordConfirmSchema(
 
 @Component({
   selector: 'app-password-confirm',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [FormField, MatFormFieldModule, MatInputModule],
   templateUrl: './password-confirm.component.html',
 })

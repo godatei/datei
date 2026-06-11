@@ -1,13 +1,5 @@
 import { HttpContext, HttpErrorResponse } from '@angular/common/http';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  DestroyRef,
-  effect,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { form, FormField, FormRoot, pattern, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
@@ -26,7 +18,7 @@ import { ImagePreviewComponent } from '~/frontend/components/image-preview.compo
 import { BytesPipe } from '~/frontend/pipes/bytes.pipe';
 import { RelativeDatePipe } from '~/frontend/pipes/relative-date.pipe';
 import { PUBLIC_LINK_TOKEN } from '~/frontend/public-links/public-link-token.interceptor';
-import { triggerDownload } from 'frontend/src/util/download';
+import { triggerDownload } from '~/util/download';
 
 type ViewerState =
   | { kind: 'loading' }
@@ -40,7 +32,6 @@ type ViewerState =
 @Component({
   selector: 'app-public-link-viewer',
   templateUrl: './public-link-viewer.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     MatButtonModule,
     MatFormFieldModule,

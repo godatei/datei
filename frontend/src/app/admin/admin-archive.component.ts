@@ -1,12 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  effect,
-  inject,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { Component, effect, inject, input, output, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -17,7 +9,6 @@ import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
 
 @Component({
   selector: 'app-admin-archive',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [MatButtonModule, MatCardModule, MatIconModule, MatSnackBarModule],
   templateUrl: './admin-archive.component.html',
 })

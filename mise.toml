@@ -4,7 +4,7 @@ env_shell_expand = false
 [tools]
 go = "1.26.3"
 golangci-lint = "2.12.2"
-node = "24"
+node = "26"
 pnpm = "11.5.3"
 github-cli = "2.92.0"
 watchexec = "2.5.1"

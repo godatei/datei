@@ -3,7 +3,6 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "baseUrl": "..",
     "outDir": "../out-tsc/app",
     "types": [],
     "noUnusedLocals": true,
@@ -14,5 +13,13 @@
   ],
   "exclude": [
     "src/**/*.spec.ts"
-  ]
+  ],
+  "angularCompilerOptions": {
+    "extendedDiagnostics": {
+      "checks": {
+        "nullishCoalescingNotNullable": "suppress",
+        "optionalChainNotNullable": "suppress"
+      }
+    }
+  }
 }
