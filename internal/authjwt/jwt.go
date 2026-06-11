@@ -14,6 +14,7 @@ const (
 	UserNameKey          = "name"
 	UserEmailKey         = "email"
 	UserEmailVerifiedKey = "email_verified"
+	UserIsAdminKey       = "is_admin"
 	ActionKey            = "action"
 	KindKey              = "kind"
 )
@@ -26,7 +27,9 @@ const KindUser = "user"
 
 var secret = sync.OnceValue(config.AuthJWTSecret)
 
-func GenerateDefaultToken(userID uuid.UUID, name, email string, emailVerified bool) (string, error) {
+func GenerateDefaultToken(
+	userID uuid.UUID, name, email string, isAdmin, emailVerified bool,
+) (string, error) {
 	now := time.Now()
 	token, err := jwt.NewBuilder().
 		IssuedAt(now).
@@ -37,6 +40,7 @@ func GenerateDefaultToken(userID uuid.UUID, name, email string, emailVerified bo
 		Claim(UserNameKey, name).
 		Claim(UserEmailKey, email).
 		Claim(UserEmailVerifiedKey, emailVerified).
+		Claim(UserIsAdminKey, isAdmin).
 		Build()
 	if err != nil {
 		return "", err

@@ -1,0 +1,60 @@
+<h2 mat-dialog-title>Add user</h2>
+<form [formRoot]="createForm">
+  <mat-dialog-content>
+    <div class="flex flex-col gap-3">
+      <mat-form-field class="w-full" appearance="outline">
+        <mat-label>Name</mat-label>
+        <input matInput [formField]="createForm.name" />
+        <mat-error>
+          @let nameErrs = createForm.name().errors();
+          @if (
+            nameErrs.length > 0 && nameErrs[0].kind === 'required' && createForm.name().touched()
+          ) {
+            Name is required
+          }
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field class="w-full" appearance="outline">
+        <mat-label>Email</mat-label>
+        <input matInput [formField]="createForm.email" type="email" autocomplete="email" />
+        <mat-error>
+          @let emailErrs = createForm.email().errors();
+          @if (emailErrs.length > 0 && createForm.email().touched()) {
+            @if (emailErrs[0].kind === 'required') {
+              Email is required
+            } @else if (emailErrs[0].kind === 'email') {
+              Enter a valid email address
+            }
+          }
+        </mat-error>
+      </mat-form-field>
+      <app-password-confirm
+        [password]="createForm.password"
+        [confirmPassword]="createForm.confirmPassword"
+        passwordLabel="Initial password"
+        confirmLabel="Confirm password"
+      />
+      <div
+        class="border p-4 mat-corner-sm flex flex-col gap-2"
+        style="border-color: var(--mat-sys-error)"
+      >
+        <p class="mat-font-body-md mat-text-on-surface-variant m-0">
+          Administrators can add and manage other users.
+        </p>
+        <mat-slide-toggle [checked]="model().isAdmin" (change)="toggleAdmin($event.checked)">
+          Administrator
+        </mat-slide-toggle>
+      </div>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="cancel()">Cancel</button>
+    <button
+      mat-flat-button
+      type="submit"
+      [disabled]="createForm().submitting() || createForm().invalid()"
+    >
+      Create user
+    </button>
+  </mat-dialog-actions>
+</form>

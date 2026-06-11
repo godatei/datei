@@ -1,0 +1,48 @@
+<div class="max-w-xl mx-auto flex flex-col gap-6 px-4 my-8">
+  <a mat-button routerLink="/admin/users" class="self-start">
+    <mat-icon>arrow_back</mat-icon>
+    Users
+  </a>
+
+  @if (loading()) {
+    <div class="animate-pulse mat-bg-surface-container mat-corner-md h-24"></div>
+  } @else if (user(); as u) {
+    <div class="flex items-center gap-4">
+      <app-user-avatar [name]="u.name" size="lg" />
+      <div class="flex flex-col min-w-0">
+        <h2 class="mat-font-headline-sm m-0 truncate">{{ u.name }}</h2>
+        <span class="mat-font-body-md mat-text-on-surface-variant truncate">{{
+          primaryEmail() || '—'
+        }}</span>
+      </div>
+    </div>
+
+    @if (isSelf()) {
+      <mat-card>
+        <mat-card-content class="flex items-start gap-3">
+          <mat-icon class="mat-text-primary">info</mat-icon>
+          <div>
+            <p class="mat-font-body-md m-0">You're viewing your own account.</p>
+            <p class="mat-font-body-sm mat-text-on-surface-variant m-0">
+              Use <a routerLink="/settings">Settings</a> to change your password. Role and archive
+              controls are hidden to prevent locking yourself out.
+            </p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <app-user-profile [port]="port()" [name]="u.name" (changed)="load()" />
+    <app-user-emails [port]="port()" />
+    @if (!isSelf()) {
+      <app-user-password [port]="port()" [requireCurrentPassword]="false" />
+      <app-admin-role [userId]="userId()" [isAdmin]="u.isAdmin" (changed)="load()" />
+    }
+    <app-admin-mfa [userId]="userId()" [mfaEnabled]="u.mfaEnabled" (changed)="load()" />
+    @if (!isSelf()) {
+      <app-admin-archive [userId]="userId()" [archived]="u.archived" (changed)="load()" />
+    }
+  } @else {
+    <p class="mat-text-on-surface-variant">User not found.</p>
+  }
+</div>

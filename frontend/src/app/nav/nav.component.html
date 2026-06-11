@@ -38,7 +38,7 @@
       <span>Datei</span>
       <span class="grow shrink basis-auto"></span>
       <button mat-button [matMenuTriggerFor]="userMenu">
-        <mat-icon>account_circle</mat-icon>
+        <app-user-avatar [name]="userName()" size="xs" class="mr-1" />
         {{ userName() }}
       </button>
       <mat-menu #userMenu="matMenu">
@@ -46,6 +46,12 @@
           <mat-icon>settings</mat-icon>
           <span>Settings</span>
         </a>
+        @if (isAdmin()) {
+          <a mat-menu-item routerLink="/admin/users">
+            <mat-icon>admin_panel_settings</mat-icon>
+            <span>Admin</span>
+          </a>
+        }
         <button mat-menu-item (click)="logout()">
           <mat-icon>logout</mat-icon>
           <span>Logout</span>

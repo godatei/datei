@@ -87,7 +87,9 @@ func (s *UserService) Login(ctx context.Context, input LoginInput) (*LoginOutput
 
 	emailVerified := !config.AuthEmailVerificationRequired() || primaryEmail.VerifiedAt != nil
 
-	tokenString, err := authjwt.GenerateDefaultToken(user.ID, user.Name, primaryEmail.Email, emailVerified)
+	tokenString, err := authjwt.GenerateDefaultToken(
+		user.ID, user.Name, primaryEmail.Email, user.IsAdmin, emailVerified,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate token: %w", err)
 	}
@@ -175,12 +177,12 @@ func (s *UserService) Register(ctx context.Context, input RegisterInput) error {
 	}
 
 	q := s.queries()
-	_, err := q.GetUserAccountByEmail(ctx, input.Email)
-	if err == nil {
-		return dateierrors.ErrEmailAlreadyInUse
-	}
-	if !errors.Is(err, pgx.ErrNoRows) {
+	exists, err := q.UserAccountEmailExists(ctx, input.Email)
+	if err != nil {
 		return fmt.Errorf("failed to check existing user: %w", err)
+	}
+	if exists {
+		return dateierrors.ErrEmailAlreadyInUse
 	}
 
 	passwordHash, passwordSalt, err := security.HashPassword(input.Password)
@@ -191,7 +193,10 @@ func (s *UserService) Register(ctx context.Context, input RegisterInput) error {
 	userID := uuid.New()
 	emailID := uuid.New()
 	agg := &Aggregate{}
-	if err := agg.Register(userID, input.Name, input.Email, emailID, passwordHash, passwordSalt, time.Now()); err != nil {
+	if err := agg.Register(
+		userID, input.Name, input.Email, emailID, passwordHash, passwordSalt,
+		true, time.Now(),
+	); err != nil {
 		return fmt.Errorf("failed to register: %w", err)
 	}
 

@@ -44,3 +44,12 @@ body {
   margin: 0;
   height: 100%;
 }
+
+.btn-error {
+  @include mat.button-overrides(
+    (
+      filled-container-color: var(--mat-sys-error),
+      filled-label-text-color: var(--mat-sys-on-error),
+    )
+  );
+}

@@ -22,7 +22,11 @@ type server struct {
 	linkService  *link.Service
 }
 
-func NewServer(dateiSvc *datei.Service, userSvc *users.UserService, linkSvc *link.Service) *server {
+func NewServer(
+	dateiSvc *datei.Service,
+	userSvc *users.UserService,
+	linkSvc *link.Service,
+) *server {
 	return &server{
 		dateiService: dateiSvc,
 		userService:  userSvc,

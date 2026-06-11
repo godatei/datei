@@ -25,3 +25,25 @@ func MapEmailProjectionSliceToAPI(rows []db.UserAccountEmailProjection) []api.Us
 	}
 	return emails
 }
+
+func toAdminUserListItem(row db.ListUserAccountProjectionsRow) api.AdminUserListItem {
+	item := api.AdminUserListItem{
+		Id:             row.ID,
+		Name:           row.Name,
+		IsAdmin:        row.IsAdmin,
+		MfaEnabled:     row.MfaEnabled,
+		Archived:       row.ArchivedAt != nil,
+		CreatedAt:      row.CreatedAt,
+		LastLoggedInAt: row.LastLoggedInAt,
+	}
+	if row.PrimaryEmail != nil {
+		email := openapi_types.Email(*row.PrimaryEmail)
+		item.PrimaryEmail = &email
+	}
+	if row.PrimaryEmailVerifiedAt != nil {
+		item.PrimaryEmailVerified = new(true)
+	} else if row.PrimaryEmail != nil {
+		item.PrimaryEmailVerified = new(false)
+	}
+	return item
+}

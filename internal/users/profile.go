@@ -2,7 +2,6 @@ package users
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/security"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 )
 
 type UpdateUserInput struct {
@@ -75,12 +73,12 @@ type UpdateUserEmailInput struct {
 func (s *UserService) UpdateUserEmail(ctx context.Context, input UpdateUserEmailInput) error {
 	q := s.queries()
 
-	_, err := q.GetUserAccountByEmail(ctx, input.NewEmail)
-	if err == nil {
-		return dateierrors.ErrEmailAlreadyInUse
-	}
-	if !errors.Is(err, pgx.ErrNoRows) {
+	exists, err := q.UserAccountEmailExists(ctx, input.NewEmail)
+	if err != nil {
 		return fmt.Errorf("failed to check existing email: %w", err)
+	}
+	if exists {
+		return dateierrors.ErrEmailAlreadyInUse
 	}
 
 	primaryEmail, err := q.GetPrimaryEmailForUser(ctx, input.UserID)
@@ -158,12 +156,12 @@ type AddEmailInput struct {
 
 func (s *UserService) AddEmail(ctx context.Context, input AddEmailInput) error {
 	q := s.queries()
-	_, err := q.GetUserAccountByEmail(ctx, input.Email)
-	if err == nil {
-		return dateierrors.ErrEmailAlreadyInUse
-	}
-	if !errors.Is(err, pgx.ErrNoRows) {
+	exists, err := q.UserAccountEmailExists(ctx, input.Email)
+	if err != nil {
 		return fmt.Errorf("failed to check existing email: %w", err)
+	}
+	if exists {
+		return dateierrors.ErrEmailAlreadyInUse
 	}
 
 	emailID := uuid.New()

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import {
   type FieldTree,
   type SchemaPath,
@@ -30,11 +30,13 @@ export function passwordConfirmSchema(
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [FormField, MatFormFieldModule, MatInputModule],
   templateUrl: './password-confirm.component.html',
-  host: { style: 'display:contents' },
 })
 export class PasswordConfirmComponent {
   readonly password = input.required<FieldTree<string>>();
   readonly confirmPassword = input.required<FieldTree<string>>();
   readonly passwordLabel = input('Password');
   readonly confirmLabel = input('Confirm password');
+
+  readonly passwordField = computed(() => this.password()());
+  readonly confirmPasswordField = computed(() => this.confirmPassword()());
 }

@@ -28,6 +28,7 @@ var (
 	ErrLinkUnauthorized      = errors.New("link session token missing, invalid, or expired")
 
 	// User / auth errors
+	ErrForbidden               = errors.New("forbidden")
 	ErrInvalidCredentials      = errors.New("invalid credentials")
 	ErrEmailAlreadyInUse       = errors.New("email already in use")
 	ErrRegistrationDisabled    = errors.New("registration is disabled")

@@ -1,0 +1,25 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>{{ currentlyArchived() ? 'Unarchive User' : 'Archive User' }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <p class="mat-font-body-md mat-text-on-surface-variant mb-4">
+      @if (currentlyArchived()) {
+        This user is archived and cannot log in. Unarchive to restore access.
+      } @else {
+        Archived users can no longer log in. You can undo this immediately or unarchive later.
+      }
+    </p>
+    @if (currentlyArchived()) {
+      <button mat-flat-button (click)="toggle()" [disabled]="loading()">
+        <mat-icon>unarchive</mat-icon>
+        Unarchive user
+      </button>
+    } @else {
+      <button mat-flat-button class="btn-error" (click)="toggle()" [disabled]="loading()">
+        <mat-icon>archive</mat-icon>
+        Archive user
+      </button>
+    }
+  </mat-card-content>
+</mat-card>

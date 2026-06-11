@@ -9,6 +9,7 @@ CREATE TABLE user_account_projection (
   name TEXT NOT NULL,
   password_hash BYTEA NOT NULL,
   password_salt BYTEA NOT NULL,
+  is_admin BOOLEAN NOT NULL DEFAULT true,
   mfa_secret TEXT,
   mfa_enabled BOOLEAN NOT NULL DEFAULT false,
   mfa_enabled_at TIMESTAMPTZ,

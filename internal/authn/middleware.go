@@ -23,6 +23,7 @@ type AuthInfo struct {
 	Name          string
 	Email         string
 	EmailVerified bool
+	IsAdmin       bool
 	Action        authjwt.Action
 }
 
@@ -148,6 +149,10 @@ func extractAuthInfo(token jwt.Token) (AuthInfo, error) {
 	var verified bool
 	if err := token.Get(authjwt.UserEmailVerifiedKey, &verified); err == nil {
 		info.EmailVerified = verified
+	}
+	var isAdmin bool
+	if err := token.Get(authjwt.UserIsAdminKey, &isAdmin); err == nil {
+		info.IsAdmin = isAdmin
 	}
 	var actionStr string
 	if err := token.Get(authjwt.ActionKey, &actionStr); err == nil {

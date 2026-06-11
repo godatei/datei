@@ -45,6 +45,8 @@ func updateProjection(ctx context.Context, q *db.Queries, event events.DomainEve
 		return updateProjectionForUserRegistered(ctx, q, &e)
 	case UserNameChangedEvent:
 		return updateProjectionForUserNameChanged(ctx, q, &e)
+	case UserAdminChangedEvent:
+		return updateProjectionForUserAdminChanged(ctx, q, &e)
 	case UserPasswordChangedEvent:
 		return updateProjectionForUserPasswordChanged(ctx, q, &e)
 	case UserEmailChangedEvent:
@@ -69,6 +71,8 @@ func updateProjection(ctx context.Context, q *db.Queries, event events.DomainEve
 		return updateProjectionForUserMFARecoveryCodesRegenerated(ctx, q, &e)
 	case UserArchivedEvent:
 		return updateProjectionForUserArchived(ctx, q, &e)
+	case UserUnarchivedEvent:
+		return updateProjectionForUserUnarchived(ctx, q, &e)
 	case UserLoggedInEvent:
 		return updateProjectionForUserLoggedIn(ctx, q, &e)
 	default:

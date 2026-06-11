@@ -20,6 +20,16 @@
           <mat-form-field class="w-full" appearance="outline">
             <mat-label>Email</mat-label>
             <input matInput [formField]="loginForm.email" type="email" autocomplete="email" />
+            <mat-error>
+              @let emailErrs = loginForm.email().errors();
+              @if (emailErrs.length > 0 && loginForm.email().touched()) {
+                @if (emailErrs[0].kind === 'required') {
+                  Email is required
+                } @else if (emailErrs[0].kind === 'email') {
+                  Enter a valid email address
+                }
+              }
+            </mat-error>
           </mat-form-field>
 
           <mat-form-field class="w-full" appearance="outline">
@@ -30,6 +40,16 @@
               type="password"
               autocomplete="current-password"
             />
+            <mat-error>
+              @let passwordErrs = loginForm.password().errors();
+              @if (
+                passwordErrs.length > 0 &&
+                passwordErrs[0].kind === 'required' &&
+                loginForm.password().touched()
+              ) {
+                Password is required
+              }
+            </mat-error>
           </mat-form-field>
 
           <button
@@ -64,6 +84,16 @@
             <mat-label>MFA Code</mat-label>
             <input matInput [formField]="mfaForm.code" autocomplete="one-time-code" />
             <mat-hint>Enter your 6-digit code or a recovery code</mat-hint>
+            <mat-error>
+              @let codeErrs = mfaForm.code().errors();
+              @if (codeErrs.length > 0 && mfaForm.code().touched()) {
+                @if (codeErrs[0].kind === 'required') {
+                  MFA code is required
+                } @else if (codeErrs[0].kind === 'minLength') {
+                  Code must be at least 6 characters
+                }
+              }
+            </mat-error>
           </mat-form-field>
 
           <button

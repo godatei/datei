@@ -1,0 +1,27 @@
+delete:
+  operationId: RemoveUserEmailAdmin
+  summary: Remove a non-primary email from a user (admin only)
+  security:
+    - bearerHttpAuthentication: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: emailId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '204':
+      description: Email removed
+    '400':
+      description: Cannot remove primary email
+    '403':
+      description: Caller is not an admin
+    '404':
+      description: Email not found

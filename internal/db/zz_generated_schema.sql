@@ -245,6 +245,7 @@ CREATE TABLE public.user_account_projection (
     name text NOT NULL,
     password_hash bytea NOT NULL,
     password_salt bytea NOT NULL,
+    is_admin boolean DEFAULT true NOT NULL,
     mfa_secret text,
     mfa_enabled boolean DEFAULT false NOT NULL,
     mfa_enabled_at timestamp with time zone,

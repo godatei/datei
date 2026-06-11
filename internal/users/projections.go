@@ -13,6 +13,7 @@ func updateProjectionForUserRegistered(ctx context.Context, q *db.Queries, event
 		Name:         event.Name,
 		PasswordHash: event.PasswordHash,
 		PasswordSalt: event.PasswordSalt,
+		IsAdmin:      event.IsAdmin,
 		CreatedAt:    event.CreatedAt,
 	}); err != nil {
 		return fmt.Errorf("failed to insert user_account projection: %w", err)
@@ -34,6 +35,14 @@ func updateProjectionForUserRegistered(ctx context.Context, q *db.Queries, event
 func updateProjectionForUserNameChanged(ctx context.Context, q *db.Queries, event *UserNameChangedEvent) error {
 	return q.UpdateUserAccountProjectionName(ctx, db.UpdateUserAccountProjectionNameParams{
 		Name:      event.NewName,
+		UpdatedAt: event.ChangedAt,
+		ID:        event.ID,
+	})
+}
+
+func updateProjectionForUserAdminChanged(ctx context.Context, q *db.Queries, event *UserAdminChangedEvent) error {
+	return q.UpdateUserAccountProjectionIsAdmin(ctx, db.UpdateUserAccountProjectionIsAdminParams{
+		IsAdmin:   event.IsAdmin,
 		UpdatedAt: event.ChangedAt,
 		ID:        event.ID,
 	})
@@ -155,6 +164,17 @@ func updateProjectionForUserMFARecoveryCodesRegenerated(
 func updateProjectionForUserArchived(ctx context.Context, q *db.Queries, event *UserArchivedEvent) error {
 	return q.UpdateUserAccountProjectionArchived(ctx, db.UpdateUserAccountProjectionArchivedParams{
 		ArchivedAt: &event.ArchivedAt,
+		UpdatedAt:  event.ArchivedAt,
+		ID:         event.ID,
+	})
+}
+
+func updateProjectionForUserUnarchived(
+	ctx context.Context, q *db.Queries, event *UserUnarchivedEvent,
+) error {
+	return q.UpdateUserAccountProjectionArchived(ctx, db.UpdateUserAccountProjectionArchivedParams{
+		ArchivedAt: nil,
+		UpdatedAt:  event.UnarchivedAt,
 		ID:         event.ID,
 	})
 }

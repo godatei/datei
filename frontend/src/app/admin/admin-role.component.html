@@ -1,0 +1,15 @@
+<mat-card>
+  <mat-card-header><mat-card-title>Administrator Access</mat-card-title></mat-card-header>
+  <mat-card-content>
+    <p class="mat-font-body-md mat-text-on-surface-variant mb-4">
+      Administrators can add and manage other users.
+    </p>
+    <mat-slide-toggle
+      [checked]="checked()"
+      [disabled]="loading()"
+      (change)="toggle($event.checked)"
+    >
+      Administrator
+    </mat-slide-toggle>
+  </mat-card-content>
+</mat-card>

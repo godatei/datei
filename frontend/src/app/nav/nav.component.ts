@@ -10,6 +10,7 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '~/frontend/services/auth.service';
+import { UserAvatarComponent } from '~/frontend/users/user-avatar.component';
 
 @Component({
   selector: 'app-nav',
@@ -25,6 +26,7 @@ import { AuthService } from '~/frontend/services/auth.service';
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
+    UserAvatarComponent,
   ],
 })
 export class NavComponent {
@@ -35,6 +37,7 @@ export class NavComponent {
   private readonly handsetObserver = toSignal(this.breakpointObserver.observe(Breakpoints.Handset));
   protected readonly isHandset = computed(() => this.handsetObserver()?.matches ?? false);
   protected readonly userName = computed(() => this.auth.userName() ?? 'User');
+  protected readonly isAdmin = this.auth.isAdmin;
 
   logout() {
     this.auth.logout();

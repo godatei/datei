@@ -26,6 +26,7 @@ export interface JWTClaims {
   name: string;
   email: string;
   email_verified: boolean;
+  is_admin?: boolean;
   action?: 'verify-email' | 'reset-password';
   exp: number;
   [claim: string]: unknown;
@@ -43,6 +44,8 @@ export class AuthService {
   });
 
   readonly userName = computed(() => this._nameOverride() ?? this.getClaims()?.name);
+
+  readonly isAdmin = computed(() => this.getClaims()?.is_admin === true);
 
   private get token(): string | null {
     return this._token();

@@ -96,6 +96,9 @@ const getLinkProjectionByKey = `-- name: GetLinkProjectionByKey :one
 SELECT id, owner_id, name, key, code, expires_at, revoked_at, created_at, updated_at, open_count FROM link_projection WHERE key = $1
 `
 
+// Used by the unlock endpoint, which only needs the link's own row to validate
+// key + code + expiration; the owner name is fetched separately by the
+// authenticated list/download path that does need to render it.
 func (q *Queries) GetLinkProjectionByKey(ctx context.Context, key string) (LinkProjection, error) {
 	row := q.db.QueryRow(ctx, getLinkProjectionByKey, key)
 	var i LinkProjection

@@ -1,0 +1,67 @@
+<mat-card>
+  <mat-card-header><mat-card-title>Email Addresses</mat-card-title></mat-card-header>
+  <mat-card-content>
+    <p class="mat-font-body-md mat-text-on-surface-variant mb-4">
+      Control email addresses and verification status
+    </p>
+    @for (email of emails(); track email.id; let last = $last) {
+      <div class="flex items-center gap-2 py-3">
+        <span class="grow break-all">{{ email.email }}</span>
+        <mat-chip-set>
+          @if (email.isPrimary) {
+            <mat-chip highlighted>Primary</mat-chip>
+          }
+          @if (email.verified) {
+            <mat-chip>Verified</mat-chip>
+          } @else {
+            <mat-chip class="opacity-70">Unverified</mat-chip>
+          }
+        </mat-chip-set>
+        <div class="flex gap-1">
+          @if (!email.isPrimary && email.verified) {
+            <button mat-button (click)="setPrimary(email.id)" [disabled]="loading()">
+              Set primary
+            </button>
+          }
+          @if (!email.isPrimary) {
+            <button
+              mat-icon-button
+              color="warn"
+              (click)="removeEmail(email.id)"
+              [disabled]="loading()"
+              [attr.aria-label]="'Remove ' + email.email"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          }
+        </div>
+      </div>
+      @if (!last) {
+        <mat-divider />
+      }
+    }
+    <form class="flex flex-col gap-2 mt-4" [formRoot]="addEmailForm">
+      <mat-form-field class="w-full" appearance="outline">
+        <mat-label>Add email address</mat-label>
+        <input matInput [formField]="addEmailForm.email" type="email" />
+        <mat-error>
+          @let errs = addEmailForm.email().errors();
+          @if (errs.length > 0 && addEmailForm.email().touched()) {
+            @if (errs[0].kind === 'email') {
+              Enter a valid email address
+            } @else if (errs[0].kind === 'required') {
+              Email is required
+            }
+          }
+        </mat-error>
+      </mat-form-field>
+      <button
+        mat-flat-button
+        type="submit"
+        [disabled]="addEmailForm().submitting() || addEmailForm().invalid()"
+      >
+        Add email
+      </button>
+    </form>
+  </mat-card-content>
+</mat-card>

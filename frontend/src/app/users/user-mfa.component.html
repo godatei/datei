@@ -1,0 +1,97 @@
+<mat-card>
+  <mat-card-header><mat-card-title>Multi-Factor Authentication</mat-card-title></mat-card-header>
+  <mat-card-content>
+    <p class="mat-font-body-md mat-text-on-surface-variant mb-4">
+      Add an extra layer of security to the account
+    </p>
+
+    @if (setupData()) {
+      <div class="flex flex-col gap-3">
+        <p>Scan this QR code with your authenticator app:</p>
+        <div class="flex justify-center p-4 mat-corner-md mat-bg-surface-container">
+          <img [src]="setupData()!.qrCodeUrl" alt="MFA QR Code" width="200" height="200" />
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="font-mono break-all grow">{{ setupData()!.secret }}</span>
+          <button mat-icon-button (click)="copySecret()" aria-label="Copy secret to clipboard">
+            <mat-icon>content_copy</mat-icon>
+          </button>
+        </div>
+        <form class="flex flex-col gap-2" [formRoot]="enableForm">
+          <mat-form-field class="w-full" appearance="outline">
+            <mat-label>Verification code</mat-label>
+            <input matInput [formField]="enableForm.code" autocomplete="one-time-code" />
+            <mat-error>
+              @let codeErrs = enableForm.code().errors();
+              @if (codeErrs.length > 0 && enableForm.code().touched()) {
+                @if (codeErrs[0].kind === 'required') {
+                  Verification code is required
+                } @else if (codeErrs[0].kind === 'minLength') {
+                  Code must be at least 6 characters
+                }
+              }
+            </mat-error>
+          </mat-form-field>
+          <button
+            mat-flat-button
+            type="submit"
+            [disabled]="enableForm().submitting() || enableForm().invalid()"
+          >
+            Enable MFA
+          </button>
+        </form>
+      </div>
+    } @else if (recoveryCodes()) {
+      <p>Save these recovery codes in a safe place:</p>
+      <div class="p-4 mb-4 mat-corner-sm mat-bg-surface-container">
+        <ul
+          class="font-mono list-none mb-2 grid grid-cols-2 gap-1"
+          role="list"
+          aria-label="Recovery codes"
+        >
+          @for (code of recoveryCodes()!; track code) {
+            <li>{{ code }}</li>
+          }
+        </ul>
+        <button mat-button (click)="copyRecoveryCodes()">
+          <mat-icon>content_copy</mat-icon>
+          Copy all
+        </button>
+      </div>
+      <button mat-flat-button (click)="recoveryCodes.set(undefined)">Done</button>
+    } @else if (!mfaEnabled()) {
+      <button mat-flat-button (click)="setupMFA()" [disabled]="loading()" class="self-end">
+        Set up MFA
+      </button>
+    } @else {
+      <p>Multi-factor authentication is enabled.</p>
+      <div class="border p-4 mt-4 mat-corner-sm" style="border-color: var(--mat-sys-error)">
+        <p class="mat-font-label-lg mat-text-error mb-3">Disable multi-factor authentication</p>
+        <form class="flex flex-col gap-2" [formRoot]="disableForm">
+          <mat-form-field class="w-full" appearance="outline">
+            <mat-label>Password</mat-label>
+            <input matInput [formField]="disableForm.password" type="password" />
+            <mat-error>
+              @let passwordErrs = disableForm.password().errors();
+              @if (
+                passwordErrs.length > 0 &&
+                passwordErrs[0].kind === 'required' &&
+                disableForm.password().touched()
+              ) {
+                Password is required
+              }
+            </mat-error>
+          </mat-form-field>
+          <button
+            mat-button
+            color="warn"
+            type="submit"
+            [disabled]="disableForm().submitting() || disableForm().invalid()"
+          >
+            Disable MFA
+          </button>
+        </form>
+      </div>
+    }
+  </mat-card-content>
+</mat-card>
