@@ -11,10 +11,44 @@ const {title, description} = Astro.props;
 ---
 
 <BaseLayout title={title} description={description}>
-  <aside>
-    <Sidebar />
-  </aside>
-  <article>
-    <slot />
-  </article>
+  <div class="docs">
+    <aside>
+      <Sidebar />
+    </aside>
+    <article>
+      <slot />
+    </article>
+  </div>
 </BaseLayout>
+
+<style>
+  .docs {
+    display: grid;
+    grid-template-columns: 16rem minmax(0, 1fr);
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  aside {
+    position: sticky;
+    top: 4.5rem;
+  }
+
+  article {
+    max-width: 48rem;
+  }
+
+  article > :global(h1) {
+    margin-top: 0.5rem;
+  }
+
+  @media (max-width: 48rem) {
+    .docs {
+      grid-template-columns: 1fr;
+    }
+
+    aside {
+      position: static;
+    }
+  }
+</style>

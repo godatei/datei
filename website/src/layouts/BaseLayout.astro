@@ -1,6 +1,7 @@
 ---
 import Footer from '~/components/Footer.astro';
 import Header from '~/components/Header.astro';
+import '~/styles/global.css';
 
 export interface Props {
   title: string;
@@ -27,9 +28,16 @@ const ogUrl = Astro.url.href;
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
 
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/datei-logo.svg" />
     <link rel="icon" href="/favicon.ico" />
     <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,wght@0,400..700;1,400..700&family=Google+Sans+Code:wght@400..600&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <Header />

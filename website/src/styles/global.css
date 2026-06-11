@@ -1,0 +1,173 @@
+/*
+ * Global styles: Material 3 design tokens (azure scheme, matching the
+ * Angular Material azure palette used in the product frontend) consumed by
+ * both @material/web components and our own elements.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  /* Typography */
+  --font-base:
+    'Google Sans', Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --md-ref-typeface-brand: var(--font-base);
+  --md-ref-typeface-plain: var(--font-base);
+
+  /* Color scheme (seed: Google blue, light) */
+  --md-sys-color-primary: light-dark(#0b57d0, #aac7ff);
+  --md-sys-color-on-primary: light-dark(#ffffff, #062e6f);
+  --md-sys-color-primary-container: light-dark(#d3e3fd, #0842a0);
+  --md-sys-color-on-primary-container: light-dark(#041e49, #d3e3fd);
+  --md-sys-color-secondary: light-dark(#575e71, #bfc6dc);
+  --md-sys-color-on-secondary: light-dark(#ffffff, #293041);
+  --md-sys-color-secondary-container: light-dark(#dbe2f9, #3f4759);
+  --md-sys-color-on-secondary-container: light-dark(#141b2c, #dbe2f9);
+  --md-sys-color-tertiary: light-dark(#715573, #dfbbde);
+  --md-sys-color-on-tertiary: light-dark(#ffffff, #402843);
+  --md-sys-color-tertiary-container: light-dark(#fbd7fc, #583e5b);
+  --md-sys-color-on-tertiary-container: light-dark(#29132d, #fbd7fc);
+  --md-sys-color-error: light-dark(#ba1a1a, #ffb4ab);
+  --md-sys-color-on-error: light-dark(#ffffff, #690005);
+  --md-sys-color-error-container: light-dark(#ffdad6, #93000a);
+  --md-sys-color-on-error-container: light-dark(#410002, #ffdad6);
+  --md-sys-color-surface: light-dark(#f9f9ff, #111318);
+  --md-sys-color-on-surface: light-dark(#191c20, #e2e2e9);
+  --md-sys-color-surface-variant: light-dark(#e1e2ec, #44474e);
+  --md-sys-color-on-surface-variant: light-dark(#44474e, #c4c6d0);
+  --md-sys-color-surface-container-lowest: light-dark(#ffffff, #0c0e13);
+  --md-sys-color-surface-container-low: light-dark(#f3f3fa, #191c20);
+  --md-sys-color-surface-container: light-dark(#ededf4, #1d2024);
+  --md-sys-color-surface-container-high: light-dark(#e7e8ee, #282a2f);
+  --md-sys-color-surface-container-highest: light-dark(#e2e2e9, #33353a);
+  --md-sys-color-outline: light-dark(#74777f, #8e9099);
+  --md-sys-color-outline-variant: light-dark(#c4c6d0, #44474e);
+  --md-sys-color-inverse-surface: light-dark(#2e3036, #e2e2e9);
+  --md-sys-color-inverse-on-surface: light-dark(#f0f0f7, #2e3036);
+  --md-sys-color-inverse-primary: light-dark(#aac7ff, #0b57d0);
+  --md-sys-color-scrim: #000000;
+  --md-sys-color-shadow: #000000;
+}
+
+/* Base */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-base);
+  font-size: 1rem;
+  line-height: 1.6;
+  background-color: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  flex: 1;
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-base);
+  font-weight: 500;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: 2.5rem;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size: 1.75rem;
+  margin-top: 2.5rem;
+}
+
+h3 {
+  font-size: 1.25rem;
+}
+
+a {
+  color: var(--md-sys-color-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Markdown content */
+
+article :is(p, ul, ol) {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+article a {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+article img {
+  border-radius: 1rem;
+}
+
+article blockquote {
+  margin: 1.5rem 0;
+  padding: 0.25rem 1.25rem;
+  border-inline-start: 4px solid var(--md-sys-color-primary);
+  background-color: var(--md-sys-color-surface-container-low);
+  border-radius: 0 0.75rem 0.75rem 0;
+}
+
+article code {
+  font-family:
+    'Google Sans Code', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.875em;
+}
+
+article :not(pre) > code {
+  background-color: var(--md-sys-color-surface-container-high);
+  border-radius: 0.375rem;
+  padding: 0.125rem 0.375rem;
+}
+
+article pre {
+  padding: 1rem 1.25rem;
+  border-radius: 1rem;
+  overflow-x: auto;
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+article table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+article :is(th, td) {
+  border: 1px solid var(--md-sys-color-outline-variant);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}

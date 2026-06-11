@@ -1,4 +1,5 @@
 ---
+import {Image} from 'astro:assets';
 import BaseLayout from '~/layouts/BaseLayout.astro';
 import {getSortedPosts} from '~/utils/blog';
 
@@ -7,28 +8,103 @@ const title = 'Blog';
 const description = 'Latest updates, tutorials, and insights about Datei';
 ---
 
+<script>
+  import '@material/web/labs/card/elevated-card.js';
+</script>
+
 <BaseLayout title={title} description={description}>
-  <h1>{title}</h1>
-  <p>{description}</p>
-  <ul>
+  <header class="page-header">
+    <h1>{title}</h1>
+    <p>{description}</p>
+  </header>
+  <ul class="posts">
     {
       posts.map(post => (
         <li>
-          <article>
-            <h2>
-              <a href={`/blog/${post.data.slug}/`}>{post.data.title}</a>
-            </h2>
-            <p>{post.data.description}</p>
-            <time datetime={post.data.publishDate.toISOString()}>
-              {post.data.publishDate.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
-            </time>
-          </article>
+          <md-elevated-card>
+            <a class="post-link" href={`/blog/${post.data.slug}/`}>
+              <Image
+                src={post.data.image}
+                alt=""
+                width={800}
+                widths={[400, 800]}
+                sizes="(max-width: 48rem) 100vw, 24rem"
+              />
+              <div class="post-body">
+                <h2>{post.data.title}</h2>
+                <p>{post.data.description}</p>
+                <time datetime={post.data.publishDate.toISOString()}>
+                  {post.data.publishDate.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </time>
+              </div>
+            </a>
+          </md-elevated-card>
         </li>
       ))
     }
   </ul>
 </BaseLayout>
+
+<style>
+  .page-header {
+    text-align: center;
+    padding: 1rem 0 2rem;
+  }
+
+  .page-header p {
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 1.125rem;
+  }
+
+  .posts {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+    gap: 1.5rem;
+  }
+
+  .post-link {
+    display: block;
+    color: inherit;
+  }
+
+  .post-link:hover {
+    text-decoration: none;
+  }
+
+  .post-link img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 0.75rem 0.75rem 0 0;
+  }
+
+  .post-body {
+    padding: 1rem 1.25rem 1.25rem;
+  }
+
+  .post-body h2 {
+    margin: 0;
+    font-size: 1.25rem;
+  }
+
+  .post-body h2:hover {
+    color: var(--md-sys-color-primary);
+  }
+
+  .post-body p {
+    color: var(--md-sys-color-on-surface-variant);
+    margin: 0.5rem 0;
+  }
+
+  time {
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 0.875rem;
+  }
+</style>
