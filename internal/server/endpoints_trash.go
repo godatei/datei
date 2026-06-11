@@ -9,8 +9,12 @@ import (
 	"github.com/godatei/datei/pkg/api"
 )
 
+type trashServer struct {
+	svc *datei.Service
+}
+
 // ListTrash implements [StrictServerInterface].
-func (s *server) ListTrash(
+func (s *trashServer) ListTrash(
 	ctx context.Context,
 	request ListTrashRequestObject,
 ) (ListTrashResponseObject, error) {
@@ -23,7 +27,7 @@ func (s *server) ListTrash(
 		offset = *request.Params.Offset
 	}
 
-	result, err := s.dateiService.ListTrash(ctx, datei.ListTrashInput{
+	result, err := s.svc.ListTrash(ctx, datei.ListTrashInput{
 		Limit:  limit,
 		Offset: offset,
 	})
@@ -38,7 +42,7 @@ func (s *server) ListTrash(
 }
 
 // ListTrashChildren implements [StrictServerInterface].
-func (s *server) ListTrashChildren(
+func (s *trashServer) ListTrashChildren(
 	ctx context.Context,
 	request ListTrashChildrenRequestObject,
 ) (ListTrashChildrenResponseObject, error) {
@@ -51,7 +55,7 @@ func (s *server) ListTrashChildren(
 		offset = *request.Params.Offset
 	}
 
-	result, err := s.dateiService.ListTrashChildren(ctx, datei.ListTrashChildrenInput{
+	result, err := s.svc.ListTrashChildren(ctx, datei.ListTrashChildrenInput{
 		ParentID: request.DateiId,
 		Limit:    limit,
 		Offset:   offset,
@@ -74,11 +78,11 @@ func (s *server) ListTrashChildren(
 }
 
 // RestoreTrash implements [StrictServerInterface].
-func (s *server) RestoreTrash(
+func (s *trashServer) RestoreTrash(
 	ctx context.Context,
 	request RestoreTrashRequestObject,
 ) (RestoreTrashResponseObject, error) {
-	err := s.dateiService.RestoreDatei(ctx, datei.RestoreDateiInput{
+	err := s.svc.RestoreDatei(ctx, datei.RestoreDateiInput{
 		ID:       request.DateiId,
 		ParentID: request.Body.ParentId,
 	})

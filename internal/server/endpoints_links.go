@@ -9,8 +9,12 @@ import (
 	"github.com/godatei/datei/pkg/api"
 )
 
+type linkServer struct {
+	svc *link.Service
+}
+
 // ListLinks implements [StrictServerInterface].
-func (s *server) ListLinks(
+func (s *linkServer) ListLinks(
 	ctx context.Context,
 	request ListLinksRequestObject,
 ) (ListLinksResponseObject, error) {
@@ -27,7 +31,7 @@ func (s *server) ListLinks(
 		status = string(*request.Params.Status)
 	}
 
-	result, err := s.linkService.ListLinks(ctx, link.ListLinksInput{
+	result, err := s.svc.ListLinks(ctx, link.ListLinksInput{
 		Status: status,
 		Limit:  limit,
 		Offset: offset,
@@ -42,7 +46,7 @@ func (s *server) ListLinks(
 }
 
 // CreateLink implements [StrictServerInterface].
-func (s *server) CreateLink(
+func (s *linkServer) CreateLink(
 	ctx context.Context,
 	request CreateLinkRequestObject,
 ) (CreateLinkResponseObject, error) {
@@ -50,7 +54,7 @@ func (s *server) CreateLink(
 		return CreateLink400Response{}, nil
 	}
 
-	result, err := s.linkService.CreateLink(ctx, link.CreateLinkInput{
+	result, err := s.svc.CreateLink(ctx, link.CreateLinkInput{
 		Name:      request.Body.Name,
 		ExpiresAt: request.Body.ExpiresAt,
 		Code:      request.Body.Code,
@@ -66,11 +70,11 @@ func (s *server) CreateLink(
 }
 
 // GetLink implements [StrictServerInterface].
-func (s *server) GetLink(
+func (s *linkServer) GetLink(
 	ctx context.Context,
 	request GetLinkRequestObject,
 ) (GetLinkResponseObject, error) {
-	result, err := s.linkService.GetLink(ctx, request.Id)
+	result, err := s.svc.GetLink(ctx, request.Id)
 	if err != nil {
 		if errors.Is(err, dateierrors.ErrLinkNotFound) {
 			return GetLink404Response{}, nil
@@ -81,7 +85,7 @@ func (s *server) GetLink(
 }
 
 // UpdateLink implements [StrictServerInterface].
-func (s *server) UpdateLink(
+func (s *linkServer) UpdateLink(
 	ctx context.Context,
 	request UpdateLinkRequestObject,
 ) (UpdateLinkResponseObject, error) {
@@ -102,7 +106,7 @@ func (s *server) UpdateLink(
 		input.ClearExpiration = *request.Body.ClearExpiration
 	}
 
-	result, err := s.linkService.UpdateLink(ctx, input)
+	result, err := s.svc.UpdateLink(ctx, input)
 	if err != nil {
 		switch {
 		case errors.Is(err, dateierrors.ErrLinkNotFound):
@@ -119,11 +123,11 @@ func (s *server) UpdateLink(
 }
 
 // RevokeLink implements [StrictServerInterface].
-func (s *server) RevokeLink(
+func (s *linkServer) RevokeLink(
 	ctx context.Context,
 	request RevokeLinkRequestObject,
 ) (RevokeLinkResponseObject, error) {
-	err := s.linkService.RevokeLink(ctx, request.Id)
+	err := s.svc.RevokeLink(ctx, request.Id)
 	if err != nil {
 		switch {
 		case errors.Is(err, dateierrors.ErrLinkNotFound):
@@ -138,11 +142,11 @@ func (s *server) RevokeLink(
 }
 
 // RotateLinkKey implements [StrictServerInterface].
-func (s *server) RotateLinkKey(
+func (s *linkServer) RotateLinkKey(
 	ctx context.Context,
 	request RotateLinkKeyRequestObject,
 ) (RotateLinkKeyResponseObject, error) {
-	result, err := s.linkService.RotateKey(ctx, request.Id)
+	result, err := s.svc.RotateKey(ctx, request.Id)
 	if err != nil {
 		switch {
 		case errors.Is(err, dateierrors.ErrLinkNotFound):
@@ -157,7 +161,7 @@ func (s *server) RotateLinkKey(
 }
 
 // AddDateiToLink implements [StrictServerInterface].
-func (s *server) AddDateiToLink(
+func (s *linkServer) AddDateiToLink(
 	ctx context.Context,
 	request AddDateiToLinkRequestObject,
 ) (AddDateiToLinkResponseObject, error) {
@@ -165,7 +169,7 @@ func (s *server) AddDateiToLink(
 		return AddDateiToLink400Response{}, nil
 	}
 
-	result, err := s.linkService.AddDateiToLink(ctx, request.Id, request.Body.DateiId)
+	result, err := s.svc.AddDateiToLink(ctx, request.Id, request.Body.DateiId)
 	if err != nil {
 		switch {
 		case errors.Is(err, dateierrors.ErrLinkNotFound):
@@ -184,11 +188,11 @@ func (s *server) AddDateiToLink(
 }
 
 // RemoveDateiFromLink implements [StrictServerInterface].
-func (s *server) RemoveDateiFromLink(
+func (s *linkServer) RemoveDateiFromLink(
 	ctx context.Context,
 	request RemoveDateiFromLinkRequestObject,
 ) (RemoveDateiFromLinkResponseObject, error) {
-	err := s.linkService.RemoveDateiFromLink(ctx, request.Id, request.DateiId)
+	err := s.svc.RemoveDateiFromLink(ctx, request.Id, request.DateiId)
 	if err != nil {
 		switch {
 		case errors.Is(err, dateierrors.ErrLinkNotFound):

@@ -9,9 +9,13 @@ import (
 	"github.com/godatei/datei/pkg/api"
 )
 
+type authServer struct {
+	svc *users.UserService
+}
+
 // Login implements [StrictServerInterface].
-func (s *server) Login(ctx context.Context, request LoginRequestObject) (LoginResponseObject, error) {
-	result, err := s.userService.Login(ctx, users.LoginInput{
+func (s *authServer) Login(ctx context.Context, request LoginRequestObject) (LoginResponseObject, error) {
+	result, err := s.svc.Login(ctx, users.LoginInput{
 		Email:    string(request.Body.Email),
 		Password: request.Body.Password,
 		MfaCode:  request.Body.MfaCode,
@@ -34,18 +38,18 @@ func (s *server) Login(ctx context.Context, request LoginRequestObject) (LoginRe
 }
 
 // GetLoginConfig implements [StrictServerInterface].
-func (s *server) GetLoginConfig(
+func (s *authServer) GetLoginConfig(
 	_ context.Context, _ GetLoginConfigRequestObject,
 ) (GetLoginConfigResponseObject, error) {
-	cfg := s.userService.GetLoginConfig()
+	cfg := s.svc.GetLoginConfig()
 	return GetLoginConfig200JSONResponse(api.LoginConfigResponse{
 		RegistrationEnabled: cfg.RegistrationEnabled,
 	}), nil
 }
 
 // Register implements [StrictServerInterface].
-func (s *server) Register(ctx context.Context, request RegisterRequestObject) (RegisterResponseObject, error) {
-	err := s.userService.Register(ctx, users.RegisterInput{
+func (s *authServer) Register(ctx context.Context, request RegisterRequestObject) (RegisterResponseObject, error) {
+	err := s.svc.Register(ctx, users.RegisterInput{
 		Email:    string(request.Body.Email),
 		Name:     request.Body.Name,
 		Password: request.Body.Password,
@@ -64,10 +68,10 @@ func (s *server) Register(ctx context.Context, request RegisterRequestObject) (R
 }
 
 // ResetPassword implements [StrictServerInterface].
-func (s *server) ResetPassword(
+func (s *authServer) ResetPassword(
 	ctx context.Context, request ResetPasswordRequestObject,
 ) (ResetPasswordResponseObject, error) {
-	s.userService.ResetPassword(ctx, users.ResetPasswordInput{
+	s.svc.ResetPassword(ctx, users.ResetPasswordInput{
 		Email: string(request.Body.Email),
 	})
 	return ResetPassword204Response{}, nil
