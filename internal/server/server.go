@@ -17,20 +17,23 @@ const (
 )
 
 type server struct {
-	dateiService *datei.Service
-	userService  *users.UserService
-	linkService  *link.Service
+	dateiService      *datei.Service
+	userService       *users.UserService
+	linkService       *link.Service
+	publicLinkService *link.PublicService
 }
 
 func NewServer(
 	dateiSvc *datei.Service,
 	userSvc *users.UserService,
 	linkSvc *link.Service,
+	publicLinkSvc *link.PublicService,
 ) *server {
 	return &server{
-		dateiService: dateiSvc,
-		userService:  userSvc,
-		linkService:  linkSvc,
+		dateiService:      dateiSvc,
+		userService:       userSvc,
+		linkService:       linkSvc,
+		publicLinkService: publicLinkSvc,
 	}
 }
 

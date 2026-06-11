@@ -21,7 +21,7 @@ func (s *server) UnlockPublicLink(
 		code = *request.Body.Code
 	}
 
-	result, err := s.linkService.UnlockLink(ctx, request.Key, code)
+	result, err := s.publicLinkService.UnlockPublicLink(ctx, request.Key, code)
 	if err != nil {
 		switch {
 		case errors.Is(err, dateierrors.ErrLinkCodeRequired):
@@ -50,7 +50,7 @@ func (s *server) ListPublicLinkDateien(
 ) (ListPublicLinkDateienResponseObject, error) {
 	session := link.RequirePublicLinkSessionFromContext(ctx)
 
-	result, err := s.linkService.ListPublicLinkDateien(ctx, session, request.Params.ParentId)
+	result, err := s.publicLinkService.ListPublicLinkDateien(ctx, session, request.Params.ParentId)
 	if err != nil {
 		switch {
 		case errors.Is(err, dateierrors.ErrLinkUnauthorized):
@@ -82,7 +82,7 @@ func (s *server) DownloadPublicLinkDatei(
 ) (DownloadPublicLinkDateiResponseObject, error) {
 	session := link.RequirePublicLinkSessionFromContext(ctx)
 
-	result, err := s.linkService.DownloadPublicLinkDatei(ctx, session, request.DateiId)
+	result, err := s.publicLinkService.DownloadPublicLinkDatei(ctx, session, request.DateiId)
 	if err != nil {
 		switch {
 		case errors.Is(err, dateierrors.ErrIsDirectory):
