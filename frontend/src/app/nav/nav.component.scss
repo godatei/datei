@@ -1,0 +1,155 @@
+// M3 Expressive navigation rail: collapsed (96dp) <-> expanded (220dp).
+// Angular Material has no rail component, so the rail anatomy is built on
+// Material system variables. Spec: m3.material.io/components/navigation-rail
+$rail-collapsed-width: 96px;
+$rail-expanded-width: 220px;
+$rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
+
+.nav-rail {
+  width: $rail-collapsed-width;
+  background-color: var(--mat-sys-surface-container);
+  transition: width $rail-motion;
+
+  // Edge-attached standard rail has no rounded corners (modal variant keeps them).
+  &.mat-drawer-side {
+    border-radius: 0;
+  }
+
+  &.nav-rail-expanded {
+    width: $rail-expanded-width;
+  }
+}
+
+.nav-rail-toggle {
+  margin: 44px 0 0 24px;
+}
+
+.nav-rail-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 40px;
+}
+
+.nav-rail-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 0 4px;
+  color: var(--mat-sys-on-surface-variant);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+
+  // Keep icon and label painted above the absolutely positioned indicator.
+  mat-icon,
+  .nav-rail-label {
+    position: relative;
+  }
+
+  mat-icon {
+    margin: 4px 0; // centers the 24px icon in the 32px-high indicator
+  }
+
+  &:hover .nav-rail-indicator {
+    background-color: color-mix(in srgb, var(--mat-sys-on-surface) 8%, transparent);
+  }
+
+  &:focus-visible {
+    outline: none;
+
+    .nav-rail-indicator {
+      outline: 2px solid var(--mat-sys-secondary);
+      outline-offset: 1px;
+    }
+  }
+
+  &.active {
+    mat-icon {
+      color: var(--mat-sys-on-secondary-container);
+    }
+
+    .nav-rail-label {
+      color: var(--mat-sys-secondary);
+    }
+
+    .nav-rail-indicator {
+      background-color: var(--mat-sys-secondary-container);
+    }
+
+    &:hover .nav-rail-indicator {
+      background-color: color-mix(
+        in srgb,
+        var(--mat-sys-on-secondary-container) 8%,
+        var(--mat-sys-secondary-container)
+      );
+    }
+  }
+}
+
+.nav-rail-indicator {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: 56px;
+  height: 32px;
+  transform: translateX(-50%);
+  border-radius: var(--mat-sys-corner-full);
+  transition: background-color 150ms linear;
+}
+
+.nav-rail-label {
+  font: var(--mat-sys-label-medium);
+}
+
+// Expanded rail: horizontal items with a full-width pill indicator.
+.nav-rail-expanded {
+  .nav-rail-item {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 8px;
+    height: 56px;
+    margin: 0 20px;
+    padding: 0 16px;
+
+    mat-icon {
+      margin: 0;
+    }
+
+    &.active .nav-rail-label {
+      color: var(--mat-sys-on-secondary-container);
+    }
+  }
+
+  .nav-rail-indicator {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform: none;
+  }
+
+  .nav-rail-label {
+    font: var(--mat-sys-label-large);
+  }
+}
+
+// Keep the page content margin in sync with the animated rail width on
+// desktop (mode="side"). The sidenav's own measured margin is static, so it
+// is overridden here to follow the collapse/expand transition.
+.nav-shell:not(.nav-shell-handset) > .mat-drawer-content {
+  margin-left: $rail-collapsed-width !important;
+  transition: margin-left $rail-motion;
+}
+
+.nav-shell:not(.nav-shell-handset).nav-shell-expanded > .mat-drawer-content {
+  margin-left: $rail-expanded-width !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-rail,
+  .nav-shell > .mat-drawer-content {
+    transition: none;
+  }
+}
