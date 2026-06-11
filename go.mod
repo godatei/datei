@@ -85,7 +85,7 @@ require (
 	github.com/ncruces/go-sqlite3 v0.34.0 // indirect
 	github.com/ncruces/go-sqlite3-wasm/v2 v2.1.35300 // indirect
 	github.com/ncruces/julianday v1.0.0 // indirect
-	github.com/oapi-codegen/oapi-codegen/v2 v2.7.0 // indirect
+	github.com/oapi-codegen/oapi-codegen/v2 v2.7.1 // indirect
 	github.com/oasdiff/yaml v0.0.9 // indirect
 	github.com/oasdiff/yaml3 v0.0.12 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
