@@ -1,12 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  OnInit,
-  resource,
-  signal,
-} from '@angular/core';
+import { Component, computed, inject, OnInit, resource, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -21,7 +13,6 @@ import { Datei, DateiPathItem } from '~/api/models';
 @Component({
   templateUrl: './restore-dialog.component.html',
   styleUrl: './restore-dialog.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [MatButtonModule, MatDialogModule, MatIconModule, MatListModule, MatProgressBarModule],
 })
 export class RestoreDialogComponent implements OnInit {

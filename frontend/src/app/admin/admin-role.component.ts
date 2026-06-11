@@ -1,12 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  effect,
-  inject,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { Component, effect, inject, input, output, signal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -16,7 +8,6 @@ import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
 
 @Component({
   selector: 'app-admin-role',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [MatCardModule, MatSlideToggleModule, MatSnackBarModule],
   templateUrl: './admin-role.component.html',
 })

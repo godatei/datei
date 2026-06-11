@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
+import { Component, inject, input, output, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -8,7 +8,6 @@ import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
 
 @Component({
   selector: 'app-admin-mfa',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [MatButtonModule, MatCardModule, MatSnackBarModule],
   templateUrl: './admin-mfa.component.html',
 })

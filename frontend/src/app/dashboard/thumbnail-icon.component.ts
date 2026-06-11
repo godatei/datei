@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   OnDestroy,
   computed,
@@ -46,7 +45,6 @@ function canHaveThumbnail(datei: Datei): boolean {
       <mat-icon>{{ iconName() }}</mat-icon>
     }
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [MatIconModule],
 })
 export class ThumbnailIconComponent implements OnDestroy {
