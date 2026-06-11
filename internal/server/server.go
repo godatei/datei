@@ -1,9 +1,6 @@
 package server
 
 import (
-	"fmt"
-	"io"
-
 	"github.com/godatei/datei/internal/datei"
 	"github.com/godatei/datei/internal/link"
 	"github.com/godatei/datei/internal/users"
@@ -17,10 +14,14 @@ const (
 )
 
 type server struct {
-	dateiService      *datei.Service
-	userService       *users.UserService
-	linkService       *link.Service
-	publicLinkService *link.PublicService
+	dateiServer
+	trashServer
+	authServer
+	settingsServer
+	emailsServer
+	adminUsersServer
+	linkServer
+	publicLinkServer
 }
 
 func NewServer(
@@ -30,23 +31,15 @@ func NewServer(
 	publicLinkSvc *link.PublicService,
 ) *server {
 	return &server{
-		dateiService:      dateiSvc,
-		userService:       userSvc,
-		linkService:       linkSvc,
-		publicLinkService: publicLinkSvc,
+		dateiServer:      dateiServer{svc: dateiSvc},
+		trashServer:      trashServer{svc: dateiSvc},
+		authServer:       authServer{svc: userSvc},
+		settingsServer:   settingsServer{svc: userSvc},
+		emailsServer:     emailsServer{svc: userSvc},
+		adminUsersServer: adminUsersServer{svc: userSvc},
+		linkServer:       linkServer{svc: linkSvc},
+		publicLinkServer: publicLinkServer{svc: publicLinkSvc},
 	}
 }
 
 var _ StrictServerInterface = (*server)(nil)
-
-// readLimited reads at most maxBytes from r. If the input exceeds maxBytes, an error is returned.
-func readLimited(r io.Reader, maxBytes int64) ([]byte, error) {
-	buf, err := io.ReadAll(io.LimitReader(r, maxBytes+1))
-	if err != nil {
-		return nil, err
-	}
-	if int64(len(buf)) > maxBytes {
-		return nil, fmt.Errorf("input exceeds %d bytes", maxBytes)
-	}
-	return buf, nil
-}

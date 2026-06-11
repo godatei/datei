@@ -9,10 +9,14 @@ import (
 	"github.com/godatei/datei/pkg/api"
 )
 
+type publicLinkServer struct {
+	svc *link.PublicService
+}
+
 // UnlockPublicLink implements [StrictServerInterface]. It is the only
 // unauthenticated endpoint in this file; success returns a short-lived JWT
 // that the viewer presents on subsequent list/download calls.
-func (s *server) UnlockPublicLink(
+func (s *publicLinkServer) UnlockPublicLink(
 	ctx context.Context,
 	request UnlockPublicLinkRequestObject,
 ) (UnlockPublicLinkResponseObject, error) {
@@ -21,7 +25,7 @@ func (s *server) UnlockPublicLink(
 		code = *request.Body.Code
 	}
 
-	result, err := s.publicLinkService.UnlockPublicLink(ctx, request.Key, code)
+	result, err := s.svc.UnlockPublicLink(ctx, request.Key, code)
 	if err != nil {
 		switch {
 		case errors.Is(err, dateierrors.ErrLinkCodeRequired):
@@ -44,13 +48,13 @@ func (s *server) UnlockPublicLink(
 // ListPublicLinkDateien implements [StrictServerInterface]. The session claims
 // are extracted from the public-link JWT by the auth middleware and read here
 // from ctx.
-func (s *server) ListPublicLinkDateien(
+func (s *publicLinkServer) ListPublicLinkDateien(
 	ctx context.Context,
 	request ListPublicLinkDateienRequestObject,
 ) (ListPublicLinkDateienResponseObject, error) {
 	session := link.RequirePublicLinkSessionFromContext(ctx)
 
-	result, err := s.publicLinkService.ListPublicLinkDateien(ctx, session, request.Params.ParentId)
+	result, err := s.svc.ListPublicLinkDateien(ctx, session, request.Params.ParentId)
 	if err != nil {
 		switch {
 		case errors.Is(err, dateierrors.ErrLinkUnauthorized):
@@ -76,13 +80,13 @@ func (s *server) ListPublicLinkDateien(
 }
 
 // DownloadPublicLinkDatei implements [StrictServerInterface].
-func (s *server) DownloadPublicLinkDatei(
+func (s *publicLinkServer) DownloadPublicLinkDatei(
 	ctx context.Context,
 	request DownloadPublicLinkDateiRequestObject,
 ) (DownloadPublicLinkDateiResponseObject, error) {
 	session := link.RequirePublicLinkSessionFromContext(ctx)
 
-	result, err := s.publicLinkService.DownloadPublicLinkDatei(ctx, session, request.DateiId)
+	result, err := s.svc.DownloadPublicLinkDatei(ctx, session, request.DateiId)
 	if err != nil {
 		switch {
 		case errors.Is(err, dateierrors.ErrIsDirectory):

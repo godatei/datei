@@ -13,8 +13,12 @@ import (
 	"github.com/google/uuid"
 )
 
+type dateiServer struct {
+	svc *datei.Service
+}
+
 // ListDatei implements [StrictServerInterface].
-func (s *server) ListDatei(
+func (s *dateiServer) ListDatei(
 	ctx context.Context,
 	request ListDateiRequestObject,
 ) (ListDateiResponseObject, error) {
@@ -27,7 +31,7 @@ func (s *server) ListDatei(
 		offset = *request.Params.Offset
 	}
 
-	result, err := s.dateiService.ListDatei(ctx, datei.ListDateiInput{
+	result, err := s.svc.ListDatei(ctx, datei.ListDateiInput{
 		ParentID: request.Params.ParentId,
 		Limit:    limit,
 		Offset:   offset,
@@ -45,7 +49,7 @@ func (s *server) ListDatei(
 }
 
 // CreateDatei implements [StrictServerInterface].
-func (s *server) CreateDatei(
+func (s *dateiServer) CreateDatei(
 	ctx context.Context,
 	request CreateDateiRequestObject,
 ) (CreateDateiResponseObject, error) {
@@ -104,7 +108,7 @@ func (s *server) CreateDatei(
 		return CreateDatei400JSONResponse{Message: "filename is required"}, nil
 	}
 
-	result, err := s.dateiService.CreateDatei(ctx, datei.CreateDateiInput{
+	result, err := s.svc.CreateDatei(ctx, datei.CreateDateiInput{
 		ParentID:    parentID,
 		Reader:      fileData,
 		FileName:    fileName,
@@ -127,11 +131,11 @@ func (s *server) CreateDatei(
 }
 
 // GetDateiPath implements [StrictServerInterface].
-func (s *server) GetDateiPath(
+func (s *dateiServer) GetDateiPath(
 	ctx context.Context,
 	request GetDateiPathRequestObject,
 ) (GetDateiPathResponseObject, error) {
-	path, err := s.dateiService.GetDateiPath(ctx, request.Id)
+	path, err := s.svc.GetDateiPath(ctx, request.Id)
 	if err != nil {
 		if errors.Is(err, dateierrors.ErrNotFound) {
 			return GetDateiPath404Response{}, nil
@@ -142,11 +146,11 @@ func (s *server) GetDateiPath(
 }
 
 // DownloadDatei implements [StrictServerInterface].
-func (s *server) DownloadDatei(
+func (s *dateiServer) DownloadDatei(
 	ctx context.Context,
 	request DownloadDateiRequestObject,
 ) (DownloadDateiResponseObject, error) {
-	result, err := s.dateiService.DownloadDatei(ctx, request.Id)
+	result, err := s.svc.DownloadDatei(ctx, request.Id)
 	if err != nil {
 		switch {
 		case errors.Is(err, dateierrors.ErrIsDirectory):
@@ -169,7 +173,7 @@ func (s *server) DownloadDatei(
 }
 
 // UpdateDatei implements [StrictServerInterface].
-func (s *server) UpdateDatei(
+func (s *dateiServer) UpdateDatei(
 	ctx context.Context,
 	request UpdateDateiRequestObject,
 ) (UpdateDateiResponseObject, error) {
@@ -246,7 +250,7 @@ func (s *server) UpdateDatei(
 		}
 	}
 
-	result, err := s.dateiService.UpdateDatei(ctx, datei.UpdateDateiInput{
+	result, err := s.svc.UpdateDatei(ctx, datei.UpdateDateiInput{
 		ID:            request.Id,
 		Name:          name,
 		MoveRequested: moveRequested,
@@ -273,7 +277,7 @@ func (s *server) UpdateDatei(
 }
 
 // GetDateiThumbnail implements [StrictServerInterface].
-func (s *server) GetDateiThumbnail(
+func (s *dateiServer) GetDateiThumbnail(
 	ctx context.Context,
 	request GetDateiThumbnailRequestObject,
 ) (GetDateiThumbnailResponseObject, error) {
@@ -282,7 +286,7 @@ func (s *server) GetDateiThumbnail(
 		ifNoneMatch = *request.Params.IfNoneMatch
 	}
 
-	result, err := s.dateiService.GetThumbnail(ctx, request.Id, ifNoneMatch)
+	result, err := s.svc.GetThumbnail(ctx, request.Id, ifNoneMatch)
 	if err != nil {
 		switch {
 		case errors.Is(err, dateierrors.ErrNotModified):
@@ -307,11 +311,11 @@ func (s *server) GetDateiThumbnail(
 }
 
 // DeleteDatei implements [StrictServerInterface].
-func (s *server) DeleteDatei(
+func (s *dateiServer) DeleteDatei(
 	ctx context.Context,
 	request DeleteDateiRequestObject,
 ) (DeleteDateiResponseObject, error) {
-	err := s.dateiService.DeleteDatei(ctx, request.Id)
+	err := s.svc.DeleteDatei(ctx, request.Id)
 	if err != nil {
 		return DeleteDatei404Response{}, nil
 	}
