@@ -35,15 +35,15 @@ func (e ListLinksParamsStatus) Valid() bool {
 	}
 }
 
-// AddDateiToLinkRequest defines model for AddDateiToLinkRequest.
-type AddDateiToLinkRequest struct {
-	// DateiId ID of the datei to add to the link
-	DateiId openapi_types.UUID `json:"dateiId"`
-}
-
 // AddEmailRequest defines model for AddEmailRequest.
 type AddEmailRequest struct {
 	Email openapi_types.Email `json:"email"`
+}
+
+// AddFileToLinkRequest defines model for AddFileToLinkRequest.
+type AddFileToLinkRequest struct {
+	// FileId ID of the file to add to the link
+	FileId openapi_types.UUID `json:"fileId"`
 }
 
 // AdminCreateUserRequest defines model for AdminCreateUserRequest.
@@ -88,12 +88,12 @@ type ConfirmResetPasswordRequest struct {
 	Password string `json:"password"`
 }
 
-// CreateDateiRequest defines model for CreateDateiRequest.
-type CreateDateiRequest struct {
+// CreateFileRequest defines model for CreateFileRequest.
+type CreateFileRequest struct {
 	// File File data (optional, omit for directories)
 	File *openapi_types.File `json:"file,omitempty"`
 
-	// Name Name for the new Datei
+	// Name Name for the new File
 	Name *string `json:"name,omitempty"`
 
 	// ParentId Parent directory ID (omit for root)
@@ -105,18 +105,33 @@ type CreateLinkRequest struct {
 	// Code Optional plain-text code required to view
 	Code *string `json:"code,omitempty"`
 
-	// DateiIds IDs of dateien to share (may be empty)
-	DateiIds []openapi_types.UUID `json:"dateiIds"`
-
 	// ExpiresAt Expiration timestamp; omit or null for "never expires"
 	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
+
+	// FileIds IDs of files to share (may be empty)
+	FileIds []openapi_types.UUID `json:"fileIds"`
 
 	// Name Display name of the link (mandatory, may not be blank)
 	Name string `json:"name"`
 }
 
-// Datei defines model for Datei.
-type Datei struct {
+// DisableMFARequest defines model for DisableMFARequest.
+type DisableMFARequest struct {
+	Password string `json:"password"`
+}
+
+// EnableMFARequest defines model for EnableMFARequest.
+type EnableMFARequest struct {
+	Code string `json:"code"`
+}
+
+// EnableMFAResponse defines model for EnableMFAResponse.
+type EnableMFAResponse struct {
+	RecoveryCodes []string `json:"recoveryCodes"`
+}
+
+// File defines model for File.
+type File struct {
 	// Checksum File checksum (null for directories)
 	Checksum *string `json:"checksum,omitempty"`
 
@@ -135,13 +150,13 @@ type Datei struct {
 	// IsDirectory Whether this is a directory
 	IsDirectory bool `json:"isDirectory"`
 
-	// LinkedDateiId ID of linked Datei (for symlinks)
-	LinkedDateiId *openapi_types.UUID `json:"linkedDateiId,omitempty"`
+	// LinkedFileId ID of linked File (for symlinks)
+	LinkedFileId *openapi_types.UUID `json:"linkedFileId,omitempty"`
 
 	// MimeType MIME type (null for directories)
 	MimeType *string `json:"mimeType,omitempty"`
 
-	// Name Current name of the Datei
+	// Name Current name of the File
 	Name *string `json:"name"`
 
 	// ParentId Parent directory ID
@@ -163,26 +178,11 @@ type Datei struct {
 	UpdatedBy *openapi_types.UUID `json:"updatedBy,omitempty"`
 }
 
-// DateiPathItem defines model for DateiPathItem.
-type DateiPathItem struct {
+// FilePathItem defines model for FilePathItem.
+type FilePathItem struct {
 	Id      openapi_types.UUID `json:"id"`
 	Name    string             `json:"name"`
 	Trashed *bool              `json:"trashed,omitempty"`
-}
-
-// DisableMFARequest defines model for DisableMFARequest.
-type DisableMFARequest struct {
-	Password string `json:"password"`
-}
-
-// EnableMFARequest defines model for EnableMFARequest.
-type EnableMFARequest struct {
-	Code string `json:"code"`
-}
-
-// EnableMFAResponse defines model for EnableMFAResponse.
-type EnableMFAResponse struct {
-	RecoveryCodes []string `json:"recoveryCodes"`
 }
 
 // Link defines model for Link.
@@ -232,14 +232,14 @@ type LinkDetail struct {
 	// CreatedAt Creation timestamp
 	CreatedAt time.Time `json:"createdAt"`
 
-	// Dateien Top-level dateien shared by the link
-	Dateien []Datei `json:"dateien"`
-
 	// ExpiresAt Expiration timestamp; null if the link never expires
 	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
 
 	// FileCount Total number of files reachable in the shared subtree (excluding trashed)
 	FileCount int `json:"fileCount"`
+
+	// Files Top-level files shared by the link
+	Files []File `json:"files"`
 
 	// FolderCount Total number of folders reachable in the shared subtree (excluding trashed)
 	FolderCount int `json:"folderCount"`
@@ -275,18 +275,18 @@ type ListAdminUsersResponse struct {
 	Total int `json:"total"`
 }
 
-// ListDateiResponse defines model for ListDateiResponse.
-type ListDateiResponse struct {
-	// Items Array of Datei objects
-	Items []Datei `json:"items"`
-
-	// Total Total number of items (before pagination)
-	Total int `json:"total"`
-}
-
 // ListEmailsResponse defines model for ListEmailsResponse.
 type ListEmailsResponse struct {
 	Emails []UserEmail `json:"emails"`
+}
+
+// ListFilesResponse defines model for ListFilesResponse.
+type ListFilesResponse struct {
+	// Items Array of File objects
+	Items []File `json:"items"`
+
+	// Total Total number of items (before pagination)
+	Total int `json:"total"`
 }
 
 // ListLinksResponse defines model for ListLinksResponse.
@@ -298,13 +298,13 @@ type ListLinksResponse struct {
 	Total int `json:"total"`
 }
 
-// ListPublicLinkDateienResponse defines model for ListPublicLinkDateienResponse.
-type ListPublicLinkDateienResponse struct {
+// ListPublicLinkFilesResponse defines model for ListPublicLinkFilesResponse.
+type ListPublicLinkFilesResponse struct {
 	// ExpiresAt When the link expires; null if it never expires
 	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
 
-	// Items Array of Datei objects accessible via the public link
-	Items []Datei `json:"items"`
+	// Items Array of File objects accessible via the public link
+	Items []File `json:"items"`
 
 	// Name Display name of the link
 	Name string `json:"name"`
@@ -315,8 +315,8 @@ type ListPublicLinkDateienResponse struct {
 
 // ListTrashResponse defines model for ListTrashResponse.
 type ListTrashResponse struct {
-	// Items Array of trashed Datei objects
-	Items []TrashedDatei `json:"items"`
+	// Items Array of trashed File objects
+	Items []TrashedFile `json:"items"`
 
 	// Total Total number of items (before pagination)
 	Total int `json:"total"`
@@ -367,8 +367,8 @@ type ResetPasswordRequest struct {
 	Email openapi_types.Email `json:"email"`
 }
 
-// RestoreDateiRequest defines model for RestoreDateiRequest.
-type RestoreDateiRequest struct {
+// RestoreFileRequest defines model for RestoreFileRequest.
+type RestoreFileRequest struct {
 	// ParentId Target parent directory for the restored item, or null to restore to the root.
 	ParentId *openapi_types.UUID `json:"parentId"`
 }
@@ -379,8 +379,8 @@ type SetupMFAResponse struct {
 	Secret    string `json:"secret"`
 }
 
-// TrashedDatei defines model for TrashedDatei.
-type TrashedDatei struct {
+// TrashedFile defines model for TrashedFile.
+type TrashedFile struct {
 	// Checksum File checksum (null for directories)
 	Checksum *string `json:"checksum,omitempty"`
 
@@ -399,17 +399,17 @@ type TrashedDatei struct {
 	// IsDirectory Whether this is a directory
 	IsDirectory bool `json:"isDirectory"`
 
-	// LinkedDateiId ID of linked Datei (for symlinks)
-	LinkedDateiId *openapi_types.UUID `json:"linkedDateiId,omitempty"`
+	// LinkedFileId ID of linked File (for symlinks)
+	LinkedFileId *openapi_types.UUID `json:"linkedFileId,omitempty"`
 
 	// MimeType MIME type (null for directories)
 	MimeType *string `json:"mimeType,omitempty"`
 
-	// Name Current name of the Datei
+	// Name Current name of the File
 	Name *string `json:"name"`
 
 	// OriginPath Full ancestor path of the parent directory at the time of trashing. Populated only for root-level trash items (when listing without parentId). Empty when the item was at root level.
-	OriginPath *[]DateiPathItem `json:"originPath,omitempty"`
+	OriginPath *[]FilePathItem `json:"originPath,omitempty"`
 
 	// ParentId Parent directory ID
 	ParentId *openapi_types.UUID `json:"parentId,omitempty"`
@@ -445,30 +445,30 @@ type UnlockPublicLinkResponse struct {
 	Token string `json:"token"`
 }
 
-// UpdateDateiRequest defines model for UpdateDateiRequest.
-type UpdateDateiRequest struct {
-	// Name New name for the Datei (optional)
+// UpdateFileRequest defines model for UpdateFileRequest.
+type UpdateFileRequest struct {
+	// Name New name for the File (optional)
 	Name *string `json:"name,omitempty"`
 
 	// ParentId New parent directory ID (null moves to root; only used when updateParentId is true)
 	ParentId *openapi_types.UUID `json:"parentId,omitempty"`
 
-	// UpdateParentId Whether to move the Datei to a new parent directory
+	// UpdateParentId Whether to move the File to a new parent directory
 	UpdateParentId *bool `json:"updateParentId,omitempty"`
 }
 
-// UpdateDateiWithFileRequest defines model for UpdateDateiWithFileRequest.
-type UpdateDateiWithFileRequest struct {
+// UpdateFileWithContentRequest defines model for UpdateFileWithContentRequest.
+type UpdateFileWithContentRequest struct {
 	// File New file data (optional)
 	File *openapi_types.File `json:"file,omitempty"`
 
-	// Name New name for the Datei (optional)
+	// Name New name for the File (optional)
 	Name *string `json:"name,omitempty"`
 
 	// ParentId New parent directory ID (null moves to root; only used when updateParentId is true)
 	ParentId *openapi_types.UUID `json:"parentId,omitempty"`
 
-	// UpdateParentId Whether to move the Datei to a new parent directory
+	// UpdateParentId Whether to move the File to a new parent directory
 	UpdateParentId *bool `json:"updateParentId,omitempty"`
 }
 
@@ -533,8 +533,8 @@ type ListUsersAdminParams struct {
 	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
-// ListDateiParams defines parameters for ListDatei.
-type ListDateiParams struct {
+// ListFilesParams defines parameters for ListFiles.
+type ListFilesParams struct {
 	// ParentId Parent directory ID (omit for root)
 	ParentId *openapi_types.UUID `form:"parentId,omitempty" json:"parentId,omitempty"`
 
@@ -545,8 +545,8 @@ type ListDateiParams struct {
 	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
-// GetDateiThumbnailParams defines parameters for GetDateiThumbnail.
-type GetDateiThumbnailParams struct {
+// GetFileThumbnailParams defines parameters for GetFileThumbnail.
+type GetFileThumbnailParams struct {
 	IfNoneMatch *string `json:"If-None-Match,omitempty"`
 }
 
@@ -565,9 +565,9 @@ type ListLinksParams struct {
 // ListLinksParamsStatus defines parameters for ListLinks.
 type ListLinksParamsStatus string
 
-// ListPublicLinkDateienParams defines parameters for ListPublicLinkDateien.
-type ListPublicLinkDateienParams struct {
-	// ParentId When set, list children of this folder (must be inside the link's shared scope); when omitted, list the top-level shared dateien
+// ListPublicLinkFilesParams defines parameters for ListPublicLinkFiles.
+type ListPublicLinkFilesParams struct {
+	// ParentId When set, list children of this folder (must be inside the link's shared scope); when omitted, list the top-level shared files
 	ParentId *openapi_types.UUID `form:"parentId,omitempty" json:"parentId,omitempty"`
 }
 
@@ -610,14 +610,14 @@ type RegisterJSONRequestBody = RegisterRequest
 // ResetPasswordJSONRequestBody defines body for ResetPassword for application/json ContentType.
 type ResetPasswordJSONRequestBody = ResetPasswordRequest
 
-// CreateDateiMultipartRequestBody defines body for CreateDatei for multipart/form-data ContentType.
-type CreateDateiMultipartRequestBody = CreateDateiRequest
+// CreateFileMultipartRequestBody defines body for CreateFile for multipart/form-data ContentType.
+type CreateFileMultipartRequestBody = CreateFileRequest
 
-// UpdateDateiFormdataRequestBody defines body for UpdateDatei for application/x-www-form-urlencoded ContentType.
-type UpdateDateiFormdataRequestBody = UpdateDateiRequest
+// UpdateFileFormdataRequestBody defines body for UpdateFile for application/x-www-form-urlencoded ContentType.
+type UpdateFileFormdataRequestBody = UpdateFileRequest
 
-// UpdateDateiMultipartRequestBody defines body for UpdateDatei for multipart/form-data ContentType.
-type UpdateDateiMultipartRequestBody = UpdateDateiWithFileRequest
+// UpdateFileMultipartRequestBody defines body for UpdateFile for multipart/form-data ContentType.
+type UpdateFileMultipartRequestBody = UpdateFileWithContentRequest
 
 // CreateLinkJSONRequestBody defines body for CreateLink for application/json ContentType.
 type CreateLinkJSONRequestBody = CreateLinkRequest
@@ -625,8 +625,8 @@ type CreateLinkJSONRequestBody = CreateLinkRequest
 // UpdateLinkJSONRequestBody defines body for UpdateLink for application/json ContentType.
 type UpdateLinkJSONRequestBody = UpdateLinkRequest
 
-// AddDateiToLinkJSONRequestBody defines body for AddDateiToLink for application/json ContentType.
-type AddDateiToLinkJSONRequestBody = AddDateiToLinkRequest
+// AddFileToLinkJSONRequestBody defines body for AddFileToLink for application/json ContentType.
+type AddFileToLinkJSONRequestBody = AddFileToLinkRequest
 
 // UnlockPublicLinkJSONRequestBody defines body for UnlockPublicLink for application/json ContentType.
 type UnlockPublicLinkJSONRequestBody = UnlockPublicLinkRequest
@@ -653,4 +653,4 @@ type UpdateUserJSONRequestBody = UpdateUserRequest
 type UpdateUserEmailJSONRequestBody = UpdateUserEmailRequest
 
 // RestoreTrashJSONRequestBody defines body for RestoreTrash for application/json ContentType.
-type RestoreTrashJSONRequestBody = RestoreDateiRequest
+type RestoreTrashJSONRequestBody = RestoreFileRequest

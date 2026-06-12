@@ -21,13 +21,13 @@ func updateProjectionForLinkCreated(ctx context.Context, q *db.Queries, event *L
 		return fmt.Errorf("failed to insert link_projection: %w", err)
 	}
 
-	for _, dateiID := range event.DateiIDs {
-		if err := q.InsertLinkDateiProjection(ctx, db.InsertLinkDateiProjectionParams{
+	for _, fileID := range event.FileIDs {
+		if err := q.InsertLinkFileProjection(ctx, db.InsertLinkFileProjectionParams{
 			LinkID:  event.ID,
-			DateiID: dateiID,
+			FileID:  fileID,
 			AddedAt: event.CreatedAt,
 		}); err != nil {
-			return fmt.Errorf("failed to insert link_datei_projection: %w", err)
+			return fmt.Errorf("failed to insert link_file_projection: %w", err)
 		}
 	}
 
@@ -60,13 +60,13 @@ func updateProjectionForLinkKeyRotated(
 	return nil
 }
 
-func updateProjectionForLinkDateiAdded(ctx context.Context, q *db.Queries, event *LinkDateiAddedEvent) error {
-	if err := q.InsertLinkDateiProjection(ctx, db.InsertLinkDateiProjectionParams{
+func updateProjectionForLinkFileAdded(ctx context.Context, q *db.Queries, event *LinkFileAddedEvent) error {
+	if err := q.InsertLinkFileProjection(ctx, db.InsertLinkFileProjectionParams{
 		LinkID:  event.ID,
-		DateiID: event.DateiID,
+		FileID:  event.FileID,
 		AddedAt: event.AddedAt,
 	}); err != nil {
-		return fmt.Errorf("failed to insert link_datei_projection: %w", err)
+		return fmt.Errorf("failed to insert link_file_projection: %w", err)
 	}
 	if err := q.TouchLinkProjection(ctx, db.TouchLinkProjectionParams{
 		UpdatedAt: event.AddedAt,
@@ -77,12 +77,12 @@ func updateProjectionForLinkDateiAdded(ctx context.Context, q *db.Queries, event
 	return nil
 }
 
-func updateProjectionForLinkDateiRemoved(ctx context.Context, q *db.Queries, event *LinkDateiRemovedEvent) error {
-	if err := q.DeleteLinkDateiProjection(ctx, db.DeleteLinkDateiProjectionParams{
-		LinkID:  event.ID,
-		DateiID: event.DateiID,
+func updateProjectionForLinkFileRemoved(ctx context.Context, q *db.Queries, event *LinkFileRemovedEvent) error {
+	if err := q.DeleteLinkFileProjection(ctx, db.DeleteLinkFileProjectionParams{
+		LinkID: event.ID,
+		FileID: event.FileID,
 	}); err != nil {
-		return fmt.Errorf("failed to delete link_datei_projection: %w", err)
+		return fmt.Errorf("failed to delete link_file_projection: %w", err)
 	}
 	if err := q.TouchLinkProjection(ctx, db.TouchLinkProjectionParams{
 		UpdatedAt: event.RemovedAt,

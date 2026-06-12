@@ -75,7 +75,7 @@
     <ng-container matColumnDef="icon">
       <th mat-header-cell *matHeaderCellDef></th>
       <td mat-cell *matCellDef="let element" class="w-20">
-        <app-thumbnail-icon [datei]="element" />
+        <app-thumbnail-icon [file]="element" />
       </td>
     </ng-container>
 
@@ -126,7 +126,7 @@
             <mat-icon>person_add</mat-icon>
             Share
           </button>
-          <button mat-menu-item (click)="trashDatei(element, $event)">
+          <button mat-menu-item (click)="trashFile(element, $event)">
             <mat-icon>delete</mat-icon>
             Move to trash
           </button>

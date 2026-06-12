@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/go-chi/httprate"
+	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/authn"
-	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/users"
 )
 
@@ -37,7 +37,7 @@ func BasicAuthMiddleware(userSvc *users.UserService) func(http.Handler) http.Han
 
 			out, err := userSvc.ValidateCredentials(r.Context(), email, password)
 			if err != nil {
-				if errors.Is(err, dateierrors.ErrInvalidCredentials) {
+				if errors.Is(err, apperrors.ErrInvalidCredentials) {
 					if limited := failLimiter.RespondOnLimit(w, r, ip); !limited {
 						w.Header().Set("WWW-Authenticate", `Basic realm="Datei WebDAV"`)
 						http.Error(w, "Unauthorized", http.StatusUnauthorized)

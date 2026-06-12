@@ -1,7 +1,7 @@
 type: object
 required:
   - name
-  - dateiIds
+  - fileIds
 properties:
   name:
     type: string
@@ -18,9 +18,9 @@ properties:
     nullable: true
     maxLength: 128
     description: Optional plain-text code required to view
-  dateiIds:
+  fileIds:
     type: array
     items:
       type: string
       format: uuid
-    description: IDs of dateien to share (may be empty)
+    description: IDs of files to share (may be empty)

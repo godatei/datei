@@ -1,0 +1,8 @@
+type: object
+required:
+  - fileId
+properties:
+  fileId:
+    type: string
+    format: uuid
+    description: ID of the file to add to the link
