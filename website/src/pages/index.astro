@@ -1,0 +1,114 @@
+---
+import {Icon} from 'astro-icon/components';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+
+const title = 'Datei';
+const description =
+  'Datei is an open source, self-hosted file management platform.';
+
+const features = [
+  {
+    title: 'Self-hosted',
+    icon: 'lucide:server',
+    description:
+      'Run Datei on your own infrastructure and keep full control over your files.',
+  },
+  {
+    title: 'Open source',
+    icon: 'lucide:github',
+    description:
+      'Datei is developed in the open. Read the source, open issues, and contribute on GitHub.',
+  },
+  {
+    title: 'Built to last',
+    icon: 'lucide:history',
+    description:
+      'An event-sourced core keeps a full history of every change to your files.',
+  },
+];
+---
+
+<script>
+  import '@material/web/button/filled-button.js';
+  import '@material/web/button/outlined-button.js';
+  import '@material/web/labs/card/outlined-card.js';
+</script>
+
+<BaseLayout title={title} description={description}>
+  <section class="hero">
+    <img src="/datei-logo.svg" alt="" width="96" height="96" />
+    <h1>{title}</h1>
+    <p>{description}</p>
+    <div class="actions">
+      <md-filled-button href="/docs/">Get started</md-filled-button>
+      <md-outlined-button
+        href="https://github.com/godatei/datei"
+        target="_blank">
+        View on GitHub
+      </md-outlined-button>
+    </div>
+  </section>
+
+  <section class="features" aria-label="Features">
+    {
+      features.map(feature => (
+        <md-outlined-card>
+          <Icon name={feature.icon} size={28} />
+          <h2>{feature.title}</h2>
+          <p>{feature.description}</p>
+        </md-outlined-card>
+      ))
+    }
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    text-align: center;
+    padding: 4rem 0 3rem;
+  }
+
+  .hero h1 {
+    font-size: 3.5rem;
+    margin: 1.5rem 0 0;
+  }
+
+  .hero p {
+    font-size: 1.25rem;
+    color: var(--md-sys-color-on-surface-variant);
+    max-width: 36rem;
+    margin: 1rem auto 0;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 1.5rem;
+    padding: 2rem 0;
+  }
+
+  .features md-outlined-card {
+    padding: 1.5rem;
+  }
+
+  .features [data-icon] {
+    color: var(--md-sys-color-primary);
+  }
+
+  .features h2 {
+    margin: 0.75rem 0 0;
+    font-size: 1.25rem;
+  }
+
+  .features p {
+    margin: 0.5rem 0 0;
+    color: var(--md-sys-color-on-surface-variant);
+  }
+</style>

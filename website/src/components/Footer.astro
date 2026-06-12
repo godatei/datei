@@ -1,0 +1,63 @@
+---
+const year = new Date().getFullYear();
+---
+
+<script>
+  import '@material/web/divider/divider.js';
+</script>
+
+<footer>
+  <md-divider></md-divider>
+  <div class="content">
+    <p>© {year} Datei</p>
+    <ul>
+      <li>
+        <a href="/docs/">Docs</a>
+      </li>
+      <li>
+        <a href="/blog/">Blog</a>
+      </li>
+      <li>
+        <a
+          href="https://github.com/godatei/datei"
+          target="_blank"
+          rel="noopener noreferrer">
+          GitHub
+        </a>
+      </li>
+    </ul>
+  </div>
+</footer>
+
+<style>
+  footer {
+    background-color: var(--md-sys-color-surface-container-low);
+  }
+
+  .content {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  a {
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  a:hover {
+    color: var(--md-sys-color-primary);
+  }
+</style>

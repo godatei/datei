@@ -1,0 +1,48 @@
+---
+import {getDocHref, getDocLabel, getSortedDocs} from '~/utils/docs';
+
+const docs = await getSortedDocs();
+const currentPath = Astro.url.pathname;
+---
+
+<script>
+  import '@material/web/list/list-item.js';
+  import '@material/web/list/list.js';
+</script>
+
+<nav aria-label="Docs">
+  <md-list>
+    {
+      docs.map(doc => {
+        const href = getDocHref(doc);
+        const isCurrent = href === currentPath;
+        return (
+          <md-list-item
+            type="link"
+            href={href}
+            class:list={{current: isCurrent}}
+            aria-current={isCurrent ? 'page' : undefined}>
+            {getDocLabel(doc)}
+          </md-list-item>
+        );
+      })
+    }
+  </md-list>
+</nav>
+
+<style>
+  md-list {
+    --md-list-container-color: transparent;
+    border-radius: 1rem;
+  }
+
+  md-list-item {
+    border-radius: 9999px;
+    --md-list-item-one-line-container-height: 44px;
+  }
+
+  md-list-item.current {
+    background-color: var(--md-sys-color-secondary-container);
+    --md-list-item-label-text-color: var(--md-sys-color-on-secondary-container);
+  }
+</style>
