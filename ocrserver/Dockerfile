@@ -17,7 +17,7 @@ COPY . .
 RUN CGO_ENABLED=1 go build -ldflags "-s" -o ocrserver .
 
 
-FROM alpine:3.23 AS runtime
+FROM alpine:3.24 AS runtime
 
 RUN apk add --no-cache \
     tesseract-ocr \
