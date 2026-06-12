@@ -6,6 +6,7 @@ import (
 
 	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/link"
+	"github.com/godatei/datei/internal/linkauth"
 	"github.com/godatei/datei/pkg/api"
 )
 
@@ -52,7 +53,7 @@ func (s *publicLinkServer) ListPublicLinkDateien(
 	ctx context.Context,
 	request ListPublicLinkDateienRequestObject,
 ) (ListPublicLinkDateienResponseObject, error) {
-	session := link.RequirePublicLinkSessionFromContext(ctx)
+	session := linkauth.RequirePublicLinkSessionFromContext(ctx)
 
 	result, err := s.svc.ListPublicLinkDateien(ctx, session, request.Params.ParentId)
 	if err != nil {
@@ -84,7 +85,7 @@ func (s *publicLinkServer) DownloadPublicLinkDatei(
 	ctx context.Context,
 	request DownloadPublicLinkDateiRequestObject,
 ) (DownloadPublicLinkDateiResponseObject, error) {
-	session := link.RequirePublicLinkSessionFromContext(ctx)
+	session := linkauth.RequirePublicLinkSessionFromContext(ctx)
 
 	result, err := s.svc.DownloadPublicLinkDatei(ctx, session, request.DateiId)
 	if err != nil {

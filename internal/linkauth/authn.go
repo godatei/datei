@@ -1,4 +1,4 @@
-package link
+package linkauth
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/godatei/datei/internal/dateierrors"
+	"github.com/godatei/datei/internal/link"
 )
 
 // SecuritySchemeName is the OpenAPI security scheme name used to gate the
@@ -18,14 +19,14 @@ type publicLinkContextKey struct{}
 
 // PublicLinkSessionFromContext returns the public-link session claims attached
 // to this request by the auth middleware.
-func PublicLinkSessionFromContext(ctx context.Context) (SessionClaims, bool) {
-	s, ok := ctx.Value(publicLinkContextKey{}).(SessionClaims)
+func PublicLinkSessionFromContext(ctx context.Context) (link.SessionClaims, bool) {
+	s, ok := ctx.Value(publicLinkContextKey{}).(link.SessionClaims)
 	return s, ok
 }
 
 // RequirePublicLinkSessionFromContext panics if no public-link session is
 // present in ctx. Use this after the public-link auth middleware has run.
-func RequirePublicLinkSessionFromContext(ctx context.Context) SessionClaims {
+func RequirePublicLinkSessionFromContext(ctx context.Context) link.SessionClaims {
 	s, ok := PublicLinkSessionFromContext(ctx)
 	if !ok {
 		panic("no public link session in context")
@@ -48,7 +49,7 @@ func OpenAPIAuthFunc() openapi3filter.AuthenticationFunc {
 		if tokenString == authHeader {
 			return fmt.Errorf("invalid Authorization header format: %w", dateierrors.ErrLinkUnauthorized)
 		}
-		claims, err := ParseSessionToken(tokenString)
+		claims, err := link.ParseSessionToken(tokenString)
 		if err != nil {
 			return err
 		}

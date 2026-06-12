@@ -22,6 +22,7 @@ import (
 	"github.com/godatei/datei/internal/db/migrations"
 	"github.com/godatei/datei/internal/frontend"
 	"github.com/godatei/datei/internal/link"
+	"github.com/godatei/datei/internal/linkauth"
 	"github.com/godatei/datei/internal/mailer"
 	"github.com/godatei/datei/internal/ocr"
 	"github.com/godatei/datei/internal/server"
@@ -163,9 +164,9 @@ func run(ctx context.Context, options Options) error {
 	// We dispatch by scheme name because both the owner auth and the public-link
 	// session use http+Bearer but verify against different claim shapes.
 	ownerAuth := authn.OpenAPIAuthFunc()
-	publicLinkAuth := link.OpenAPIAuthFunc()
+	publicLinkAuth := linkauth.OpenAPIAuthFunc()
 	authDispatch := func(ctx context.Context, input *openapi3filter.AuthenticationInput) error {
-		if input.SecuritySchemeName == link.SecuritySchemeName {
+		if input.SecuritySchemeName == linkauth.SecuritySchemeName {
 			return publicLinkAuth(ctx, input)
 		}
 		return ownerAuth(ctx, input)
