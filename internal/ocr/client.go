@@ -7,11 +7,13 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
-	"net/textproto"
+	"sort"
+	"strconv"
+	"strings"
 	"time"
 )
 
-// Client calls an OCR server to extract text from images and PDFs.
+// Client calls a rapidocr_api server to extract text from images.
 type Client struct {
 	serverURI  string
 	httpClient *http.Client
@@ -26,23 +28,23 @@ func NewClient(serverURI string) *Client {
 	}
 }
 
-type ocrResponse struct {
-	Text string `json:"text"`
+// ocrResponse mirrors the rapidocr_api response: a map keyed by the detected
+// line index ("0", "1", ...) where each value holds the recognized text. An
+// empty object is returned when no text is detected.
+type ocrResponse map[string]struct {
+	RecTxt string `json:"rec_txt"`
 }
 
-// ExtractText sends a file to the OCR server and returns the extracted text.
-// contentType must be an image MIME type or "application/pdf".
-func (c *Client) ExtractText(ctx context.Context, r io.Reader, contentType string) (string, error) {
+// ExtractText sends a single image to the OCR server and returns the recognized
+// text, with one detected line per output line.
+func (c *Client) ExtractText(ctx context.Context, r io.Reader) (string, error) {
 	pr, pw := io.Pipe()
 	w := multipart.NewWriter(pw)
 
 	go func() {
 		defer func() { pw.CloseWithError(w.Close()) }()
 
-		h := make(textproto.MIMEHeader)
-		h.Set("Content-Disposition", `form-data; name="file"; filename="file"`)
-		h.Set("Content-Type", contentType)
-		fw, err := w.CreatePart(h)
+		fw, err := w.CreateFormFile("image_file", "image")
 		if err != nil {
 			pw.CloseWithError(fmt.Errorf("ocr: create form file: %w", err))
 			return
@@ -76,5 +78,30 @@ func (c *Client) ExtractText(ctx context.Context, r io.Reader, contentType strin
 		return "", fmt.Errorf("ocr: decode response: %w", err)
 	}
 
-	return result.Text, nil
+	return joinLines(result), nil
+}
+
+// joinLines orders the detected lines by their numeric index and joins their
+// recognized text with newlines.
+func joinLines(result ocrResponse) string {
+	keys := make([]int, 0, len(result))
+	index := make(map[int]string, len(result))
+	for k, v := range result {
+		i, err := strconv.Atoi(k)
+		if err != nil {
+			continue
+		}
+		keys = append(keys, i)
+		index[i] = v.RecTxt
+	}
+	sort.Ints(keys)
+
+	var b strings.Builder
+	for i, k := range keys {
+		if i != 0 {
+			b.WriteByte('\n')
+		}
+		b.WriteString(index[k])
+	}
+	return b.String()
 }
