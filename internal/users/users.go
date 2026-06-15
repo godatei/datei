@@ -38,17 +38,38 @@ func (s *UserService) queries() *db.Queries {
 	return db.New(s.db)
 }
 
+// UserAccount is the service read model for an authenticated user account. It
+// deliberately exposes only the fields callers need, without leaking the
+// database projection (which also carries password hashes, MFA secrets, etc.).
+type UserAccount struct {
+	ID         uuid.UUID
+	Name       string
+	IsAdmin    bool
+	MfaEnabled bool
+	Archived   bool
+}
+
+func userFromProjection(p db.UserAccountProjection) UserAccount {
+	return UserAccount{
+		ID:         p.ID,
+		Name:       p.Name,
+		IsAdmin:    p.IsAdmin,
+		MfaEnabled: p.MfaEnabled,
+		Archived:   p.ArchivedAt != nil,
+	}
+}
+
 // GetUser returns the current user profile from the projection.
-func (s *UserService) GetUser(ctx context.Context, userID uuid.UUID) (db.UserAccountProjection, error) {
+func (s *UserService) GetUser(ctx context.Context, userID uuid.UUID) (UserAccount, error) {
 	q := s.queries()
 	user, err := q.GetUserAccountByID(ctx, userID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return db.UserAccountProjection{}, apperrors.ErrNotFound
+			return UserAccount{}, apperrors.ErrNotFound
 		}
-		return db.UserAccountProjection{}, fmt.Errorf("failed to get user: %w", err)
+		return UserAccount{}, fmt.Errorf("failed to get user: %w", err)
 	}
-	return user, nil
+	return userFromProjection(user), nil
 }
 
 func (s *UserService) sendVerificationEmail(ctx context.Context, userID uuid.UUID, email string) {

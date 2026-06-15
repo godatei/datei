@@ -10,7 +10,6 @@ import (
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/authjwt"
-	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/users"
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v3/jwt"
@@ -98,7 +97,7 @@ func OpenAPIAuthFunc(userSvc *users.UserService) openapi3filter.AuthenticationFu
 			slog.Error("auth: failed to load user", "path", r.URL.Path, "user_id", claims.userID, "error", err)
 			return fmt.Errorf("failed to load user: %w", err)
 		}
-		if account.ArchivedAt != nil {
+		if account.Archived {
 			slog.Debug("auth: user is archived", "path", r.URL.Path, "user_id", claims.userID)
 			return errors.New("user is archived")
 		}
@@ -128,16 +127,16 @@ func RequireEmailIdentity(ctx context.Context) EmailIdentity {
 	return id
 }
 
-// GetCurrentUser retrieves the authenticated user's projection from ctx.
-func GetCurrentUser(ctx context.Context) (db.UserAccountProjection, error) {
-	if user, ok := ctx.Value(userContextKey{}).(db.UserAccountProjection); ok {
+// GetCurrentUser retrieves the authenticated user from ctx.
+func GetCurrentUser(ctx context.Context) (users.UserAccount, error) {
+	if user, ok := ctx.Value(userContextKey{}).(users.UserAccount); ok {
 		return user, nil
 	}
-	return db.UserAccountProjection{}, ErrNoAuthentication
+	return users.UserAccount{}, ErrNoAuthentication
 }
 
-// RequireCurrentUser panics if no user projection is present (use after Middleware).
-func RequireCurrentUser(ctx context.Context) db.UserAccountProjection {
+// RequireCurrentUser panics if no user is present (use after Middleware).
+func RequireCurrentUser(ctx context.Context) users.UserAccount {
 	user, err := GetCurrentUser(ctx)
 	if err != nil {
 		panic(err)
@@ -145,8 +144,8 @@ func RequireCurrentUser(ctx context.Context) db.UserAccountProjection {
 	return user
 }
 
-// PopulateContext injects the EmailIdentity and database-backed user projection into ctx.
-func PopulateContext(ctx context.Context, identity EmailIdentity, user db.UserAccountProjection) context.Context {
+// PopulateContext injects the EmailIdentity and the authenticated user into ctx.
+func PopulateContext(ctx context.Context, identity EmailIdentity, user users.UserAccount) context.Context {
 	ctx = context.WithValue(ctx, emailContextKey{}, identity)
 	ctx = context.WithValue(ctx, userContextKey{}, user)
 	return ctx

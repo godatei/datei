@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/godatei/datei/internal/apperrors"
-	"github.com/godatei/datei/internal/db"
+	"github.com/godatei/datei/internal/users"
 )
 
 // RequireAdmin returns the current user record if the caller is authenticated
@@ -12,11 +12,11 @@ import (
 //
 // The admin flag is read from the database-backed account loaded by the auth
 // middleware, so demotion takes effect on the next request.
-func RequireAdmin(ctx context.Context) (db.UserAccountProjection, error) {
+func RequireAdmin(ctx context.Context) (users.UserAccount, error) {
 	if user, err := GetCurrentUser(ctx); err != nil {
-		return db.UserAccountProjection{}, err
+		return users.UserAccount{}, err
 	} else if !user.IsAdmin {
-		return db.UserAccountProjection{}, apperrors.ErrForbidden
+		return users.UserAccount{}, apperrors.ErrForbidden
 	} else {
 		return user, nil
 	}

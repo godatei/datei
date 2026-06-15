@@ -109,8 +109,8 @@ func (s *UserService) Login(ctx context.Context, input LoginInput) (*LoginOutput
 }
 
 type ValidateCredentialsOutput struct {
-	Account db.UserAccountProjection
-	Email   string
+	UserAccount UserAccount
+	Email       string
 }
 
 // ValidateCredentials verifies email/password without generating a JWT or
@@ -136,8 +136,8 @@ func (s *UserService) ValidateCredentials(
 		return nil, fmt.Errorf("failed to get primary email: %w", err)
 	}
 	return &ValidateCredentialsOutput{
-		Account: user,
-		Email:   primaryEmail.Email,
+		UserAccount: userFromProjection(user),
+		Email:       primaryEmail.Email,
 	}, nil
 }
 

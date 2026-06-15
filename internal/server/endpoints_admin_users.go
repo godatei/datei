@@ -6,7 +6,6 @@ import (
 
 	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/authn"
-	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/users"
 	"github.com/godatei/datei/pkg/api"
 )
@@ -15,7 +14,7 @@ type adminUsersServer struct {
 	svc *users.UserService
 }
 
-func (s *adminUsersServer) requireAdmin(ctx context.Context) (db.UserAccountProjection, error) {
+func (s *adminUsersServer) requireAdmin(ctx context.Context) (users.UserAccount, error) {
 	return authn.RequireAdmin(ctx)
 }
 

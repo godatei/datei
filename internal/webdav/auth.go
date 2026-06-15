@@ -53,7 +53,7 @@ func BasicAuthMiddleware(userSvc *users.UserService) func(http.Handler) http.Han
 			}
 
 			identity := authn.EmailIdentity{Email: out.Email}
-			r = r.WithContext(authn.PopulateContext(r.Context(), identity, out.Account))
+			r = r.WithContext(authn.PopulateContext(r.Context(), identity, out.UserAccount))
 			next.ServeHTTP(w, r)
 		})
 	}
