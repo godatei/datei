@@ -42,7 +42,7 @@
 
 ### OCR Service
 
-- **Tesseract** via REST API
+- **RapidOCR** (PaddleOCR models on ONNX Runtime) via REST API
 
 ## Service Communication
 

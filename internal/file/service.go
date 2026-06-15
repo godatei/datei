@@ -5,11 +5,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"image/jpeg"
 	"io"
 	"log/slog"
 	"strings"
 	"time"
 
+	"github.com/gen2brain/go-fitz"
 	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/authn"
 	"github.com/godatei/datei/internal/db"
@@ -43,6 +45,13 @@ func NewService(
 	}
 }
 
+// pageBreak separates the extracted text of consecutive pages in a document.
+const pageBreak = "\n\n---\n\n"
+
+// ocrDPI is the resolution used to rasterize PDF pages before sending them to
+// the OCR server.
+const ocrDPI = 300
+
 func isOCRable(contentType string) bool {
 	return strings.HasPrefix(contentType, "image/") || contentType == "application/pdf"
 }
@@ -59,11 +68,19 @@ func (s *Service) startOCR(ctx context.Context, fileID uuid.UUID, s3Key, checksu
 			return
 		}
 		defer reader.Close()
-		text, err := s.ocrClient.ExtractText(ctx, reader, contentType)
+
+		buf, err := io.ReadAll(reader)
+		if err != nil {
+			slog.Warn("ocr: failed to read object", "error", err, "fileID", fileID)
+			return
+		}
+
+		text, err := s.extractText(ctx, buf, contentType)
 		if err != nil {
 			slog.Warn("ocr: extraction failed", "error", err, "fileID", fileID)
 			return
 		}
+
 		queries := db.New(s.db)
 		if err := queries.UpdateFileProjectionContentMD(ctx, db.UpdateFileProjectionContentMDParams{
 			ContentMd: &text,
@@ -73,6 +90,53 @@ func (s *Service) startOCR(ctx context.Context, fileID uuid.UUID, s3Key, checksu
 			slog.Warn("ocr: failed to update projection", "error", err, "fileID", fileID)
 		}
 	}()
+}
+
+// extractText returns the text content of an image or PDF. PDFs are handled
+// in-process: a born-digital text layer is preferred and only scanned pages are
+// sent to the OCR server.
+func (s *Service) extractText(ctx context.Context, buf []byte, contentType string) (string, error) {
+	if contentType == "application/pdf" {
+		return s.extractPDFText(ctx, buf)
+	}
+	return s.ocrClient.ExtractText(ctx, bytes.NewReader(buf))
+}
+
+func (s *Service) extractPDFText(ctx context.Context, buf []byte) (string, error) {
+	doc, err := fitz.NewFromReader(bytes.NewReader(buf))
+	if err != nil {
+		return "", fmt.Errorf("open pdf: %w", err)
+	}
+	defer doc.Close()
+
+	n := doc.NumPage()
+
+	pages := make([]string, n)
+	for i := range n {
+		t, err := doc.Text(i)
+		if err != nil {
+			return "", fmt.Errorf("read pdf text page %d: %w", i, err)
+		}
+		if strings.TrimSpace(t) != "" {
+			pages[i] = t
+			continue
+		}
+
+		img, err := doc.ImageDPI(i, ocrDPI)
+		if err != nil {
+			return "", fmt.Errorf("render pdf page %d: %w", i, err)
+		}
+		var jpg bytes.Buffer
+		if err := jpeg.Encode(&jpg, img, nil); err != nil {
+			return "", fmt.Errorf("encode pdf page %d: %w", i, err)
+		}
+		t, err = s.ocrClient.ExtractText(ctx, &jpg)
+		if err != nil {
+			return "", fmt.Errorf("ocr pdf page %d: %w", i, err)
+		}
+		pages[i] = t
+	}
+	return strings.Join(pages, pageBreak), nil
 }
 
 // ListFilesInput contains parameters for listing file records
