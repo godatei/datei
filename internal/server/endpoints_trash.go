@@ -4,13 +4,17 @@ import (
 	"context"
 	"errors"
 
-	"github.com/godatei/datei/internal/datei"
-	"github.com/godatei/datei/internal/dateierrors"
+	"github.com/godatei/datei/internal/apperrors"
+	"github.com/godatei/datei/internal/file"
 	"github.com/godatei/datei/pkg/api"
 )
 
+type trashServer struct {
+	svc *file.Service
+}
+
 // ListTrash implements [StrictServerInterface].
-func (s *server) ListTrash(
+func (s *trashServer) ListTrash(
 	ctx context.Context,
 	request ListTrashRequestObject,
 ) (ListTrashResponseObject, error) {
@@ -23,7 +27,7 @@ func (s *server) ListTrash(
 		offset = *request.Params.Offset
 	}
 
-	result, err := s.dateiService.ListTrash(ctx, datei.ListTrashInput{
+	result, err := s.svc.ListTrash(ctx, file.ListTrashInput{
 		Limit:  limit,
 		Offset: offset,
 	})
@@ -38,7 +42,7 @@ func (s *server) ListTrash(
 }
 
 // ListTrashChildren implements [StrictServerInterface].
-func (s *server) ListTrashChildren(
+func (s *trashServer) ListTrashChildren(
 	ctx context.Context,
 	request ListTrashChildrenRequestObject,
 ) (ListTrashChildrenResponseObject, error) {
@@ -51,44 +55,44 @@ func (s *server) ListTrashChildren(
 		offset = *request.Params.Offset
 	}
 
-	result, err := s.dateiService.ListTrashChildren(ctx, datei.ListTrashChildrenInput{
-		ParentID: request.DateiId,
+	result, err := s.svc.ListTrashChildren(ctx, file.ListTrashChildrenInput{
+		ParentID: request.FileId,
 		Limit:    limit,
 		Offset:   offset,
 	})
 	if err != nil {
 		switch {
-		case errors.Is(err, dateierrors.ErrParentNotFound),
-			errors.Is(err, dateierrors.ErrParentNotTrashed),
-			errors.Is(err, dateierrors.ErrParentNotDirectory):
+		case errors.Is(err, apperrors.ErrParentNotFound),
+			errors.Is(err, apperrors.ErrParentNotTrashed),
+			errors.Is(err, apperrors.ErrParentNotDirectory):
 			return ListTrashChildren404Response{}, nil
 		default:
 			return nil, err
 		}
 	}
 
-	return ListTrashChildren200JSONResponse(api.ListDateiResponse{
+	return ListTrashChildren200JSONResponse(api.ListFilesResponse{
 		Items: result.Items,
 		Total: result.Total,
 	}), nil
 }
 
 // RestoreTrash implements [StrictServerInterface].
-func (s *server) RestoreTrash(
+func (s *trashServer) RestoreTrash(
 	ctx context.Context,
 	request RestoreTrashRequestObject,
 ) (RestoreTrashResponseObject, error) {
-	err := s.dateiService.RestoreDatei(ctx, datei.RestoreDateiInput{
-		ID:       request.DateiId,
+	err := s.svc.RestoreFile(ctx, file.RestoreFileInput{
+		ID:       request.FileId,
 		ParentID: request.Body.ParentId,
 	})
 	if err != nil {
 		switch {
-		case errors.Is(err, dateierrors.ErrNotFound), errors.Is(err, dateierrors.ErrNotInTrash),
-			errors.Is(err, dateierrors.ErrParentNotFound):
+		case errors.Is(err, apperrors.ErrNotFound), errors.Is(err, apperrors.ErrNotInTrash),
+			errors.Is(err, apperrors.ErrParentNotFound):
 			return RestoreTrash404Response{}, nil
-		case errors.Is(err, dateierrors.ErrInvalidInput), errors.Is(err, dateierrors.ErrParentNotDirectory),
-			errors.Is(err, dateierrors.ErrParentTrashed), errors.Is(err, dateierrors.ErrCycleDetected):
+		case errors.Is(err, apperrors.ErrInvalidInput), errors.Is(err, apperrors.ErrParentNotDirectory),
+			errors.Is(err, apperrors.ErrParentTrashed), errors.Is(err, apperrors.ErrCycleDetected):
 			return RestoreTrash400Response{}, nil
 		default:
 			return nil, err

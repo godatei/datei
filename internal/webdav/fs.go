@@ -9,8 +9,8 @@ import (
 	"path"
 	"strings"
 
-	"github.com/godatei/datei/internal/datei"
-	"github.com/godatei/datei/internal/dateierrors"
+	"github.com/godatei/datei/internal/apperrors"
+	"github.com/godatei/datei/internal/file"
 	"github.com/godatei/datei/pkg/api"
 	"github.com/google/uuid"
 	xdav "golang.org/x/net/webdav"
@@ -18,9 +18,9 @@ import (
 
 type davCacheKey struct{}
 
-type davPathCache map[string]*api.Datei
+type davPathCache map[string]*api.File
 
-func (c davPathCache) store(parentPath string, children []api.Datei) {
+func (c davPathCache) store(parentPath string, children []api.File) {
 	for i := range children {
 		child := &children[i]
 		if child.Name == nil {
@@ -36,7 +36,7 @@ func (c davPathCache) store(parentPath string, children []api.Datei) {
 	}
 }
 
-func readFromCache(ctx context.Context, name string) *api.Datei {
+func readFromCache(ctx context.Context, name string) *api.File {
 	if cache := cacheFromContext(ctx); cache != nil {
 		if d, ok := cache[name]; ok {
 			return d
@@ -45,7 +45,7 @@ func readFromCache(ctx context.Context, name string) *api.Datei {
 	return nil
 }
 
-func writeToCache(ctx context.Context, parentPath string, children []api.Datei) {
+func writeToCache(ctx context.Context, parentPath string, children []api.File) {
 	if cache := cacheFromContext(ctx); cache != nil {
 		cache.store(parentPath, children)
 	}
@@ -59,7 +59,7 @@ func cacheFromContext(ctx context.Context) davPathCache {
 // CacheMiddleware injects a per-request path cache into the context.
 // x/net/webdav calls OpenFile for every child during PROPFIND to fetch dead
 // properties; the cache lets resolve() skip the DB for paths already loaded
-// by ListDateiChildren.
+// by ListFileChildren.
 func CacheMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), davCacheKey{}, make(davPathCache))
@@ -67,16 +67,16 @@ func CacheMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-type dateiFS struct {
-	service *datei.Service
+type fileFS struct {
+	service *file.Service
 }
 
 // NewHandler returns a webdav.Handler that serves the Datei file system.
 // It must be mounted at /dav.
-func NewHandler(service *datei.Service) *xdav.Handler {
+func NewHandler(service *file.Service) *xdav.Handler {
 	return &xdav.Handler{
 		Prefix:     "/dav",
-		FileSystem: &dateiFS{service: service},
+		FileSystem: &fileFS{service: service},
 		LockSystem: xdav.NewMemLS(),
 		Logger: func(r *http.Request, err error) {
 			if err != nil {
@@ -89,9 +89,9 @@ func NewHandler(service *datei.Service) *xdav.Handler {
 	}
 }
 
-// resolve returns the api.Datei for the given WebDAV path.
+// resolve returns the api.File for the given WebDAV path.
 // Returns nil, nil for the virtual root ("/").
-func (fs *dateiFS) resolve(ctx context.Context, name string) (*api.Datei, error) {
+func (fs *fileFS) resolve(ctx context.Context, name string) (*api.File, error) {
 	name = strings.Trim(name, "/")
 	if name == "" {
 		return nil, nil
@@ -102,25 +102,25 @@ func (fs *dateiFS) resolve(ctx context.Context, name string) (*api.Datei, error)
 	}
 
 	segments := strings.Split(name, "/")
-	item, err := fs.service.FindDateiByPath(ctx, segments)
-	if errors.Is(err, dateierrors.ErrNotFound) {
+	item, err := fs.service.FindFileByPath(ctx, segments)
+	if errors.Is(err, apperrors.ErrNotFound) {
 		return nil, os.ErrNotExist
 	}
 	return item, err
 }
 
 // findChild returns the non-trashed child of parentID with the given name.
-func (fs *dateiFS) findChild(ctx context.Context, parentID *uuid.UUID, name string) (*api.Datei, error) {
-	item, err := fs.service.FindDateiByName(ctx, parentID, name)
-	if errors.Is(err, dateierrors.ErrNotFound) {
+func (fs *fileFS) findChild(ctx context.Context, parentID *uuid.UUID, name string) (*api.File, error) {
+	item, err := fs.service.FindFileByName(ctx, parentID, name)
+	if errors.Is(err, apperrors.ErrNotFound) {
 		return nil, os.ErrNotExist
 	}
 	return item, err
 }
 
-// resolveParent returns the parent datei and the base filename for a path.
+// resolveParent returns the parent file and the base filename for a path.
 // parent is nil when the item lives directly under the virtual root.
-func (fs *dateiFS) resolveParent(ctx context.Context, name string) (*api.Datei, string, error) {
+func (fs *fileFS) resolveParent(ctx context.Context, name string) (*api.File, string, error) {
 	dir, base := path.Split(strings.TrimRight(name, "/"))
 	dir = strings.TrimRight(dir, "/")
 	if dir == "" {
@@ -136,7 +136,7 @@ func (fs *dateiFS) resolveParent(ctx context.Context, name string) (*api.Datei, 
 	return parent, base, nil
 }
 
-func (fs *dateiFS) Mkdir(ctx context.Context, name string, _ os.FileMode) error {
+func (fs *fileFS) Mkdir(ctx context.Context, name string, _ os.FileMode) error {
 	parent, base, err := fs.resolveParent(ctx, name)
 	if err != nil {
 		return err
@@ -153,14 +153,14 @@ func (fs *dateiFS) Mkdir(ctx context.Context, name string, _ os.FileMode) error 
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
-	_, err = fs.service.CreateDatei(ctx, datei.CreateDateiInput{
+	_, err = fs.service.CreateFile(ctx, file.CreateFileInput{
 		ParentID: parentID,
 		FileName: base,
 	})
 	return mapErr(err)
 }
 
-func (fs *dateiFS) RemoveAll(ctx context.Context, name string) error {
+func (fs *fileFS) RemoveAll(ctx context.Context, name string) error {
 	proj, err := fs.resolve(ctx, name)
 	if err != nil {
 		return err
@@ -168,10 +168,10 @@ func (fs *dateiFS) RemoveAll(ctx context.Context, name string) error {
 	if proj == nil {
 		return os.ErrPermission
 	}
-	return mapErr(fs.service.DeleteDatei(ctx, proj.Id))
+	return mapErr(fs.service.DeleteFile(ctx, proj.Id))
 }
 
-func (fs *dateiFS) Rename(ctx context.Context, oldName, newName string) error {
+func (fs *fileFS) Rename(ctx context.Context, oldName, newName string) error {
 	proj, err := fs.resolve(ctx, oldName)
 	if err != nil {
 		return err
@@ -203,7 +203,7 @@ func (fs *dateiFS) Rename(ctx context.Context, oldName, newName string) error {
 	sameParent := (proj.ParentId == nil && newParentID == nil) ||
 		(proj.ParentId != nil && newParentID != nil && *proj.ParentId == *newParentID)
 
-	input := datei.UpdateDateiInput{ID: proj.Id}
+	input := file.UpdateFileInput{ID: proj.Id}
 	currentName := ""
 	if proj.Name != nil {
 		currentName = *proj.Name
@@ -215,11 +215,11 @@ func (fs *dateiFS) Rename(ctx context.Context, oldName, newName string) error {
 		input.MoveRequested = true
 		input.NewParentID = newParentID
 	}
-	_, err = fs.service.UpdateDatei(ctx, input)
+	_, err = fs.service.UpdateFile(ctx, input)
 	return mapErr(err)
 }
 
-func (fs *dateiFS) Stat(ctx context.Context, name string) (os.FileInfo, error) {
+func (fs *fileFS) Stat(ctx context.Context, name string) (os.FileInfo, error) {
 	if name == "/" {
 		return rootInfo(), nil
 	}
@@ -233,12 +233,12 @@ func (fs *dateiFS) Stat(ctx context.Context, name string) (os.FileInfo, error) {
 	return projInfo(proj), nil
 }
 
-func (fs *dateiFS) OpenFile(ctx context.Context, name string, flag int, _ os.FileMode) (xdav.File, error) {
+func (fs *fileFS) OpenFile(ctx context.Context, name string, flag int, _ os.FileMode) (xdav.File, error) {
 	isWrite := flag&(os.O_WRONLY|os.O_RDWR|os.O_CREATE) != 0
 
 	if name == "/" || name == "" {
-		return newDirFile(rootInfo(), func() ([]api.Datei, error) {
-			children, err := fs.service.ListDateiChildren(ctx, nil)
+		return newDirFile(rootInfo(), func() ([]api.File, error) {
+			children, err := fs.service.ListFileChildren(ctx, nil)
 			if err == nil {
 				writeToCache(ctx, "", children)
 			}
@@ -255,8 +255,8 @@ func (fs *dateiFS) OpenFile(ctx context.Context, name string, flag int, _ os.Fil
 		if proj.IsDirectory {
 			id := proj.Id
 			parentTrimmed := strings.Trim(name, "/")
-			return newDirFile(projInfo(proj), func() ([]api.Datei, error) {
-				children, err := fs.service.ListDateiChildren(ctx, &id)
+			return newDirFile(projInfo(proj), func() ([]api.File, error) {
+				children, err := fs.service.ListFileChildren(ctx, &id)
 				if err == nil {
 					writeToCache(ctx, parentTrimmed, children)
 				}
@@ -265,8 +265,8 @@ func (fs *dateiFS) OpenFile(ctx context.Context, name string, flag int, _ os.Fil
 		}
 
 		id := proj.Id
-		return newReadFile(projInfo(proj), func() (*datei.DownloadDateiOutput, error) {
-			return fs.service.DownloadDatei(ctx, id)
+		return newReadFile(projInfo(proj), func() (*file.DownloadFileOutput, error) {
+			return fs.service.DownloadFile(ctx, id)
 		}), nil
 	}
 
@@ -298,13 +298,13 @@ func (fs *dateiFS) OpenFile(ctx context.Context, name string, flag int, _ os.Fil
 
 func mapErr(err error) error {
 	switch {
-	case errors.Is(err, dateierrors.ErrNotFound),
-		errors.Is(err, dateierrors.ErrParentNotFound),
-		errors.Is(err, dateierrors.ErrParentTrashed):
+	case errors.Is(err, apperrors.ErrNotFound),
+		errors.Is(err, apperrors.ErrParentNotFound),
+		errors.Is(err, apperrors.ErrParentTrashed):
 		return os.ErrNotExist
-	case errors.Is(err, dateierrors.ErrIsDirectory),
-		errors.Is(err, dateierrors.ErrParentNotDirectory),
-		errors.Is(err, dateierrors.ErrCycleDetected):
+	case errors.Is(err, apperrors.ErrIsDirectory),
+		errors.Is(err, apperrors.ErrParentNotDirectory),
+		errors.Is(err, apperrors.ErrCycleDetected):
 		return os.ErrInvalid
 	default:
 		return err

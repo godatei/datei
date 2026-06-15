@@ -1,13 +1,13 @@
 package link
 
 import (
-	"github.com/godatei/datei/internal/datei"
 	"github.com/godatei/datei/internal/db"
+	"github.com/godatei/datei/internal/file"
 	"github.com/godatei/datei/pkg/api"
 )
 
 // MapProjectionToLink converts a db.LinkProjection plus computed counts into
-// the list-shape api.Link (no dateien).
+// the list-shape api.Link (no files).
 func MapProjectionToLink(p *db.LinkProjection, fileCount, folderCount, openCount int) *api.Link {
 	if p == nil {
 		return nil
@@ -29,11 +29,11 @@ func MapProjectionToLink(p *db.LinkProjection, fileCount, folderCount, openCount
 }
 
 // MapAggregateToLinkDetail converts an in-memory Aggregate plus its top-level
-// dateien and computed counts into the detail-shape api.LinkDetail, used after
+// files and computed counts into the detail-shape api.LinkDetail, used after
 // a Save to avoid refetching the link_projection row we just wrote.
 func MapAggregateToLinkDetail(
 	a *Aggregate,
-	dateien []db.DateiProjection,
+	files []db.FileProjection,
 	fileCount, folderCount, openCount int,
 ) *api.LinkDetail {
 	if a == nil {
@@ -47,7 +47,7 @@ func MapAggregateToLinkDetail(
 		Code:        a.Code,
 		ExpiresAt:   a.ExpiresAt,
 		RevokedAt:   a.RevokedAt,
-		Dateien:     datei.MapProjectionSliceToAPI(dateien),
+		Files:       file.MapProjectionSliceToAPI(files),
 		FileCount:   fileCount,
 		FolderCount: folderCount,
 		OpenCount:   openCount,

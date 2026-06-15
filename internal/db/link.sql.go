@@ -16,15 +16,15 @@ const countLinkContents = `-- name: CountLinkContents :one
 WITH RECURSIVE
 roots AS (
   SELECT d.id, d.is_directory
-    FROM datei_projection d
-    INNER JOIN link_datei_projection ld ON ld.datei_id = d.id
+    FROM file_projection d
+    INNER JOIN link_file_projection ld ON ld.file_id = d.id
     WHERE ld.link_id = $1 AND d.trashed_at IS NULL
 ),
 descendants(id, is_directory) AS (
   SELECT id, is_directory FROM roots
   UNION
   SELECT child.id, child.is_directory
-    FROM datei_projection child
+    FROM file_projection child
     INNER JOIN descendants d ON child.parent_id = d.id
     WHERE child.trashed_at IS NULL
 )
@@ -42,7 +42,7 @@ type CountLinkContentsRow struct {
 }
 
 // Recursively counts files and folders reachable from the link's shared roots,
-// including the shared roots themselves. Trashed dateien are excluded. Also
+// including the shared roots themselves. Trashed files are excluded. Also
 // returns the link's lifetime open count so the response includes everything
 // the owner needs in a single round-trip.
 func (q *Queries) CountLinkContents(ctx context.Context, id uuid.UUID) (CountLinkContentsRow, error) {
@@ -77,23 +77,23 @@ func (q *Queries) CountLinkProjectionsByOwner(ctx context.Context, arg CountLink
 	return column_1, err
 }
 
-const deleteLinkDateiProjection = `-- name: DeleteLinkDateiProjection :exec
-DELETE FROM link_datei_projection
- WHERE link_id = $1 AND datei_id = $2
+const deleteLinkFileProjection = `-- name: DeleteLinkFileProjection :exec
+DELETE FROM link_file_projection
+ WHERE link_id = $1 AND file_id = $2
 `
 
-type DeleteLinkDateiProjectionParams struct {
-	LinkID  uuid.UUID `db:"link_id"`
-	DateiID uuid.UUID `db:"datei_id"`
+type DeleteLinkFileProjectionParams struct {
+	LinkID uuid.UUID `db:"link_id"`
+	FileID uuid.UUID `db:"file_id"`
 }
 
-func (q *Queries) DeleteLinkDateiProjection(ctx context.Context, arg DeleteLinkDateiProjectionParams) error {
-	_, err := q.db.Exec(ctx, deleteLinkDateiProjection, arg.LinkID, arg.DateiID)
+func (q *Queries) DeleteLinkFileProjection(ctx context.Context, arg DeleteLinkFileProjectionParams) error {
+	_, err := q.db.Exec(ctx, deleteLinkFileProjection, arg.LinkID, arg.FileID)
 	return err
 }
 
 const getLinkProjectionByKey = `-- name: GetLinkProjectionByKey :one
-SELECT id, owner_id, name, key, code, expires_at, revoked_at, created_at, updated_at, open_count FROM link_projection WHERE key = $1
+SELECT id, owner_id, name, key, code, expires_at, revoked_at, open_count, created_at, updated_at FROM link_projection WHERE key = $1
 `
 
 // Used by the unlock endpoint, which only needs the link's own row to validate
@@ -110,15 +110,15 @@ func (q *Queries) GetLinkProjectionByKey(ctx context.Context, key string) (LinkP
 		&i.Code,
 		&i.ExpiresAt,
 		&i.RevokedAt,
+		&i.OpenCount,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.OpenCount,
 	)
 	return i, err
 }
 
 const getLinkProjectionWithOwnerByID = `-- name: GetLinkProjectionWithOwnerByID :one
-SELECT l.id, l.owner_id, l.name, l.key, l.code, l.expires_at, l.revoked_at, l.created_at, l.updated_at, l.open_count, u.name AS owner_name
+SELECT l.id, l.owner_id, l.name, l.key, l.code, l.expires_at, l.revoked_at, l.open_count, l.created_at, l.updated_at, u.name AS owner_name
 FROM link_projection l
 INNER JOIN user_account_projection u ON u.id = l.owner_id
 WHERE l.id = $1
@@ -132,9 +132,9 @@ type GetLinkProjectionWithOwnerByIDRow struct {
 	Code      *string    `db:"code"`
 	ExpiresAt *time.Time `db:"expires_at"`
 	RevokedAt *time.Time `db:"revoked_at"`
+	OpenCount int64      `db:"open_count"`
 	CreatedAt time.Time  `db:"created_at"`
 	UpdatedAt time.Time  `db:"updated_at"`
-	OpenCount int64      `db:"open_count"`
 	OwnerName string     `db:"owner_name"`
 }
 
@@ -152,9 +152,9 @@ func (q *Queries) GetLinkProjectionWithOwnerByID(ctx context.Context, id uuid.UU
 		&i.Code,
 		&i.ExpiresAt,
 		&i.RevokedAt,
+		&i.OpenCount,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.OpenCount,
 		&i.OwnerName,
 	)
 	return i, err
@@ -176,20 +176,20 @@ func (q *Queries) IncrementLinkProjectionOpenCount(ctx context.Context, arg Incr
 	return err
 }
 
-const insertLinkDateiProjection = `-- name: InsertLinkDateiProjection :exec
-INSERT INTO link_datei_projection (link_id, datei_id, added_at)
+const insertLinkFileProjection = `-- name: InsertLinkFileProjection :exec
+INSERT INTO link_file_projection (link_id, file_id, added_at)
  VALUES ($1, $2, $3)
- ON CONFLICT (link_id, datei_id) DO NOTHING
+ ON CONFLICT (link_id, file_id) DO NOTHING
 `
 
-type InsertLinkDateiProjectionParams struct {
+type InsertLinkFileProjectionParams struct {
 	LinkID  uuid.UUID `db:"link_id"`
-	DateiID uuid.UUID `db:"datei_id"`
+	FileID  uuid.UUID `db:"file_id"`
 	AddedAt time.Time `db:"added_at"`
 }
 
-func (q *Queries) InsertLinkDateiProjection(ctx context.Context, arg InsertLinkDateiProjectionParams) error {
-	_, err := q.db.Exec(ctx, insertLinkDateiProjection, arg.LinkID, arg.DateiID, arg.AddedAt)
+func (q *Queries) InsertLinkFileProjection(ctx context.Context, arg InsertLinkFileProjectionParams) error {
+	_, err := q.db.Exec(ctx, insertLinkFileProjection, arg.LinkID, arg.FileID, arg.AddedAt)
 	return err
 }
 
@@ -224,18 +224,18 @@ func (q *Queries) InsertLinkProjection(ctx context.Context, arg InsertLinkProjec
 	return err
 }
 
-const isDateiInLinkScope = `-- name: IsDateiInLinkScope :one
+const isFileInLinkScope = `-- name: IsFileInLinkScope :one
 WITH RECURSIVE
 shared_roots(id) AS (
-  SELECT datei_id FROM link_datei_projection WHERE link_id = $1
+  SELECT file_id FROM link_file_projection WHERE link_id = $1
 ),
 ancestors(id, parent_id, trashed_at, depth) AS (
   SELECT d.id, d.parent_id, d.trashed_at, 0
-    FROM datei_projection d
+    FROM file_projection d
     WHERE d.id = $2
   UNION
   SELECT p.id, p.parent_id, p.trashed_at, a.depth + 1
-    FROM datei_projection p
+    FROM file_projection p
     INNER JOIN ancestors a ON p.id = a.parent_id
 )
 SELECT EXISTS(
@@ -245,42 +245,42 @@ SELECT EXISTS(
 )
 `
 
-type IsDateiInLinkScopeParams struct {
+type IsFileInLinkScopeParams struct {
 	LinkID uuid.UUID `db:"link_id"`
 	ID     uuid.UUID `db:"id"`
 }
 
-// Returns true iff dateiID is one of the link's directly-shared dateien OR is
+// Returns true iff fileID is one of the link's directly-shared files OR is
 // a descendant of any shared directory in the link, AND no ancestor in the
 // chain (up to and including the shared root) is trashed.
-func (q *Queries) IsDateiInLinkScope(ctx context.Context, arg IsDateiInLinkScopeParams) (bool, error) {
-	row := q.db.QueryRow(ctx, isDateiInLinkScope, arg.LinkID, arg.ID)
+func (q *Queries) IsFileInLinkScope(ctx context.Context, arg IsFileInLinkScopeParams) (bool, error) {
+	row := q.db.QueryRow(ctx, isFileInLinkScope, arg.LinkID, arg.ID)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
 }
 
-const listDateienByLink = `-- name: ListDateienByLink :many
-SELECT d.id, d.parent_id, d.is_directory, d.linked_datei_id, d.name, d.s3_key, d.size, d.checksum, d.mime_type, d.content_md, d.content_search, d.created_at, d.updated_at, d.trashed_at, d.created_by, d.updated_by, d.trashed_by FROM datei_projection d
- INNER JOIN link_datei_projection ld ON ld.datei_id = d.id
+const listFilesByLink = `-- name: ListFilesByLink :many
+SELECT d.id, d.parent_id, d.is_directory, d.linked_file_id, d.name, d.s3_key, d.size, d.checksum, d.mime_type, d.content_md, d.content_search, d.created_at, d.updated_at, d.trashed_at, d.created_by, d.updated_by, d.trashed_by FROM file_projection d
+ INNER JOIN link_file_projection ld ON ld.file_id = d.id
  WHERE ld.link_id = $1 AND d.trashed_at IS NULL
  ORDER BY d.is_directory DESC, d.name ASC
 `
 
-func (q *Queries) ListDateienByLink(ctx context.Context, linkID uuid.UUID) ([]DateiProjection, error) {
-	rows, err := q.db.Query(ctx, listDateienByLink, linkID)
+func (q *Queries) ListFilesByLink(ctx context.Context, linkID uuid.UUID) ([]FileProjection, error) {
+	rows, err := q.db.Query(ctx, listFilesByLink, linkID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []DateiProjection
+	var items []FileProjection
 	for rows.Next() {
-		var i DateiProjection
+		var i FileProjection
 		if err := rows.Scan(
 			&i.ID,
 			&i.ParentID,
 			&i.IsDirectory,
-			&i.LinkedDateiID,
+			&i.LinkedFileID,
 			&i.Name,
 			&i.S3Key,
 			&i.Size,
@@ -306,7 +306,7 @@ func (q *Queries) ListDateienByLink(ctx context.Context, linkID uuid.UUID) ([]Da
 }
 
 const listLinkProjectionsByOwner = `-- name: ListLinkProjectionsByOwner :many
-SELECT id, owner_id, name, key, code, expires_at, revoked_at, created_at, updated_at, open_count FROM link_projection
+SELECT id, owner_id, name, key, code, expires_at, revoked_at, open_count, created_at, updated_at FROM link_projection
  WHERE owner_id = $1
    AND CASE $2::text
      WHEN 'active'  THEN revoked_at IS NULL AND (expires_at IS NULL OR expires_at > NOW())
@@ -348,9 +348,9 @@ func (q *Queries) ListLinkProjectionsByOwner(ctx context.Context, arg ListLinkPr
 			&i.Code,
 			&i.ExpiresAt,
 			&i.RevokedAt,
+			&i.OpenCount,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.OpenCount,
 		); err != nil {
 			return nil, err
 		}

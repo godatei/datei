@@ -4,19 +4,23 @@ import (
 	"context"
 	"errors"
 
+	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/authn"
-	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/users"
 	"github.com/godatei/datei/pkg/api"
 )
 
+type settingsServer struct {
+	svc *users.UserService
+}
+
 // GetCurrentUser implements [StrictServerInterface].
-func (s *server) GetCurrentUser(
+func (s *settingsServer) GetCurrentUser(
 	ctx context.Context, _ GetCurrentUserRequestObject,
 ) (GetCurrentUserResponseObject, error) {
 	authInfo := authn.RequireContext(ctx)
 
-	user, err := s.userService.GetUser(ctx, authInfo.UserID)
+	user, err := s.svc.GetUser(ctx, authInfo.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -29,27 +33,29 @@ func (s *server) GetCurrentUser(
 }
 
 // UpdateUser implements [StrictServerInterface].
-func (s *server) UpdateUser(ctx context.Context, request UpdateUserRequestObject) (UpdateUserResponseObject, error) {
+func (s *settingsServer) UpdateUser(
+	ctx context.Context, request UpdateUserRequestObject,
+) (UpdateUserResponseObject, error) {
 	authInfo := authn.RequireContext(ctx)
 
-	err := s.userService.UpdateUser(ctx, users.UpdateUserInput{
+	err := s.svc.UpdateUser(ctx, users.UpdateUserInput{
 		UserID:          authInfo.UserID,
 		Name:            request.Body.Name,
 		Password:        request.Body.Password,
 		CurrentPassword: request.Body.CurrentPassword,
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrInvalidCredentials) ||
-			errors.Is(err, dateierrors.ErrCurrentPasswordRequired) {
+		if errors.Is(err, apperrors.ErrInvalidCredentials) ||
+			errors.Is(err, apperrors.ErrCurrentPasswordRequired) {
 			return UpdateUser403Response{}, nil
 		}
-		if errors.Is(err, dateierrors.ErrInvalidInput) {
+		if errors.Is(err, apperrors.ErrInvalidInput) {
 			return UpdateUser400Response{}, nil
 		}
 		return nil, err
 	}
 
-	user, err := s.userService.GetUser(ctx, authInfo.UserID)
+	user, err := s.svc.GetUser(ctx, authInfo.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -62,17 +68,17 @@ func (s *server) UpdateUser(ctx context.Context, request UpdateUserRequestObject
 }
 
 // UpdateUserEmail implements [StrictServerInterface].
-func (s *server) UpdateUserEmail(
+func (s *settingsServer) UpdateUserEmail(
 	ctx context.Context, request UpdateUserEmailRequestObject,
 ) (UpdateUserEmailResponseObject, error) {
 	authInfo := authn.RequireContext(ctx)
 
-	err := s.userService.UpdateUserEmail(ctx, users.UpdateUserEmailInput{
+	err := s.svc.UpdateUserEmail(ctx, users.UpdateUserEmailInput{
 		UserID:   authInfo.UserID,
 		NewEmail: string(request.Body.Email),
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrInvalidInput) {
+		if errors.Is(err, apperrors.ErrInvalidInput) {
 			return UpdateUserEmail400Response{}, nil
 		}
 		return nil, err
@@ -82,12 +88,12 @@ func (s *server) UpdateUserEmail(
 }
 
 // RequestEmailVerification implements [StrictServerInterface].
-func (s *server) RequestEmailVerification(
+func (s *settingsServer) RequestEmailVerification(
 	ctx context.Context, _ RequestEmailVerificationRequestObject,
 ) (RequestEmailVerificationResponseObject, error) {
 	authInfo := authn.RequireContext(ctx)
 
-	if err := s.userService.RequestEmailVerification(ctx, authInfo.UserID); err != nil {
+	if err := s.svc.RequestEmailVerification(ctx, authInfo.UserID); err != nil {
 		return nil, err
 	}
 
@@ -95,17 +101,17 @@ func (s *server) RequestEmailVerification(
 }
 
 // ConfirmEmailVerification implements [StrictServerInterface].
-func (s *server) ConfirmEmailVerification(
+func (s *settingsServer) ConfirmEmailVerification(
 	ctx context.Context, _ ConfirmEmailVerificationRequestObject,
 ) (ConfirmEmailVerificationResponseObject, error) {
 	authInfo := authn.RequireContext(ctx)
 
-	err := s.userService.ConfirmEmailVerification(ctx, users.ConfirmEmailVerificationInput{
+	err := s.svc.ConfirmEmailVerification(ctx, users.ConfirmEmailVerificationInput{
 		UserID:     authInfo.UserID,
 		TokenEmail: authInfo.Email,
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrEmailMismatch) {
+		if errors.Is(err, apperrors.ErrEmailMismatch) {
 			return ConfirmEmailVerification403Response{}, nil
 		}
 		return nil, err
@@ -115,12 +121,12 @@ func (s *server) ConfirmEmailVerification(
 }
 
 // SetupMFA implements [StrictServerInterface].
-func (s *server) SetupMFA(ctx context.Context, _ SetupMFARequestObject) (SetupMFAResponseObject, error) {
+func (s *settingsServer) SetupMFA(ctx context.Context, _ SetupMFARequestObject) (SetupMFAResponseObject, error) {
 	authInfo := authn.RequireContext(ctx)
 
-	result, err := s.userService.SetupMFA(ctx, authInfo.UserID)
+	result, err := s.svc.SetupMFA(ctx, authInfo.UserID)
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrMFAAlreadyEnabled) {
+		if errors.Is(err, apperrors.ErrMFAAlreadyEnabled) {
 			return SetupMFA403Response{}, nil
 		}
 		return nil, err
@@ -133,17 +139,19 @@ func (s *server) SetupMFA(ctx context.Context, _ SetupMFARequestObject) (SetupMF
 }
 
 // EnableMFA implements [StrictServerInterface].
-func (s *server) EnableMFA(ctx context.Context, request EnableMFARequestObject) (EnableMFAResponseObject, error) {
+func (s *settingsServer) EnableMFA(
+	ctx context.Context, request EnableMFARequestObject,
+) (EnableMFAResponseObject, error) {
 	authInfo := authn.RequireContext(ctx)
 
-	result, err := s.userService.EnableMFA(ctx, users.EnableMFAInput{
+	result, err := s.svc.EnableMFA(ctx, users.EnableMFAInput{
 		UserID: authInfo.UserID,
 		Code:   request.Body.Code,
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrMFAInvalidCode) ||
-			errors.Is(err, dateierrors.ErrMFAAlreadyEnabled) ||
-			errors.Is(err, dateierrors.ErrMFANotSetUp) {
+		if errors.Is(err, apperrors.ErrMFAInvalidCode) ||
+			errors.Is(err, apperrors.ErrMFAAlreadyEnabled) ||
+			errors.Is(err, apperrors.ErrMFANotSetUp) {
 			return EnableMFA403Response{}, nil
 		}
 		return nil, err
@@ -153,16 +161,18 @@ func (s *server) EnableMFA(ctx context.Context, request EnableMFARequestObject) 
 }
 
 // DisableMFA implements [StrictServerInterface].
-func (s *server) DisableMFA(ctx context.Context, request DisableMFARequestObject) (DisableMFAResponseObject, error) {
+func (s *settingsServer) DisableMFA(
+	ctx context.Context, request DisableMFARequestObject,
+) (DisableMFAResponseObject, error) {
 	authInfo := authn.RequireContext(ctx)
 
-	err := s.userService.DisableMFA(ctx, users.DisableMFAInput{
+	err := s.svc.DisableMFA(ctx, users.DisableMFAInput{
 		UserID:   authInfo.UserID,
 		Password: request.Body.Password,
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrInvalidCredentials) ||
-			errors.Is(err, dateierrors.ErrMFANotEnabled) {
+		if errors.Is(err, apperrors.ErrInvalidCredentials) ||
+			errors.Is(err, apperrors.ErrMFANotEnabled) {
 			return DisableMFA403Response{}, nil
 		}
 		return nil, err
@@ -172,18 +182,18 @@ func (s *server) DisableMFA(ctx context.Context, request DisableMFARequestObject
 }
 
 // RegenerateMFARecoveryCodes implements [StrictServerInterface].
-func (s *server) RegenerateMFARecoveryCodes(
+func (s *settingsServer) RegenerateMFARecoveryCodes(
 	ctx context.Context, request RegenerateMFARecoveryCodesRequestObject,
 ) (RegenerateMFARecoveryCodesResponseObject, error) {
 	authInfo := authn.RequireContext(ctx)
 
-	codes, err := s.userService.RegenerateMFARecoveryCodes(ctx, users.RegenerateRecoveryCodesInput{
+	codes, err := s.svc.RegenerateMFARecoveryCodes(ctx, users.RegenerateRecoveryCodesInput{
 		UserID:   authInfo.UserID,
 		Password: request.Body.Password,
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrInvalidCredentials) ||
-			errors.Is(err, dateierrors.ErrMFANotEnabled) {
+		if errors.Is(err, apperrors.ErrInvalidCredentials) ||
+			errors.Is(err, apperrors.ErrMFANotEnabled) {
 			return RegenerateMFARecoveryCodes403Response{}, nil
 		}
 		return nil, err
@@ -195,12 +205,12 @@ func (s *server) RegenerateMFARecoveryCodes(
 }
 
 // GetMFARecoveryCodesStatus implements [StrictServerInterface].
-func (s *server) GetMFARecoveryCodesStatus(
+func (s *settingsServer) GetMFARecoveryCodesStatus(
 	ctx context.Context, _ GetMFARecoveryCodesStatusRequestObject,
 ) (GetMFARecoveryCodesStatusResponseObject, error) {
 	authInfo := authn.RequireContext(ctx)
 
-	count, err := s.userService.GetMFARecoveryCodesStatus(ctx, authInfo.UserID)
+	count, err := s.svc.GetMFARecoveryCodesStatus(ctx, authInfo.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -211,17 +221,17 @@ func (s *server) GetMFARecoveryCodesStatus(
 }
 
 // ConfirmResetPassword implements [StrictServerInterface].
-func (s *server) ConfirmResetPassword(
+func (s *settingsServer) ConfirmResetPassword(
 	ctx context.Context, request ConfirmResetPasswordRequestObject,
 ) (ConfirmResetPasswordResponseObject, error) {
 	authInfo := authn.RequireContext(ctx)
 
-	err := s.userService.ConfirmResetPassword(ctx, users.ConfirmResetPasswordInput{
+	err := s.svc.ConfirmResetPassword(ctx, users.ConfirmResetPasswordInput{
 		UserID:   authInfo.UserID,
 		Password: request.Body.Password,
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrInvalidInput) {
+		if errors.Is(err, apperrors.ErrInvalidInput) {
 			return ConfirmResetPassword400Response{}, nil
 		}
 		return nil, err

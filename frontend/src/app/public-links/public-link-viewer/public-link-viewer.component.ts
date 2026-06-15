@@ -12,8 +12,8 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { isPast } from 'date-fns';
 import { Api } from '~/api/api';
-import { downloadPublicLinkDatei, listPublicLinkDateien, unlockPublicLink } from '~/api/functions';
-import type { Datei } from '~/api/models/datei';
+import { downloadPublicLinkFile, listPublicLinkFiles, unlockPublicLink } from '~/api/functions';
+import type { File } from '~/api/models/file';
 import { ImagePreviewComponent } from '~/frontend/components/image-preview.component';
 import { BytesPipe } from '~/frontend/pipes/bytes.pipe';
 import { RelativeDatePipe } from '~/frontend/pipes/relative-date.pipe';
@@ -74,8 +74,8 @@ export class PublicLinkViewerComponent {
     const s = this.state();
     return s.kind === 'error' ? s.message : '';
   });
-  protected readonly dataSource = new MatTableDataSource<Datei>([]);
-  private readonly items = signal<Datei[]>([]);
+  protected readonly dataSource = new MatTableDataSource<File>([]);
+  private readonly items = signal<File[]>([]);
   protected readonly linkName = signal<string>('');
   protected readonly ownerName = signal<string>('');
   protected readonly expiresAt = signal<Date | null>(null);
@@ -158,7 +158,7 @@ export class PublicLinkViewerComponent {
       this.handleUnlockError(e, candidateCode !== undefined);
       return;
     }
-    await this.loadDateien(this.currentParentId(), retried);
+    await this.loadFiles(this.currentParentId(), retried);
     this.maybeAutoDescend();
   }
 
@@ -173,10 +173,10 @@ export class PublicLinkViewerComponent {
     }
   }
 
-  private async loadDateien(parentId: string | null, retried = false): Promise<void> {
+  private async loadFiles(parentId: string | null, retried = false): Promise<void> {
     try {
       const result = await this.api.invoke(
-        listPublicLinkDateien,
+        listPublicLinkFiles,
         { parentId: parentId ?? undefined },
         this.linkContext(),
       );
@@ -195,12 +195,12 @@ export class PublicLinkViewerComponent {
     }
   }
 
-  private async loadSinglePreview(file: Datei): Promise<void> {
+  private async loadSinglePreview(file: File): Promise<void> {
     if (this.previewBlob) return;
     try {
       const response = await this.api.invoke$Response(
-        downloadPublicLinkDatei,
-        { dateiId: file.id },
+        downloadPublicLinkFile,
+        { fileId: file.id },
         this.linkContext(),
       );
       const blob = response.body as unknown as Blob;
@@ -261,18 +261,18 @@ export class PublicLinkViewerComponent {
     this.state.set({ kind: 'error', message: 'Failed to load shared files' });
   }
 
-  protected async navigateInto(folder: Datei): Promise<void> {
+  protected async navigateInto(folder: File): Promise<void> {
     if (!folder.isDirectory) return;
     this.path.update((p) => [...p, { id: folder.id, name: folder.name ?? 'Folder' }]);
-    await this.loadDateien(folder.id);
+    await this.loadFiles(folder.id);
   }
 
   protected async navigateToBreadcrumb(index: number): Promise<void> {
     this.path.update((p) => p.slice(0, index + 1));
-    await this.loadDateien(this.currentParentId());
+    await this.loadFiles(this.currentParentId());
   }
 
-  protected async download(item: Datei): Promise<void> {
+  protected async download(item: File): Promise<void> {
     if (item.isDirectory) {
       void this.navigateInto(item);
       return;
@@ -285,11 +285,11 @@ export class PublicLinkViewerComponent {
     await this.downloadWithRetry(item, false);
   }
 
-  private async downloadWithRetry(item: Datei, retried: boolean): Promise<void> {
+  private async downloadWithRetry(item: File, retried: boolean): Promise<void> {
     try {
       const response = await this.api.invoke$Response(
-        downloadPublicLinkDatei,
-        { dateiId: item.id },
+        downloadPublicLinkFile,
+        { fileId: item.id },
         this.linkContext(),
       );
       triggerDownload(response.body as unknown as Blob, item.name ?? 'download');

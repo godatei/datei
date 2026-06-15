@@ -76,9 +76,9 @@ describe('tokenInterceptor', () => {
     sessionStorage.setItem('datei_action_token', actionToken);
     auth['_token'].set(sessionToken);
 
-    httpClient.get('/api/v1/datei').subscribe();
+    httpClient.get('/api/v1/files').subscribe();
 
-    const req = httpTesting.expectOne('/api/v1/datei');
+    const req = httpTesting.expectOne('/api/v1/files');
     expect(req.request.headers.get('Authorization')).toBe(`Bearer ${sessionToken}`);
     req.flush({});
   });

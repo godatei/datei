@@ -10,13 +10,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
 import { startOfTomorrow } from 'date-fns';
 import { Api } from '~/api/api';
-import { createLink, removeDateiFromLink, updateLink } from '~/api/functions';
-import type { Datei } from '~/api/models/datei';
+import { createLink, removeFileFromLink, updateLink } from '~/api/functions';
+import type { File } from '~/api/models/file';
 import type { LinkDetail } from '~/api/models/link-detail';
 import type { UpdateLinkRequest } from '~/api/models/update-link-request';
 
 export type LinkFormDialogData =
-  | { mode: 'create'; dateiIds: string[]; defaultName?: string }
+  | { mode: 'create'; fileIds: string[]; defaultName?: string }
   | { mode: 'edit'; link: LinkDetail };
 
 interface LinkFormModel {
@@ -55,17 +55,15 @@ export class LinkFormDialogComponent {
   // Capture mode-specific payload up front so the rest of the class can use the
   // simpler `this.isEdit` boolean without re-narrowing `this.data` everywhere.
   private readonly editLink: LinkDetail | null = this.data.mode === 'edit' ? this.data.link : null;
-  private readonly createDateiIds: string[] = this.data.mode === 'create' ? this.data.dateiIds : [];
+  private readonly createFileIds: string[] = this.data.mode === 'create' ? this.data.fileIds : [];
   private readonly defaultName: string | undefined =
     this.data.mode === 'create' ? this.data.defaultName : undefined;
 
-  protected readonly dateiCount = computed(() => this.createDateiIds.length);
+  protected readonly fileCount = computed(() => this.createFileIds.length);
 
   protected readonly errorMessage = signal<string | null>(null);
-  protected readonly sharedDateien = signal<Datei[]>(
-    this.editLink ? [...this.editLink.dateien] : [],
-  );
-  // Datei IDs the user removed in this dialog session. Pending until Save —
+  protected readonly sharedFiles = signal<File[]>(this.editLink ? [...this.editLink.files] : []);
+  // File IDs the user removed in this dialog session. Pending until Save —
   // Cancel/Escape/backdrop must leave the server state unchanged.
   private readonly pendingRemovals = signal<ReadonlySet<string>>(new Set());
 
@@ -120,7 +118,7 @@ export class LinkFormDialogComponent {
         name: v.name.trim(),
         expiresAt: v.expiresAt ? v.expiresAt.toISOString() : undefined,
         code: v.code.trim() === '' ? undefined : v.code.trim(),
-        dateiIds: this.createDateiIds,
+        fileIds: this.createFileIds,
       },
     });
   }
@@ -146,17 +144,17 @@ export class LinkFormDialogComponent {
 
     // Flush the queued removals first so the link's content set matches what
     // the dialog has been showing the user before the metadata update lands.
-    for (const dateiId of this.pendingRemovals()) {
-      await this.api.invoke(removeDateiFromLink, { id: linkId, dateiId });
+    for (const fileId of this.pendingRemovals()) {
+      await this.api.invoke(removeFileFromLink, { id: linkId, fileId });
     }
 
     return this.api.invoke(updateLink, { id: linkId, body });
   }
 
-  protected removeDatei(datei: Datei): void {
+  protected removeFile(file: File): void {
     if (!this.isEdit) return;
-    this.sharedDateien.update((items) => items.filter((d) => d.id !== datei.id));
-    this.pendingRemovals.update((s) => new Set(s).add(datei.id));
+    this.sharedFiles.update((items) => items.filter((d) => d.id !== file.id));
+    this.pendingRemovals.update((s) => new Set(s).add(file.id));
   }
 
   protected cancel(): void {

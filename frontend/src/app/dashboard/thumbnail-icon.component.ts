@@ -10,8 +10,8 @@ import {
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { Api } from '~/api/api';
-import { getDateiThumbnail } from '~/api/functions';
-import { Datei } from '~/api/models';
+import { getFileThumbnail } from '~/api/functions';
+import { File } from '~/api/models';
 
 const THUMBNAIL_MIME_TYPES = new Set([
   'application/pdf',
@@ -20,9 +20,9 @@ const THUMBNAIL_MIME_TYPES = new Set([
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 ]);
 
-function canHaveThumbnail(datei: Datei): boolean {
-  if (datei.isDirectory || !datei.checksum) return false;
-  const mime = datei.mimeType?.toLowerCase().trim();
+function canHaveThumbnail(file: File): boolean {
+  if (file.isDirectory || !file.checksum) return false;
+  const mime = file.mimeType?.toLowerCase().trim();
   return mime !== undefined && (mime.startsWith('image/') || THUMBNAIL_MIME_TYPES.has(mime));
 }
 
@@ -50,10 +50,10 @@ function canHaveThumbnail(datei: Datei): boolean {
 export class ThumbnailIconComponent implements OnDestroy {
   private readonly api = inject(Api);
 
-  public readonly datei = input.required<Datei>();
+  public readonly file = input.required<File>();
 
   protected readonly iconName = computed(() => {
-    const d = this.datei();
+    const d = this.file();
     if (d.isDirectory) return 'folder';
     const mime = d.mimeType ?? '';
     if (mime.startsWith('image/')) return 'image';
@@ -62,11 +62,11 @@ export class ThumbnailIconComponent implements OnDestroy {
   });
 
   private readonly thumbnailBlob = resource({
-    params: () => ({ id: this.datei().id, supported: canHaveThumbnail(this.datei()) }),
+    params: () => ({ id: this.file().id, supported: canHaveThumbnail(this.file()) }),
     loader: async ({ params }) => {
       if (!params.supported) return null;
       try {
-        return (await this.api.invoke(getDateiThumbnail, { id: params.id })) as Blob;
+        return (await this.api.invoke(getFileThumbnail, { id: params.id })) as Blob;
       } catch {
         return null;
       }

@@ -4,7 +4,7 @@ post:
   security:
     - bearerHttpAuthentication: []
   parameters:
-    - name: dateiId
+    - name: fileId
       in: path
       required: true
       schema:
@@ -15,7 +15,7 @@ post:
     content:
       application/json:
         schema:
-          $ref: '../components/schemas/RestoreDateiRequest.yaml'
+          $ref: '../components/schemas/RestoreFileRequest.yaml'
   responses:
     '204':
       description: Successfully restored

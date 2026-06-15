@@ -4,19 +4,23 @@ import (
 	"context"
 	"errors"
 
+	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/authn"
-	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/users"
 	"github.com/godatei/datei/pkg/api"
 )
 
+type emailsServer struct {
+	svc *users.UserService
+}
+
 // ListEmails implements [StrictServerInterface].
-func (s *server) ListEmails(
+func (s *emailsServer) ListEmails(
 	ctx context.Context, _ ListEmailsRequestObject,
 ) (ListEmailsResponseObject, error) {
 	authInfo := authn.RequireContext(ctx)
 
-	emails, err := s.userService.ListEmails(ctx, authInfo.UserID)
+	emails, err := s.svc.ListEmails(ctx, authInfo.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -25,17 +29,17 @@ func (s *server) ListEmails(
 }
 
 // AddEmail implements [StrictServerInterface].
-func (s *server) AddEmail(
+func (s *emailsServer) AddEmail(
 	ctx context.Context, request AddEmailRequestObject,
 ) (AddEmailResponseObject, error) {
 	authInfo := authn.RequireContext(ctx)
 
-	err := s.userService.AddEmail(ctx, users.AddEmailInput{
+	err := s.svc.AddEmail(ctx, users.AddEmailInput{
 		UserID: authInfo.UserID,
 		Email:  string(request.Body.Email),
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrEmailAlreadyInUse) || errors.Is(err, dateierrors.ErrInvalidInput) {
+		if errors.Is(err, apperrors.ErrEmailAlreadyInUse) || errors.Is(err, apperrors.ErrInvalidInput) {
 			return AddEmail400Response{}, nil
 		}
 		return nil, err
@@ -45,17 +49,17 @@ func (s *server) AddEmail(
 }
 
 // RemoveEmail implements [StrictServerInterface].
-func (s *server) RemoveEmail(
+func (s *emailsServer) RemoveEmail(
 	ctx context.Context, request RemoveEmailRequestObject,
 ) (RemoveEmailResponseObject, error) {
 	authInfo := authn.RequireContext(ctx)
 
-	err := s.userService.RemoveEmail(ctx, authInfo.UserID, request.EmailId)
+	err := s.svc.RemoveEmail(ctx, authInfo.UserID, request.EmailId)
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrNotFound) {
+		if errors.Is(err, apperrors.ErrNotFound) {
 			return RemoveEmail404Response{}, nil
 		}
-		if errors.Is(err, dateierrors.ErrInvalidInput) {
+		if errors.Is(err, apperrors.ErrInvalidInput) {
 			return RemoveEmail400Response{}, nil
 		}
 		return nil, err
@@ -65,17 +69,17 @@ func (s *server) RemoveEmail(
 }
 
 // SetPrimaryEmail implements [StrictServerInterface].
-func (s *server) SetPrimaryEmail(
+func (s *emailsServer) SetPrimaryEmail(
 	ctx context.Context, request SetPrimaryEmailRequestObject,
 ) (SetPrimaryEmailResponseObject, error) {
 	authInfo := authn.RequireContext(ctx)
 
-	err := s.userService.SetPrimaryEmail(ctx, authInfo.UserID, request.EmailId)
+	err := s.svc.SetPrimaryEmail(ctx, authInfo.UserID, request.EmailId)
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrNotFound) {
+		if errors.Is(err, apperrors.ErrNotFound) {
 			return SetPrimaryEmail404Response{}, nil
 		}
-		if errors.Is(err, dateierrors.ErrInvalidInput) {
+		if errors.Is(err, apperrors.ErrInvalidInput) {
 			return SetPrimaryEmail400Response{}, nil
 		}
 		return nil, err

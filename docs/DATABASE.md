@@ -60,11 +60,11 @@ erDiagram
         TIMESTAMPTZ created_at
     }
 
-    Datei {
+    File {
         UUID id PK
         UUID parent_id FK
         BOOLEAN is_directory
-        UUID linked_datei_id FK
+        UUID linked_file_id FK
         UUID latest_name_id FK
         UUID latest_version_id FK
         UUID created_by FK
@@ -74,17 +74,17 @@ erDiagram
         TIMESTAMPTZ updated_at
     }
 
-    DateiName {
+    FileName {
         UUID id PK
-        UUID datei_id FK
+        UUID file_id FK
         TEXT name
         UUID created_by FK
         TIMESTAMPTZ created_at
     }
 
-    DateiVersion {
+    FileVersion {
         UUID id PK
-        UUID datei_id FK
+        UUID file_id FK
         INTEGER version_number
         TEXT s3_bucket
         TEXT s3_key
@@ -97,26 +97,26 @@ erDiagram
         TIMESTAMPTZ created_at
     }
 
-    Datei_Label {
-        UUID datei_id PK,FK
+    File_Label {
+        UUID file_id PK,FK
         UUID label_id PK,FK
     }
 
-    DateiAnnotation {
+    FileAnnotation {
         UUID id PK
-        UUID datei_id FK
+        UUID file_id FK
         TEXT key
         TEXT value
         TIMESTAMPTZ created_at
         TIMESTAMPTZ updated_at
     }
 
-    DateiPermission {
+    FilePermission {
         UUID id PK
-        UUID datei_id FK
+        UUID file_id FK
         UUID user_account_id FK
         UUID user_group_id FK
-        DateiPermissionType permission_type "ENUM"
+        FilePermissionType permission_type "ENUM"
         BOOLEAN is_favorite
         TIMESTAMPTZ created_at
     }
@@ -130,14 +130,14 @@ erDiagram
         TIMESTAMPTZ created_at
     }
 
-    PublicLink_Datei {
+    PublicLink_File {
         UUID public_link_id PK,FK
-        UUID datei_id PK,FK
+        UUID file_id PK,FK
     }
 
-    DateiComment {
+    FileComment {
         UUID id PK
-        UUID datei_id FK
+        UUID file_id FK
         UUID user_account_id FK
         TEXT content
         TIMESTAMPTZ created_at
@@ -164,32 +164,32 @@ erDiagram
     UserAccount ||--o{ UserEmail : "has emails"
     UserAccount ||--o{ UserGroup_Member : "belongs to"
     UserAccount ||--o{ UserGroup : "created"
-    UserAccount ||--o{ DateiComment : "commented"
+    UserAccount ||--o{ FileComment : "commented"
     UserAccount ||--o{ AuditLog : "performed"
     UserGroup ||--o{ UserGroup_Member : "has members"
 
-    Datei ||--o{ Datei : "parent_id (folder hierarchy)"
-    Datei ||--o| Datei : "linked_datei_id (link)"
-    Datei ||--o{ DateiName : "has names"
-    Datei ||--o| DateiName : "latest_name_id"
-    Datei ||--o{ DateiVersion : "has versions"
-    Datei ||--o| DateiVersion : "latest_version_id"
-    Datei ||--o{ Datei_Label : "has labels"
-    Datei ||--o{ DateiAnnotation : "has annotations"
-    Datei ||--o{ DateiPermission : "has permissions"
-    Datei ||--o{ PublicLink_Datei : "shared via"
-    Datei ||--o{ DateiComment : "has comments"
+    File ||--o{ File : "parent_id (folder hierarchy)"
+    File ||--o| File : "linked_file_id (link)"
+    File ||--o{ FileName : "has names"
+    File ||--o| FileName : "latest_name_id"
+    File ||--o{ FileVersion : "has versions"
+    File ||--o| FileVersion : "latest_version_id"
+    File ||--o{ File_Label : "has labels"
+    File ||--o{ FileAnnotation : "has annotations"
+    File ||--o{ FilePermission : "has permissions"
+    File ||--o{ PublicLink_File : "shared via"
+    File ||--o{ FileComment : "has comments"
 
-    Label ||--o{ Datei_Label : "applied to"
+    Label ||--o{ File_Label : "applied to"
 
-    DateiPermission }o--o| UserAccount : "granted to user"
-    DateiPermission }o--o| UserGroup : "granted to group"
+    FilePermission }o--o| UserAccount : "granted to user"
+    FilePermission }o--o| UserGroup : "granted to group"
 
-    DateiVersion }o--o| UserAccount : "created_by"
-    Datei }o--o| UserAccount : "created_by"
-    Datei }o--o| UserAccount : "trashed_by"
+    FileVersion }o--o| UserAccount : "created_by"
+    File }o--o| UserAccount : "created_by"
+    File }o--o| UserAccount : "trashed_by"
 
-    PublicLink ||--o{ PublicLink_Datei : "contains"
+    PublicLink ||--o{ PublicLink_File : "contains"
     PublicLink }o--|| UserAccount : "created_by"
 ```
 
@@ -244,14 +244,14 @@ erDiagram
    │         └────────────────────────────────────────┘
    │
    │  ┌───────────────────────────────────────────────────────────────────┐
-   │  │ Datei                                                            │
+   │  │ File                                                            │
    │  ├───────────────────────────────────────────────────────────────────┤
    │  │ id                 UUID       PK                                 │
-   │  │ parent_id          UUID       FK -> Datei(id)  ON DELETE RESTRICT│
+   │  │ parent_id          UUID       FK -> File(id)  ON DELETE RESTRICT│
    │  │ is_directory       BOOLEAN    NOT NULL DEFAULT false             │
-   │  │ linked_datei_id    UUID       FK -> Datei(id)  [link]            │
-   │  │ latest_name_id     UUID       FK -> DateiName(id)               │
-   │  │ latest_version_id  UUID       FK -> DateiVersion(id)             │
+   │  │ linked_file_id    UUID       FK -> File(id)  [link]            │
+   │  │ latest_name_id     UUID       FK -> FileName(id)               │
+   │  │ latest_version_id  UUID       FK -> FileVersion(id)             │
    │  │ created_by         UUID       FK -> UserAccount(id)              │
    │  │ trashed_at         TIMESTAMPTZ  [soft delete / trash]              │
    │  │ trashed_by         UUID       FK -> UserAccount(id)              │
@@ -260,20 +260,20 @@ erDiagram
    │  └──┬──────────┬──────────┬──────────┬──────────┬───────────────────┘
    │     │          │          │          │          │
    │     │          │          │          │          │  ┌─────────────────────────────────────┐
-   │     │          │          │          │          └─>│ DateiName                           │
+   │     │          │          │          │          └─>│ FileName                           │
    │     │          │          │          │             ├─────────────────────────────────────┤
    │     │          │          │          │             │ id          UUID       PK           │
-   │     │          │          │          │             │ datei_id    UUID       FK           │
+   │     │          │          │          │             │ file_id    UUID       FK           │
    │     │          │          │          │             │ name        TEXT       NOT NULL     │
    │     │          │          │          │             │ created_by  UUID       FK -> UserAccount │
    │     │          │          │          │             │ created_at  TIMESTAMPTZ             │
    │     │          │          │          │             └─────────────────────────────────────┘
    │     │          │          │          │
    │     │          │          │          │  ┌───────────────────────────────────────────────┐
-   │     │          │          │          └─>│ DateiVersion                                  │
+   │     │          │          │          └─>│ FileVersion                                  │
    │     │          │          │             ├───────────────────────────────────────────────┤
    │     │          │          │             │ id                UUID       PK               │
-   │     │          │          │             │ datei_id          UUID       FK               │
+   │     │          │          │             │ file_id          UUID       FK               │
    │     │          │          │             │ version_number    INTEGER                     │
    │     │          │          │             │ s3_bucket         TEXT       NOT NULL          │
    │     │          │          │             │ s3_key            TEXT       NOT NULL          │
@@ -284,39 +284,39 @@ erDiagram
    │     │          │          │             │ content_search    TSVECTOR   GENERATED (GIN)  │
    │     │          │          │             │ created_by        UUID       FK -> UserAccount │
    │     │          │          │             │ created_at        TIMESTAMPTZ                   │
-   │     │          │          │             │ UNIQUE(datei_id, version_number)              │
+   │     │          │          │             │ UNIQUE(file_id, version_number)              │
    │     │          │          │             └───────────────────────────────────────────────┘
    │     │          │          │
    │     │          │          │  ┌─────────────────────────────────────┐
-   │     │          │          └─>│ DateiAnnotation                    │
+   │     │          │          └─>│ FileAnnotation                    │
    │     │          │             ├─────────────────────────────────────┤
    │     │          │             │ id          UUID       PK           │
-   │     │          │             │ datei_id    UUID       FK           │
+   │     │          │             │ file_id    UUID       FK           │
    │     │          │             │ key         TEXT       NOT NULL     │
    │     │          │             │ value       TEXT       NOT NULL     │
    │     │          │             │ created_at  TIMESTAMPTZ              │
    │     │          │             │ updated_at  TIMESTAMPTZ              │
-   │     │          │             │ UNIQUE(datei_id, key)              │
+   │     │          │             │ UNIQUE(file_id, key)              │
    │     │          │             └─────────────────────────────────────┘
    │     │          │
    │     │          │  ┌─────────────────────────────────────────────────────┐
-   │     │          └─>│ DateiPermission                                     │
+   │     │          └─>│ FilePermission                                     │
    │     │             ├─────────────────────────────────────────────────────┤
    │     │             │ id               UUID    PK                         │
-   │     │             │ datei_id         UUID    FK                         │
+   │     │             │ file_id         UUID    FK                         │
    │     │             │ user_account_id  UUID    FK -> UserAccount(id)      │
    │     │             │ user_group_id    UUID    FK -> UserGroup(id)        │
-   │     │             │ permission_type  DateiPermissionType  ENUM          │
+   │     │             │ permission_type  FilePermissionType  ENUM          │
    │     │             │ is_favorite      BOOLEAN  NOT NULL DEFAULT false   │
    │     │             │ created_at       TIMESTAMPTZ                          │
    │     │             │ CHECK: exactly one of user/group is NOT NULL        │
-   │     │             │ UNIQUE owner per datei (partial index)              │
+   │     │             │ UNIQUE owner per file (partial index)              │
    │     │             └─────────────────────────────────────────────────────┘
    │     │
    │     │  ┌────────────────────────────────────┐     ┌──────────────────────────────┐
-   │     └─>│ Datei_Label                        │     │ Label                        │
+   │     └─>│ File_Label                        │     │ Label                        │
    │        ├────────────────────────────────────┤     ├──────────────────────────────┤
-   │        │ datei_id  UUID  PK,FK              │────>│ id                UUID    PK │
+   │        │ file_id  UUID  PK,FK              │────>│ id                UUID    PK │
    │        │ label_id  UUID  PK,FK              │     │ name              TEXT  UNIQUE│
    │        └────────────────────────────────────┘     │ foreground_color  TEXT        │
    │                                                   │ background_color  TEXT        │
@@ -324,10 +324,10 @@ erDiagram
    │                                                   └──────────────────────────────┘
    │
    │  ┌──────────────────────────────────────┐     ┌────────────────────────────────────┐
-   └─>│ PublicLink                           │     │ PublicLink_Datei                   │
+   └─>│ PublicLink                           │     │ PublicLink_File                   │
       ├──────────────────────────────────────┤     ├────────────────────────────────────┤
       │ id              UUID       PK        │<────│ public_link_id  UUID  PK,FK        │
-      │ token           TEXT       UNIQUE    │     │ datei_id        UUID  PK,FK -> Datei│
+      │ token           TEXT       UNIQUE    │     │ file_id        UUID  PK,FK -> File│
       │ created_by      UUID       FK        │     └────────────────────────────────────┘
       │ permission_type PublicLinkPermissionType │
       │                 ENUM DEFAULT 'read_only' │
@@ -336,10 +336,10 @@ erDiagram
       └──────────────────────────────────────┘
 
 ┌──────────────────────────────────────────┐
-│ DateiComment                             │
+│ FileComment                             │
 ├──────────────────────────────────────────┤
 │ id               UUID       PK           │
-│ datei_id         UUID       FK -> Datei  │
+│ file_id         UUID       FK -> File  │
 │ user_account_id  UUID       FK -> UserAccount │
 │ content          TEXT       NOT NULL     │
 │ created_at       TIMESTAMPTZ              │
@@ -372,8 +372,8 @@ erDiagram
 
 ### Naming Convention
 
-- **Entity tables**: `CamelCase` (e.g. `UserAccount`, `Datei`, `Label`)
-- **Relation/join tables**: `CamelCase_CamelCase` with underscore separator (e.g. `Datei_Label`, `PublicLink_Datei`, `UserGroup_Member`)
+- **Entity tables**: `CamelCase` (e.g. `UserAccount`, `File`, `Label`)
+- **Relation/join tables**: `CamelCase_CamelCase` with underscore separator (e.g. `File_Label`, `PublicLink_File`, `UserGroup_Member`)
 - **Indexes**: `idx_TableName_column` / `uq_TableName_name`
 - **Constraints**: `ck_TableName_name` / `fk_TableName_name`
 
@@ -395,36 +395,36 @@ must explicitly trash or move children before deleting a parent folder.
 
 ### Links
 
-A Datei can be a **link** to another Datei via `linked_datei_id`. Links have their own
+A File can be a **link** to another File via `linked_file_id`. Links have their own
 permissions and metadata but reference the target's file content. If the target is deleted,
-`linked_datei_id` is set to NULL (broken link), which the application should handle gracefully.
+`linked_file_id` is set to NULL (broken link), which the application should handle gracefully.
 
 ### Versioning
 
-`DateiName` tracks the full history of a Datei's display name. The `latest_name_id` FK on
-Datei points to the current name, following the same deferred-FK pattern as `latest_version_id`.
+`FileName` tracks the full history of a File's display name. The `latest_name_id` FK on
+File points to the current name, following the same deferred-FK pattern as `latest_version_id`.
 
-`DateiVersion` is the single source of truth for all file-content metadata: `s3_bucket`,
+`FileVersion` is the single source of truth for all file-content metadata: `s3_bucket`,
 `s3_key`, `file_size`, `checksum`, `mime_type`, `content_md`, and `content_search`.
-The `Datei` table holds only structural and lifecycle columns (`is_directory`,
-`linked_datei_id`, `trashed_at`, etc.) plus FK pointers to the current name and version.
-The circular FK dependencies are resolved by creating the Datei table first, then adding the
-FK constraints via `ALTER TABLE` after `DateiName` and `DateiVersion` exist.
+The `File` table holds only structural and lifecycle columns (`is_directory`,
+`linked_file_id`, `trashed_at`, etc.) plus FK pointers to the current name and version.
+The circular FK dependencies are resolved by creating the File table first, then adding the
+FK constraints via `ALTER TABLE` after `FileName` and `FileVersion` exist.
 
 ### Permissions
 
-The `DateiPermission` table uses a **polymorphic grantee** pattern: each row references either
+The `FilePermission` table uses a **polymorphic grantee** pattern: each row references either
 a `user_account_id` OR a `user_group_id` (enforced by a CHECK constraint). Permission types
-use the `DateiPermissionType` enum (`owner`, `read_write`, `read_only`). Similarly,
+use the `FilePermissionType` enum (`owner`, `read_write`, `read_only`). Similarly,
 `PublicLink.permission_type` uses the `PublicLinkPermissionType` enum (`read_only`, `read_write`).
 
-The `is_favorite` boolean column allows users to mark a Datei as a favorite directly on their
+The `is_favorite` boolean column allows users to mark a File as a favorite directly on their
 permission row, avoiding a separate table. Defaults to `false`.
 
 Key constraints:
 
-- **Single owner**: A partial unique index ensures at most one `owner` permission per Datei
-- **No duplicates**: Unique indexes prevent granting the same user or group multiple permissions on the same Datei
+- **Single owner**: A partial unique index ensures at most one `owner` permission per File
+- **No duplicates**: Unique indexes prevent granting the same user or group multiple permissions on the same File
 - **Grantee required**: A CHECK constraint ensures exactly one of user/group is set
 
 ### Deletion Policy
@@ -439,7 +439,7 @@ hard deletion is reserved for rare administrative operations.
 
 ### Soft Delete
 
-**Datei**: The `trashed_at` timestamp supports a trash/recycle bin. The `trashed_by` column
+**File**: The `trashed_at` timestamp supports a trash/recycle bin. The `trashed_by` column
 records who put the item in the trash. Items with `trashed_at IS NULL` are active; items with
 a timestamp are in trash. A partial index on `trashed_at` optimizes listing trashed items.
 Application queries should filter on `WHERE trashed_at IS NULL` by default.
@@ -453,14 +453,14 @@ optimize querying archived entities.
 ### Labels and Annotations
 
 - **Labels** have globally unique names and customizable foreground/background colors.
-  The many-to-many `Datei_Label` relation table allows any Datei to have multiple labels.
-- **Annotations** are key-value pairs per Datei. The `UNIQUE(datei_id, key)` constraint
-  ensures each key appears at most once per Datei. The `updated_at` column tracks when
+  The many-to-many `File_Label` relation table allows any File to have multiple labels.
+- **Annotations** are key-value pairs per File. The `UNIQUE(file_id, key)` constraint
+  ensures each key appears at most once per File. The `updated_at` column tracks when
   a value was last changed.
 
 ### Full-Text Search
 
-Each `DateiVersion` stores a `content_md` column containing the file's content converted to
+Each `FileVersion` stores a `content_md` column containing the file's content converted to
 markdown. A generated `content_search` TSVECTOR column is automatically derived from
 `content_md` using `to_tsvector('simple', ...)` and indexed with a GIN index for fast
 full-text search queries. The `simple` text search configuration is language-agnostic,
@@ -469,9 +469,9 @@ making it suitable for a self-hosted solution used internationally.
 To search current file content, join through `latest_version_id` and `latest_name_id`:
 
 ```sql
-SELECT d.id, dn.name FROM Datei d
-JOIN DateiName dn ON d.latest_name_id = dn.id
-JOIN DateiVersion dv ON d.latest_version_id = dv.id
+SELECT d.id, dn.name FROM File d
+JOIN FileName dn ON d.latest_name_id = dn.id
+JOIN FileVersion dv ON d.latest_version_id = dv.id
 WHERE dv.content_search @@ to_tsquery('simple', 'quarterly & report')
   AND d.trashed_at IS NULL;
 ```
@@ -479,8 +479,8 @@ WHERE dv.content_search @@ to_tsquery('simple', 'quarterly & report')
 ### Public Links
 
 Token-based sharing via `PublicLink`. Each link has a unique token, optional expiration,
-a `permission_type` (`read_only` or `read_write`), and references multiple Dateis through
-the `PublicLink_Datei` relation table.
+a `permission_type` (`read_only` or `read_write`), and references multiple Files through
+the `PublicLink_File` relation table.
 
 ### User Emails
 
@@ -502,17 +502,17 @@ Each `UserGroup` tracks its `created_by` user. The `UserGroup_Member` relation t
 a `role` column using the `UserGroupRole` enum (`admin` or `member`). Group admins can manage
 membership; regular members inherit group permissions only.
 
-### Datei Comments
+### File Comments
 
-The `DateiComment` table supports collaboration with threaded discussions on files.
-Each comment is tied to a Datei and a UserAccount, with `updated_at` tracking edits.
+The `FileComment` table supports collaboration with threaded discussions on files.
+Each comment is tied to a File and a UserAccount, with `updated_at` tracking edits.
 
 ### Audit Log
 
 The `AuditLog` table records all significant actions in the system. Each entry captures:
 
 - `actor_id` -- the user who performed the action (nullable for system actions)
-- `action` -- the action type (e.g. `datei.create`, `datei.trash`, `permission.grant`, `user.login`)
+- `action` -- the action type (e.g. `file.create`, `file.trash`, `permission.grant`, `user.login`)
 - `target_type` and `target_id` -- the entity affected (polymorphic reference)
 - `metadata` -- additional context as JSONB (e.g. old/new values, file names)
 - `ip_address` -- client IP for security auditing

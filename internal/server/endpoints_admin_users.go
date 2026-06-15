@@ -4,22 +4,26 @@ import (
 	"context"
 	"errors"
 
+	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/authn"
-	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/users"
 	"github.com/godatei/datei/pkg/api"
 )
 
-func (s *server) requireAdmin(ctx context.Context) (authn.AuthInfo, error) {
+type adminUsersServer struct {
+	svc *users.UserService
+}
+
+func (s *adminUsersServer) requireAdmin(ctx context.Context) (authn.AuthInfo, error) {
 	return authn.RequireAdmin(ctx)
 }
 
 // ListUsersAdmin implements [StrictServerInterface].
-func (s *server) ListUsersAdmin(
+func (s *adminUsersServer) ListUsersAdmin(
 	ctx context.Context, request ListUsersAdminRequestObject,
 ) (ListUsersAdminResponseObject, error) {
 	if _, err := s.requireAdmin(ctx); err != nil {
-		if errors.Is(err, dateierrors.ErrForbidden) {
+		if errors.Is(err, apperrors.ErrForbidden) {
 			return ListUsersAdmin403Response{}, nil
 		}
 		return nil, err
@@ -34,7 +38,7 @@ func (s *server) ListUsersAdmin(
 		offset = *request.Params.Offset
 	}
 
-	result, err := s.userService.ListUsers(ctx, users.ListUsersInput{Limit: limit, Offset: offset})
+	result, err := s.svc.ListUsers(ctx, users.ListUsersInput{Limit: limit, Offset: offset})
 	if err != nil {
 		return nil, err
 	}
@@ -46,24 +50,24 @@ func (s *server) ListUsersAdmin(
 }
 
 // CreateUserAdmin implements [StrictServerInterface].
-func (s *server) CreateUserAdmin(
+func (s *adminUsersServer) CreateUserAdmin(
 	ctx context.Context, request CreateUserAdminRequestObject,
 ) (CreateUserAdminResponseObject, error) {
 	if _, err := s.requireAdmin(ctx); err != nil {
-		if errors.Is(err, dateierrors.ErrForbidden) {
+		if errors.Is(err, apperrors.ErrForbidden) {
 			return CreateUserAdmin403Response{}, nil
 		}
 		return nil, err
 	}
 
-	item, err := s.userService.AdminCreateUser(ctx, users.AdminCreateUserInput{
+	item, err := s.svc.AdminCreateUser(ctx, users.AdminCreateUserInput{
 		Name:     request.Body.Name,
 		Email:    string(request.Body.Email),
 		Password: request.Body.Password,
 		IsAdmin:  request.Body.IsAdmin,
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrEmailAlreadyInUse) || errors.Is(err, dateierrors.ErrInvalidInput) {
+		if errors.Is(err, apperrors.ErrEmailAlreadyInUse) || errors.Is(err, apperrors.ErrInvalidInput) {
 			return CreateUserAdmin400Response{}, nil
 		}
 		return nil, err
@@ -72,19 +76,19 @@ func (s *server) CreateUserAdmin(
 }
 
 // GetUserAdmin implements [StrictServerInterface].
-func (s *server) GetUserAdmin(
+func (s *adminUsersServer) GetUserAdmin(
 	ctx context.Context, request GetUserAdminRequestObject,
 ) (GetUserAdminResponseObject, error) {
 	if _, err := s.requireAdmin(ctx); err != nil {
-		if errors.Is(err, dateierrors.ErrForbidden) {
+		if errors.Is(err, apperrors.ErrForbidden) {
 			return GetUserAdmin403Response{}, nil
 		}
 		return nil, err
 	}
 
-	item, err := s.userService.GetUserForAdmin(ctx, request.Id)
+	item, err := s.svc.GetUserForAdmin(ctx, request.Id)
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrNotFound) {
+		if errors.Is(err, apperrors.ErrNotFound) {
 			return GetUserAdmin404Response{}, nil
 		}
 		return nil, err
@@ -93,12 +97,12 @@ func (s *server) GetUserAdmin(
 }
 
 // UpdateUserAdmin implements [StrictServerInterface].
-func (s *server) UpdateUserAdmin(
+func (s *adminUsersServer) UpdateUserAdmin(
 	ctx context.Context, request UpdateUserAdminRequestObject,
 ) (UpdateUserAdminResponseObject, error) {
 	auth, err := s.requireAdmin(ctx)
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrForbidden) {
+		if errors.Is(err, apperrors.ErrForbidden) {
 			return UpdateUserAdmin403Response{}, nil
 		}
 		return nil, err
@@ -123,11 +127,11 @@ func (s *server) UpdateUserAdmin(
 		Archived:       request.Body.Archived,
 		PrimaryEmailID: request.Body.PrimaryEmailId,
 	}
-	if err := s.userService.AdminUpdateUser(ctx, input); err != nil {
-		if errors.Is(err, dateierrors.ErrNotFound) {
+	if err := s.svc.AdminUpdateUser(ctx, input); err != nil {
+		if errors.Is(err, apperrors.ErrNotFound) {
 			return UpdateUserAdmin404Response{}, nil
 		}
-		if errors.Is(err, dateierrors.ErrInvalidInput) {
+		if errors.Is(err, apperrors.ErrInvalidInput) {
 			return UpdateUserAdmin400Response{}, nil
 		}
 		return nil, err
@@ -136,24 +140,24 @@ func (s *server) UpdateUserAdmin(
 }
 
 // ResetUserPasswordAdmin implements [StrictServerInterface].
-func (s *server) ResetUserPasswordAdmin(
+func (s *adminUsersServer) ResetUserPasswordAdmin(
 	ctx context.Context, request ResetUserPasswordAdminRequestObject,
 ) (ResetUserPasswordAdminResponseObject, error) {
 	if _, err := s.requireAdmin(ctx); err != nil {
-		if errors.Is(err, dateierrors.ErrForbidden) {
+		if errors.Is(err, apperrors.ErrForbidden) {
 			return ResetUserPasswordAdmin403Response{}, nil
 		}
 		return nil, err
 	}
 
-	if err := s.userService.AdminResetPassword(ctx, users.AdminResetPasswordInput{
+	if err := s.svc.AdminResetPassword(ctx, users.AdminResetPasswordInput{
 		UserID:   request.Id,
 		Password: request.Body.Password,
 	}); err != nil {
-		if errors.Is(err, dateierrors.ErrNotFound) {
+		if errors.Is(err, apperrors.ErrNotFound) {
 			return ResetUserPasswordAdmin404Response{}, nil
 		}
-		if errors.Is(err, dateierrors.ErrInvalidInput) {
+		if errors.Is(err, apperrors.ErrInvalidInput) {
 			return ResetUserPasswordAdmin400Response{}, nil
 		}
 		return nil, err
@@ -162,17 +166,17 @@ func (s *server) ResetUserPasswordAdmin(
 }
 
 // ListUserEmailsAdmin implements [StrictServerInterface].
-func (s *server) ListUserEmailsAdmin(
+func (s *adminUsersServer) ListUserEmailsAdmin(
 	ctx context.Context, request ListUserEmailsAdminRequestObject,
 ) (ListUserEmailsAdminResponseObject, error) {
 	if _, err := s.requireAdmin(ctx); err != nil {
-		if errors.Is(err, dateierrors.ErrForbidden) {
+		if errors.Is(err, apperrors.ErrForbidden) {
 			return ListUserEmailsAdmin403Response{}, nil
 		}
 		return nil, err
 	}
 
-	emails, err := s.userService.AdminListEmails(ctx, request.Id)
+	emails, err := s.svc.AdminListEmails(ctx, request.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -182,18 +186,18 @@ func (s *server) ListUserEmailsAdmin(
 }
 
 // AddUserEmailAdmin implements [StrictServerInterface].
-func (s *server) AddUserEmailAdmin(
+func (s *adminUsersServer) AddUserEmailAdmin(
 	ctx context.Context, request AddUserEmailAdminRequestObject,
 ) (AddUserEmailAdminResponseObject, error) {
 	if _, err := s.requireAdmin(ctx); err != nil {
-		if errors.Is(err, dateierrors.ErrForbidden) {
+		if errors.Is(err, apperrors.ErrForbidden) {
 			return AddUserEmailAdmin403Response{}, nil
 		}
 		return nil, err
 	}
 
-	if err := s.userService.AdminAddEmail(ctx, request.Id, string(request.Body.Email)); err != nil {
-		if errors.Is(err, dateierrors.ErrEmailAlreadyInUse) || errors.Is(err, dateierrors.ErrInvalidInput) {
+	if err := s.svc.AdminAddEmail(ctx, request.Id, string(request.Body.Email)); err != nil {
+		if errors.Is(err, apperrors.ErrEmailAlreadyInUse) || errors.Is(err, apperrors.ErrInvalidInput) {
 			return AddUserEmailAdmin400Response{}, nil
 		}
 		return nil, err
@@ -202,21 +206,21 @@ func (s *server) AddUserEmailAdmin(
 }
 
 // RemoveUserEmailAdmin implements [StrictServerInterface].
-func (s *server) RemoveUserEmailAdmin(
+func (s *adminUsersServer) RemoveUserEmailAdmin(
 	ctx context.Context, request RemoveUserEmailAdminRequestObject,
 ) (RemoveUserEmailAdminResponseObject, error) {
 	if _, err := s.requireAdmin(ctx); err != nil {
-		if errors.Is(err, dateierrors.ErrForbidden) {
+		if errors.Is(err, apperrors.ErrForbidden) {
 			return RemoveUserEmailAdmin403Response{}, nil
 		}
 		return nil, err
 	}
 
-	if err := s.userService.AdminRemoveEmail(ctx, request.Id, request.EmailId); err != nil {
-		if errors.Is(err, dateierrors.ErrNotFound) {
+	if err := s.svc.AdminRemoveEmail(ctx, request.Id, request.EmailId); err != nil {
+		if errors.Is(err, apperrors.ErrNotFound) {
 			return RemoveUserEmailAdmin404Response{}, nil
 		}
-		if errors.Is(err, dateierrors.ErrInvalidInput) {
+		if errors.Is(err, apperrors.ErrInvalidInput) {
 			return RemoveUserEmailAdmin400Response{}, nil
 		}
 		return nil, err
@@ -225,21 +229,21 @@ func (s *server) RemoveUserEmailAdmin(
 }
 
 // DisableUserMFAAdmin implements [StrictServerInterface].
-func (s *server) DisableUserMFAAdmin(
+func (s *adminUsersServer) DisableUserMFAAdmin(
 	ctx context.Context, request DisableUserMFAAdminRequestObject,
 ) (DisableUserMFAAdminResponseObject, error) {
 	if _, err := s.requireAdmin(ctx); err != nil {
-		if errors.Is(err, dateierrors.ErrForbidden) {
+		if errors.Is(err, apperrors.ErrForbidden) {
 			return DisableUserMFAAdmin403Response{}, nil
 		}
 		return nil, err
 	}
 
-	if err := s.userService.AdminDisableMFA(ctx, request.Id); err != nil {
-		if errors.Is(err, dateierrors.ErrNotFound) {
+	if err := s.svc.AdminDisableMFA(ctx, request.Id); err != nil {
+		if errors.Is(err, apperrors.ErrNotFound) {
 			return DisableUserMFAAdmin404Response{}, nil
 		}
-		if errors.Is(err, dateierrors.ErrMFANotEnabled) {
+		if errors.Is(err, apperrors.ErrMFANotEnabled) {
 			return DisableUserMFAAdmin403Response{}, nil
 		}
 		return nil, err

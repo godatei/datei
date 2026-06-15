@@ -1,4 +1,4 @@
--- Datei: Initial Database Schema
+-- File: Initial Database Schema
 
 -- ============================================================================
 -- User Account Projections
@@ -51,7 +51,7 @@ CREATE UNIQUE INDEX uq_user_account_email_projection_primary ON user_account_ema
 -- Event Stores
 -- ============================================================================
 
-CREATE TABLE datei_event (
+CREATE TABLE file_event (
   id BIGSERIAL PRIMARY KEY,
   stream_id UUID NOT NULL,
   stream_version INT NOT NULL,
@@ -62,9 +62,9 @@ CREATE TABLE datei_event (
   CONSTRAINT uq_event_store_stream_version UNIQUE (stream_id, stream_version)
 );
 
-CREATE INDEX idx_datei_event_stream_id ON datei_event(stream_id);
-CREATE INDEX idx_datei_event_created_at ON datei_event(created_at DESC);
-CREATE INDEX idx_datei_event_event_type ON datei_event(event_type);
+CREATE INDEX idx_file_event_stream_id ON file_event(stream_id);
+CREATE INDEX idx_file_event_created_at ON file_event(created_at DESC);
+CREATE INDEX idx_file_event_event_type ON file_event(event_type);
 
 CREATE TABLE user_account_event (
   id BIGSERIAL PRIMARY KEY,
@@ -82,20 +82,20 @@ CREATE INDEX idx_user_account_event_created_at ON user_account_event(created_at 
 CREATE INDEX idx_user_account_event_event_type ON user_account_event(event_type);
 
 -- ============================================================================
--- Datei Permission Type
+-- File Permission Type
 -- ============================================================================
 
-CREATE TYPE datei_permission_type AS ENUM ('owner', 'read_write', 'read_only');
+CREATE TYPE file_permission_type AS ENUM ('owner', 'read_write', 'read_only');
 
 -- ============================================================================
--- Datei Projection
+-- File Projection
 -- ============================================================================
 
-CREATE TABLE datei_projection (
+CREATE TABLE file_projection (
   id UUID PRIMARY KEY,
-  parent_id UUID REFERENCES datei_projection(id) ON DELETE RESTRICT,
+  parent_id UUID REFERENCES file_projection(id) ON DELETE RESTRICT,
   is_directory BOOLEAN NOT NULL DEFAULT false,
-  linked_datei_id UUID REFERENCES datei_projection(id) ON DELETE SET NULL,
+  linked_file_id UUID REFERENCES file_projection(id) ON DELETE SET NULL,
   name TEXT NOT NULL,
   s3_key TEXT,
   size BIGINT,
@@ -111,39 +111,39 @@ CREATE TABLE datei_projection (
   trashed_by UUID REFERENCES user_account_projection(id) ON DELETE RESTRICT
 );
 
-CREATE INDEX idx_datei_projection_parent_id ON datei_projection(parent_id);
-CREATE INDEX idx_datei_projection_linked_datei_id ON datei_projection(linked_datei_id) WHERE linked_datei_id IS NOT NULL;
-CREATE INDEX idx_datei_projection_content_search ON datei_projection USING GIN(content_search);
+CREATE INDEX idx_file_projection_parent_id ON file_projection(parent_id);
+CREATE INDEX idx_file_projection_linked_file_id ON file_projection(linked_file_id) WHERE linked_file_id IS NOT NULL;
+CREATE INDEX idx_file_projection_content_search ON file_projection USING GIN(content_search);
 
 -- ============================================================================
--- Datei Permission Projection
+-- File Permission Projection
 --
 -- user_group_id has no FK: the user_group table is not yet event-sourced and
 -- has been removed from this migration. The column is retained because
--- DateiPermissionGranted/Revoked events still carry UserGroupID for forward
+-- FilePermissionGranted/Revoked events still carry UserGroupID for forward
 -- compatibility with a future groups domain.
 -- ============================================================================
 
-CREATE TABLE datei_permission_projection (
+CREATE TABLE file_permission_projection (
   id UUID PRIMARY KEY,
-  datei_id UUID NOT NULL REFERENCES datei_projection(id) ON DELETE CASCADE,
+  file_id UUID NOT NULL REFERENCES file_projection(id) ON DELETE CASCADE,
   user_account_id UUID REFERENCES user_account_projection(id) ON DELETE RESTRICT,
   user_group_id UUID,
-  permission_type datei_permission_type NOT NULL,
+  permission_type file_permission_type NOT NULL,
   is_favorite BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL,
-  CONSTRAINT ck_datei_permission_projection_grantee CHECK (
+  CONSTRAINT ck_file_permission_projection_grantee CHECK (
     (user_account_id IS NOT NULL AND user_group_id IS NULL) OR
     (user_account_id IS NULL AND user_group_id IS NOT NULL)
   )
 );
 
-CREATE INDEX idx_datei_permission_projection_datei_id ON datei_permission_projection(datei_id);
-CREATE INDEX idx_datei_permission_projection_user_account_id ON datei_permission_projection(user_account_id) WHERE user_account_id IS NOT NULL;
-CREATE INDEX idx_datei_permission_projection_user_group_id ON datei_permission_projection(user_group_id) WHERE user_group_id IS NOT NULL;
-CREATE UNIQUE INDEX uq_datei_permission_projection_owner ON datei_permission_projection(datei_id) WHERE permission_type = 'owner';
-CREATE UNIQUE INDEX uq_datei_permission_projection_user ON datei_permission_projection(datei_id, user_account_id) WHERE user_account_id IS NOT NULL;
-CREATE UNIQUE INDEX uq_datei_permission_projection_group ON datei_permission_projection(datei_id, user_group_id) WHERE user_group_id IS NOT NULL;
+CREATE INDEX idx_file_permission_projection_file_id ON file_permission_projection(file_id);
+CREATE INDEX idx_file_permission_projection_user_account_id ON file_permission_projection(user_account_id) WHERE user_account_id IS NOT NULL;
+CREATE INDEX idx_file_permission_projection_user_group_id ON file_permission_projection(user_group_id) WHERE user_group_id IS NOT NULL;
+CREATE UNIQUE INDEX uq_file_permission_projection_owner ON file_permission_projection(file_id) WHERE permission_type = 'owner';
+CREATE UNIQUE INDEX uq_file_permission_projection_user ON file_permission_projection(file_id, user_account_id) WHERE user_account_id IS NOT NULL;
+CREATE UNIQUE INDEX uq_file_permission_projection_group ON file_permission_projection(file_id, user_group_id) WHERE user_group_id IS NOT NULL;
 
 -- ============================================================================
 -- Link Event Store (public sharing domain)
@@ -188,14 +188,14 @@ CREATE TABLE link_projection (
 CREATE INDEX idx_link_projection_owner_id ON link_projection(owner_id);
 
 -- ============================================================================
--- Link <-> Datei Join Projection
+-- Link <-> File Join Projection
 -- ============================================================================
 
-CREATE TABLE link_datei_projection (
+CREATE TABLE link_file_projection (
   link_id UUID NOT NULL REFERENCES link_projection(id) ON DELETE CASCADE,
-  datei_id UUID NOT NULL REFERENCES datei_projection(id) ON DELETE CASCADE,
+  file_id UUID NOT NULL REFERENCES file_projection(id) ON DELETE CASCADE,
   added_at TIMESTAMPTZ NOT NULL,
-  PRIMARY KEY (link_id, datei_id)
+  PRIMARY KEY (link_id, file_id)
 );
 
-CREATE INDEX idx_link_datei_projection_datei_id ON link_datei_projection(datei_id);
+CREATE INDEX idx_link_file_projection_file_id ON link_file_projection(file_id);

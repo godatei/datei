@@ -4,23 +4,27 @@ import (
 	"context"
 	"errors"
 
-	"github.com/godatei/datei/internal/dateierrors"
+	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/users"
 	"github.com/godatei/datei/pkg/api"
 )
 
+type authServer struct {
+	svc *users.UserService
+}
+
 // Login implements [StrictServerInterface].
-func (s *server) Login(ctx context.Context, request LoginRequestObject) (LoginResponseObject, error) {
-	result, err := s.userService.Login(ctx, users.LoginInput{
+func (s *authServer) Login(ctx context.Context, request LoginRequestObject) (LoginResponseObject, error) {
+	result, err := s.svc.Login(ctx, users.LoginInput{
 		Email:    string(request.Body.Email),
 		Password: request.Body.Password,
 		MfaCode:  request.Body.MfaCode,
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrInvalidCredentials) {
+		if errors.Is(err, apperrors.ErrInvalidCredentials) {
 			return Login401Response{}, nil
 		}
-		if errors.Is(err, dateierrors.ErrMFAInvalidCode) {
+		if errors.Is(err, apperrors.ErrMFAInvalidCode) {
 			return Login401Response{}, nil
 		}
 		return nil, err
@@ -34,27 +38,27 @@ func (s *server) Login(ctx context.Context, request LoginRequestObject) (LoginRe
 }
 
 // GetLoginConfig implements [StrictServerInterface].
-func (s *server) GetLoginConfig(
+func (s *authServer) GetLoginConfig(
 	_ context.Context, _ GetLoginConfigRequestObject,
 ) (GetLoginConfigResponseObject, error) {
-	cfg := s.userService.GetLoginConfig()
+	cfg := s.svc.GetLoginConfig()
 	return GetLoginConfig200JSONResponse(api.LoginConfigResponse{
 		RegistrationEnabled: cfg.RegistrationEnabled,
 	}), nil
 }
 
 // Register implements [StrictServerInterface].
-func (s *server) Register(ctx context.Context, request RegisterRequestObject) (RegisterResponseObject, error) {
-	err := s.userService.Register(ctx, users.RegisterInput{
+func (s *authServer) Register(ctx context.Context, request RegisterRequestObject) (RegisterResponseObject, error) {
+	err := s.svc.Register(ctx, users.RegisterInput{
 		Email:    string(request.Body.Email),
 		Name:     request.Body.Name,
 		Password: request.Body.Password,
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrRegistrationDisabled) {
+		if errors.Is(err, apperrors.ErrRegistrationDisabled) {
 			return Register403Response{}, nil
 		}
-		if errors.Is(err, dateierrors.ErrInvalidInput) || errors.Is(err, dateierrors.ErrEmailAlreadyInUse) {
+		if errors.Is(err, apperrors.ErrInvalidInput) || errors.Is(err, apperrors.ErrEmailAlreadyInUse) {
 			return Register400Response{}, nil
 		}
 		return nil, err
@@ -64,10 +68,10 @@ func (s *server) Register(ctx context.Context, request RegisterRequestObject) (R
 }
 
 // ResetPassword implements [StrictServerInterface].
-func (s *server) ResetPassword(
+func (s *authServer) ResetPassword(
 	ctx context.Context, request ResetPasswordRequestObject,
 ) (ResetPasswordResponseObject, error) {
-	s.userService.ResetPassword(ctx, users.ResetPasswordInput{
+	s.svc.ResetPassword(ctx, users.ResetPasswordInput{
 		Email: string(request.Body.Email),
 	})
 	return ResetPassword204Response{}, nil

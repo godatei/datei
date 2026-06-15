@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/authn"
-	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/pkg/api"
 	"github.com/google/uuid"
@@ -50,7 +50,7 @@ type CreateLinkInput struct {
 	Name      string
 	ExpiresAt *time.Time
 	Code      *string
-	DateiIDs  []uuid.UUID
+	FileIDs   []uuid.UUID
 }
 
 func (s *Service) CreateLink(ctx context.Context, input CreateLinkInput) (*api.LinkDetail, error) {
@@ -59,13 +59,13 @@ func (s *Service) CreateLink(ctx context.Context, input CreateLinkInput) (*api.L
 	input.Code = normalizeOptionalCode(input.Code)
 
 	queries := db.New(s.db)
-	if len(input.DateiIDs) > 0 {
-		count, err := queries.CountUntrashedDateiByIDs(ctx, input.DateiIDs)
+	if len(input.FileIDs) > 0 {
+		count, err := queries.CountUntrashedFileByIDs(ctx, input.FileIDs)
 		if err != nil {
 			return nil, err
 		}
-		if int(count) != len(input.DateiIDs) {
-			return nil, dateierrors.ErrInvalidInput
+		if int(count) != len(input.FileIDs) {
+			return nil, apperrors.ErrInvalidInput
 		}
 	}
 
@@ -78,7 +78,7 @@ func (s *Service) CreateLink(ctx context.Context, input CreateLinkInput) (*api.L
 	now := time.Now()
 
 	agg := &Aggregate{}
-	if err := agg.Create(id, userID, input.Name, key, input.Code, input.ExpiresAt, input.DateiIDs, now); err != nil {
+	if err := agg.Create(id, userID, input.Name, key, input.Code, input.ExpiresAt, input.FileIDs, now); err != nil {
 		return nil, err
 	}
 
@@ -224,22 +224,22 @@ func (s *Service) RotateKey(ctx context.Context, id uuid.UUID) (*api.LinkDetail,
 	return s.aggregateToLinkDetail(ctx, agg)
 }
 
-func (s *Service) AddDateiToLink(ctx context.Context, linkID, dateiID uuid.UUID) (*api.LinkDetail, error) {
+func (s *Service) AddFileToLink(ctx context.Context, linkID, fileID uuid.UUID) (*api.LinkDetail, error) {
 	agg, err := s.loadOwnedAggregate(ctx, linkID)
 	if err != nil {
 		return nil, err
 	}
 
 	queries := db.New(s.db)
-	count, err := queries.CountUntrashedDateiByIDs(ctx, []uuid.UUID{dateiID})
+	count, err := queries.CountUntrashedFileByIDs(ctx, []uuid.UUID{fileID})
 	if err != nil {
 		return nil, err
 	}
 	if count != 1 {
-		return nil, dateierrors.ErrInvalidInput
+		return nil, apperrors.ErrInvalidInput
 	}
 
-	if err := agg.AddDatei(dateiID, time.Now()); err != nil {
+	if err := agg.AddFile(fileID, time.Now()); err != nil {
 		return nil, err
 	}
 	if err := s.repository.Save(ctx, agg); err != nil {
@@ -249,13 +249,13 @@ func (s *Service) AddDateiToLink(ctx context.Context, linkID, dateiID uuid.UUID)
 	return s.aggregateToLinkDetail(ctx, agg)
 }
 
-func (s *Service) RemoveDateiFromLink(ctx context.Context, linkID, dateiID uuid.UUID) error {
+func (s *Service) RemoveFileFromLink(ctx context.Context, linkID, fileID uuid.UUID) error {
 	agg, err := s.loadOwnedAggregate(ctx, linkID)
 	if err != nil {
 		return err
 	}
 
-	if err := agg.RemoveDatei(dateiID, time.Now()); err != nil {
+	if err := agg.RemoveFile(fileID, time.Now()); err != nil {
 		return err
 	}
 	return s.repository.Save(ctx, agg)
@@ -281,20 +281,20 @@ func (s *Service) loadOwnedAggregate(ctx context.Context, id uuid.UUID) (*Aggreg
 	userID := authn.RequireContext(ctx).UserID
 	agg, err := s.repository.LoadByID(ctx, id)
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrNotFound) {
-			return nil, dateierrors.ErrLinkNotFound
+		if errors.Is(err, apperrors.ErrNotFound) {
+			return nil, apperrors.ErrLinkNotFound
 		}
 		return nil, err
 	}
 	if agg.OwnerID != userID {
-		return nil, dateierrors.ErrLinkNotFound
+		return nil, apperrors.ErrLinkNotFound
 	}
 	return agg, nil
 }
 
 func (s *Service) aggregateToLinkDetail(ctx context.Context, agg *Aggregate) (*api.LinkDetail, error) {
 	queries := db.New(s.db)
-	dateien, err := queries.ListDateienByLink(ctx, agg.ID)
+	files, err := queries.ListFilesByLink(ctx, agg.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -303,7 +303,7 @@ func (s *Service) aggregateToLinkDetail(ctx context.Context, agg *Aggregate) (*a
 		return nil, err
 	}
 	return MapAggregateToLinkDetail(
-		agg, dateien, int(counts.FileCount), int(counts.FolderCount), int(counts.OpenCount),
+		agg, files, int(counts.FileCount), int(counts.FolderCount), int(counts.OpenCount),
 	), nil
 }
 

@@ -50,8 +50,8 @@ func init() {
 	events.RegisterEvent("LinkCreated", func() events.DomainEvent { return &LinkCreatedEvent{} })
 	events.RegisterEvent("LinkUpdated", func() events.DomainEvent { return &LinkUpdatedEvent{} })
 	events.RegisterEvent("LinkKeyRotated", func() events.DomainEvent { return &LinkKeyRotatedEvent{} })
-	events.RegisterEvent("LinkDateiAdded", func() events.DomainEvent { return &LinkDateiAddedEvent{} })
-	events.RegisterEvent("LinkDateiRemoved", func() events.DomainEvent { return &LinkDateiRemovedEvent{} })
+	events.RegisterEvent("LinkFileAdded", func() events.DomainEvent { return &LinkFileAddedEvent{} })
+	events.RegisterEvent("LinkFileRemoved", func() events.DomainEvent { return &LinkFileRemovedEvent{} })
 	events.RegisterEvent("LinkRevoked", func() events.DomainEvent { return &LinkRevokedEvent{} })
 	events.RegisterEvent("LinkOpened", func() events.DomainEvent { return &LinkOpenedEvent{} })
 }
@@ -67,7 +67,7 @@ type LinkCreatedEvent struct {
 	Key       string      `json:"key"`
 	Code      *string     `json:"code,omitempty"`
 	ExpiresAt *time.Time  `json:"expires_at,omitempty"`
-	DateiIDs  []uuid.UUID `json:"datei_ids"`
+	FileIDs   []uuid.UUID `json:"file_ids"`
 	CreatedAt time.Time   `json:"created_at"`
 }
 
@@ -82,18 +82,18 @@ func (e LinkCreatedEvent) ApplyTo(a *Aggregate) {
 	a.ExpiresAt = e.ExpiresAt
 	a.CreatedAt = e.CreatedAt
 	a.UpdatedAt = e.CreatedAt
-	if a.dateiIDs == nil {
-		a.dateiIDs = make(map[uuid.UUID]struct{}, len(e.DateiIDs))
+	if a.fileIDs == nil {
+		a.fileIDs = make(map[uuid.UUID]struct{}, len(e.FileIDs))
 	}
-	for _, id := range e.DateiIDs {
-		a.dateiIDs[id] = struct{}{}
+	for _, id := range e.FileIDs {
+		a.fileIDs[id] = struct{}{}
 	}
 }
 
 // LinkUpdatedEvent is recorded when the owner edits a link's settings (name,
 // code, expiration). These are batched in a single event because they map to
 // a single Save action in the edit modal — a deliberate deviation from the
-// per-field event pattern used in the datei/users domains.
+// per-field event pattern used in the file/users domains.
 type LinkUpdatedEvent struct {
 	ID        uuid.UUID  `json:"id"`
 	Name      string     `json:"name"`
@@ -125,32 +125,32 @@ func (e LinkKeyRotatedEvent) ApplyTo(a *Aggregate) {
 	a.UpdatedAt = e.RotatedAt
 }
 
-type LinkDateiAddedEvent struct {
+type LinkFileAddedEvent struct {
 	ID      uuid.UUID `json:"id"`
-	DateiID uuid.UUID `json:"datei_id"`
+	FileID  uuid.UUID `json:"file_id"`
 	AddedAt time.Time `json:"added_at"`
 }
 
-func (e LinkDateiAddedEvent) EventType() string   { return "LinkDateiAdded" }
-func (e LinkDateiAddedEvent) StreamID() uuid.UUID { return e.ID }
-func (e LinkDateiAddedEvent) ApplyTo(a *Aggregate) {
-	if a.dateiIDs == nil {
-		a.dateiIDs = make(map[uuid.UUID]struct{})
+func (e LinkFileAddedEvent) EventType() string   { return "LinkFileAdded" }
+func (e LinkFileAddedEvent) StreamID() uuid.UUID { return e.ID }
+func (e LinkFileAddedEvent) ApplyTo(a *Aggregate) {
+	if a.fileIDs == nil {
+		a.fileIDs = make(map[uuid.UUID]struct{})
 	}
-	a.dateiIDs[e.DateiID] = struct{}{}
+	a.fileIDs[e.FileID] = struct{}{}
 	a.UpdatedAt = e.AddedAt
 }
 
-type LinkDateiRemovedEvent struct {
+type LinkFileRemovedEvent struct {
 	ID        uuid.UUID `json:"id"`
-	DateiID   uuid.UUID `json:"datei_id"`
+	FileID    uuid.UUID `json:"file_id"`
 	RemovedAt time.Time `json:"removed_at"`
 }
 
-func (e LinkDateiRemovedEvent) EventType() string   { return "LinkDateiRemoved" }
-func (e LinkDateiRemovedEvent) StreamID() uuid.UUID { return e.ID }
-func (e LinkDateiRemovedEvent) ApplyTo(a *Aggregate) {
-	delete(a.dateiIDs, e.DateiID)
+func (e LinkFileRemovedEvent) EventType() string   { return "LinkFileRemoved" }
+func (e LinkFileRemovedEvent) StreamID() uuid.UUID { return e.ID }
+func (e LinkFileRemovedEvent) ApplyTo(a *Aggregate) {
+	delete(a.fileIDs, e.FileID)
 	a.UpdatedAt = e.RemovedAt
 }
 

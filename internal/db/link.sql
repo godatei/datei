@@ -62,36 +62,36 @@ SELECT COUNT(*)::bigint FROM link_projection
      ELSE TRUE
    END;
 
--- name: InsertLinkDateiProjection :exec
-INSERT INTO link_datei_projection (link_id, datei_id, added_at)
+-- name: InsertLinkFileProjection :exec
+INSERT INTO link_file_projection (link_id, file_id, added_at)
  VALUES ($1, $2, $3)
- ON CONFLICT (link_id, datei_id) DO NOTHING;
+ ON CONFLICT (link_id, file_id) DO NOTHING;
 
--- name: DeleteLinkDateiProjection :exec
-DELETE FROM link_datei_projection
- WHERE link_id = $1 AND datei_id = $2;
+-- name: DeleteLinkFileProjection :exec
+DELETE FROM link_file_projection
+ WHERE link_id = $1 AND file_id = $2;
 
--- name: ListDateienByLink :many
-SELECT d.* FROM datei_projection d
- INNER JOIN link_datei_projection ld ON ld.datei_id = d.id
+-- name: ListFilesByLink :many
+SELECT d.* FROM file_projection d
+ INNER JOIN link_file_projection ld ON ld.file_id = d.id
  WHERE ld.link_id = $1 AND d.trashed_at IS NULL
  ORDER BY d.is_directory DESC, d.name ASC;
 
--- name: IsDateiInLinkScope :one
--- Returns true iff dateiID is one of the link's directly-shared dateien OR is
+-- name: IsFileInLinkScope :one
+-- Returns true iff fileID is one of the link's directly-shared files OR is
 -- a descendant of any shared directory in the link, AND no ancestor in the
 -- chain (up to and including the shared root) is trashed.
 WITH RECURSIVE
 shared_roots(id) AS (
-  SELECT datei_id FROM link_datei_projection WHERE link_id = $1
+  SELECT file_id FROM link_file_projection WHERE link_id = $1
 ),
 ancestors(id, parent_id, trashed_at, depth) AS (
   SELECT d.id, d.parent_id, d.trashed_at, 0
-    FROM datei_projection d
+    FROM file_projection d
     WHERE d.id = $2
   UNION
   SELECT p.id, p.parent_id, p.trashed_at, a.depth + 1
-    FROM datei_projection p
+    FROM file_projection p
     INNER JOIN ancestors a ON p.id = a.parent_id
 )
 SELECT EXISTS(
@@ -102,21 +102,21 @@ SELECT EXISTS(
 
 -- name: CountLinkContents :one
 -- Recursively counts files and folders reachable from the link's shared roots,
--- including the shared roots themselves. Trashed dateien are excluded. Also
+-- including the shared roots themselves. Trashed files are excluded. Also
 -- returns the link's lifetime open count so the response includes everything
 -- the owner needs in a single round-trip.
 WITH RECURSIVE
 roots AS (
   SELECT d.id, d.is_directory
-    FROM datei_projection d
-    INNER JOIN link_datei_projection ld ON ld.datei_id = d.id
+    FROM file_projection d
+    INNER JOIN link_file_projection ld ON ld.file_id = d.id
     WHERE ld.link_id = $1 AND d.trashed_at IS NULL
 ),
 descendants(id, is_directory) AS (
   SELECT id, is_directory FROM roots
   UNION
   SELECT child.id, child.is_directory
-    FROM datei_projection child
+    FROM file_projection child
     INNER JOIN descendants d ON child.parent_id = d.id
     WHERE child.trashed_at IS NULL
 )

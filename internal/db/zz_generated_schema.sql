@@ -4,8 +4,8 @@
 --
 
 
--- Dumped from database version 18.3
--- Dumped by pg_dump version 18.3
+-- Dumped from database version 18.4
+-- Dumped by pg_dump version 18.4
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -20,10 +20,24 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: datei_permission_type; Type: TYPE; Schema: public; Owner: -
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
 --
 
-CREATE TYPE public.datei_permission_type AS ENUM (
+-- *not* creating schema, since initdb creates it
+
+
+--
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON SCHEMA public IS '';
+
+
+--
+-- Name: file_permission_type; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.file_permission_type AS ENUM (
     'owner',
     'read_write',
     'read_only'
@@ -35,10 +49,10 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: datei_event; Type: TABLE; Schema: public; Owner: -
+-- Name: file_event; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.datei_event (
+CREATE TABLE public.file_event (
     id bigint NOT NULL,
     stream_id uuid NOT NULL,
     stream_version integer NOT NULL,
@@ -50,10 +64,10 @@ CREATE TABLE public.datei_event (
 
 
 --
--- Name: datei_event_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+-- Name: file_event_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE public.datei_event_id_seq
+CREATE SEQUENCE public.file_event_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -62,37 +76,37 @@ CREATE SEQUENCE public.datei_event_id_seq
 
 
 --
--- Name: datei_event_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+-- Name: file_event_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE public.datei_event_id_seq OWNED BY public.datei_event.id;
+ALTER SEQUENCE public.file_event_id_seq OWNED BY public.file_event.id;
 
 
 --
--- Name: datei_permission_projection; Type: TABLE; Schema: public; Owner: -
+-- Name: file_permission_projection; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.datei_permission_projection (
+CREATE TABLE public.file_permission_projection (
     id uuid NOT NULL,
-    datei_id uuid NOT NULL,
+    file_id uuid NOT NULL,
     user_account_id uuid,
     user_group_id uuid,
-    permission_type public.datei_permission_type NOT NULL,
+    permission_type public.file_permission_type NOT NULL,
     is_favorite boolean DEFAULT false NOT NULL,
     created_at timestamp with time zone NOT NULL,
-    CONSTRAINT ck_datei_permission_projection_grantee CHECK ((((user_account_id IS NOT NULL) AND (user_group_id IS NULL)) OR ((user_account_id IS NULL) AND (user_group_id IS NOT NULL))))
+    CONSTRAINT ck_file_permission_projection_grantee CHECK ((((user_account_id IS NOT NULL) AND (user_group_id IS NULL)) OR ((user_account_id IS NULL) AND (user_group_id IS NOT NULL))))
 );
 
 
 --
--- Name: datei_projection; Type: TABLE; Schema: public; Owner: -
+-- Name: file_projection; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.datei_projection (
+CREATE TABLE public.file_projection (
     id uuid NOT NULL,
     parent_id uuid,
     is_directory boolean DEFAULT false NOT NULL,
-    linked_datei_id uuid,
+    linked_file_id uuid,
     name text NOT NULL,
     s3_key text,
     size bigint,
@@ -106,17 +120,6 @@ CREATE TABLE public.datei_projection (
     created_by uuid,
     updated_by uuid,
     trashed_by uuid
-);
-
-
---
--- Name: link_datei_projection; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.link_datei_projection (
-    link_id uuid NOT NULL,
-    datei_id uuid NOT NULL,
-    added_at timestamp with time zone NOT NULL
 );
 
 
@@ -155,6 +158,17 @@ ALTER SEQUENCE public.link_event_id_seq OWNED BY public.link_event.id;
 
 
 --
+-- Name: link_file_projection; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.link_file_projection (
+    link_id uuid NOT NULL,
+    file_id uuid NOT NULL,
+    added_at timestamp with time zone NOT NULL
+);
+
+
+--
 -- Name: link_projection; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -166,9 +180,9 @@ CREATE TABLE public.link_projection (
     code text,
     expires_at timestamp with time zone,
     revoked_at timestamp with time zone,
+    open_count bigint DEFAULT 0 NOT NULL,
     created_at timestamp with time zone NOT NULL,
     updated_at timestamp with time zone NOT NULL,
-    open_count bigint DEFAULT 0 NOT NULL,
     CONSTRAINT ck_link_projection_code_length CHECK (((code IS NULL) OR ((length(code) >= 1) AND (length(code) <= 128)))),
     CONSTRAINT ck_link_projection_name_length CHECK (((length(name) >= 1) AND (length(name) <= 255)))
 );
@@ -258,10 +272,10 @@ CREATE TABLE public.user_account_projection (
 
 
 --
--- Name: datei_event id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: file_event id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.datei_event ALTER COLUMN id SET DEFAULT nextval('public.datei_event_id_seq'::regclass);
+ALTER TABLE ONLY public.file_event ALTER COLUMN id SET DEFAULT nextval('public.file_event_id_seq'::regclass);
 
 
 --

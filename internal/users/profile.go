@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/config"
-	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/security"
 	"github.com/google/uuid"
 )
@@ -28,17 +28,17 @@ func (s *UserService) UpdateUser(ctx context.Context, input UpdateUserInput) err
 
 	if input.Name != nil {
 		if err := agg.ChangeName(*input.Name, now); err != nil {
-			return dateierrors.ErrInvalidInput
+			return apperrors.ErrInvalidInput
 		}
 	}
 
 	if input.Password != nil {
 		if len(*input.Password) < 8 {
-			return dateierrors.ErrInvalidInput
+			return apperrors.ErrInvalidInput
 		}
 
 		if input.CurrentPassword == nil || *input.CurrentPassword == "" {
-			return dateierrors.ErrCurrentPasswordRequired
+			return apperrors.ErrCurrentPasswordRequired
 		}
 		q := s.queries()
 		user, err := q.GetUserAccountByID(ctx, input.UserID)
@@ -46,7 +46,7 @@ func (s *UserService) UpdateUser(ctx context.Context, input UpdateUserInput) err
 			return fmt.Errorf("failed to get user: %w", err)
 		}
 		if err := security.VerifyPassword(*input.CurrentPassword, user.PasswordHash, user.PasswordSalt); err != nil {
-			return dateierrors.ErrInvalidCredentials
+			return apperrors.ErrInvalidCredentials
 		}
 
 		hash, salt, err := security.HashPassword(*input.Password)
@@ -54,7 +54,7 @@ func (s *UserService) UpdateUser(ctx context.Context, input UpdateUserInput) err
 			return fmt.Errorf("failed to hash password: %w", err)
 		}
 		if err := agg.ChangePassword(hash, salt, now); err != nil {
-			return dateierrors.ErrInvalidInput
+			return apperrors.ErrInvalidInput
 		}
 	}
 
@@ -78,7 +78,7 @@ func (s *UserService) UpdateUserEmail(ctx context.Context, input UpdateUserEmail
 		return fmt.Errorf("failed to check existing email: %w", err)
 	}
 	if exists {
-		return dateierrors.ErrEmailAlreadyInUse
+		return apperrors.ErrEmailAlreadyInUse
 	}
 
 	primaryEmail, err := q.GetPrimaryEmailForUser(ctx, input.UserID)
@@ -92,7 +92,7 @@ func (s *UserService) UpdateUserEmail(ctx context.Context, input UpdateUserEmail
 	}
 
 	if err := agg.ChangeEmail(primaryEmail.Email, input.NewEmail, time.Now()); err != nil {
-		return dateierrors.ErrInvalidInput
+		return apperrors.ErrInvalidInput
 	}
 
 	if err := s.repository.Save(ctx, agg); err != nil {
@@ -130,7 +130,7 @@ func (s *UserService) ConfirmEmailVerification(ctx context.Context, input Confir
 	}
 
 	if input.TokenEmail != email.Email {
-		return dateierrors.ErrEmailMismatch
+		return apperrors.ErrEmailMismatch
 	}
 
 	agg, err := s.repository.LoadByID(ctx, input.UserID)
@@ -139,7 +139,7 @@ func (s *UserService) ConfirmEmailVerification(ctx context.Context, input Confir
 	}
 
 	if err := agg.VerifyEmail(time.Now()); err != nil {
-		return dateierrors.ErrInvalidInput
+		return apperrors.ErrInvalidInput
 	}
 
 	if err := s.repository.Save(ctx, agg); err != nil {
@@ -161,7 +161,7 @@ func (s *UserService) AddEmail(ctx context.Context, input AddEmailInput) error {
 		return fmt.Errorf("failed to check existing email: %w", err)
 	}
 	if exists {
-		return dateierrors.ErrEmailAlreadyInUse
+		return apperrors.ErrEmailAlreadyInUse
 	}
 
 	emailID := uuid.New()
@@ -171,7 +171,7 @@ func (s *UserService) AddEmail(ctx context.Context, input AddEmailInput) error {
 	}
 
 	if err := agg.AddEmail(emailID, input.Email, time.Now()); err != nil {
-		return dateierrors.ErrInvalidInput
+		return apperrors.ErrInvalidInput
 	}
 
 	if err := s.repository.Save(ctx, agg); err != nil {
@@ -192,7 +192,7 @@ type ConfirmResetPasswordInput struct {
 
 func (s *UserService) ConfirmResetPassword(ctx context.Context, input ConfirmResetPasswordInput) error {
 	if len(input.Password) < 8 {
-		return dateierrors.ErrInvalidInput
+		return apperrors.ErrInvalidInput
 	}
 
 	hash, salt, err := security.HashPassword(input.Password)
@@ -206,7 +206,7 @@ func (s *UserService) ConfirmResetPassword(ctx context.Context, input ConfirmRes
 	}
 
 	if err := agg.ChangePassword(hash, salt, time.Now()); err != nil {
-		return dateierrors.ErrInvalidInput
+		return apperrors.ErrInvalidInput
 	}
 
 	if err := s.repository.Save(ctx, agg); err != nil {
