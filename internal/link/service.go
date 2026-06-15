@@ -54,7 +54,7 @@ type CreateLinkInput struct {
 }
 
 func (s *Service) CreateLink(ctx context.Context, input CreateLinkInput) (*api.LinkDetail, error) {
-	userID := authn.RequireContext(ctx).UserID
+	userID := authn.RequireCurrentUser(ctx).ID
 
 	input.Code = normalizeOptionalCode(input.Code)
 
@@ -102,7 +102,7 @@ type ListLinksOutput struct {
 }
 
 func (s *Service) ListLinks(ctx context.Context, input ListLinksInput) (*ListLinksOutput, error) {
-	userID := authn.RequireContext(ctx).UserID
+	userID := authn.RequireCurrentUser(ctx).ID
 	queries := db.New(s.db)
 
 	limit := int32(input.Limit)
@@ -278,7 +278,7 @@ func (s *Service) RevokeLink(ctx context.Context, id uuid.UUID) error {
 // ============================================================================
 
 func (s *Service) loadOwnedAggregate(ctx context.Context, id uuid.UUID) (*Aggregate, error) {
-	userID := authn.RequireContext(ctx).UserID
+	userID := authn.RequireCurrentUser(ctx).ID
 	agg, err := s.repository.LoadByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrNotFound) {

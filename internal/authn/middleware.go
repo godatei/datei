@@ -8,30 +8,41 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3filter"
+	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/authjwt"
+	"github.com/godatei/datei/internal/db"
+	"github.com/godatei/datei/internal/users"
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v3/jwt"
 )
 
-type contextKey struct{}
+type emailContextKey struct{}
+
+type userContextKey struct{}
 
 var ErrNoAuthentication = errors.New("no authentication")
 
-// AuthInfo holds the authenticated user's info extracted from JWT.
-type AuthInfo struct {
-	UserID        uuid.UUID
-	Name          string
-	Email         string
-	EmailVerified bool
-	IsAdmin       bool
-	Action        authjwt.Action
+// EmailIdentity holds session identity details that are not part of the database
+// user record — currently just the email tied to the credential (the JWT email
+// claim, or the primary email for Basic Auth). The authoritative user record is
+// stored separately under userContextKey (see CurrentUser/GetCurrentUser).
+type EmailIdentity struct {
+	Email string
+}
+
+// claims holds the values extracted from a validated identity JWT. It is
+// internal to the auth flow; consumers read Identity and the user projection.
+type claims struct {
+	userID uuid.UUID
+	email  string
+	action authjwt.Action
 }
 
 // OpenAPIAuthFunc returns an openapi3filter.AuthenticationFunc that validates
-// Bearer JWTs and injects AuthInfo into the request context.
+// Bearer JWTs and injects the Identity and user projection into the request context.
 // The OapiRequestValidator only calls this for routes with a security requirement;
 // routes with `security: []` in the spec are skipped automatically.
-func OpenAPIAuthFunc() openapi3filter.AuthenticationFunc {
+func OpenAPIAuthFunc(userSvc *users.UserService) openapi3filter.AuthenticationFunc {
 	return func(ctx context.Context, input *openapi3filter.AuthenticationInput) error {
 		if input.SecurityScheme.Type != "http" || input.SecurityScheme.Scheme != "Bearer" {
 			return fmt.Errorf("unsupported security scheme: %s/%s",
@@ -55,7 +66,7 @@ func OpenAPIAuthFunc() openapi3filter.AuthenticationFunc {
 			return fmt.Errorf("invalid token: %w", err)
 		}
 
-		info, err := extractAuthInfo(token)
+		claims, err := extractClaims(token)
 		if err != nil {
 			slog.Debug("auth: failed to extract claims", "path", r.URL.Path, "error", err)
 			return fmt.Errorf("failed to extract claims: %w", err)
@@ -70,98 +81,108 @@ func OpenAPIAuthFunc() openapi3filter.AuthenticationFunc {
 			if err != nil {
 				return fmt.Errorf("invalid x-required-action extension: %w", err)
 			}
-			if info.Action != required {
-				return fmt.Errorf("token action %q not allowed for this endpoint", info.Action)
+			if claims.action != required {
+				return fmt.Errorf("token action %q not allowed for this endpoint", claims.action)
 			}
-		} else if info.Action != "" {
-			return fmt.Errorf("token action %q not allowed for this endpoint", info.Action)
+		} else if claims.action != "" {
+			return fmt.Errorf("token action %q not allowed for this endpoint", claims.action)
 		}
 
-		newCtx := context.WithValue(r.Context(), contextKey{}, info)
-		*r = *r.WithContext(newCtx) //nolint:contextcheck // must use r.Context(), not func ctx
+		//nolint:contextcheck // use r.Context() so the lookup is cancelled on client disconnect
+		account, err := userSvc.GetUser(r.Context(), claims.userID)
+		if err != nil {
+			if errors.Is(err, apperrors.ErrNotFound) {
+				slog.Debug("auth: user not found", "path", r.URL.Path, "user_id", claims.userID)
+				return fmt.Errorf("user not found: %w", err)
+			}
+			slog.Error("auth: failed to load user", "path", r.URL.Path, "user_id", claims.userID, "error", err)
+			return fmt.Errorf("failed to load user: %w", err)
+		}
+		if account.ArchivedAt != nil {
+			slog.Debug("auth: user is archived", "path", r.URL.Path, "user_id", claims.userID)
+			return errors.New("user is archived")
+		}
+
+		identity := EmailIdentity{Email: claims.email}
+		//nolint:contextcheck // must use r.Context(), not func ctx
+		*r = *r.WithContext(PopulateContext(r.Context(), identity, account))
 
 		return nil
 	}
 }
 
-// FromContext retrieves AuthInfo from the request context.
-func FromContext(ctx context.Context) (AuthInfo, error) {
-	if auth, ok := ctx.Value(contextKey{}).(AuthInfo); ok {
-		return auth, nil
+// GetEmailIdentity retrieves the session Identity from the request context.
+func GetEmailIdentity(ctx context.Context) (EmailIdentity, error) {
+	if id, ok := ctx.Value(emailContextKey{}).(EmailIdentity); ok {
+		return id, nil
 	}
-	return AuthInfo{}, ErrNoAuthentication
+	return EmailIdentity{}, ErrNoAuthentication
 }
 
-// RequireContext panics if no auth info is present (use after Middleware).
-func RequireContext(ctx context.Context) AuthInfo {
-	auth, err := FromContext(ctx)
+// RequireEmailIdentity panics if no Identity is present (use after Middleware).
+func RequireEmailIdentity(ctx context.Context) EmailIdentity {
+	id, err := GetEmailIdentity(ctx)
 	if err != nil {
 		panic(err)
 	}
-	return auth
+	return id
 }
 
-// FromTokenString parses a signed JWT string and returns the AuthInfo.
-func FromTokenString(tokenString string) (AuthInfo, error) {
-	token, err := authjwt.ParseToken(tokenString)
-	if err != nil {
-		return AuthInfo{}, err
+// GetCurrentUser retrieves the authenticated user's projection from ctx.
+func GetCurrentUser(ctx context.Context) (db.UserAccountProjection, error) {
+	if user, ok := ctx.Value(userContextKey{}).(db.UserAccountProjection); ok {
+		return user, nil
 	}
-	return extractAuthInfo(token)
+	return db.UserAccountProjection{}, ErrNoAuthentication
 }
 
-// NewContext injects AuthInfo into ctx.
-func NewContext(ctx context.Context, info AuthInfo) context.Context {
-	return context.WithValue(ctx, contextKey{}, info)
+// RequireCurrentUser panics if no user projection is present (use after Middleware).
+func RequireCurrentUser(ctx context.Context) db.UserAccountProjection {
+	user, err := GetCurrentUser(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return user
 }
 
-func extractAuthInfo(token jwt.Token) (AuthInfo, error) {
+// PopulateContext injects the EmailIdentity and database-backed user projection into ctx.
+func PopulateContext(ctx context.Context, identity EmailIdentity, user db.UserAccountProjection) context.Context {
+	ctx = context.WithValue(ctx, emailContextKey{}, identity)
+	ctx = context.WithValue(ctx, userContextKey{}, user)
+	return ctx
+}
+
+func extractClaims(token jwt.Token) (claims, error) {
 	// Require the `kind` claim to be present and equal to KindUser. This is
 	// what stops a public-link session token (signed with the same secret) from
 	// being accepted here as an owner-auth token.
 	var kind string
 	if err := token.Get(authjwt.KindKey, &kind); err != nil {
-		return AuthInfo{}, errors.New("missing kind claim")
+		return claims{}, errors.New("missing kind claim")
 	}
 	if kind != authjwt.KindUser {
-		return AuthInfo{}, fmt.Errorf("token kind %q not allowed", kind)
+		return claims{}, fmt.Errorf("token kind %q not allowed", kind)
 	}
 
-	sub, ok := token.Subject()
-	if !ok {
-		return AuthInfo{}, errors.New("missing subject claim")
-	}
-	userID, err := uuid.Parse(sub)
-	if err != nil {
-		return AuthInfo{}, err
+	var c claims
+	_ = token.Get(authjwt.UserEmailKey, &c.email)
+
+	if sub, ok := token.Subject(); !ok {
+		return claims{}, errors.New("missing subject claim")
+	} else if userID, err := uuid.Parse(sub); err != nil {
+		return claims{}, err
+	} else {
+		c.userID = userID
 	}
 
-	info := AuthInfo{UserID: userID}
-
-	var name string
-	if err := token.Get(authjwt.UserNameKey, &name); err == nil {
-		info.Name = name
-	}
-	var email string
-	if err := token.Get(authjwt.UserEmailKey, &email); err == nil {
-		info.Email = email
-	}
-	var verified bool
-	if err := token.Get(authjwt.UserEmailVerifiedKey, &verified); err == nil {
-		info.EmailVerified = verified
-	}
-	var isAdmin bool
-	if err := token.Get(authjwt.UserIsAdminKey, &isAdmin); err == nil {
-		info.IsAdmin = isAdmin
-	}
 	var actionStr string
 	if err := token.Get(authjwt.ActionKey, &actionStr); err == nil {
-		action, err := authjwt.ParseAction(actionStr)
-		if err != nil {
-			return AuthInfo{}, err
+		if action, err := authjwt.ParseAction(actionStr); err != nil {
+			return claims{}, err
+		} else {
+			c.action = action
 		}
-		info.Action = action
 	}
 
-	return info, nil
+	return c, nil
 }
