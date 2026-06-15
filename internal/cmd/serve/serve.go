@@ -163,7 +163,7 @@ func run(ctx context.Context, options Options) error {
 	// API routes: OpenAPI validator handles auth via security schemes in the spec.
 	// We dispatch by scheme name because both the owner auth and the public-link
 	// session use http+Bearer but verify against different claim shapes.
-	ownerAuth := authn.OpenAPIAuthFunc()
+	ownerAuth := authn.OpenAPIAuthFunc(userSvc)
 	publicLinkAuth := linkauth.OpenAPIAuthFunc()
 	authDispatch := func(ctx context.Context, input *openapi3filter.AuthenticationInput) error {
 		if input.SecuritySchemeName == linkauth.SecuritySchemeName {

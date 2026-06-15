@@ -6,6 +6,7 @@ import (
 
 	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/authn"
+	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/users"
 	"github.com/godatei/datei/pkg/api"
 )
@@ -14,7 +15,7 @@ type adminUsersServer struct {
 	svc *users.UserService
 }
 
-func (s *adminUsersServer) requireAdmin(ctx context.Context) (authn.AuthInfo, error) {
+func (s *adminUsersServer) requireAdmin(ctx context.Context) (db.UserAccountProjection, error) {
 	return authn.RequireAdmin(ctx)
 }
 
@@ -100,7 +101,7 @@ func (s *adminUsersServer) GetUserAdmin(
 func (s *adminUsersServer) UpdateUserAdmin(
 	ctx context.Context, request UpdateUserAdminRequestObject,
 ) (UpdateUserAdminResponseObject, error) {
-	auth, err := s.requireAdmin(ctx)
+	admin, err := s.requireAdmin(ctx)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrForbidden) {
 			return UpdateUserAdmin403Response{}, nil
@@ -111,7 +112,7 @@ func (s *adminUsersServer) UpdateUserAdmin(
 	// An admin must not be able to demote themselves — they would lose access mid-call
 	// and could lock the system out if they're the last admin. The same reasoning
 	// applies to archiving their own account.
-	if auth.UserID == request.Id {
+	if admin.ID == request.Id {
 		if request.Body.IsAdmin != nil && !*request.Body.IsAdmin {
 			return UpdateUserAdmin400Response{}, nil
 		}

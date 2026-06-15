@@ -13,7 +13,7 @@ import (
 )
 
 // BasicAuthMiddleware validates HTTP Basic Auth credentials against the user
-// service and injects the resulting AuthInfo into the request context.
+// service and injects the resulting Identity and user projection into the request context.
 // Accounts with MFA enabled cannot use WebDAV.
 // Failed credential attempts are rate-limited per IP (20 failures/minute).
 func BasicAuthMiddleware(userSvc *users.UserService) func(http.Handler) http.Handler {
@@ -37,30 +37,23 @@ func BasicAuthMiddleware(userSvc *users.UserService) func(http.Handler) http.Han
 
 			out, err := userSvc.ValidateCredentials(r.Context(), email, password)
 			if err != nil {
-				if errors.Is(err, apperrors.ErrInvalidCredentials) {
+				switch {
+				case errors.Is(err, apperrors.ErrInvalidCredentials):
 					if limited := failLimiter.RespondOnLimit(w, r, ip); !limited {
 						w.Header().Set("WWW-Authenticate", `Basic realm="Datei WebDAV"`)
 						http.Error(w, "Unauthorized", http.StatusUnauthorized)
 					}
-				} else {
+				case errors.Is(err, apperrors.ErrMFARequired):
+					http.Error(w, "MFA-protected accounts cannot use WebDAV", http.StatusForbidden)
+				default:
 					slog.ErrorContext(r.Context(), "failed to validate webdav credentials", "error", err)
 					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 				}
 				return
 			}
 
-			if out.RequiresMFA {
-				http.Error(w, "MFA-protected accounts cannot use WebDAV", http.StatusForbidden)
-				return
-			}
-
-			info := authn.AuthInfo{
-				UserID:        out.UserID,
-				Name:          out.Name,
-				Email:         out.Email,
-				EmailVerified: out.EmailVerified,
-			}
-			r = r.WithContext(authn.NewContext(r.Context(), info))
+			identity := authn.EmailIdentity{Email: out.Email}
+			r = r.WithContext(authn.PopulateContext(r.Context(), identity, out.Account))
 			next.ServeHTTP(w, r)
 		})
 	}

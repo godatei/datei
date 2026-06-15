@@ -162,7 +162,7 @@ func (s *Service) CreateFile(ctx context.Context, input CreateFileInput) (*api.F
 	id := uuid.New()
 	now := time.Now()
 
-	userID := authn.RequireContext(ctx).UserID
+	userID := authn.RequireCurrentUser(ctx).ID
 
 	agg := &Aggregate{}
 	if err := agg.Create(id, input.ParentID, isDirectory, input.FileName, userID, now); err != nil {
@@ -252,7 +252,7 @@ func (s *Service) UpdateFile(ctx context.Context, input UpdateFileInput) (*api.F
 	}
 
 	now := time.Now()
-	userID := authn.RequireContext(ctx).UserID
+	userID := authn.RequireCurrentUser(ctx).ID
 
 	if input.Name != nil {
 		if err := agg.Rename(*input.Name, userID, now); err != nil {
@@ -587,7 +587,7 @@ func (s *Service) DeleteFile(ctx context.Context, fileID uuid.UUID) error {
 		return err
 	}
 
-	userID := authn.RequireContext(ctx).UserID
+	userID := authn.RequireCurrentUser(ctx).ID
 	if err := agg.Trash(userID, time.Now()); err != nil {
 		return err
 	}
@@ -611,7 +611,7 @@ func (s *Service) RestoreFile(ctx context.Context, input RestoreFileInput) error
 		return err
 	}
 
-	userID := authn.RequireContext(ctx).UserID
+	userID := authn.RequireCurrentUser(ctx).ID
 	now := time.Now()
 
 	if input.ParentID != nil {

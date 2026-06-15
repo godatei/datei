@@ -2,14 +2,17 @@ package users
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 
+	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/authjwt"
 	"github.com/godatei/datei/internal/config"
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/mailer"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -40,6 +43,9 @@ func (s *UserService) GetUser(ctx context.Context, userID uuid.UUID) (db.UserAcc
 	q := s.queries()
 	user, err := q.GetUserAccountByID(ctx, userID)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return db.UserAccountProjection{}, apperrors.ErrNotFound
+		}
 		return db.UserAccountProjection{}, fmt.Errorf("failed to get user: %w", err)
 	}
 	return user, nil
