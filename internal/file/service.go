@@ -112,22 +112,16 @@ func (s *Service) extractPDFText(ctx context.Context, buf []byte) (string, error
 	n := doc.NumPage()
 
 	pages := make([]string, n)
-	hasText := false
 	for i := range n {
 		t, err := doc.Text(i)
 		if err != nil {
 			return "", fmt.Errorf("read pdf text page %d: %w", i, err)
 		}
 		if strings.TrimSpace(t) != "" {
-			hasText = true
+			pages[i] = t
+			continue
 		}
-		pages[i] = t
-	}
-	if hasText {
-		return strings.Join(pages, pageBreak), nil
-	}
 
-	for i := range n {
 		img, err := doc.ImageDPI(i, ocrDPI)
 		if err != nil {
 			return "", fmt.Errorf("render pdf page %d: %w", i, err)
@@ -136,7 +130,7 @@ func (s *Service) extractPDFText(ctx context.Context, buf []byte) (string, error
 		if err := jpeg.Encode(&jpg, img, nil); err != nil {
 			return "", fmt.Errorf("encode pdf page %d: %w", i, err)
 		}
-		t, err := s.ocrClient.ExtractText(ctx, &jpg)
+		t, err = s.ocrClient.ExtractText(ctx, &jpg)
 		if err != nil {
 			return "", fmt.Errorf("ocr pdf page %d: %w", i, err)
 		}
