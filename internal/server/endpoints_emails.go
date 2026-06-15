@@ -18,9 +18,9 @@ type emailsServer struct {
 func (s *emailsServer) ListEmails(
 	ctx context.Context, _ ListEmailsRequestObject,
 ) (ListEmailsResponseObject, error) {
-	authInfo := authn.RequireContext(ctx)
+	user := authn.RequireCurrentUser(ctx)
 
-	emails, err := s.svc.ListEmails(ctx, authInfo.UserID)
+	emails, err := s.svc.ListEmails(ctx, user.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -32,10 +32,10 @@ func (s *emailsServer) ListEmails(
 func (s *emailsServer) AddEmail(
 	ctx context.Context, request AddEmailRequestObject,
 ) (AddEmailResponseObject, error) {
-	authInfo := authn.RequireContext(ctx)
+	user := authn.RequireCurrentUser(ctx)
 
 	err := s.svc.AddEmail(ctx, users.AddEmailInput{
-		UserID: authInfo.UserID,
+		UserID: user.ID,
 		Email:  string(request.Body.Email),
 	})
 	if err != nil {
@@ -52,9 +52,9 @@ func (s *emailsServer) AddEmail(
 func (s *emailsServer) RemoveEmail(
 	ctx context.Context, request RemoveEmailRequestObject,
 ) (RemoveEmailResponseObject, error) {
-	authInfo := authn.RequireContext(ctx)
+	user := authn.RequireCurrentUser(ctx)
 
-	err := s.svc.RemoveEmail(ctx, authInfo.UserID, request.EmailId)
+	err := s.svc.RemoveEmail(ctx, user.ID, request.EmailId)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrNotFound) {
 			return RemoveEmail404Response{}, nil
@@ -72,9 +72,9 @@ func (s *emailsServer) RemoveEmail(
 func (s *emailsServer) SetPrimaryEmail(
 	ctx context.Context, request SetPrimaryEmailRequestObject,
 ) (SetPrimaryEmailResponseObject, error) {
-	authInfo := authn.RequireContext(ctx)
+	user := authn.RequireCurrentUser(ctx)
 
-	err := s.svc.SetPrimaryEmail(ctx, authInfo.UserID, request.EmailId)
+	err := s.svc.SetPrimaryEmail(ctx, user.ID, request.EmailId)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrNotFound) {
 			return SetPrimaryEmail404Response{}, nil

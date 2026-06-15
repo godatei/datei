@@ -4,21 +4,20 @@ import (
 	"context"
 
 	"github.com/godatei/datei/internal/apperrors"
+	"github.com/godatei/datei/internal/users"
 )
 
-// RequireAdmin returns the current AuthInfo if the caller is authenticated AND
-// has is_admin=true on the JWT. Returns apperrors.ErrForbidden if not.
+// RequireAdmin returns the current user record if the caller is authenticated
+// AND is_admin=true. Returns apperrors.ErrForbidden if not.
 //
-// The check trusts the JWT claim; demotion takes effect on the user's next
-// token refresh. If we ever need real-time revocation, route this through a
-// DB lookup instead.
-func RequireAdmin(ctx context.Context) (AuthInfo, error) {
-	info, err := FromContext(ctx)
-	if err != nil {
-		return AuthInfo{}, err
+// The admin flag is read from the database-backed account loaded by the auth
+// middleware, so demotion takes effect on the next request.
+func RequireAdmin(ctx context.Context) (users.UserAccount, error) {
+	if user, err := GetCurrentUser(ctx); err != nil {
+		return users.UserAccount{}, err
+	} else if !user.IsAdmin {
+		return users.UserAccount{}, apperrors.ErrForbidden
+	} else {
+		return user, nil
 	}
-	if !info.IsAdmin {
-		return AuthInfo{}, apperrors.ErrForbidden
-	}
-	return info, nil
 }
