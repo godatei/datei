@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/config"
-	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/security"
 	"github.com/godatei/datei/pkg/api"
@@ -61,7 +61,7 @@ func (s *UserService) GetUserForAdmin(
 	user, err := q.GetUserAccountByID(ctx, userID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return api.AdminUserListItem{}, dateierrors.ErrNotFound
+			return api.AdminUserListItem{}, apperrors.ErrNotFound
 		}
 		return api.AdminUserListItem{}, fmt.Errorf("failed to get user: %w", err)
 	}
@@ -95,10 +95,10 @@ func (s *UserService) AdminCreateUser(
 	ctx context.Context, input AdminCreateUserInput,
 ) (api.AdminUserListItem, error) {
 	if input.Name == "" || input.Email == "" {
-		return api.AdminUserListItem{}, dateierrors.ErrInvalidInput
+		return api.AdminUserListItem{}, apperrors.ErrInvalidInput
 	}
 	if len(input.Password) < 8 {
-		return api.AdminUserListItem{}, dateierrors.ErrInvalidInput
+		return api.AdminUserListItem{}, apperrors.ErrInvalidInput
 	}
 
 	q := s.queries()
@@ -107,7 +107,7 @@ func (s *UserService) AdminCreateUser(
 		return api.AdminUserListItem{}, fmt.Errorf("failed to check existing user: %w", err)
 	}
 	if exists {
-		return api.AdminUserListItem{}, dateierrors.ErrEmailAlreadyInUse
+		return api.AdminUserListItem{}, apperrors.ErrEmailAlreadyInUse
 	}
 
 	hash, salt, err := security.HashPassword(input.Password)
@@ -152,7 +152,7 @@ func (s *UserService) AdminUpdateUser(ctx context.Context, input AdminUpdateUser
 		email, err := q.GetEmailByID(ctx, db.GetEmailByIDParams{ID: *input.PrimaryEmailID, UserAccountID: input.UserID})
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
-				return dateierrors.ErrNotFound
+				return apperrors.ErrNotFound
 			}
 			return fmt.Errorf("failed to get email: %w", err)
 		}
@@ -173,29 +173,29 @@ func (s *UserService) AdminUpdateUser(ctx context.Context, input AdminUpdateUser
 	now := time.Now()
 	if input.Name != nil {
 		if err := agg.ChangeName(*input.Name, now); err != nil {
-			return dateierrors.ErrInvalidInput
+			return apperrors.ErrInvalidInput
 		}
 	}
 	if input.IsAdmin != nil {
 		if err := agg.SetAdmin(*input.IsAdmin, now); err != nil {
-			return dateierrors.ErrInvalidInput
+			return apperrors.ErrInvalidInput
 		}
 	}
 	if input.Archived != nil {
 		currentlyArchived := agg.ArchivedAt != nil
 		if *input.Archived && !currentlyArchived {
 			if err := agg.Archive(now); err != nil {
-				return dateierrors.ErrInvalidInput
+				return apperrors.ErrInvalidInput
 			}
 		} else if !*input.Archived && currentlyArchived {
 			if err := agg.Unarchive(now); err != nil {
-				return dateierrors.ErrInvalidInput
+				return apperrors.ErrInvalidInput
 			}
 		}
 	}
 	if input.PrimaryEmailID != nil && currentPrimaryID != uuid.Nil {
 		if err := agg.SetPrimaryEmail(currentPrimaryID, *input.PrimaryEmailID, now); err != nil {
-			return dateierrors.ErrInvalidInput
+			return apperrors.ErrInvalidInput
 		}
 	}
 
@@ -212,7 +212,7 @@ type AdminResetPasswordInput struct {
 
 func (s *UserService) AdminResetPassword(ctx context.Context, input AdminResetPasswordInput) error {
 	if len(input.Password) < 8 {
-		return dateierrors.ErrInvalidInput
+		return apperrors.ErrInvalidInput
 	}
 	hash, salt, err := security.HashPassword(input.Password)
 	if err != nil {
@@ -224,7 +224,7 @@ func (s *UserService) AdminResetPassword(ctx context.Context, input AdminResetPa
 		return fmt.Errorf("failed to load user: %w", err)
 	}
 	if err := agg.ChangePassword(hash, salt, time.Now()); err != nil {
-		return dateierrors.ErrInvalidInput
+		return apperrors.ErrInvalidInput
 	}
 	if err := s.repository.Save(ctx, agg); err != nil {
 		return fmt.Errorf("failed to save user: %w", err)
@@ -250,7 +250,7 @@ func (s *UserService) AdminAddEmail(ctx context.Context, userID uuid.UUID, email
 		return fmt.Errorf("failed to check existing email: %w", err)
 	}
 	if exists {
-		return dateierrors.ErrEmailAlreadyInUse
+		return apperrors.ErrEmailAlreadyInUse
 	}
 
 	agg, err := s.repository.LoadByID(ctx, userID)
@@ -258,7 +258,7 @@ func (s *UserService) AdminAddEmail(ctx context.Context, userID uuid.UUID, email
 		return fmt.Errorf("failed to load user: %w", err)
 	}
 	if err := agg.AddEmail(uuid.New(), email, time.Now()); err != nil {
-		return dateierrors.ErrInvalidInput
+		return apperrors.ErrInvalidInput
 	}
 	if err := s.repository.Save(ctx, agg); err != nil {
 		return fmt.Errorf("failed to save user: %w", err)
@@ -271,12 +271,12 @@ func (s *UserService) AdminRemoveEmail(ctx context.Context, userID, emailID uuid
 	email, err := q.GetEmailByID(ctx, db.GetEmailByIDParams{ID: emailID, UserAccountID: userID})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return dateierrors.ErrNotFound
+			return apperrors.ErrNotFound
 		}
 		return fmt.Errorf("failed to get email: %w", err)
 	}
 	if email.IsPrimary {
-		return dateierrors.ErrInvalidInput
+		return apperrors.ErrInvalidInput
 	}
 
 	agg, err := s.repository.LoadByID(ctx, userID)
@@ -284,7 +284,7 @@ func (s *UserService) AdminRemoveEmail(ctx context.Context, userID, emailID uuid
 		return fmt.Errorf("failed to load user: %w", err)
 	}
 	if err := agg.RemoveEmail(emailID, time.Now()); err != nil {
-		return dateierrors.ErrInvalidInput
+		return apperrors.ErrInvalidInput
 	}
 	if err := s.repository.Save(ctx, agg); err != nil {
 		return fmt.Errorf("failed to save user: %w", err)
@@ -297,12 +297,12 @@ func (s *UserService) AdminDisableMFA(ctx context.Context, userID uuid.UUID) err
 	user, err := q.GetUserAccountByID(ctx, userID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return dateierrors.ErrNotFound
+			return apperrors.ErrNotFound
 		}
 		return fmt.Errorf("failed to get user: %w", err)
 	}
 	if !user.MfaEnabled {
-		return dateierrors.ErrMFANotEnabled
+		return apperrors.ErrMFANotEnabled
 	}
 
 	agg, err := s.repository.LoadByID(ctx, userID)
@@ -310,7 +310,7 @@ func (s *UserService) AdminDisableMFA(ctx context.Context, userID uuid.UUID) err
 		return fmt.Errorf("failed to load user: %w", err)
 	}
 	if err := agg.DisableMFA(time.Now()); err != nil {
-		return dateierrors.ErrInvalidInput
+		return apperrors.ErrInvalidInput
 	}
 	if err := s.repository.Save(ctx, agg); err != nil {
 		return fmt.Errorf("failed to disable MFA: %w", err)

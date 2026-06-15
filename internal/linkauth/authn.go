@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3filter"
-	"github.com/godatei/datei/internal/dateierrors"
+	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/link"
 )
 
@@ -43,11 +43,11 @@ func OpenAPIAuthFunc() openapi3filter.AuthenticationFunc {
 		r := input.RequestValidationInput.Request
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			return fmt.Errorf("missing Authorization header: %w", dateierrors.ErrLinkUnauthorized)
+			return fmt.Errorf("missing Authorization header: %w", apperrors.ErrLinkUnauthorized)
 		}
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		if tokenString == authHeader {
-			return fmt.Errorf("invalid Authorization header format: %w", dateierrors.ErrLinkUnauthorized)
+			return fmt.Errorf("invalid Authorization header format: %w", apperrors.ErrLinkUnauthorized)
 		}
 		claims, err := link.ParseSessionToken(tokenString)
 		if err != nil {

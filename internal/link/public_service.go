@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/godatei/datei/internal/datei"
-	"github.com/godatei/datei/internal/dateierrors"
+	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/db"
+	"github.com/godatei/datei/internal/file"
 	"github.com/godatei/datei/pkg/api"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -22,18 +22,18 @@ import (
 type PublicService struct {
 	db         *pgxpool.Pool
 	repository Repository
-	dateiSvc   *datei.Service
+	fileSvc    *file.Service
 }
 
 func NewPublicService(
 	pool *pgxpool.Pool,
 	repository Repository,
-	dateiSvc *datei.Service,
+	fileSvc *file.Service,
 ) *PublicService {
 	return &PublicService{
 		db:         pool,
 		repository: repository,
-		dateiSvc:   dateiSvc,
+		fileSvc:    fileSvc,
 	}
 }
 
@@ -64,7 +64,7 @@ func (s *PublicService) UnlockPublicLink(ctx context.Context, key, code string) 
 	}
 	if row.Code != nil {
 		if subtle.ConstantTimeCompare([]byte(code), []byte(*row.Code)) != 1 {
-			return nil, dateierrors.ErrLinkCodeRequired
+			return nil, apperrors.ErrLinkCodeRequired
 		}
 	}
 
@@ -72,8 +72,8 @@ func (s *PublicService) UnlockPublicLink(ctx context.Context, key, code string) 
 
 	agg, err := s.repository.LoadByID(ctx, row.ID)
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrNotFound) {
-			return nil, dateierrors.ErrLinkNotFound
+		if errors.Is(err, apperrors.ErrNotFound) {
+			return nil, apperrors.ErrLinkNotFound
 		}
 		return nil, err
 	}
@@ -97,23 +97,23 @@ func (s *PublicService) UnlockPublicLink(ctx context.Context, key, code string) 
 	return &UnlockOutput{Token: token, ExpiresAt: exp}, nil
 }
 
-// ListPublicLinkDateienOutput holds a public link's display name, owner name,
-// expiration, and the dateien accessible at the requested level.
-type ListPublicLinkDateienOutput struct {
+// ListPublicLinkFilesOutput holds a public link's display name, owner name,
+// expiration, and the files accessible at the requested level.
+type ListPublicLinkFilesOutput struct {
 	Name      string
 	OwnerName string
 	ExpiresAt *time.Time
-	Items     []api.Datei
+	Items     []api.File
 }
 
-// ListPublicLinkDateien returns the dateien visible to a public viewer after
+// ListPublicLinkFiles returns the files visible to a public viewer after
 // unlock. The session (link ID + token-bound key) is read from the JWT context
 // — the caller does not pass a key or code.
-func (s *PublicService) ListPublicLinkDateien(
+func (s *PublicService) ListPublicLinkFiles(
 	ctx context.Context,
 	session SessionClaims,
 	parentID *uuid.UUID,
-) (*ListPublicLinkDateienOutput, error) {
+) (*ListPublicLinkFilesOutput, error) {
 	row, err := s.verifyLinkActive(ctx, session.LinkID, session.Fingerprint)
 	if err != nil {
 		return nil, err
@@ -121,28 +121,28 @@ func (s *PublicService) ListPublicLinkDateien(
 
 	queries := db.New(s.db)
 	if parentID == nil {
-		dateien, err := queries.ListDateienByLink(ctx, row.ID)
+		files, err := queries.ListFilesByLink(ctx, row.ID)
 		if err != nil {
 			return nil, err
 		}
-		return &ListPublicLinkDateienOutput{
+		return &ListPublicLinkFilesOutput{
 			Name:      row.Name,
 			OwnerName: row.OwnerName,
 			ExpiresAt: row.ExpiresAt,
-			Items:     datei.MapProjectionSliceToAPI(dateien),
+			Items:     file.MapProjectionSliceToAPI(files),
 		}, nil
 	}
 
 	// Existence check before scope check so a missing parent returns 404
 	// (distinct from "exists but not shared", which returns 403).
-	if _, err := queries.GetDateiProjectionByID(ctx, *parentID); err != nil {
+	if _, err := queries.GetFileProjectionByID(ctx, *parentID); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, dateierrors.ErrNotFound
+			return nil, apperrors.ErrNotFound
 		}
 		return nil, err
 	}
 
-	inScope, err := queries.IsDateiInLinkScope(ctx, db.IsDateiInLinkScopeParams{
+	inScope, err := queries.IsFileInLinkScope(ctx, db.IsFileInLinkScopeParams{
 		LinkID: row.ID,
 		ID:     *parentID,
 	})
@@ -150,12 +150,12 @@ func (s *PublicService) ListPublicLinkDateien(
 		return nil, err
 	}
 	if !inScope {
-		return nil, dateierrors.ErrLinkDateiNotShared
+		return nil, apperrors.ErrLinkFileNotShared
 	}
 
 	// The public viewer renders the full folder contents in one shot — no
 	// pagination yet — so request all rows.
-	children, err := queries.ListDateiProjectionsByParent(ctx, db.ListDateiProjectionsByParentParams{
+	children, err := queries.ListFileProjectionsByParent(ctx, db.ListFileProjectionsByParentParams{
 		ParentID: parentID,
 		Limit:    publicListChildrenLimit,
 		Offset:   0,
@@ -163,46 +163,46 @@ func (s *PublicService) ListPublicLinkDateien(
 	if err != nil {
 		return nil, err
 	}
-	return &ListPublicLinkDateienOutput{
+	return &ListPublicLinkFilesOutput{
 		Name:      row.Name,
 		OwnerName: row.OwnerName,
 		ExpiresAt: row.ExpiresAt,
-		Items:     datei.MapProjectionSliceToAPI(children),
+		Items:     file.MapProjectionSliceToAPI(children),
 	}, nil
 }
 
-func (s *PublicService) DownloadPublicLinkDatei(
+func (s *PublicService) DownloadPublicLinkFile(
 	ctx context.Context,
 	session SessionClaims,
-	dateiID uuid.UUID,
-) (*datei.DownloadDateiOutput, error) {
+	fileID uuid.UUID,
+) (*file.DownloadFileOutput, error) {
 	row, err := s.verifyLinkActive(ctx, session.LinkID, session.Fingerprint)
 	if err != nil {
 		return nil, err
 	}
 
 	queries := db.New(s.db)
-	// Existence check before scope check so a missing datei returns 404
+	// Existence check before scope check so a missing file returns 404
 	// (distinct from "exists but not shared", which returns 403).
-	if _, err := queries.GetDateiProjectionByID(ctx, dateiID); err != nil {
+	if _, err := queries.GetFileProjectionByID(ctx, fileID); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, dateierrors.ErrNotFound
+			return nil, apperrors.ErrNotFound
 		}
 		return nil, err
 	}
 
-	inScope, err := queries.IsDateiInLinkScope(ctx, db.IsDateiInLinkScopeParams{
+	inScope, err := queries.IsFileInLinkScope(ctx, db.IsFileInLinkScopeParams{
 		LinkID: row.ID,
-		ID:     dateiID,
+		ID:     fileID,
 	})
 	if err != nil {
 		return nil, err
 	}
 	if !inScope {
-		return nil, dateierrors.ErrLinkDateiNotShared
+		return nil, apperrors.ErrLinkFileNotShared
 	}
 
-	return s.dateiSvc.DownloadDatei(ctx, dateiID)
+	return s.fileSvc.DownloadFile(ctx, fileID)
 }
 
 // lookupLinkByKey returns the projection row for unlock; it checks the link is
@@ -211,15 +211,15 @@ func (s *PublicService) lookupLinkByKey(ctx context.Context, key string) (*db.Li
 	queries := db.New(s.db)
 	row, err := queries.GetLinkProjectionByKey(ctx, key)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, dateierrors.ErrLinkNotFound
+		return nil, apperrors.ErrLinkNotFound
 	} else if err != nil {
 		return nil, err
 	}
 	if row.RevokedAt != nil {
-		return nil, dateierrors.ErrLinkRevoked
+		return nil, apperrors.ErrLinkRevoked
 	}
 	if row.ExpiresAt != nil && row.ExpiresAt.Before(time.Now()) {
-		return nil, dateierrors.ErrLinkExpired
+		return nil, apperrors.ErrLinkExpired
 	}
 	return &row, nil
 }
@@ -236,19 +236,19 @@ func (s *PublicService) verifyLinkActive(
 	queries := db.New(s.db)
 	row, err := queries.GetLinkProjectionWithOwnerByID(ctx, linkID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, dateierrors.ErrLinkNotFound
+		return nil, apperrors.ErrLinkNotFound
 	} else if err != nil {
 		return nil, err
 	}
 	if row.RevokedAt != nil {
-		return nil, dateierrors.ErrLinkRevoked
+		return nil, apperrors.ErrLinkRevoked
 	}
 	if row.ExpiresAt != nil && row.ExpiresAt.Before(time.Now()) {
-		return nil, dateierrors.ErrLinkExpired
+		return nil, apperrors.ErrLinkExpired
 	}
 	currentFingerprint := LinkFingerprint(row.Key, row.Code)
 	if subtle.ConstantTimeCompare([]byte(tokenFingerprint), []byte(currentFingerprint)) != 1 {
-		return nil, dateierrors.ErrLinkUnauthorized
+		return nil, apperrors.ErrLinkUnauthorized
 	}
 	return &row, nil
 }

@@ -7,9 +7,9 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/authjwt"
 	"github.com/godatei/datei/internal/config"
-	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/mailer"
 	"github.com/godatei/datei/internal/security"
@@ -64,7 +64,7 @@ func (s *UserService) Login(ctx context.Context, input LoginInput) (*LoginOutput
 			}
 
 			if matchedCodeID == nil {
-				return nil, dateierrors.ErrMFAInvalidCode
+				return nil, apperrors.ErrMFAInvalidCode
 			}
 
 			agg, err := s.repository.LoadByID(ctx, user.ID)
@@ -148,12 +148,12 @@ func (s *UserService) verifyCredentials(ctx context.Context, email, password str
 	user, err := s.queries().GetUserAccountByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return db.UserAccountProjection{}, dateierrors.ErrInvalidCredentials
+			return db.UserAccountProjection{}, apperrors.ErrInvalidCredentials
 		}
 		return db.UserAccountProjection{}, fmt.Errorf("failed to get user: %w", err)
 	}
 	if err := security.VerifyPassword(password, user.PasswordHash, user.PasswordSalt); err != nil {
-		return db.UserAccountProjection{}, dateierrors.ErrInvalidCredentials
+		return db.UserAccountProjection{}, apperrors.ErrInvalidCredentials
 	}
 	return user, nil
 }
@@ -166,14 +166,14 @@ type RegisterInput struct {
 
 func (s *UserService) Register(ctx context.Context, input RegisterInput) error {
 	if !config.AuthRegistrationEnabled() {
-		return dateierrors.ErrRegistrationDisabled
+		return apperrors.ErrRegistrationDisabled
 	}
 
 	if input.Email == "" || input.Password == "" || input.Name == "" {
-		return dateierrors.ErrInvalidInput
+		return apperrors.ErrInvalidInput
 	}
 	if len(input.Password) < 8 {
-		return dateierrors.ErrInvalidInput
+		return apperrors.ErrInvalidInput
 	}
 
 	q := s.queries()
@@ -182,7 +182,7 @@ func (s *UserService) Register(ctx context.Context, input RegisterInput) error {
 		return fmt.Errorf("failed to check existing user: %w", err)
 	}
 	if exists {
-		return dateierrors.ErrEmailAlreadyInUse
+		return apperrors.ErrEmailAlreadyInUse
 	}
 
 	passwordHash, passwordSalt, err := security.HashPassword(input.Password)

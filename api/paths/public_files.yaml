@@ -1,0 +1,26 @@
+get:
+  operationId: ListPublicLinkFiles
+  summary: List files shared via the unlocked public link
+  security:
+    - publicLinkBearerAuthentication: []
+  parameters:
+    - name: parentId
+      in: query
+      required: false
+      description: When set, list children of this folder (must be inside the link's shared scope); when omitted, list the top-level shared files
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: List of files accessible via this link
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ListPublicLinkFilesResponse.yaml'
+    '401':
+      description: Token missing or expired
+    '403':
+      description: Link state changed since unlock (revoked, expired) or file not shared
+    '404':
+      description: File not found in the link's shared scope

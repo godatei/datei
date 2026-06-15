@@ -47,10 +47,10 @@ func updateProjection(ctx context.Context, q *db.Queries, event events.DomainEve
 		return updateProjectionForLinkUpdated(ctx, q, &e)
 	case LinkKeyRotatedEvent:
 		return updateProjectionForLinkKeyRotated(ctx, q, &e)
-	case LinkDateiAddedEvent:
-		return updateProjectionForLinkDateiAdded(ctx, q, &e)
-	case LinkDateiRemovedEvent:
-		return updateProjectionForLinkDateiRemoved(ctx, q, &e)
+	case LinkFileAddedEvent:
+		return updateProjectionForLinkFileAdded(ctx, q, &e)
+	case LinkFileRemovedEvent:
+		return updateProjectionForLinkFileRemoved(ctx, q, &e)
 	case LinkRevokedEvent:
 		return updateProjectionForLinkRevoked(ctx, q, &e)
 	case LinkOpenedEvent:

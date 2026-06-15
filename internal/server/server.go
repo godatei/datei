@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/godatei/datei/internal/datei"
+	"github.com/godatei/datei/internal/file"
 	"github.com/godatei/datei/internal/link"
 	"github.com/godatei/datei/internal/users"
 )
@@ -14,7 +14,7 @@ const (
 )
 
 type server struct {
-	dateiServer
+	fileServer
 	trashServer
 	authServer
 	settingsServer
@@ -25,14 +25,14 @@ type server struct {
 }
 
 func NewServer(
-	dateiSvc *datei.Service,
+	fileSvc *file.Service,
 	userSvc *users.UserService,
 	linkSvc *link.Service,
 	publicLinkSvc *link.PublicService,
 ) *server {
 	return &server{
-		dateiServer:      dateiServer{svc: dateiSvc},
-		trashServer:      trashServer{svc: dateiSvc},
+		fileServer:       fileServer{svc: fileSvc},
+		trashServer:      trashServer{svc: fileSvc},
 		authServer:       authServer{svc: userSvc},
 		settingsServer:   settingsServer{svc: userSvc},
 		emailsServer:     emailsServer{svc: userSvc},

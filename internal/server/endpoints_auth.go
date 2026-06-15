@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/godatei/datei/internal/dateierrors"
+	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/users"
 	"github.com/godatei/datei/pkg/api"
 )
@@ -21,10 +21,10 @@ func (s *authServer) Login(ctx context.Context, request LoginRequestObject) (Log
 		MfaCode:  request.Body.MfaCode,
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrInvalidCredentials) {
+		if errors.Is(err, apperrors.ErrInvalidCredentials) {
 			return Login401Response{}, nil
 		}
-		if errors.Is(err, dateierrors.ErrMFAInvalidCode) {
+		if errors.Is(err, apperrors.ErrMFAInvalidCode) {
 			return Login401Response{}, nil
 		}
 		return nil, err
@@ -55,10 +55,10 @@ func (s *authServer) Register(ctx context.Context, request RegisterRequestObject
 		Password: request.Body.Password,
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrRegistrationDisabled) {
+		if errors.Is(err, apperrors.ErrRegistrationDisabled) {
 			return Register403Response{}, nil
 		}
-		if errors.Is(err, dateierrors.ErrInvalidInput) || errors.Is(err, dateierrors.ErrEmailAlreadyInUse) {
+		if errors.Is(err, apperrors.ErrInvalidInput) || errors.Is(err, apperrors.ErrEmailAlreadyInUse) {
 			return Register400Response{}, nil
 		}
 		return nil, err

@@ -1,0 +1,33 @@
+post:
+  operationId: AddFileToLink
+  summary: Add a file to a link
+  security:
+    - bearerHttpAuthentication: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/AddFileToLinkRequest.yaml'
+  responses:
+    '200':
+      description: Updated link
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/LinkDetail.yaml'
+    '400':
+      description: Invalid request
+    '403':
+      description: Link revoked
+    '404':
+      description: Link not found
+    '409':
+      description: File already added to the link

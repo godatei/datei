@@ -14,22 +14,22 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Api } from '~/api/api';
 import {
-  addDateiToLink,
-  createDatei,
-  deleteDatei,
-  downloadDatei,
-  getDateiPath,
-  listDatei,
-  updateDatei$FormData,
+  addFileToLink,
+  createFile,
+  deleteFile,
+  downloadFile,
+  getFilePath,
+  listFiles,
+  updateFile$FormData,
 } from '~/api/functions';
-import { Datei } from '~/api/models';
+import { File } from '~/api/models';
 import { ThumbnailIconComponent } from './thumbnail-icon.component';
 import {
   ImagePreviewDialogComponent,
   ImagePreviewDialogData,
 } from './image-preview-dialog.component';
 import { NewFolderDialogComponent } from './new-folder-dialog.component';
-import { RenameDateiDialogComponent, RenameDateiDialogData } from './rename-datei-dialog.component';
+import { RenameFileDialogComponent, RenameFileDialogData } from './rename-file-dialog.component';
 import {
   LinkFormDialogComponent,
   LinkFormDialogData,
@@ -83,21 +83,19 @@ export class DashboardComponent {
 
   protected readonly parentId = computed(() => this.queryParams()?.get('parentId') ?? null);
 
-  protected readonly listDateiResource = resource({
+  protected readonly listFilesResource = resource({
     params: () => ({ parentId: this.parentId(), refresh: this.refresh() }),
     loader: ({ params }) =>
-      this.api.invoke(listDatei, params.parentId ? { parentId: params.parentId } : undefined),
+      this.api.invoke(listFiles, params.parentId ? { parentId: params.parentId } : undefined),
   });
 
   protected readonly pathResource = resource({
     params: () => ({ parentId: this.parentId() }),
     loader: ({ params }) =>
-      params.parentId
-        ? this.api.invoke(getDateiPath, { id: params.parentId })
-        : Promise.resolve([]),
+      params.parentId ? this.api.invoke(getFilePath, { id: params.parentId }) : Promise.resolve([]),
   });
 
-  protected readonly dataSource = new MatTableDataSource<Datei>([]);
+  protected readonly dataSource = new MatTableDataSource<File>([]);
   protected readonly displayedColumns = [
     'icon',
     'name',
@@ -107,17 +105,17 @@ export class DashboardComponent {
     'updatedAt',
     'actions',
   ];
-  protected readonly selection = viewChild.required<SelectionDirective<Datei>>(SelectionDirective);
+  protected readonly selection = viewChild.required<SelectionDirective<File>>(SelectionDirective);
   protected readonly uploading = signal(false);
 
   constructor() {
     effect(() => {
-      this.dataSource.data = this.listDateiResource.value()?.items ?? [];
+      this.dataSource.data = this.listFilesResource.value()?.items ?? [];
       this.selection().clear();
     });
   }
 
-  protected onRowDblClick(row: Datei): void {
+  protected onRowDblClick(row: File): void {
     if (row.isDirectory) {
       this.selection().clear();
       this.router.navigate([], { relativeTo: this.route, queryParams: { parentId: row.id } });
@@ -133,7 +131,7 @@ export class DashboardComponent {
 
   private async previewImage(id: string, name: string): Promise<void> {
     try {
-      const response = await this.api.invoke$Response(downloadDatei, { id });
+      const response = await this.api.invoke$Response(downloadFile, { id });
       const url = URL.createObjectURL(response.body as Blob);
       const ref = this.dialog.open(ImagePreviewDialogComponent, {
         data: {
@@ -152,7 +150,7 @@ export class DashboardComponent {
 
   private async downloadFile(id: string, name: string): Promise<void> {
     try {
-      const response = await this.api.invoke$Response(downloadDatei, { id });
+      const response = await this.api.invoke$Response(downloadFile, { id });
       triggerDownload(response.body as Blob, name);
     } catch (e) {
       console.error(e);
@@ -173,7 +171,7 @@ export class DashboardComponent {
       if (!name) return;
       try {
         const parentId = this.parentId() ?? undefined;
-        await this.api.invoke(createDatei, { body: { name, parentId } });
+        await this.api.invoke(createFile, { body: { name, parentId } });
         this.refresh.update((v) => v + 1);
       } catch (e) {
         console.error(e);
@@ -182,18 +180,18 @@ export class DashboardComponent {
     });
   }
 
-  protected openRenameDialog(datei: Datei): void {
-    const ref = this.dialog.open(RenameDateiDialogComponent, {
+  protected openRenameDialog(file: File): void {
+    const ref = this.dialog.open(RenameFileDialogComponent, {
       width: '360px',
       data: {
-        currentName: datei.name ?? '',
-        isDirectory: datei.isDirectory,
-      } satisfies RenameDateiDialogData,
+        currentName: file.name ?? '',
+        isDirectory: file.isDirectory,
+      } satisfies RenameFileDialogData,
     });
     ref.afterClosed().subscribe(async (name: string | null) => {
       if (!name) return;
       try {
-        await this.api.invoke(updateDatei$FormData, { id: datei.id, body: { name } });
+        await this.api.invoke(updateFile$FormData, { id: file.id, body: { name } });
         this.refresh.update((v) => v + 1);
       } catch (e) {
         console.error(e);
@@ -202,7 +200,7 @@ export class DashboardComponent {
     });
   }
 
-  protected async trashDatei(item: Datei, event: Event): Promise<void> {
+  protected async trashFile(item: File, event: Event): Promise<void> {
     event.stopPropagation();
     await this.trash(item);
   }
@@ -211,7 +209,7 @@ export class DashboardComponent {
     await this.trash(this.selection().selected());
   }
 
-  private async trash(items: Datei | Datei[]): Promise<void> {
+  private async trash(items: File | File[]): Promise<void> {
     if (!Array.isArray(items)) {
       items = [items];
     }
@@ -221,7 +219,7 @@ export class DashboardComponent {
     }
 
     const results = await Promise.allSettled(
-      items.map((item) => this.api.invoke(deleteDatei, { id: item.id })),
+      items.map((item) => this.api.invoke(deleteFile, { id: item.id })),
     );
 
     const failed = results.filter((r) => r.status === 'rejected').length;
@@ -240,7 +238,7 @@ export class DashboardComponent {
     }
   }
 
-  protected createLinkForRow(row: Datei): void {
+  protected createLinkForRow(row: File): void {
     this.openCreateLinkDialog([row.id], row.name ?? undefined);
   }
 
@@ -252,9 +250,9 @@ export class DashboardComponent {
     this.openCreateLinkDialog(ids, defaultName);
   }
 
-  private openCreateLinkDialog(dateiIds: string[], defaultName: string | undefined): void {
+  private openCreateLinkDialog(fileIds: string[], defaultName: string | undefined): void {
     const ref = this.dialog.open(LinkFormDialogComponent, {
-      data: { mode: 'create', dateiIds, defaultName } satisfies LinkFormDialogData,
+      data: { mode: 'create', fileIds, defaultName } satisfies LinkFormDialogData,
     });
     ref.afterClosed().subscribe((link) => {
       if (!link) return;
@@ -271,7 +269,7 @@ export class DashboardComponent {
     });
   }
 
-  protected addToLinkForRow(row: Datei): void {
+  protected addToLinkForRow(row: File): void {
     this.openLinkPickerAndAdd([row.id]);
   }
 
@@ -283,14 +281,12 @@ export class DashboardComponent {
     this.openLinkPickerAndAdd(ids);
   }
 
-  private openLinkPickerAndAdd(dateiIds: string[]): void {
+  private openLinkPickerAndAdd(fileIds: string[]): void {
     const ref = this.dialog.open(LinkPickerDialogComponent);
     ref.afterClosed().subscribe(async (link: Link | undefined) => {
       if (!link) return;
       const results = await Promise.allSettled(
-        dateiIds.map((dateiId) =>
-          this.api.invoke(addDateiToLink, { id: link.id, body: { dateiId } }),
-        ),
+        fileIds.map((fileId) => this.api.invoke(addFileToLink, { id: link.id, body: { fileId } })),
       );
       const failed = results.filter((r) => r.status === 'rejected').length;
       const added = results.length - failed;
@@ -311,20 +307,20 @@ export class DashboardComponent {
     });
   }
 
-  protected onDrag(event: DropEvent<Datei>): void {
+  protected onDrag(event: DropEvent<File>): void {
     if (!event.target) return;
     if (!this.selection().isSelected(event.target)) {
       this.selection().setSelection(event.target);
     }
   }
 
-  protected async onDrop(event: DropEvent<Datei>): Promise<void> {
+  protected async onDrop(event: DropEvent<File>): Promise<void> {
     const items = this.selection()
       .selected()
       .filter((item) => item.id !== event.target?.id);
     const results = await Promise.allSettled(
       items.map((item) =>
-        this.api.invoke(updateDatei$FormData, {
+        this.api.invoke(updateFile$FormData, {
           id: item.id,
           body: { updateParentId: true, parentId: event.target?.id },
         }),
@@ -352,7 +348,7 @@ export class DashboardComponent {
     try {
       const file = el.files[0];
       const parentId = this.parentId() ?? undefined;
-      await this.api.invoke(createDatei, { body: { file, parentId } });
+      await this.api.invoke(createFile, { body: { file, parentId } });
       this.refresh.update((v) => v + 1);
     } catch (e) {
       console.error(e);

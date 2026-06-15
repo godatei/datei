@@ -44,7 +44,7 @@ type StoreQueries struct {
 
 // PostgresEventStore implements EventStore using PostgreSQL.
 // It is parameterised with query callbacks so the same logic can serve
-// any event table (datei_event, user_account_event, …).
+// any event table (file_event, user_account_event, …).
 type PostgresEventStore struct {
 	db *pgxpool.Pool
 	sq StoreQueries

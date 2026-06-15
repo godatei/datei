@@ -56,23 +56,23 @@ paths:
   /api/v1/admin/users/{id}/mfa/disable:
     $ref: ./paths/admin_users_id_mfa_disable.yaml
 
-  # Datei (authentication required)
+  # Files (authentication required)
   /api/v1/trash:
     $ref: './paths/trash.yaml'
-  /api/v1/trash/{dateiId}/children:
+  /api/v1/trash/{fileId}/children:
     $ref: './paths/trash_id_children.yaml'
-  /api/v1/trash/{dateiId}/restore:
+  /api/v1/trash/{fileId}/restore:
     $ref: './paths/trash_id_restore.yaml'
-  /api/v1/datei:
-    $ref: ./paths/datei.yaml
-  /api/v1/datei/{id}:
-    $ref: ./paths/datei_id.yaml
-  /api/v1/datei/{id}/download:
-    $ref: './paths/datei_id_download.yaml'
-  /api/v1/datei/{id}/thumbnail:
-    $ref: './paths/datei_id_thumbnail.yaml'
-  /api/v1/datei/{id}/path:
-    $ref: './paths/datei_id_path.yaml'
+  /api/v1/files:
+    $ref: ./paths/files.yaml
+  /api/v1/files/{id}:
+    $ref: ./paths/files_id.yaml
+  /api/v1/files/{id}/download:
+    $ref: './paths/files_id_download.yaml'
+  /api/v1/files/{id}/thumbnail:
+    $ref: './paths/files_id_thumbnail.yaml'
+  /api/v1/files/{id}/path:
+    $ref: './paths/files_id_path.yaml'
 
   # Links (authentication required)
   /api/v1/links:
@@ -81,19 +81,19 @@ paths:
     $ref: ./paths/links_id.yaml
   /api/v1/links/{id}/rotate:
     $ref: ./paths/links_id_rotate.yaml
-  /api/v1/links/{id}/dateien:
-    $ref: ./paths/links_id_dateien.yaml
-  /api/v1/links/{id}/dateien/{dateiId}:
-    $ref: ./paths/links_id_dateien_dateiid.yaml
+  /api/v1/links/{id}/files:
+    $ref: ./paths/links_id_files.yaml
+  /api/v1/links/{id}/files/{fileId}:
+    $ref: ./paths/links_id_files_fileid.yaml
 
   # Public Links (unlock is unauthenticated; list/download require the JWT
   # returned by unlock as a Bearer credential)
   /api/v1/public/links/{key}/unlock:
     $ref: ./paths/public_links_key_unlock.yaml
-  /api/v1/public/dateien:
-    $ref: ./paths/public_dateien.yaml
-  /api/v1/public/dateien/{dateiId}/download:
-    $ref: ./paths/public_dateien_dateiid_download.yaml
+  /api/v1/public/files:
+    $ref: ./paths/public_files.yaml
+  /api/v1/public/files/{fileId}/download:
+    $ref: ./paths/public_files_fileid_download.yaml
 components:
   securitySchemes:
     bearerHttpAuthentication:

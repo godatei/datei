@@ -17,9 +17,9 @@ import (
 	"github.com/godatei/datei/internal/authn"
 	"github.com/godatei/datei/internal/buildconfig"
 	"github.com/godatei/datei/internal/config"
-	"github.com/godatei/datei/internal/datei"
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/db/migrations"
+	"github.com/godatei/datei/internal/file"
 	"github.com/godatei/datei/internal/frontend"
 	"github.com/godatei/datei/internal/link"
 	"github.com/godatei/datei/internal/linkauth"
@@ -28,7 +28,7 @@ import (
 	"github.com/godatei/datei/internal/server"
 	"github.com/godatei/datei/internal/storage"
 	"github.com/godatei/datei/internal/users"
-	dateiwebdav "github.com/godatei/datei/internal/webdav"
+	filewebdav "github.com/godatei/datei/internal/webdav"
 	oapimiddleware "github.com/oapi-codegen/nethttp-middleware"
 	slogchi "github.com/samber/slog-chi"
 	"github.com/spf13/cobra"
@@ -95,8 +95,8 @@ func run(ctx context.Context, options Options) error {
 		return err
 	}
 
-	dateiEventStore := datei.NewEventStore(db)
-	dateiRepository := datei.NewRepository(db, dateiEventStore)
+	fileEventStore := file.NewEventStore(db)
+	fileRepository := file.NewRepository(db, fileEventStore)
 
 	userEventStore := users.NewEventStore(db)
 	userRepository := users.NewRepository(db, userEventStore)
@@ -125,12 +125,12 @@ func run(ctx context.Context, options Options) error {
 		return err
 	}
 
-	dateiSvc := datei.NewService(db, store, dateiRepository, ocrClient)
+	fileSvc := file.NewService(db, store, fileRepository, ocrClient)
 	userSvc := users.NewUserService(db, userRepository, m)
 	linkSvc := link.NewService(db, linkRepository)
-	publicLinkSvc := link.NewPublicService(db, linkRepository, dateiSvc)
+	publicLinkSvc := link.NewPublicService(db, linkRepository, fileSvc)
 
-	srv := server.NewServer(dateiSvc, userSvc, linkSvc, publicLinkSvc)
+	srv := server.NewServer(fileSvc, userSvc, linkSvc, publicLinkSvc)
 	strictHandler := server.NewStrictHandlerWithOptions(srv, nil, server.StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
 			slog.InfoContext(r.Context(), "request validation/decoding error",
@@ -148,7 +148,7 @@ func run(ctx context.Context, options Options) error {
 		},
 	})
 
-	davHandler := dateiwebdav.NewHandler(dateiSvc)
+	davHandler := filewebdav.NewHandler(fileSvc)
 
 	for _, method := range []string{"PROPFIND", "PROPPATCH", "MKCOL", "COPY", "MOVE", "LOCK", "UNLOCK"} {
 		chi.RegisterMethod(method)
@@ -188,8 +188,8 @@ func run(ctx context.Context, options Options) error {
 	})
 
 	rootMux.Group(func(r chi.Router) {
-		r.Use(dateiwebdav.CacheMiddleware)
-		r.Use(dateiwebdav.BasicAuthMiddleware(userSvc))
+		r.Use(filewebdav.CacheMiddleware)
+		r.Use(filewebdav.BasicAuthMiddleware(userSvc))
 		r.Mount("/dav", davHandler)
 	})
 

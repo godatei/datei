@@ -58,14 +58,14 @@ describe('TrashComponent', () => {
       const req = httpTesting.expectOne('/api/v1/trash/dir-123/children');
       expect(req.request.method).toBe('GET');
       req.flush(EMPTY_TRASH);
-      httpTesting.expectOne('/api/v1/datei/dir-123/path').flush([]);
+      httpTesting.expectOne('/api/v1/files/dir-123/path').flush([]);
     });
   });
 
   describe('path request', () => {
     it('does not request path at the root', () => {
       httpTesting.expectOne('/api/v1/trash').flush(EMPTY_TRASH);
-      httpTesting.expectNone('/api/v1/datei');
+      httpTesting.expectNone('/api/v1/files');
     });
 
     it('requests path for the current parentId', () => {
@@ -75,7 +75,7 @@ describe('TrashComponent', () => {
       fixture.detectChanges();
 
       httpTesting.expectOne('/api/v1/trash/dir-456/children').flush(EMPTY_TRASH);
-      httpTesting.expectOne('/api/v1/datei/dir-456/path').flush([]);
+      httpTesting.expectOne('/api/v1/files/dir-456/path').flush([]);
     });
   });
 });

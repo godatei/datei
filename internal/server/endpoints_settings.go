@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/authn"
-	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/users"
 	"github.com/godatei/datei/pkg/api"
 )
@@ -45,11 +45,11 @@ func (s *settingsServer) UpdateUser(
 		CurrentPassword: request.Body.CurrentPassword,
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrInvalidCredentials) ||
-			errors.Is(err, dateierrors.ErrCurrentPasswordRequired) {
+		if errors.Is(err, apperrors.ErrInvalidCredentials) ||
+			errors.Is(err, apperrors.ErrCurrentPasswordRequired) {
 			return UpdateUser403Response{}, nil
 		}
-		if errors.Is(err, dateierrors.ErrInvalidInput) {
+		if errors.Is(err, apperrors.ErrInvalidInput) {
 			return UpdateUser400Response{}, nil
 		}
 		return nil, err
@@ -78,7 +78,7 @@ func (s *settingsServer) UpdateUserEmail(
 		NewEmail: string(request.Body.Email),
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrInvalidInput) {
+		if errors.Is(err, apperrors.ErrInvalidInput) {
 			return UpdateUserEmail400Response{}, nil
 		}
 		return nil, err
@@ -111,7 +111,7 @@ func (s *settingsServer) ConfirmEmailVerification(
 		TokenEmail: authInfo.Email,
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrEmailMismatch) {
+		if errors.Is(err, apperrors.ErrEmailMismatch) {
 			return ConfirmEmailVerification403Response{}, nil
 		}
 		return nil, err
@@ -126,7 +126,7 @@ func (s *settingsServer) SetupMFA(ctx context.Context, _ SetupMFARequestObject) 
 
 	result, err := s.svc.SetupMFA(ctx, authInfo.UserID)
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrMFAAlreadyEnabled) {
+		if errors.Is(err, apperrors.ErrMFAAlreadyEnabled) {
 			return SetupMFA403Response{}, nil
 		}
 		return nil, err
@@ -149,9 +149,9 @@ func (s *settingsServer) EnableMFA(
 		Code:   request.Body.Code,
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrMFAInvalidCode) ||
-			errors.Is(err, dateierrors.ErrMFAAlreadyEnabled) ||
-			errors.Is(err, dateierrors.ErrMFANotSetUp) {
+		if errors.Is(err, apperrors.ErrMFAInvalidCode) ||
+			errors.Is(err, apperrors.ErrMFAAlreadyEnabled) ||
+			errors.Is(err, apperrors.ErrMFANotSetUp) {
 			return EnableMFA403Response{}, nil
 		}
 		return nil, err
@@ -171,8 +171,8 @@ func (s *settingsServer) DisableMFA(
 		Password: request.Body.Password,
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrInvalidCredentials) ||
-			errors.Is(err, dateierrors.ErrMFANotEnabled) {
+		if errors.Is(err, apperrors.ErrInvalidCredentials) ||
+			errors.Is(err, apperrors.ErrMFANotEnabled) {
 			return DisableMFA403Response{}, nil
 		}
 		return nil, err
@@ -192,8 +192,8 @@ func (s *settingsServer) RegenerateMFARecoveryCodes(
 		Password: request.Body.Password,
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrInvalidCredentials) ||
-			errors.Is(err, dateierrors.ErrMFANotEnabled) {
+		if errors.Is(err, apperrors.ErrInvalidCredentials) ||
+			errors.Is(err, apperrors.ErrMFANotEnabled) {
 			return RegenerateMFARecoveryCodes403Response{}, nil
 		}
 		return nil, err
@@ -231,7 +231,7 @@ func (s *settingsServer) ConfirmResetPassword(
 		Password: request.Body.Password,
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrInvalidInput) {
+		if errors.Is(err, apperrors.ErrInvalidInput) {
 			return ConfirmResetPassword400Response{}, nil
 		}
 		return nil, err

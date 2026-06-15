@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/authn"
-	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/users"
 	"github.com/godatei/datei/pkg/api"
 )
@@ -39,7 +39,7 @@ func (s *emailsServer) AddEmail(
 		Email:  string(request.Body.Email),
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrEmailAlreadyInUse) || errors.Is(err, dateierrors.ErrInvalidInput) {
+		if errors.Is(err, apperrors.ErrEmailAlreadyInUse) || errors.Is(err, apperrors.ErrInvalidInput) {
 			return AddEmail400Response{}, nil
 		}
 		return nil, err
@@ -56,10 +56,10 @@ func (s *emailsServer) RemoveEmail(
 
 	err := s.svc.RemoveEmail(ctx, authInfo.UserID, request.EmailId)
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrNotFound) {
+		if errors.Is(err, apperrors.ErrNotFound) {
 			return RemoveEmail404Response{}, nil
 		}
-		if errors.Is(err, dateierrors.ErrInvalidInput) {
+		if errors.Is(err, apperrors.ErrInvalidInput) {
 			return RemoveEmail400Response{}, nil
 		}
 		return nil, err
@@ -76,10 +76,10 @@ func (s *emailsServer) SetPrimaryEmail(
 
 	err := s.svc.SetPrimaryEmail(ctx, authInfo.UserID, request.EmailId)
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrNotFound) {
+		if errors.Is(err, apperrors.ErrNotFound) {
 			return SetPrimaryEmail404Response{}, nil
 		}
-		if errors.Is(err, dateierrors.ErrInvalidInput) {
+		if errors.Is(err, apperrors.ErrInvalidInput) {
 			return SetPrimaryEmail400Response{}, nil
 		}
 		return nil, err
