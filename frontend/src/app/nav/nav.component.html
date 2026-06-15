@@ -1,31 +1,51 @@
-<mat-sidenav-container class="h-full">
+<mat-sidenav-container
+  class="nav-shell h-full"
+  [class.nav-shell-handset]="isHandset()"
+  [class.nav-shell-expanded]="expanded()"
+>
   <mat-sidenav
     #drawer
+    class="nav-rail"
+    [class.nav-rail-expanded]="railExpanded()"
     fixedInViewport
-    [attr.role]="isHandset() ? 'dialog' : 'navigation'"
+    [attr.role]="isHandset() ? 'dialog' : null"
     [mode]="isHandset() ? 'over' : 'side'"
     [opened]="!isHandset()"
   >
-    <mat-toolbar style="background: inherit">Menu</mat-toolbar>
-    <mat-nav-list>
-      <a
-        mat-list-item
-        routerLink="/"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
+    @if (!isHandset()) {
+      <button
+        type="button"
+        matIconButton
+        class="nav-rail-toggle"
+        [attr.aria-expanded]="expanded()"
+        [attr.aria-label]="expanded() ? 'Collapse navigation' : 'Expand navigation'"
+        (click)="toggleExpanded()"
       >
-        <mat-icon matListItemIcon>folder</mat-icon>
-        <span matListItemTitle>My files</span>
-      </a>
-      <a mat-list-item routerLink="/links" routerLinkActive="active">
-        <mat-icon matListItemIcon>link</mat-icon>
-        <span matListItemTitle>Links</span>
-      </a>
-      <a mat-list-item routerLink="/trash" routerLinkActive="active">
-        <mat-icon matListItemIcon>delete</mat-icon>
-        <span matListItemTitle>Trash</span>
-      </a>
-    </mat-nav-list>
+        <mat-icon>{{ expanded() ? 'menu_open' : 'menu' }}</mat-icon>
+      </button>
+    }
+    <nav class="nav-rail-items" aria-label="Main">
+      @for (item of navItems; track item.route) {
+        <a
+          #railItem
+          class="nav-rail-item"
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          ariaCurrentWhenActive="page"
+          [routerLinkActiveOptions]="{ exact: item.exact }"
+          (click)="onNavItemClick()"
+        >
+          <span
+            class="nav-rail-indicator"
+            matRipple
+            [matRippleTrigger]="railItem"
+            aria-hidden="true"
+          ></span>
+          <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
+          <span class="nav-rail-label">{{ item.label }}</span>
+        </a>
+      }
+    </nav>
   </mat-sidenav>
   <mat-sidenav-content>
     <mat-toolbar color="primary" class="sticky top-0 z-10">
