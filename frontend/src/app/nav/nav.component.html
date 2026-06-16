@@ -26,7 +26,7 @@
           [attr.aria-label]="expanded() ? 'Collapse navigation' : 'Expand navigation'"
           (click)="toggleExpanded()"
         >
-          <mat-icon>{{ expanded() ? 'menu_open' : 'menu' }}</mat-icon>
+          <mat-icon aria-hidden="true">{{ expanded() ? 'menu_open' : 'menu' }}</mat-icon>
         </button>
       }
     </div>
@@ -63,7 +63,7 @@
     <mat-toolbar class="nav-topbar sticky top-0 z-10" [class.nav-topbar-condensed]="scrolled()">
       @if (isHandset()) {
         <button type="button" aria-label="Toggle sidenav" matIconButton (click)="drawer.toggle()">
-          <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
+          <mat-icon aria-hidden="true">menu</mat-icon>
         </button>
       }
       <div class="search-slot" aria-hidden="true"></div>

@@ -5,6 +5,14 @@ $rail-collapsed-width: 96px;
 $rail-expanded-width: 220px;
 $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
 
+// Establish a full-height chain so the sidenav container fills the viewport and
+// page content scrolls inside mat-sidenav-content (whose (scroll) drives the
+// condensed top bar) instead of on the document.
+:host {
+  display: block;
+  height: 100%;
+}
+
 .nav-rail {
   width: $rail-collapsed-width;
   background-color: var(--mat-sys-surface-container);
