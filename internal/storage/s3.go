@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
@@ -20,6 +19,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
+	"github.com/glasskube/pkg/seekbuf"
 	"github.com/godatei/datei/internal/config"
 )
 
@@ -71,14 +71,25 @@ func (s *s3Store) PutObject(
 	name, contentType string,
 ) (*PutObjectOutput, error) {
 	var rs io.ReadSeeker
+	var cleanupReadSeeker func()
 	if drs, ok := data.(io.ReadSeeker); ok {
 		rs = drs
 	} else {
-		if buf, err := io.ReadAll(data); err != nil {
-			return nil, fmt.Errorf("read data: %w", err)
-		} else {
-			rs = bytes.NewReader(buf)
+		buffer, err := seekbuf.New(data)
+		if err != nil {
+			return nil, fmt.Errorf("create seek buffer: %w", err)
 		}
+		defer buffer.Destroy()
+		resource, err := buffer.Get()
+		if err != nil {
+			_ = buffer.Destroy()
+			return nil, fmt.Errorf("open seek buffer: %w", err)
+		}
+		defer resource.Close()
+		rs = resource
+	}
+	if cleanupReadSeeker != nil {
+		defer cleanupReadSeeker()
 	}
 
 	var size int64
@@ -172,17 +183,28 @@ func (s *s3Store) ObjectExists(ctx context.Context, key string) (bool, error) {
 // PutObjectAt implements [Store].
 func (s *s3Store) PutObjectAt(ctx context.Context, data io.Reader, key, contentType string) error {
 	var rs io.ReadSeeker
+	var cleanupReadSeeker func()
 	if drs, ok := data.(io.ReadSeeker); ok {
 		if _, err := drs.Seek(0, io.SeekStart); err != nil {
 			return fmt.Errorf("seek data to start: %w", err)
 		}
 		rs = drs
 	} else {
-		buf, err := io.ReadAll(data)
+		buffer, err := seekbuf.New(data)
 		if err != nil {
-			return fmt.Errorf("read data: %w", err)
+			return fmt.Errorf("create seek buffer: %w", err)
 		}
-		rs = bytes.NewReader(buf)
+		defer buffer.Destroy()
+		resource, err := buffer.Get()
+		if err != nil {
+			_ = buffer.Destroy()
+			return fmt.Errorf("open seek buffer: %w", err)
+		}
+		defer resource.Close()
+		rs = resource
+	}
+	if cleanupReadSeeker != nil {
+		defer cleanupReadSeeker()
 	}
 
 	_, err := s.client.PutObject(ctx, &s3.PutObjectInput{

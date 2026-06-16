@@ -1,12 +1,12 @@
 package server
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"io"
 	"strings"
 
+	"github.com/glasskube/pkg/seekbuf"
 	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/file"
 	"github.com/godatei/datei/pkg/api"
@@ -57,8 +57,14 @@ func (s *fileServer) CreateFile(
 	reader := request.Body
 	var parentID *uuid.UUID
 	var fileData io.Reader
+	var cleanupFileData func()
 	var fileName string
 	var contentType string
+	defer func() {
+		if cleanupFileData != nil {
+			cleanupFileData()
+		}
+	}()
 
 	for {
 		part, err := reader.NextPart()
@@ -92,11 +98,15 @@ func (s *fileServer) CreateFile(
 			if fileName == "" {
 				fileName = part.FileName()
 			}
-			if fileDataBytes, err := io.ReadAll(part); err != nil {
+			reader, cleanup, err := newSeekableUploadReader(part)
+			if err != nil {
 				return CreateFile400JSONResponse{Message: err.Error()}, nil
-			} else {
-				fileData = bytes.NewReader(fileDataBytes)
 			}
+			if cleanupFileData != nil {
+				cleanupFileData()
+			}
+			fileData = reader
+			cleanupFileData = cleanup
 			contentType = part.Header.Get("Content-Type")
 			if contentType == "" {
 				contentType = "application/octet-stream"
@@ -181,8 +191,14 @@ func (s *fileServer) UpdateFile(
 	var moveRequested bool
 	var newParentID *uuid.UUID
 	var fileData io.Reader
+	var cleanupFileData func()
 	var fileName string
 	contentType := "application/octet-stream"
+	defer func() {
+		if cleanupFileData != nil {
+			cleanupFileData()
+		}
+	}()
 
 	if reader := request.MultipartBody; reader != nil {
 		var rawName, rawUpdateParentId, rawParentId *string
@@ -219,11 +235,15 @@ func (s *fileServer) UpdateFile(
 				rawParentId = &s
 			case fileFormField:
 				fileName = part.FileName()
-				if fileDataBytes, err := io.ReadAll(part); err != nil {
+				reader, cleanup, err := newSeekableUploadReader(part)
+				if err != nil {
 					return UpdateFile400Response{}, nil
-				} else {
-					fileData = bytes.NewReader(fileDataBytes)
 				}
+				if cleanupFileData != nil {
+					cleanupFileData()
+				}
+				fileData = reader
+				cleanupFileData = cleanup
 				if partContentType := strings.TrimSpace(part.Header.Get("Content-Type")); partContentType != "" {
 					contentType = partContentType
 				}
@@ -322,4 +342,20 @@ func (s *fileServer) DeleteFile(
 
 	// Return 204 No Content
 	return DeleteFile204Response{}, nil
+}
+
+func newSeekableUploadReader(src io.Reader) (io.Reader, func(), error) {
+	buffer, err := seekbuf.New(src)
+	if err != nil {
+		return nil, nil, err
+	}
+	reader, err := buffer.Get()
+	if err != nil {
+		_ = buffer.Destroy()
+		return nil, nil, err
+	}
+	return reader, func() {
+		_ = reader.Close()
+		_ = buffer.Destroy()
+	}, nil
 }
