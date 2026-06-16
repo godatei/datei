@@ -18,12 +18,7 @@ type settingsServer struct {
 func (s *settingsServer) GetCurrentUser(
 	ctx context.Context, _ GetCurrentUserRequestObject,
 ) (GetCurrentUserResponseObject, error) {
-	authInfo := authn.RequireContext(ctx)
-
-	user, err := s.svc.GetUser(ctx, authInfo.UserID)
-	if err != nil {
-		return nil, err
-	}
+	user := authn.RequireCurrentUser(ctx)
 
 	return GetCurrentUser200JSONResponse(api.UserResponse{
 		Name:       user.Name,
@@ -36,10 +31,10 @@ func (s *settingsServer) GetCurrentUser(
 func (s *settingsServer) UpdateUser(
 	ctx context.Context, request UpdateUserRequestObject,
 ) (UpdateUserResponseObject, error) {
-	authInfo := authn.RequireContext(ctx)
+	user := authn.RequireCurrentUser(ctx)
 
 	err := s.svc.UpdateUser(ctx, users.UpdateUserInput{
-		UserID:          authInfo.UserID,
+		UserID:          user.ID,
 		Name:            request.Body.Name,
 		Password:        request.Body.Password,
 		CurrentPassword: request.Body.CurrentPassword,
@@ -55,7 +50,7 @@ func (s *settingsServer) UpdateUser(
 		return nil, err
 	}
 
-	user, err := s.svc.GetUser(ctx, authInfo.UserID)
+	user, err = s.svc.GetUser(ctx, user.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -71,10 +66,10 @@ func (s *settingsServer) UpdateUser(
 func (s *settingsServer) UpdateUserEmail(
 	ctx context.Context, request UpdateUserEmailRequestObject,
 ) (UpdateUserEmailResponseObject, error) {
-	authInfo := authn.RequireContext(ctx)
+	user := authn.RequireCurrentUser(ctx)
 
 	err := s.svc.UpdateUserEmail(ctx, users.UpdateUserEmailInput{
-		UserID:   authInfo.UserID,
+		UserID:   user.ID,
 		NewEmail: string(request.Body.Email),
 	})
 	if err != nil {
@@ -91,9 +86,9 @@ func (s *settingsServer) UpdateUserEmail(
 func (s *settingsServer) RequestEmailVerification(
 	ctx context.Context, _ RequestEmailVerificationRequestObject,
 ) (RequestEmailVerificationResponseObject, error) {
-	authInfo := authn.RequireContext(ctx)
+	user := authn.RequireCurrentUser(ctx)
 
-	if err := s.svc.RequestEmailVerification(ctx, authInfo.UserID); err != nil {
+	if err := s.svc.RequestEmailVerification(ctx, user.ID); err != nil {
 		return nil, err
 	}
 
@@ -104,11 +99,11 @@ func (s *settingsServer) RequestEmailVerification(
 func (s *settingsServer) ConfirmEmailVerification(
 	ctx context.Context, _ ConfirmEmailVerificationRequestObject,
 ) (ConfirmEmailVerificationResponseObject, error) {
-	authInfo := authn.RequireContext(ctx)
+	identity := authn.RequireEmailIdentity(ctx)
 
 	err := s.svc.ConfirmEmailVerification(ctx, users.ConfirmEmailVerificationInput{
-		UserID:     authInfo.UserID,
-		TokenEmail: authInfo.Email,
+		UserID:     authn.RequireCurrentUser(ctx).ID,
+		TokenEmail: identity.Email,
 	})
 	if err != nil {
 		if errors.Is(err, apperrors.ErrEmailMismatch) {
@@ -122,9 +117,9 @@ func (s *settingsServer) ConfirmEmailVerification(
 
 // SetupMFA implements [StrictServerInterface].
 func (s *settingsServer) SetupMFA(ctx context.Context, _ SetupMFARequestObject) (SetupMFAResponseObject, error) {
-	authInfo := authn.RequireContext(ctx)
+	user := authn.RequireCurrentUser(ctx)
 
-	result, err := s.svc.SetupMFA(ctx, authInfo.UserID)
+	result, err := s.svc.SetupMFA(ctx, user.ID)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrMFAAlreadyEnabled) {
 			return SetupMFA403Response{}, nil
@@ -142,10 +137,10 @@ func (s *settingsServer) SetupMFA(ctx context.Context, _ SetupMFARequestObject) 
 func (s *settingsServer) EnableMFA(
 	ctx context.Context, request EnableMFARequestObject,
 ) (EnableMFAResponseObject, error) {
-	authInfo := authn.RequireContext(ctx)
+	user := authn.RequireCurrentUser(ctx)
 
 	result, err := s.svc.EnableMFA(ctx, users.EnableMFAInput{
-		UserID: authInfo.UserID,
+		UserID: user.ID,
 		Code:   request.Body.Code,
 	})
 	if err != nil {
@@ -164,10 +159,10 @@ func (s *settingsServer) EnableMFA(
 func (s *settingsServer) DisableMFA(
 	ctx context.Context, request DisableMFARequestObject,
 ) (DisableMFAResponseObject, error) {
-	authInfo := authn.RequireContext(ctx)
+	user := authn.RequireCurrentUser(ctx)
 
 	err := s.svc.DisableMFA(ctx, users.DisableMFAInput{
-		UserID:   authInfo.UserID,
+		UserID:   user.ID,
 		Password: request.Body.Password,
 	})
 	if err != nil {
@@ -185,10 +180,10 @@ func (s *settingsServer) DisableMFA(
 func (s *settingsServer) RegenerateMFARecoveryCodes(
 	ctx context.Context, request RegenerateMFARecoveryCodesRequestObject,
 ) (RegenerateMFARecoveryCodesResponseObject, error) {
-	authInfo := authn.RequireContext(ctx)
+	user := authn.RequireCurrentUser(ctx)
 
 	codes, err := s.svc.RegenerateMFARecoveryCodes(ctx, users.RegenerateRecoveryCodesInput{
-		UserID:   authInfo.UserID,
+		UserID:   user.ID,
 		Password: request.Body.Password,
 	})
 	if err != nil {
@@ -208,9 +203,9 @@ func (s *settingsServer) RegenerateMFARecoveryCodes(
 func (s *settingsServer) GetMFARecoveryCodesStatus(
 	ctx context.Context, _ GetMFARecoveryCodesStatusRequestObject,
 ) (GetMFARecoveryCodesStatusResponseObject, error) {
-	authInfo := authn.RequireContext(ctx)
+	user := authn.RequireCurrentUser(ctx)
 
-	count, err := s.svc.GetMFARecoveryCodesStatus(ctx, authInfo.UserID)
+	count, err := s.svc.GetMFARecoveryCodesStatus(ctx, user.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -224,10 +219,10 @@ func (s *settingsServer) GetMFARecoveryCodesStatus(
 func (s *settingsServer) ConfirmResetPassword(
 	ctx context.Context, request ConfirmResetPasswordRequestObject,
 ) (ConfirmResetPasswordResponseObject, error) {
-	authInfo := authn.RequireContext(ctx)
+	user := authn.RequireCurrentUser(ctx)
 
 	err := s.svc.ConfirmResetPassword(ctx, users.ConfirmResetPasswordInput{
-		UserID:   authInfo.UserID,
+		UserID:   user.ID,
 		Password: request.Body.Password,
 	})
 	if err != nil {
