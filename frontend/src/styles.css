@@ -2,9 +2,10 @@
 @import '@fontsource/roboto/400.css';
 @import '@fontsource/roboto/500.css';
 @import '@fontsource/material-icons';
+@import '@fontsource/material-icons-outlined';
 
-.material-icons {
-  font-family: 'Material Icons';
+.material-icons,
+.material-icons-outlined {
   font-weight: normal;
   font-style: normal;
   font-size: 24px;
@@ -18,6 +19,14 @@
   -webkit-font-feature-settings: 'liga';
   font-feature-settings: 'liga';
   -webkit-font-smoothing: antialiased;
+}
+
+.material-icons {
+  font-family: 'Material Icons';
+}
+
+.material-icons-outlined {
+  font-family: 'Material Icons Outlined';
 }
 
 @import 'tailwindcss';

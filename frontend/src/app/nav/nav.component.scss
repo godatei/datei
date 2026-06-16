@@ -20,15 +20,43 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
   }
 }
 
+// Rail header: brand logo above the collapse/expand toggle (M3 places the
+// logo above the optional menu button and FAB). The logo, toggle and item
+// icons are anchored to the same horizontal centre (48px) in both the
+// collapsed and expanded rail, so expanding only reveals the labels and grows
+// the width — the icons and logo never jump.
+.nav-rail-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 20px;
+}
+
+.nav-rail-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 48px;
+  padding-left: 32px; // 32px logo -> centred at 48px when collapsed
+}
+
+.nav-rail-wordmark {
+  display: none;
+  font: var(--mat-sys-title-medium);
+  color: var(--mat-sys-on-surface);
+  white-space: nowrap;
+}
+
 .nav-rail-toggle {
-  margin: 44px 0 0 24px;
+  align-self: flex-start;
+  margin-left: 24px; // 48px icon button -> centred at 48px when collapsed
 }
 
 .nav-rail-items {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-top: 40px;
+  margin-top: 24px;
 }
 
 .nav-rail-item {
@@ -49,7 +77,7 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
   }
 
   mat-icon {
-    margin: 4px 0; // centers the 24px icon in the 32px-high indicator
+    margin: 4px 0; // centres the 24px icon in the 32px-high indicator
   }
 
   &:hover .nav-rail-indicator {
@@ -88,13 +116,14 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
   }
 }
 
+// Collapsed: a 56x32 pill centred on the icon. Expanded: the indicator fills
+// the row behind the icon and label.
 .nav-rail-indicator {
   position: absolute;
   top: 6px;
-  left: 50%;
-  width: 56px;
+  left: calc(50% - 28px); // centre the 56px pill without a transform, which
+  width: 56px; // would otherwise offset matRipple's centered ripple
   height: 32px;
-  transform: translateX(-50%);
   border-radius: var(--mat-sys-corner-full);
   transition: background-color 150ms linear;
 }
@@ -103,8 +132,13 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
   font: var(--mat-sys-label-medium);
 }
 
-// Expanded rail: horizontal items with a full-width pill indicator.
+// Expanded rail: icons and labels sit in a row with a full-width pill
+// indicator. The logo and toggle stay anchored, so only the items reflow.
 .nav-rail-expanded {
+  .nav-rail-wordmark {
+    display: inline;
+  }
+
   .nav-rail-item {
     flex-direction: row;
     justify-content: flex-start;
@@ -127,11 +161,104 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
     left: 0;
     width: 100%;
     height: 100%;
-    transform: none;
   }
 
   .nav-rail-label {
     font: var(--mat-sys-label-large);
+  }
+}
+
+// Top app bar shares the rail's surface tone so the navigation chrome reads as
+// one continuous surface wrapping the content (M3 top app bars are surface, not
+// a saturated primary).
+.nav-topbar {
+  gap: 8px;
+  background-color: var(--mat-sys-surface-container);
+  color: var(--mat-sys-on-surface);
+}
+
+// The sidenav container sits behind the rail and content; give it the same
+// grey so no light background shows through while the rail width animates.
+.nav-shell {
+  background-color: var(--mat-sys-surface-container);
+}
+
+// The content region behind the page is the same surface-container grey as the
+// rail/top bar, so the inset white content card reads as if framed by a grey
+// border with rounded corners.
+.nav-shell .mat-drawer-content {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--mat-sys-surface-container);
+
+  // Thin, unobtrusive scrollbar instead of a reserved gutter (which showed as
+  // a grey margin on pages without a scrollbar and broke the flush right edge).
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--mat-sys-on-surface) 35%, transparent) transparent;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: color-mix(in srgb, var(--mat-sys-on-surface) 35%, transparent);
+    border-radius: var(--mat-sys-corner-full);
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+.nav-content {
+  // Only the single top-left M3 corner needs custom CSS (no utility class
+  // covers one corner with an M3 token); grow/margin/background are applied as
+  // utility classes on the element in the template.
+  border-top-left-radius: var(--mat-sys-corner-large);
+}
+
+// M3 search bar: full-corner pill on surface-container-high with a leading icon.
+.search-bar {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 8px;
+  max-width: 480px;
+  height: 48px;
+  padding: 0 16px;
+  border-radius: var(--mat-sys-corner-full);
+  background-color: var(--mat-sys-surface-container-highest);
+  color: var(--mat-sys-on-surface-variant);
+
+  &:focus-within {
+    outline: 2px solid var(--mat-sys-secondary);
+    outline-offset: 2px;
+  }
+}
+
+.search-bar-leading {
+  flex: none;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.search-bar-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-large);
+
+  &::placeholder {
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  // Hide the native search clear control for a consistent M3 look.
+  &::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
   }
 }
 

@@ -12,18 +12,24 @@
     [mode]="isHandset() ? 'over' : 'side'"
     [opened]="!isHandset()"
   >
-    @if (!isHandset()) {
-      <button
-        type="button"
-        matIconButton
-        class="nav-rail-toggle"
-        [attr.aria-expanded]="expanded()"
-        [attr.aria-label]="expanded() ? 'Collapse navigation' : 'Expand navigation'"
-        (click)="toggleExpanded()"
-      >
-        <mat-icon>{{ expanded() ? 'menu_open' : 'menu' }}</mat-icon>
-      </button>
-    }
+    <div class="nav-rail-header">
+      <div class="nav-rail-logo">
+        <img ngSrc="datei-logo.svg" alt="Datei" width="32" height="32" />
+        <span class="nav-rail-wordmark">Datei</span>
+      </div>
+      @if (!isHandset()) {
+        <button
+          type="button"
+          matIconButton
+          class="nav-rail-toggle"
+          [attr.aria-expanded]="expanded()"
+          [attr.aria-label]="expanded() ? 'Collapse navigation' : 'Expand navigation'"
+          (click)="toggleExpanded()"
+        >
+          <mat-icon>{{ expanded() ? 'menu_open' : 'menu' }}</mat-icon>
+        </button>
+      }
+    </div>
     <nav class="nav-rail-items" aria-label="Main">
       @for (item of navItems; track item.route) {
         <a
@@ -31,6 +37,7 @@
           class="nav-rail-item"
           [routerLink]="item.route"
           routerLinkActive="active"
+          #rla="routerLinkActive"
           ariaCurrentWhenActive="page"
           [routerLinkActiveOptions]="{ exact: item.exact }"
           (click)="onNavItemClick()"
@@ -39,25 +46,37 @@
             class="nav-rail-indicator"
             matRipple
             [matRippleTrigger]="railItem"
+            [matRippleCentered]="true"
             aria-hidden="true"
           ></span>
-          <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
+          <mat-icon
+            aria-hidden="true"
+            [fontSet]="rla.isActive ? 'material-icons' : 'material-icons-outlined'"
+            >{{ item.icon }}</mat-icon
+          >
           <span class="nav-rail-label">{{ item.label }}</span>
         </a>
       }
     </nav>
   </mat-sidenav>
   <mat-sidenav-content>
-    <mat-toolbar color="primary" class="sticky top-0 z-10">
+    <mat-toolbar class="nav-topbar sticky top-0 z-10">
       @if (isHandset()) {
         <button type="button" aria-label="Toggle sidenav" matIconButton (click)="drawer.toggle()">
           <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
         </button>
       }
-      <img ngSrc="datei-logo.svg" alt="Datei" width="32" height="32" />
-      <span>Datei</span>
+      <div class="search-bar mt-3" role="search">
+        <mat-icon class="search-bar-leading" aria-hidden="true">search</mat-icon>
+        <input
+          class="search-bar-input"
+          type="search"
+          placeholder="Search files"
+          aria-label="Search files"
+        />
+      </div>
       <span class="grow shrink basis-auto"></span>
-      <button mat-button [matMenuTriggerFor]="userMenu">
+      <button mat-button class="mt-3" [matMenuTriggerFor]="userMenu">
         <app-user-avatar [name]="userName()" size="xs" class="mr-1" />
         {{ userName() }}
       </button>
@@ -78,7 +97,8 @@
         </button>
       </mat-menu>
     </mat-toolbar>
-    <!-- Add Content Here -->
-    <router-outlet></router-outlet>
+    <div class="nav-content grow mt-3 ms-3 mat-bg-surface">
+      <router-outlet></router-outlet>
+    </div>
   </mat-sidenav-content>
 </mat-sidenav-container>
