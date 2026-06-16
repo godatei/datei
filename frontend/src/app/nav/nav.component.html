@@ -59,24 +59,16 @@
       }
     </nav>
   </mat-sidenav>
-  <mat-sidenav-content>
-    <mat-toolbar class="nav-topbar sticky top-0 z-10">
+  <mat-sidenav-content (scroll)="onContentScroll($event)">
+    <mat-toolbar class="nav-topbar sticky top-0 z-10" [class.nav-topbar-condensed]="scrolled()">
       @if (isHandset()) {
         <button type="button" aria-label="Toggle sidenav" matIconButton (click)="drawer.toggle()">
           <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
         </button>
       }
-      <div class="search-bar mt-3" role="search">
-        <mat-icon class="search-bar-leading" aria-hidden="true">search</mat-icon>
-        <input
-          class="search-bar-input"
-          type="search"
-          placeholder="Search files"
-          aria-label="Search files"
-        />
-      </div>
+      <div class="search-slot" aria-hidden="true"></div>
       <span class="grow shrink basis-auto"></span>
-      <button mat-button class="mt-3" [matMenuTriggerFor]="userMenu">
+      <button mat-button [matMenuTriggerFor]="userMenu">
         <app-user-avatar [name]="userName()" size="xs" class="mr-1" />
         {{ userName() }}
       </button>
@@ -98,7 +90,7 @@
       </mat-menu>
     </mat-toolbar>
     <div class="nav-content grow mt-3 ms-3 mat-bg-surface">
-      <router-outlet></router-outlet>
+      <router-outlet />
     </div>
   </mat-sidenav-content>
 </mat-sidenav-container>

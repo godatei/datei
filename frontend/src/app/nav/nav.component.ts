@@ -67,8 +67,15 @@ export class NavComponent {
   // On handset the rail is shown as a modal expanded rail (replaces the drawer).
   protected readonly railExpanded = computed(() => this.expanded() || this.isHandset());
 
+  // Condense the sticky top bar once the content is scrolled away from the top.
+  protected readonly scrolled = signal(false);
+
   protected toggleExpanded() {
     this.expanded.update((value) => !value);
+  }
+
+  protected onContentScroll(event: Event) {
+    this.scrolled.set((event.target as HTMLElement).scrollTop > 0);
   }
 
   protected onNavItemClick() {

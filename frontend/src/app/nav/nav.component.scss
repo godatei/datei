@@ -173,8 +173,21 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
 // a saturated primary).
 .nav-topbar {
   gap: 8px;
+  // Pad top and bottom so the bar's content lines up with the rail header (logo)
+  // and the inset content card, instead of sitting flush against the top. The
+  // padding shrinks once scrolled (see .nav-topbar-condensed) so the sticky bar
+  // becomes compact and frees up vertical space.
+  height: auto;
+  padding-top: 12px;
+  padding-bottom: 12px;
   background-color: var(--mat-sys-surface-container);
   color: var(--mat-sys-on-surface);
+  transition: padding $rail-motion;
+}
+
+.nav-topbar-condensed {
+  padding-top: 4px;
+  padding-bottom: 4px;
 }
 
 // The sidenav container sits behind the rail and content; give it the same
@@ -218,48 +231,11 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
   border-top-left-radius: var(--mat-sys-corner-large);
 }
 
-// M3 search bar: full-corner pill on surface-container-high with a leading icon.
-.search-bar {
-  display: flex;
+// Reserves the top-bar area where a search bar may live, so adding one later
+// doesn't shift the surrounding layout.
+.search-slot {
   flex: 1 1 auto;
-  align-items: center;
-  gap: 8px;
   max-width: 480px;
-  height: 48px;
-  padding: 0 16px;
-  border-radius: var(--mat-sys-corner-full);
-  background-color: var(--mat-sys-surface-container-highest);
-  color: var(--mat-sys-on-surface-variant);
-
-  &:focus-within {
-    outline: 2px solid var(--mat-sys-secondary);
-    outline-offset: 2px;
-  }
-}
-
-.search-bar-leading {
-  flex: none;
-  color: var(--mat-sys-on-surface-variant);
-}
-
-.search-bar-input {
-  flex: 1 1 auto;
-  min-width: 0;
-  border: none;
-  background: transparent;
-  outline: none;
-  color: var(--mat-sys-on-surface);
-  font: var(--mat-sys-body-large);
-
-  &::placeholder {
-    color: var(--mat-sys-on-surface-variant);
-  }
-
-  // Hide the native search clear control for a consistent M3 look.
-  &::-webkit-search-cancel-button {
-    -webkit-appearance: none;
-    appearance: none;
-  }
 }
 
 // Keep the page content margin in sync with the animated rail width on
@@ -276,6 +252,7 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
 
 @media (prefers-reduced-motion: reduce) {
   .nav-rail,
+  .nav-topbar,
   .nav-shell > .mat-drawer-content {
     transition: none;
   }
