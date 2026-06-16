@@ -71,7 +71,6 @@ func (s *s3Store) PutObject(
 	name, contentType string,
 ) (*PutObjectOutput, error) {
 	var rs io.ReadSeeker
-	var cleanupReadSeeker func()
 	if drs, ok := data.(io.ReadSeeker); ok {
 		rs = drs
 	} else {
@@ -79,17 +78,13 @@ func (s *s3Store) PutObject(
 		if err != nil {
 			return nil, fmt.Errorf("create seek buffer: %w", err)
 		}
-		defer buffer.Destroy()
+		defer func() { _ = buffer.Destroy() }()
 		resource, err := buffer.Get()
 		if err != nil {
-			_ = buffer.Destroy()
 			return nil, fmt.Errorf("open seek buffer: %w", err)
 		}
 		defer resource.Close()
 		rs = resource
-	}
-	if cleanupReadSeeker != nil {
-		defer cleanupReadSeeker()
 	}
 
 	var size int64
@@ -183,7 +178,6 @@ func (s *s3Store) ObjectExists(ctx context.Context, key string) (bool, error) {
 // PutObjectAt implements [Store].
 func (s *s3Store) PutObjectAt(ctx context.Context, data io.Reader, key, contentType string) error {
 	var rs io.ReadSeeker
-	var cleanupReadSeeker func()
 	if drs, ok := data.(io.ReadSeeker); ok {
 		if _, err := drs.Seek(0, io.SeekStart); err != nil {
 			return fmt.Errorf("seek data to start: %w", err)
@@ -194,17 +188,13 @@ func (s *s3Store) PutObjectAt(ctx context.Context, data io.Reader, key, contentT
 		if err != nil {
 			return fmt.Errorf("create seek buffer: %w", err)
 		}
-		defer buffer.Destroy()
+		defer func() { _ = buffer.Destroy() }()
 		resource, err := buffer.Get()
 		if err != nil {
-			_ = buffer.Destroy()
 			return fmt.Errorf("open seek buffer: %w", err)
 		}
 		defer resource.Close()
 		rs = resource
-	}
-	if cleanupReadSeeker != nil {
-		defer cleanupReadSeeker()
 	}
 
 	_, err := s.client.PutObject(ctx, &s3.PutObjectInput{

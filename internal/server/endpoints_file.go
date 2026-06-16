@@ -98,14 +98,14 @@ func (s *fileServer) CreateFile(
 			if fileName == "" {
 				fileName = part.FileName()
 			}
-			reader, cleanup, err := newSeekableUploadReader(part)
+			uploadReader, cleanup, err := newSeekableUploadReader(part)
 			if err != nil {
 				return CreateFile400JSONResponse{Message: err.Error()}, nil
 			}
 			if cleanupFileData != nil {
 				cleanupFileData()
 			}
-			fileData = reader
+			fileData = uploadReader
 			cleanupFileData = cleanup
 			contentType = part.Header.Get("Content-Type")
 			if contentType == "" {
@@ -235,14 +235,14 @@ func (s *fileServer) UpdateFile(
 				rawParentId = &s
 			case fileFormField:
 				fileName = part.FileName()
-				reader, cleanup, err := newSeekableUploadReader(part)
+				uploadReader, cleanup, err := newSeekableUploadReader(part)
 				if err != nil {
 					return UpdateFile400Response{}, nil
 				}
 				if cleanupFileData != nil {
 					cleanupFileData()
 				}
-				fileData = reader
+				fileData = uploadReader
 				cleanupFileData = cleanup
 				if partContentType := strings.TrimSpace(part.Header.Get("Content-Type")); partContentType != "" {
 					contentType = partContentType
