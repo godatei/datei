@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
@@ -20,6 +19,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
+	"github.com/glasskube/pkg/seekbuf"
 	"github.com/godatei/datei/internal/config"
 )
 
@@ -74,11 +74,17 @@ func (s *s3Store) PutObject(
 	if drs, ok := data.(io.ReadSeeker); ok {
 		rs = drs
 	} else {
-		if buf, err := io.ReadAll(data); err != nil {
-			return nil, fmt.Errorf("read data: %w", err)
-		} else {
-			rs = bytes.NewReader(buf)
+		buffer, err := seekbuf.New(data)
+		if err != nil {
+			return nil, fmt.Errorf("create seek buffer: %w", err)
 		}
+		defer func() { _ = buffer.Destroy() }()
+		resource, err := buffer.Get()
+		if err != nil {
+			return nil, fmt.Errorf("open seek buffer: %w", err)
+		}
+		defer resource.Close()
+		rs = resource
 	}
 
 	var size int64
@@ -178,11 +184,17 @@ func (s *s3Store) PutObjectAt(ctx context.Context, data io.Reader, key, contentT
 		}
 		rs = drs
 	} else {
-		buf, err := io.ReadAll(data)
+		buffer, err := seekbuf.New(data)
 		if err != nil {
-			return fmt.Errorf("read data: %w", err)
+			return fmt.Errorf("create seek buffer: %w", err)
 		}
-		rs = bytes.NewReader(buf)
+		defer func() { _ = buffer.Destroy() }()
+		resource, err := buffer.Get()
+		if err != nil {
+			return fmt.Errorf("open seek buffer: %w", err)
+		}
+		defer resource.Close()
+		rs = resource
 	}
 
 	_, err := s.client.PutObject(ctx, &s3.PutObjectInput{
