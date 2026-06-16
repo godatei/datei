@@ -1,0 +1,71 @@
+---
+import type {ImageMetadata} from 'astro';
+import {Image} from 'astro:assets';
+
+interface Props {
+  lightSrc: ImageMetadata | string;
+  darkSrc: ImageMetadata | string;
+  alt: string;
+  class?: string;
+  widths?: number[];
+  sizes?: string;
+  loading?: 'lazy' | 'eager';
+}
+
+const {
+  lightSrc,
+  darkSrc,
+  alt,
+  class: className,
+  widths,
+  sizes,
+  loading = 'lazy',
+} = Astro.props;
+
+const variants = [
+  {cls: 'themed-light', src: lightSrc},
+  {cls: 'themed-dark', src: darkSrc},
+];
+---
+
+{
+  variants.map(({cls, src}) =>
+    typeof src === 'string' ? (
+      <img
+        src={src}
+        alt={alt}
+        class:list={[cls, className]}
+        loading={loading}
+      />
+    ) : (
+      <Image
+        src={src}
+        alt={alt}
+        class:list={[cls, className]}
+        widths={widths}
+        sizes={sizes}
+        loading={loading}
+      />
+    ),
+  )
+}
+
+<style>
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .themed-dark {
+    display: none;
+  }
+
+  :global(html[data-theme='dark']) .themed-light {
+    display: none;
+  }
+
+  :global(html[data-theme='dark']) .themed-dark {
+    display: block;
+  }
+</style>

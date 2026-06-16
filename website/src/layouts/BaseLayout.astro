@@ -1,4 +1,5 @@
 ---
+import {Font} from 'astro:assets';
 import Footer from '~/components/Footer.astro';
 import Header from '~/components/Header.astro';
 import '~/styles/global.css';
@@ -15,6 +16,16 @@ const ogUrl = Astro.url.href;
 <!doctype html>
 <html lang="en">
   <head>
+    <script is:inline>
+      const stored = localStorage.getItem('theme');
+      const dark = stored
+        ? stored === 'dark'
+        : window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (stored === 'light' || stored === 'dark') {
+        document.documentElement.style.colorScheme = stored;
+      }
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="generator" content={Astro.generator} />
@@ -32,12 +43,8 @@ const ogUrl = Astro.url.href;
     <link rel="icon" href="/favicon.ico" />
     <link rel="sitemap" href="/sitemap-index.xml" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,wght@0,400..700;1,400..700&family=Google+Sans+Code:wght@400..600&display=swap"
-      rel="stylesheet"
-    />
+    <Font cssVariable="--font-google-sans" preload />
+    <Font cssVariable="--font-google-sans-code" />
   </head>
   <body>
     <Header />

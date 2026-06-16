@@ -5,6 +5,11 @@ sidebar:
   order: 1
 ---
 
+> **"Datei" is German for _file_.**
+>
+> But also for document. And dataset. Basically anything you really don't want
+> to lose.
+
 Datei is an open source, self-hosted file management platform.
 
 The source code is available on

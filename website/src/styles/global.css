@@ -1,7 +1,8 @@
 /*
- * Global styles: Material 3 design tokens (azure scheme, matching the
- * Angular Material azure palette used in the product frontend) consumed by
- * both @material/web components and our own elements.
+ * Global styles: Material 3 design tokens. Brand hues from the DATEI palette
+ * (primary blue #0B75E4, tertiary pink #E40072, plus green/yellow accents)
+ * sit on the standard M3 neutral surface ramp so @material/web components
+ * (cards, lists, elevation) read correctly in both light and dark mode.
  */
 
 :root {
@@ -9,23 +10,30 @@
 
   /* Typography */
   --font-base:
-    'Google Sans', Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    var(--font-google-sans), Roboto, system-ui, -apple-system, 'Segoe UI',
+    sans-serif;
   --md-ref-typeface-brand: var(--font-base);
   --md-ref-typeface-plain: var(--font-base);
 
-  /* Color scheme (seed: Google blue, light) */
-  --md-sys-color-primary: light-dark(#0b57d0, #aac7ff);
-  --md-sys-color-on-primary: light-dark(#ffffff, #062e6f);
-  --md-sys-color-primary-container: light-dark(#d3e3fd, #0842a0);
-  --md-sys-color-on-primary-container: light-dark(#041e49, #d3e3fd);
+  /* DATEI brand accents (raw swatches from Figma node 656:3479) */
+  --datei-brand-blue: #0b75e4;
+  --datei-brand-pink: #e40072;
+  --datei-brand-green: #5acf04;
+  --datei-brand-yellow: #f4c430;
+
+  /* Color scheme (seed: DATEI brand blue #0B75E4) */
+  --md-sys-color-primary: #0b75e4;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: light-dark(#d4e3ff, #00497f);
+  --md-sys-color-on-primary-container: light-dark(#001c3b, #d4e3ff);
   --md-sys-color-secondary: light-dark(#575e71, #bfc6dc);
   --md-sys-color-on-secondary: light-dark(#ffffff, #293041);
   --md-sys-color-secondary-container: light-dark(#dbe2f9, #3f4759);
   --md-sys-color-on-secondary-container: light-dark(#141b2c, #dbe2f9);
-  --md-sys-color-tertiary: light-dark(#715573, #dfbbde);
-  --md-sys-color-on-tertiary: light-dark(#ffffff, #402843);
-  --md-sys-color-tertiary-container: light-dark(#fbd7fc, #583e5b);
-  --md-sys-color-on-tertiary-container: light-dark(#29132d, #fbd7fc);
+  --md-sys-color-tertiary: light-dark(#e40072, #ff86bb);
+  --md-sys-color-on-tertiary: light-dark(#ffffff, #5e0036);
+  --md-sys-color-tertiary-container: light-dark(#ffd9e4, #86004f);
+  --md-sys-color-on-tertiary-container: light-dark(#3e0021, #ffd9e4);
   --md-sys-color-error: light-dark(#ba1a1a, #ffb4ab);
   --md-sys-color-on-error: light-dark(#ffffff, #690005);
   --md-sys-color-error-container: light-dark(#ffdad6, #93000a);
@@ -144,7 +152,8 @@ article blockquote {
 
 article code {
   font-family:
-    'Google Sans Code', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    var(--font-google-sans-code), ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace;
   font-size: 0.875em;
 }
 
