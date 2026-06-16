@@ -69,13 +69,9 @@ export class NavComponent {
   // On handset the rail is shown as a modal expanded rail (replaces the drawer).
   protected readonly railExpanded = computed(() => this.expanded() || this.isHandset());
 
-  // Condense the sticky top bar once the content is scrolled away from the top.
-  protected readonly scrolled = signal(false);
-
   constructor() {
     // mat-sidenav-content stays mounted across route changes, so reset its
-    // scroll position (and the condensed top bar) when navigating, otherwise
-    // the next page loads mid-scroll.
+    // scroll position when navigating, otherwise the next page loads mid-scroll.
     this.router.events
       .pipe(
         filter((event) => event instanceof NavigationEnd),
@@ -83,16 +79,11 @@ export class NavComponent {
       )
       .subscribe(() => {
         this.content().getElementRef().nativeElement.scrollTop = 0;
-        this.scrolled.set(false);
       });
   }
 
   protected toggleExpanded() {
     this.expanded.update((value) => !value);
-  }
-
-  protected onContentScroll(event: Event) {
-    this.scrolled.set((event.target as HTMLElement).scrollTop > 0);
   }
 
   protected onNavItemClick() {

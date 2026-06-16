@@ -183,8 +183,8 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
   gap: 8px;
   // Pad top and bottom so the bar's content lines up with the rail header (logo)
   // and the inset content card, instead of sitting flush against the top. The
-  // padding shrinks once scrolled (see .nav-topbar-condensed) so the sticky bar
-  // becomes compact and frees up vertical space.
+  // padding shrinks once the content scrolls so the sticky bar becomes compact
+  // and frees up vertical space (see the scroll-driven animation below).
   height: auto;
   padding-top: 12px;
   padding-bottom: 12px;
@@ -193,9 +193,23 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
   transition: padding $rail-motion;
 }
 
-.nav-topbar-condensed {
-  padding-top: 4px;
-  padding-bottom: 4px;
+// Condense the sticky top bar as the content scrolls, driven purely by CSS.
+// scroll(nearest) resolves to mat-sidenav-content (the scroll container the
+// full-height chain establishes). Where unsupported, the bar simply stays at
+// its full size.
+@supports (animation-timeline: scroll()) {
+  .nav-topbar {
+    animation: nav-topbar-condense linear both;
+    animation-timeline: scroll(nearest);
+    animation-range: 0 64px;
+  }
+
+  @keyframes nav-topbar-condense {
+    to {
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+  }
 }
 
 // The sidenav container sits behind the rail and content; give it the same
@@ -263,5 +277,9 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
   .nav-topbar,
   .nav-shell > .mat-drawer-content {
     transition: none;
+  }
+
+  .nav-topbar {
+    animation: none;
   }
 }

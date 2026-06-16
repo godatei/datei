@@ -59,8 +59,8 @@
       }
     </nav>
   </mat-sidenav>
-  <mat-sidenav-content (scroll)="onContentScroll($event)">
-    <mat-toolbar class="nav-topbar sticky top-0 z-10" [class.nav-topbar-condensed]="scrolled()">
+  <mat-sidenav-content>
+    <mat-toolbar class="nav-topbar sticky top-0 z-10">
       @if (isHandset()) {
         <button type="button" aria-label="Toggle sidenav" matIconButton (click)="drawer.toggle()">
           <mat-icon aria-hidden="true">menu</mat-icon>
