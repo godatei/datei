@@ -1,16 +1,14 @@
 ---
+import '@material/web/iconbutton/icon-button.js';
 import {Icon} from 'astro-icon/components';
 
 const links = [
   {label: 'Docs', href: '/docs/'},
+  {label: 'Roadmap', href: '/roadmap/'},
   {label: 'Blog', href: '/blog/'},
 ];
 const currentPath = Astro.url.pathname;
 ---
-
-<script>
-  import '@material/web/iconbutton/icon-button.js';
-</script>
 
 <header>
   <nav aria-label="Main">
@@ -49,7 +47,16 @@ const currentPath = Astro.url.pathname;
     position: sticky;
     top: 0;
     z-index: 10;
-    background-color: var(--md-sys-color-surface-container);
+    background-color: var(--md-sys-color-surface);
+    animation: header-scrolled linear both;
+    animation-timeline: scroll();
+    animation-range: 0 4rem;
+  }
+
+  @keyframes header-scrolled {
+    to {
+      background-color: var(--md-sys-color-surface-container);
+    }
   }
 
   nav {

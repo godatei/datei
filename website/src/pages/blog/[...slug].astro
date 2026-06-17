@@ -1,4 +1,6 @@
 ---
+import '@material/web/chips/assist-chip.js';
+import '@material/web/chips/chip-set.js';
 import {Image} from 'astro:assets';
 import BaseLayout from '~/layouts/BaseLayout.astro';
 import type {Post} from '~/types';
@@ -26,11 +28,6 @@ export interface Props {
 const {post} = Astro.props;
 const {Content} = await post.rendered;
 ---
-
-<script>
-  import '@material/web/chips/assist-chip.js';
-  import '@material/web/chips/chip-set.js';
-</script>
 
 <BaseLayout title={post.data.title} description={post.data.description}>
   <article>

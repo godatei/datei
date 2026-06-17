@@ -1,4 +1,5 @@
 ---
+import '@material/web/labs/card/outlined-card.js';
 import {Icon} from 'astro-icon/components';
 
 const features = [
@@ -20,12 +21,14 @@ const features = [
     description:
       'An event-sourced core keeps a full history of every change to your files.',
   },
+  {
+    title: 'Intelligent',
+    icon: 'material-symbols:auto-awesome',
+    description:
+      'Auto organize, label and bring up documents when you need them.',
+  },
 ];
 ---
-
-<script>
-  import '@material/web/labs/card/outlined-card.js';
-</script>
 
 <section class="features" aria-label="Features">
   {

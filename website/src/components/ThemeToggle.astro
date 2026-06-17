@@ -1,4 +1,5 @@
 ---
+import '@material/web/iconbutton/icon-button.js';
 import {Icon} from 'astro-icon/components';
 ---
 
@@ -8,8 +9,6 @@ import {Icon} from 'astro-icon/components';
 </md-icon-button>
 
 <script>
-  import '@material/web/iconbutton/icon-button.js';
-
   const btn = document.getElementById('theme-toggle');
   if (btn) {
     const setLabel = () => {

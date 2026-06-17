@@ -1,7 +1,8 @@
 ---
-import appDark from '~/assets/datei-app-dark.png';
-import appLight from '~/assets/datei-app-light.png';
-import ThemedImage from '~/components/ThemedImage.astro';
+import '@material/web/button/filled-button.js';
+import '@material/web/button/filled-tonal-button.js';
+import {Image} from 'astro:assets';
+import gradient from '~/assets/datei-gradient.svg';
 
 interface Props {
   description: string;
@@ -9,11 +10,6 @@ interface Props {
 
 const {description} = Astro.props;
 ---
-
-<script>
-  import '@material/web/button/filled-button.js';
-  import '@material/web/button/filled-tonal-button.js';
-</script>
 
 <section class="hero">
   <div class="hero-content">
@@ -27,16 +23,14 @@ const {description} = Astro.props;
       >
     </div>
   </div>
-  <div class="hero-shot">
-    <ThemedImage
-      lightSrc={appLight}
-      darkSrc={appDark}
-      alt="The Datei dashboard showing quick actions, folders and recent activity."
-      widths={[640, 960, 1280, 1920]}
-      sizes="(max-width: 64rem) 100vw, 60rem"
+  <a class="hero-shot" href="/blog/introducing-datei/">
+    <Image
+      src={gradient}
+      alt="Read the introduction blog post: Datei is German for file."
+      width={1200}
       loading="eager"
     />
-  </div>
+  </a>
 </section>
 
 <style>
@@ -70,6 +64,7 @@ const {description} = Astro.props;
   }
 
   .hero-shot {
+    display: block;
     width: min(100%, 60rem);
     margin: 3rem auto 0;
     overflow: hidden;
@@ -78,5 +73,11 @@ const {description} = Astro.props;
     box-shadow:
       0 1px 3px rgb(0 0 0 / 0.12),
       0 12px 32px rgb(0 0 0 / 0.18);
+  }
+
+  .hero-shot img {
+    display: block;
+    width: 100%;
+    height: auto;
   }
 </style>

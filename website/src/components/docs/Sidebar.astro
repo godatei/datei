@@ -1,14 +1,11 @@
 ---
+import '@material/web/list/list-item.js';
+import '@material/web/list/list.js';
 import {getDocHref, getDocLabel, getSortedDocs} from '~/utils/docs';
 
 const docs = await getSortedDocs();
 const currentPath = Astro.url.pathname;
 ---
-
-<script>
-  import '@material/web/list/list-item.js';
-  import '@material/web/list/list.js';
-</script>
 
 <nav aria-label="Docs">
   <md-list>
@@ -38,7 +35,13 @@ const currentPath = Astro.url.pathname;
 
   md-list-item {
     border-radius: 9999px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
     --md-list-item-one-line-container-height: 44px;
+  }
+
+  md-list-item:not(.current):hover {
+    background-color: var(--md-sys-color-surface-container-high);
   }
 
   md-list-item.current {

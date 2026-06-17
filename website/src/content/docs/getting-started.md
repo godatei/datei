@@ -5,7 +5,9 @@ sidebar:
   order: 2
 ---
 
-This guide walks you through running Datei for the first time.
+Datei is still very early. Things will change, break, and move around. If you
+want to follow along as it takes shape, watch the project on
+[GitHub](https://github.com/godatei/datei).
 
 ## Get the Datei source code
 
@@ -19,4 +21,4 @@ cd datei
 ## Run Datei locally
 
 Follow the instructions in the repository
-[README](https://github.com/godatei/datei#readme) to build and run Datei.
+[CONTRIBUTING.md](https://github.com/godatei/datei/blob/main/CONTRIBUTING.md) to build and run Datei.

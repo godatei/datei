@@ -127,6 +127,41 @@ img {
   height: auto;
 }
 
+/*
+ * Hover feedback for Material buttons. The components are server-rendered and
+ * not hydrated, so their interactive ripple/state-layer never runs. We
+ * recreate the M3 hover state layer (an 8% overlay of the "on" color) using
+ * each component's own color tokens, which cascade into its shadow DOM.
+ */
+
+md-filled-button,
+md-filled-tonal-button,
+md-icon-button {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+md-filled-button:hover {
+  --md-filled-button-container-color: color-mix(
+    in srgb,
+    var(--md-sys-color-on-primary) 8%,
+    var(--md-sys-color-primary)
+  );
+}
+
+md-filled-tonal-button:hover {
+  --md-filled-tonal-button-container-color: color-mix(
+    in srgb,
+    var(--md-sys-color-on-secondary-container) 8%,
+    var(--md-sys-color-secondary-container)
+  );
+}
+
+md-icon-button:hover {
+  border-radius: 9999px;
+  background-color: var(--md-sys-color-surface-container-high);
+}
+
 /* Markdown content */
 
 article :is(p, ul, ol) {
