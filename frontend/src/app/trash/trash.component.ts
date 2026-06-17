@@ -23,6 +23,7 @@ import { snackSuccessDuration } from '~/frontend/constants';
   selector: 'app-trash',
   templateUrl: './trash.component.html',
   styleUrls: ['./trash.component.css'],
+  host: { class: 'flex flex-col grow min-h-0' },
   imports: [
     DatePipe,
     MatButtonModule,

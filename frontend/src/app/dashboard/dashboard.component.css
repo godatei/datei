@@ -1,3 +1,8 @@
+/* Opaque background so rows don't show through the sticky header while scrolling. */
+.mat-mdc-header-cell {
+  background: var(--mat-sys-surface);
+}
+
 tr {
   /*
   This is required because the material table set `background: inherit`,

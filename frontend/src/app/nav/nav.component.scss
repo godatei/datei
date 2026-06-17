@@ -148,7 +148,6 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
   padding-bottom: 12px;
   background-color: var(--mat-sys-surface-container);
   color: var(--mat-sys-on-surface);
-  transition: padding $rail-motion;
 }
 
 .nav-brand {
@@ -162,51 +161,27 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
   color: var(--mat-sys-on-surface);
 }
 
-@supports (animation-timeline: scroll()) {
-  .nav-topbar {
-    animation: nav-topbar-condense linear both;
-    animation-timeline: scroll(nearest);
-    animation-range: 0 64px;
-  }
-
-  @keyframes nav-topbar-condense {
-    to {
-      padding-top: 4px;
-      padding-bottom: 4px;
-    }
-  }
-}
-
 .nav-shell {
   @apply h-full;
   background-color: var(--mat-sys-surface-container);
 }
 
+// The shell itself never scrolls: it's a fixed-height column (top bar + content
+// card). Scrolling lives inside each page so only its table body moves.
 .nav-shell .mat-drawer-content {
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   background-color: var(--mat-sys-surface-container);
-  scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--mat-sys-on-surface) 35%, transparent) transparent;
-
-  &::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background-color: color-mix(in srgb, var(--mat-sys-on-surface) 35%, transparent);
-    border-radius: var(--mat-sys-corner-full);
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
 }
 
-// Only the single top-left corner needs CSS; no utility covers one M3 corner.
+// Inset content card fills the remaining height and clips; the routed page owns
+// its own scroll region. Only the single top-left corner needs CSS (no utility
+// covers one M3 corner).
 .nav-content {
-  @apply grow;
+  @apply grow min-h-0 overflow-hidden;
+  display: flex;
+  flex-direction: column;
   background-color: var(--mat-sys-surface);
   border-top-left-radius: var(--mat-sys-corner-large);
 }
@@ -223,12 +198,7 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
 
 @media (prefers-reduced-motion: reduce) {
   .nav-rail,
-  .nav-topbar,
   .nav-shell > .mat-drawer-content {
     transition: none;
-  }
-
-  .nav-topbar {
-    animation: none;
   }
 }

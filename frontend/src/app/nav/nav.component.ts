@@ -7,16 +7,15 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NgOptimizedImage } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatRippleModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatSidenav, MatSidenavContent, MatSidenavModule } from '@angular/material/sidenav';
+import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { filter } from 'rxjs';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '~/frontend/services/auth.service';
 import { UserAvatarComponent } from '~/frontend/users/user-avatar.component';
 
@@ -52,7 +51,6 @@ export class NavComponent {
   private readonly router = inject(Router);
 
   private readonly drawer = viewChild.required(MatSidenav);
-  private readonly content = viewChild.required(MatSidenavContent);
 
   private readonly handsetObserver = toSignal(this.breakpointObserver.observe(Breakpoints.Handset));
   protected readonly isHandset = computed(() => this.handsetObserver()?.matches ?? false);
@@ -68,19 +66,6 @@ export class NavComponent {
   protected readonly expanded = signal(false);
   // On handset the rail is shown as a modal expanded rail (replaces the drawer).
   protected readonly railExpanded = computed(() => this.expanded() || this.isHandset());
-
-  constructor() {
-    // mat-sidenav-content stays mounted across route changes, so reset its
-    // scroll position when navigating, otherwise the next page loads mid-scroll.
-    this.router.events
-      .pipe(
-        filter((event) => event instanceof NavigationEnd),
-        takeUntilDestroyed(),
-      )
-      .subscribe(() => {
-        this.content().getElementRef().nativeElement.scrollTop = 0;
-      });
-  }
 
   protected toggleExpanded() {
     this.expanded.update((value) => !value);

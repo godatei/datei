@@ -1,5 +1,5 @@
 <div
-  class="mx-5 mt-3"
+  class="flex flex-col grow min-h-0 mx-5 mt-3"
   appDragDrop
   #drag="appDragDrop"
   (dragStart)="onDrag($event)"
@@ -71,93 +71,95 @@
     }
   </div>
 
-  <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
-    <ng-container matColumnDef="icon">
-      <th mat-header-cell *matHeaderCellDef></th>
-      <td mat-cell *matCellDef="let element" class="w-20">
-        <app-thumbnail-icon [file]="element" />
-      </td>
-    </ng-container>
+  <div class="grow min-h-0 overflow-auto">
+    <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+      <ng-container matColumnDef="icon">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let element" class="w-20">
+          <app-thumbnail-icon [file]="element" />
+        </td>
+      </ng-container>
 
-    <ng-container matColumnDef="name">
-      <th mat-header-cell *matHeaderCellDef>Name</th>
-      <td mat-cell *matCellDef="let element">
-        {{ element.name }}
-      </td>
-    </ng-container>
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Name</th>
+        <td mat-cell *matCellDef="let element">
+          {{ element.name }}
+        </td>
+      </ng-container>
 
-    <ng-container matColumnDef="size">
-      <th mat-header-cell *matHeaderCellDef>Size</th>
-      <td mat-cell *matCellDef="let element">{{ element.size | bytes }}</td>
-    </ng-container>
+      <ng-container matColumnDef="size">
+        <th mat-header-cell *matHeaderCellDef>Size</th>
+        <td mat-cell *matCellDef="let element">{{ element.size | bytes }}</td>
+      </ng-container>
 
-    <ng-container matColumnDef="createdAt">
-      <th mat-header-cell *matHeaderCellDef>Created At</th>
-      <td mat-cell *matCellDef="let element">{{ element.createdAt | date }}</td>
-    </ng-container>
+      <ng-container matColumnDef="createdAt">
+        <th mat-header-cell *matHeaderCellDef>Created At</th>
+        <td mat-cell *matCellDef="let element">{{ element.createdAt | date }}</td>
+      </ng-container>
 
-    <ng-container matColumnDef="updatedAt">
-      <th mat-header-cell *matHeaderCellDef>Updated At</th>
-      <td mat-cell *matCellDef="let element">{{ element.updatedAt | date }}</td>
-    </ng-container>
+      <ng-container matColumnDef="updatedAt">
+        <th mat-header-cell *matHeaderCellDef>Updated At</th>
+        <td mat-cell *matCellDef="let element">{{ element.updatedAt | date }}</td>
+      </ng-container>
 
-    <ng-container matColumnDef="mimeType">
-      <th mat-header-cell *matHeaderCellDef>Content Type</th>
-      <td mat-cell *matCellDef="let element">{{ element.mimeType }}</td>
-    </ng-container>
+      <ng-container matColumnDef="mimeType">
+        <th mat-header-cell *matHeaderCellDef>Content Type</th>
+        <td mat-cell *matCellDef="let element">{{ element.mimeType }}</td>
+      </ng-container>
 
-    <ng-container matColumnDef="actions">
-      <th mat-header-cell *matHeaderCellDef></th>
-      <td mat-cell *matCellDef="let element" class="w-12 text-right">
-        <button
-          matIconButton
-          [matMenuTriggerFor]="rowMenu"
-          (click)="$event.stopPropagation()"
-          aria-label="More actions"
-        >
-          <mat-icon>more_vert</mat-icon>
-        </button>
-        <mat-menu #rowMenu="matMenu">
-          <button mat-menu-item (click)="openRenameDialog(element)">
-            <mat-icon>edit</mat-icon>
-            Rename
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let element" class="w-12 text-right">
+          <button
+            matIconButton
+            [matMenuTriggerFor]="rowMenu"
+            (click)="$event.stopPropagation()"
+            aria-label="More actions"
+          >
+            <mat-icon>more_vert</mat-icon>
           </button>
-          <button mat-menu-item [matMenuTriggerFor]="rowSharingMenu">
-            <mat-icon>person_add</mat-icon>
-            Share
-          </button>
-          <button mat-menu-item (click)="trashFile(element, $event)">
-            <mat-icon>delete</mat-icon>
-            Move to trash
-          </button>
-        </mat-menu>
-        <mat-menu #rowSharingMenu="matMenu">
-          <button mat-menu-item (click)="createLinkForRow(element)">
-            <mat-icon>link</mat-icon>
-            Create public link
-          </button>
-          <button mat-menu-item (click)="addToLinkForRow(element)">
-            <mat-icon>add_link</mat-icon>
-            Add to public link
-          </button>
-        </mat-menu>
-      </td>
-    </ng-container>
+          <mat-menu #rowMenu="matMenu">
+            <button mat-menu-item (click)="openRenameDialog(element)">
+              <mat-icon>edit</mat-icon>
+              Rename
+            </button>
+            <button mat-menu-item [matMenuTriggerFor]="rowSharingMenu">
+              <mat-icon>person_add</mat-icon>
+              Share
+            </button>
+            <button mat-menu-item (click)="trashFile(element, $event)">
+              <mat-icon>delete</mat-icon>
+              Move to trash
+            </button>
+          </mat-menu>
+          <mat-menu #rowSharingMenu="matMenu">
+            <button mat-menu-item (click)="createLinkForRow(element)">
+              <mat-icon>link</mat-icon>
+              Create public link
+            </button>
+            <button mat-menu-item (click)="addToLinkForRow(element)">
+              <mat-icon>add_link</mat-icon>
+              Add to public link
+            </button>
+          </mat-menu>
+        </td>
+      </ng-container>
 
-    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr
-      mat-row
-      *matRowDef="let row; columns: displayedColumns"
-      [appDragItem]="row"
-      [appDropTarget]="row"
-      [dropTargetEnabled]="row.isDirectory"
-      [appSelectionItem]="row"
-      (dblclick)="onRowDblClick(row)"
-      class="select-none transition-colors"
-      [class.opacity-50]="drag.isDragging() && selection.selectedIds().has(row.id)"
-      [class.cursor-pointer]="!drag.isDragging()"
-    ></tr>
-  </table>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+      <tr
+        mat-row
+        *matRowDef="let row; columns: displayedColumns"
+        [appDragItem]="row"
+        [appDropTarget]="row"
+        [dropTargetEnabled]="row.isDirectory"
+        [appSelectionItem]="row"
+        (dblclick)="onRowDblClick(row)"
+        class="select-none transition-colors"
+        [class.opacity-50]="drag.isDragging() && selection.selectedIds().has(row.id)"
+        [class.cursor-pointer]="!drag.isDragging()"
+      ></tr>
+    </table>
+  </div>
 
   <div
     appDragPreview
