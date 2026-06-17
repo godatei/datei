@@ -206,7 +206,6 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
 
 // Only the single top-left corner needs CSS; no utility covers one M3 corner.
 .nav-content {
-  @apply grow mt-3 ms-3;
   background-color: var(--mat-sys-surface);
   border-top-left-radius: var(--mat-sys-corner-large);
 }
