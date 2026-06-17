@@ -20,7 +20,7 @@ RUN repo="https://www.modelscope.cn/models/RapidAI/RapidOCR/resolve/v3.8.0/onnx"
     && sha256sum -c /models.sha256
 
 
-FROM python:3.11-slim-bookworm
+FROM python:3.14-slim-bookworm
 
 # rapidocr_api pulls in rapidocr; the inference engine (onnxruntime) must be
 # installed explicitly. rapidocr declares a dependency on the full opencv-python,
