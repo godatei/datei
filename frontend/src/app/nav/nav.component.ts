@@ -31,6 +31,8 @@ interface NavItem {
   templateUrl: './nav.component.html',
   styleUrl: './nav.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // Full-height chain so content scrolls inside mat-sidenav-content, not the document.
+  host: { class: 'block h-full' },
   imports: [
     NgOptimizedImage,
     MatToolbarModule,
