@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/httprate"
 	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/authn"
@@ -28,7 +29,7 @@ func BasicAuthMiddleware(userSvc *users.UserService) func(http.Handler) http.Han
 				return
 			}
 
-			ip, _ := httprate.KeyByRealIP(r)
+			ip := middleware.GetClientIP(r.Context())
 			if allowed, _, _ := failLimiter.Status(ip); !allowed {
 				if limited := failLimiter.RespondOnLimit(w, r, ip); limited {
 					return
