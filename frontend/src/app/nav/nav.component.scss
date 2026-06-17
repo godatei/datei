@@ -1,13 +1,11 @@
-// M3 Expressive navigation rail: collapsed (96dp) <-> expanded (220dp).
-// Angular Material has no rail component, so the rail anatomy is built on
-// Material system variables. Spec: m3.material.io/components/navigation-rail
+@reference 'tailwindcss';
+
+// Custom M3 navigation rail (Angular Material has no rail component).
 $rail-collapsed-width: 96px;
 $rail-expanded-width: 220px;
 $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
 
-// Establish a full-height chain so the sidenav container fills the viewport and
-// page content scrolls inside mat-sidenav-content (whose (scroll) drives the
-// condensed top bar) instead of on the document.
+// Full-height chain so content scrolls inside mat-sidenav-content, not the document.
 :host {
   display: block;
   height: 100%;
@@ -18,7 +16,6 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
   background-color: var(--mat-sys-surface-container);
   transition: width $rail-motion;
 
-  // Edge-attached standard rail has no rounded corners (modal variant keeps them).
   &.mat-drawer-side {
     border-radius: 0;
   }
@@ -28,36 +25,11 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
   }
 }
 
-// Rail header: brand logo above the collapse/expand toggle (M3 places the
-// logo above the optional menu button and FAB). The logo, toggle and item
-// icons are anchored to the same horizontal centre (48px) in both the
-// collapsed and expanded rail, so expanding only reveals the labels and grows
-// the width — the icons and logo never jump.
 .nav-rail-header {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
   padding-top: 20px;
-}
-
-.nav-rail-logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  height: 48px;
-  padding-left: 32px; // 32px logo -> centred at 48px when collapsed
-}
-
-.nav-rail-wordmark {
-  display: none;
-  font: var(--mat-sys-title-medium);
-  color: var(--mat-sys-on-surface);
-  white-space: nowrap;
-}
-
-.nav-rail-toggle {
-  align-self: flex-start;
-  margin-left: 24px; // 48px icon button -> centred at 48px when collapsed
+  // Inset the 48px burger so it sits on the same 48px axis as the item icons.
+  padding-inline-start: 24px;
 }
 
 .nav-rail-items {
@@ -78,14 +50,13 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
 
-  // Keep icon and label painted above the absolutely positioned indicator.
   mat-icon,
   .nav-rail-label {
     position: relative;
   }
 
   mat-icon {
-    margin: 4px 0; // centres the 24px icon in the 32px-high indicator
+    margin: 4px 0;
   }
 
   &:hover .nav-rail-indicator {
@@ -124,13 +95,12 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
   }
 }
 
-// Collapsed: a 56x32 pill centred on the icon. Expanded: the indicator fills
-// the row behind the icon and label.
 .nav-rail-indicator {
   position: absolute;
   top: 6px;
-  left: calc(50% - 28px); // centre the 56px pill without a transform, which
-  width: 56px; // would otherwise offset matRipple's centered ripple
+  // Centre the pill without a transform, which would offset matRipple's ripple.
+  left: calc(50% - 28px);
+  width: 56px;
   height: 32px;
   border-radius: var(--mat-sys-corner-full);
   transition: background-color 150ms linear;
@@ -140,13 +110,7 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
   font: var(--mat-sys-label-medium);
 }
 
-// Expanded rail: icons and labels sit in a row with a full-width pill
-// indicator. The logo and toggle stay anchored, so only the items reflow.
 .nav-rail-expanded {
-  .nav-rail-wordmark {
-    display: inline;
-  }
-
   .nav-rail-item {
     flex-direction: row;
     justify-content: flex-start;
@@ -176,15 +140,9 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
   }
 }
 
-// Top app bar shares the rail's surface tone so the navigation chrome reads as
-// one continuous surface wrapping the content (M3 top app bars are surface, not
-// a saturated primary).
 .nav-topbar {
+  @apply sticky top-0 z-10;
   gap: 8px;
-  // Pad top and bottom so the bar's content lines up with the rail header (logo)
-  // and the inset content card, instead of sitting flush against the top. The
-  // padding shrinks once the content scrolls so the sticky bar becomes compact
-  // and frees up vertical space (see the scroll-driven animation below).
   height: auto;
   padding-top: 12px;
   padding-bottom: 12px;
@@ -193,10 +151,17 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
   transition: padding $rail-motion;
 }
 
-// Condense the sticky top bar as the content scrolls, driven purely by CSS.
-// scroll(nearest) resolves to mat-sidenav-content (the scroll container the
-// full-height chain establishes). Where unsupported, the bar simply stays at
-// its full size.
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-brand-name {
+  font: var(--mat-sys-title-medium);
+  color: var(--mat-sys-on-surface);
+}
+
 @supports (animation-timeline: scroll()) {
   .nav-topbar {
     animation: nav-topbar-condense linear both;
@@ -212,22 +177,15 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
   }
 }
 
-// The sidenav container sits behind the rail and content; give it the same
-// grey so no light background shows through while the rail width animates.
 .nav-shell {
+  @apply h-full;
   background-color: var(--mat-sys-surface-container);
 }
 
-// The content region behind the page is the same surface-container grey as the
-// rail/top bar, so the inset white content card reads as if framed by a grey
-// border with rounded corners.
 .nav-shell .mat-drawer-content {
   display: flex;
   flex-direction: column;
   background-color: var(--mat-sys-surface-container);
-
-  // Thin, unobtrusive scrollbar instead of a reserved gutter (which showed as
-  // a grey margin on pages without a scrollbar and broke the flush right edge).
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--mat-sys-on-surface) 35%, transparent) transparent;
 
@@ -246,23 +204,14 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
   }
 }
 
+// Only the single top-left corner needs CSS; no utility covers one M3 corner.
 .nav-content {
-  // Only the single top-left M3 corner needs custom CSS (no utility class
-  // covers one corner with an M3 token); grow/margin/background are applied as
-  // utility classes on the element in the template.
+  @apply grow mt-3 ms-3;
+  background-color: var(--mat-sys-surface);
   border-top-left-radius: var(--mat-sys-corner-large);
 }
 
-// Reserves the top-bar area where a search bar may live, so adding one later
-// doesn't shift the surrounding layout.
-.search-slot {
-  flex: 1 1 auto;
-  max-width: 480px;
-}
-
-// Keep the page content margin in sync with the animated rail width on
-// desktop (mode="side"). The sidenav's own measured margin is static, so it
-// is overridden here to follow the collapse/expand transition.
+// Material's measured drawer margin is static; override it to follow the rail.
 .nav-shell:not(.nav-shell-handset) > .mat-drawer-content {
   margin-left: $rail-collapsed-width !important;
   transition: margin-left $rail-motion;

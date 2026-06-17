@@ -1,5 +1,5 @@
 <mat-sidenav-container
-  class="nav-shell h-full"
+  class="nav-shell"
   [class.nav-shell-handset]="isHandset()"
   [class.nav-shell-expanded]="expanded()"
 >
@@ -13,15 +13,10 @@
     [opened]="!isHandset()"
   >
     <div class="nav-rail-header">
-      <div class="nav-rail-logo">
-        <img ngSrc="datei-logo.svg" alt="Datei" width="32" height="32" />
-        <span class="nav-rail-wordmark">Datei</span>
-      </div>
       @if (!isHandset()) {
         <button
           type="button"
           matIconButton
-          class="nav-rail-toggle"
           [attr.aria-expanded]="expanded()"
           [attr.aria-label]="expanded() ? 'Collapse navigation' : 'Expand navigation'"
           (click)="toggleExpanded()"
@@ -60,13 +55,16 @@
     </nav>
   </mat-sidenav>
   <mat-sidenav-content>
-    <mat-toolbar class="nav-topbar sticky top-0 z-10">
+    <mat-toolbar class="nav-topbar">
       @if (isHandset()) {
         <button type="button" aria-label="Toggle sidenav" matIconButton (click)="drawer.toggle()">
           <mat-icon aria-hidden="true">menu</mat-icon>
         </button>
       }
-      <div class="search-slot" aria-hidden="true"></div>
+      <div class="nav-brand">
+        <img ngSrc="datei-logo.svg" alt="Datei" width="32" height="32" />
+        <span class="nav-brand-name">Datei</span>
+      </div>
       <span class="grow shrink basis-auto"></span>
       <button mat-button [matMenuTriggerFor]="userMenu">
         <app-user-avatar [name]="userName()" size="xs" class="mr-1" />
@@ -89,7 +87,7 @@
         </button>
       </mat-menu>
     </mat-toolbar>
-    <div class="nav-content grow mt-3 ms-3 mat-bg-surface">
+    <div class="nav-content">
       <router-outlet />
     </div>
   </mat-sidenav-content>
