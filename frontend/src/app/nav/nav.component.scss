@@ -137,11 +137,13 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
   background-color: var(--mat-sys-surface-container);
 }
 
-// Inset content card fills the remaining height and clips; the routed page owns
-// its own scroll region. Only the single top-left corner needs CSS (no utility
-// covers one M3 corner).
+// Inset content card fills the remaining height. File-list pages manage their
+// own inner scroll region (so only their table body scrolls); pages without one
+// (settings, admin) overflow and scroll within the card instead of being
+// clipped. Only the single top-left corner needs CSS (no utility covers one M3
+// corner).
 .nav-content {
-  @apply flex flex-col grow min-h-0 overflow-hidden;
+  @apply flex flex-col grow min-h-0 overflow-auto;
   background-color: var(--mat-sys-surface);
   border-top-left-radius: var(--mat-sys-corner-large);
 }
