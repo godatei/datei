@@ -48,6 +48,21 @@ const currentPath = Astro.url.pathname;
     top: 0;
     z-index: 10;
     background-color: var(--md-sys-color-surface);
+  }
+
+  /*
+   * Fade in a surface-container overlay on scroll instead of animating
+   * background-color between two tokens. Animating the color directly
+   * snapshots the resolved light-dark() values, so a scrolled header keeps
+   * the previous theme's color after a theme toggle. Animating opacity is
+   * theme-independent and lets the color re-resolve from the token each frame.
+   */
+  header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: var(--md-sys-color-surface-container);
+    opacity: 0;
     animation: header-scrolled linear both;
     animation-timeline: scroll();
     animation-range: 0 4rem;
@@ -55,11 +70,12 @@ const currentPath = Astro.url.pathname;
 
   @keyframes header-scrolled {
     to {
-      background-color: var(--md-sys-color-surface-container);
+      opacity: 1;
     }
   }
 
   nav {
+    position: relative;
     max-width: 72rem;
     margin: 0 auto;
     padding: 0.5rem 1.5rem;
