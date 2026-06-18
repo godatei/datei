@@ -149,6 +149,12 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
   border-top-left-radius: var(--mat-sys-corner-large);
 }
 
+// On handset the rail is an overlay (not a side panel pushing the content), so
+// the card spans the full width; round the top-right corner too for symmetry.
+.nav-shell-handset .nav-content {
+  border-top-right-radius: var(--mat-sys-corner-large);
+}
+
 // Material's measured drawer margin is static; override it (inline style → needs
 // `!important`) so the content follows the rail width.
 .nav-shell:not(.nav-shell-handset) > .mat-drawer-content {
