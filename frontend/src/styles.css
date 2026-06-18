@@ -37,6 +37,23 @@
   --mat-card-content-padding: 2rem 2rem 1.5rem;
 }
 
+/* Material tables: opaque sticky header plus row hover/selection backgrounds.
+   Material sets `background: inherit` on rows, which overrides Tailwind bg
+   utilities, so concrete values are set here. */
+.mat-mdc-header-cell {
+  background: var(--mat-sys-surface);
+}
+
+tr {
+  &:hover {
+    background: var(--mat-sys-surface-container-low);
+  }
+
+  &.selection-item-selected {
+    background: var(--mat-sys-secondary-container);
+  }
+}
+
 /* Compact variant of matIconButton for inline-with-text contexts.
    The touch target stays at the M3 default (48px) via the overlay element. */
 .mat-icon-button-compact {

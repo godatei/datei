@@ -18,9 +18,10 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
   }
 }
 
-// Inset the 48px burger so it sits on the same 48px axis as the item icons.
+// Pin the header to the collapsed rail width so the centred burger stays on the
+// item-icon axis and doesn't shift when the rail expands.
 .nav-rail-header {
-  @apply flex pt-5 ps-6;
+  @apply flex justify-center w-24 pt-3;
 }
 
 .nav-rail-items {
