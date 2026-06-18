@@ -75,4 +75,4 @@ jobs:
         run: >-
           aws cloudfront create-invalidation
           --distribution-id E28ZWX3797KDLS
-          --invalidation-batch "Paths={Quantity='1' ,Items=['/*']},CallerReference=WEBSITE_$GITHUB_RUN_ID"
+          --invalidation-batch "Paths={Quantity=1,Items=['/*']},CallerReference=WEBSITE_$GITHUB_RUN_ID"
