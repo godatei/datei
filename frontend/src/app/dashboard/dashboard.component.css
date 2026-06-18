@@ -1,22 +1,9 @@
-tr {
-  /*
-  This is required because the material table set `background: inherit`,
-  which overrules TailwindCSS `background-color: ...`
-  */
-
-  &:hover {
-    background: var(--mat-sys-surface-container-low);
-  }
-
-  &.selection-item-selected {
-    background: var(--mat-sys-secondary-container);
-  }
-
-  &.drop-target-active {
-    background: var(--mat-sys-primary-container);
-    outline: 2px solid var(--mat-sys-primary);
-    outline-offset: -2px;
-  }
+/* Rows highlighted as drop targets while dragging. The shared header/hover/
+   selection backgrounds live in styles.css. */
+tr.drop-target-active {
+  background: var(--mat-sys-primary-container);
+  outline: 2px solid var(--mat-sys-primary);
+  outline-offset: -2px;
 }
 
 /* Breadcrumb buttons highlighted as drop targets while dragging */
