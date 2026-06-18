@@ -2,9 +2,10 @@
 @import '@fontsource/roboto/400.css';
 @import '@fontsource/roboto/500.css';
 @import '@fontsource/material-icons';
+@import '@fontsource/material-icons-outlined';
 
-.material-icons {
-  font-family: 'Material Icons';
+.material-icons,
+.material-icons-outlined {
   font-weight: normal;
   font-style: normal;
   font-size: 24px;
@@ -20,12 +21,44 @@
   -webkit-font-smoothing: antialiased;
 }
 
+.material-icons {
+  font-family: 'Material Icons';
+}
+
+.material-icons-outlined {
+  font-family: 'Material Icons Outlined';
+}
+
 @import 'tailwindcss';
 
 /* You can add global styles to this file, and also import other style files */
 
 .auth-card {
   --mat-card-content-padding: 2rem 2rem 1.5rem;
+}
+
+/* Material tables: opaque sticky header plus row hover/selection backgrounds.
+   Material sets `background: inherit` on rows, which overrides Tailwind bg
+   utilities, so concrete values are set here. */
+.mat-mdc-header-cell {
+  background: var(--mat-sys-surface);
+}
+
+tr {
+  &:hover {
+    background: var(--mat-sys-surface-container-low);
+  }
+
+  &.selection-item-selected {
+    background: var(--mat-sys-secondary-container);
+  }
+}
+
+/* The collapsed rail is exactly one icon-column wide and its header is pinned to
+   that same width; hide horizontal overflow so the scroll container never shows
+   a horizontal scrollbar. Vertical scroll stays available for short viewports. */
+.nav-rail .mat-drawer-inner-container {
+  overflow-x: hidden;
 }
 
 /* Compact variant of matIconButton for inline-with-text contexts.

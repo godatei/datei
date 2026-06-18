@@ -51,6 +51,7 @@ import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
+  host: { class: 'flex flex-col grow min-h-0' },
   imports: [
     MatMenuModule,
     MatIconModule,

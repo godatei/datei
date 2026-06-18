@@ -1,0 +1,174 @@
+@reference 'tailwindcss';
+
+// Custom M3 motion curve; no Tailwind/M3 token exists, and Tailwind cannot
+// animate width/margin, so the rail transitions stay in plain CSS.
+$rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
+
+.nav-rail {
+  @apply w-24;
+  background-color: var(--mat-sys-surface-container);
+  transition: width $rail-motion;
+
+  &.mat-drawer-side {
+    @apply rounded-none;
+  }
+
+  &.nav-rail-expanded {
+    @apply w-55;
+  }
+}
+
+// Pin the header to the collapsed rail width so the centred burger stays on the
+// item-icon axis and doesn't shift when the rail expands.
+.nav-rail-header {
+  @apply flex justify-center w-24 pt-3;
+}
+
+.nav-rail-items {
+  @apply flex flex-col gap-1 mt-6;
+}
+
+.nav-rail-item {
+  @apply relative flex flex-col items-center gap-1 pt-1.5 pb-1 no-underline;
+  color: var(--mat-sys-on-surface-variant);
+  -webkit-tap-highlight-color: transparent;
+
+  mat-icon,
+  .nav-rail-label {
+    @apply relative;
+  }
+
+  mat-icon {
+    @apply my-1;
+  }
+
+  &:hover .nav-rail-indicator {
+    background-color: color-mix(in srgb, var(--mat-sys-on-surface) 8%, transparent);
+  }
+
+  &:focus-visible {
+    @apply outline-none;
+
+    .nav-rail-indicator {
+      @apply outline-offset-1;
+      outline: 2px solid var(--mat-sys-secondary);
+    }
+  }
+
+  &.active {
+    mat-icon {
+      color: var(--mat-sys-on-secondary-container);
+    }
+
+    .nav-rail-label {
+      color: var(--mat-sys-secondary);
+    }
+
+    .nav-rail-indicator {
+      background-color: var(--mat-sys-secondary-container);
+    }
+
+    &:hover .nav-rail-indicator {
+      background-color: color-mix(
+        in srgb,
+        var(--mat-sys-on-secondary-container) 8%,
+        var(--mat-sys-secondary-container)
+      );
+    }
+  }
+}
+
+// Centre the pill with a negative margin instead of a transform, which would
+// offset matRipple's ripple.
+.nav-rail-indicator {
+  @apply absolute top-1.5 left-1/2 -ml-7 w-14 h-8 transition-colors duration-150 ease-linear;
+  border-radius: var(--mat-sys-corner-full);
+}
+
+.nav-rail-label {
+  font: var(--mat-sys-label-medium);
+}
+
+.nav-rail-expanded {
+  .nav-rail-item {
+    @apply flex-row justify-start gap-2 h-14 mx-5 px-4;
+
+    mat-icon {
+      @apply m-0;
+    }
+
+    &.active .nav-rail-label {
+      color: var(--mat-sys-on-secondary-container);
+    }
+  }
+
+  .nav-rail-indicator {
+    @apply top-0 left-0 ml-0 w-full h-full;
+  }
+
+  .nav-rail-label {
+    font: var(--mat-sys-label-large);
+  }
+}
+
+.nav-topbar {
+  @apply sticky top-0 z-10 gap-2 h-auto py-3;
+  background-color: var(--mat-sys-surface-container);
+  color: var(--mat-sys-on-surface);
+}
+
+.nav-brand {
+  @apply flex items-center gap-2;
+}
+
+.nav-brand-name {
+  font: var(--mat-sys-title-medium);
+  color: var(--mat-sys-on-surface);
+}
+
+.nav-shell {
+  @apply h-full;
+  background-color: var(--mat-sys-surface-container);
+}
+
+// The shell itself never scrolls: it's a fixed-height column (top bar + content
+// card). Scrolling lives inside each page so only its table body moves.
+.nav-shell .mat-drawer-content {
+  @apply flex flex-col overflow-hidden;
+  background-color: var(--mat-sys-surface-container);
+}
+
+// Inset content card fills the remaining height. File-list pages manage their
+// own inner scroll region (so only their table body scrolls); pages without one
+// (settings, admin) overflow and scroll within the card instead of being
+// clipped. Only the single top-left corner needs CSS (no utility covers one M3
+// corner).
+.nav-content {
+  @apply flex flex-col grow min-h-0 overflow-auto;
+  background-color: var(--mat-sys-surface);
+  border-top-left-radius: var(--mat-sys-corner-large);
+}
+
+// On handset the rail is an overlay (not a side panel pushing the content), so
+// the card spans the full width; round the top-right corner too for symmetry.
+.nav-shell-handset .nav-content {
+  border-top-right-radius: var(--mat-sys-corner-large);
+}
+
+// Material's measured drawer margin is static; override it (inline style → needs
+// `!important`) so the content follows the rail width.
+.nav-shell:not(.nav-shell-handset) > .mat-drawer-content {
+  @apply ml-24!;
+  transition: margin-left $rail-motion;
+}
+
+.nav-shell:not(.nav-shell-handset).nav-shell-expanded > .mat-drawer-content {
+  @apply ml-55!;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-rail,
+  .nav-shell > .mat-drawer-content {
+    transition: none;
+  }
+}
