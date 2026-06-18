@@ -1,9 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { initials } from './initials';
 
 @Component({
   selector: 'app-user-avatar',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './user-avatar.component.html',
   host: {
     '[class]': 'classes()',

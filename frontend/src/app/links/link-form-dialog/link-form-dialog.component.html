@@ -4,7 +4,7 @@
     <div class="flex flex-col gap-2 pt-2">
       @if (!isEdit) {
         <p class="mat-text-on-surface-variant mat-font-body-md">
-          Sharing {dateiCount(), plural, =1 {1 item} other {{{ dateiCount() }} items}}.
+          Sharing {fileCount(), plural, =1 {1 item} other {{{ fileCount() }} items}}.
         </p>
       }
 
@@ -48,13 +48,13 @@
       @if (isEdit) {
         <div class="flex flex-col gap-1 mt-4">
           <h3 class="mat-font-title-sm mb-0">Shared items</h3>
-          @if (sharedDateien().length === 0) {
+          @if (sharedFiles().length === 0) {
             <p class="mat-text-on-surface-variant mat-font-body-sm">
               No items in this link. Add items from the Files page.
             </p>
           } @else {
             <mat-list>
-              @for (item of sharedDateien(); track item.id) {
+              @for (item of sharedFiles(); track item.id) {
                 <mat-list-item>
                   <mat-icon matListItemIcon>
                     {{ item.isDirectory ? 'folder' : 'description' }}
@@ -64,7 +64,7 @@
                     matIconButton
                     matListItemMeta
                     type="button"
-                    (click)="removeDatei(item)"
+                    (click)="removeFile(item)"
                     [attr.aria-label]="'Remove ' + (item.name ?? 'item')"
                   >
                     <mat-icon>close</mat-icon>

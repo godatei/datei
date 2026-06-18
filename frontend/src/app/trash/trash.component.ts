@@ -1,14 +1,5 @@
 import { DatePipe } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, computed, effect, inject, resource, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
@@ -18,8 +9,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Api } from '~/api/api';
-import { getDateiPath, listTrash, listTrashChildren } from '~/api/functions';
-import { Datei, TrashedDatei } from '~/api/models';
+import { getFilePath, listTrash, listTrashChildren } from '~/api/functions';
+import { File, TrashedFile } from '~/api/models';
 import { ThumbnailIconComponent } from '~/frontend/dashboard/thumbnail-icon.component';
 import { SelectionDirective } from '~/frontend/dashboard/selection.directive';
 import { SelectionItemDirective } from '~/frontend/dashboard/selection-item.directive';
@@ -32,7 +23,6 @@ import { snackSuccessDuration } from '~/frontend/constants';
   selector: 'app-trash',
   templateUrl: './trash.component.html',
   styleUrls: ['./trash.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatePipe,
     MatButtonModule,
@@ -62,16 +52,14 @@ export class TrashComponent {
     params: () => ({ refresh: this.refresh(), parentId: this.parentId() }),
     loader: ({ params }) =>
       params.parentId
-        ? this.api.invoke(listTrashChildren, { dateiId: params.parentId })
+        ? this.api.invoke(listTrashChildren, { fileId: params.parentId })
         : this.api.invoke(listTrash, undefined),
   });
 
   protected readonly pathResource = resource({
     params: () => ({ parentId: this.parentId() }),
     loader: ({ params }) =>
-      params.parentId
-        ? this.api.invoke(getDateiPath, { id: params.parentId })
-        : Promise.resolve([]),
+      params.parentId ? this.api.invoke(getFilePath, { id: params.parentId }) : Promise.resolve([]),
   });
 
   protected readonly displayedColumns = computed(() =>
@@ -80,8 +68,8 @@ export class TrashComponent {
       : ['icon', 'name', 'trashedAt', 'originPath', 'actions'],
   );
 
-  protected readonly dataSource = new MatTableDataSource<Datei>([]);
-  protected readonly selection = viewChild.required<SelectionDirective<Datei>>(SelectionDirective);
+  protected readonly dataSource = new MatTableDataSource<File>([]);
+  protected readonly selection = viewChild.required<SelectionDirective<File>>(SelectionDirective);
 
   constructor() {
     effect(() => {
@@ -97,19 +85,19 @@ export class TrashComponent {
     });
   }
 
-  protected onRowDblClick(row: Datei): void {
+  protected onRowDblClick(row: File): void {
     if (row.isDirectory) {
       this.selection().clear();
       this.router.navigate([], { relativeTo: this.route, queryParams: { parentId: row.id } });
     }
   }
 
-  protected restore(item: Datei): void {
+  protected restore(item: File): void {
     const dialogRef = this.dialog.open(RestoreDialogComponent, { data: item });
     dialogRef
       .afterClosed()
       .pipe(filter((result) => result))
-      .subscribe((result: { parent?: Datei }) => {
+      .subscribe((result: { parent?: File }) => {
         this.refresh.update((v) => v + 1);
         const snackRef = this.snack.open(
           `"${item.name ?? 'Unnamed'}" has been restored to ${result.parent?.name ?? 'My files'}`,
@@ -124,12 +112,12 @@ export class TrashComponent {
       });
   }
 
-  protected deletePermanently(item: Datei): void {
+  protected deletePermanently(item: File): void {
     // TODO: implement permanent delete
     console.warn('delete not implemented', item);
   }
 
-  protected formatOriginPath(item: TrashedDatei): string {
+  protected formatOriginPath(item: TrashedFile): string {
     const parts = item.originPath;
     if (!parts || parts.length === 0) {
       return 'My files';

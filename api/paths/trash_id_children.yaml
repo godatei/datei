@@ -4,7 +4,7 @@ get:
   security:
     - bearerHttpAuthentication: []
   parameters:
-    - name: dateiId
+    - name: fileId
       in: path
       required: true
       schema:
@@ -28,6 +28,6 @@ get:
       content:
         application/json:
           schema:
-            $ref: '../components/schemas/ListDateiResponse.yaml'
+            $ref: '../components/schemas/ListFilesResponse.yaml'
     '404':
       description: Trashed directory not found or not trashed

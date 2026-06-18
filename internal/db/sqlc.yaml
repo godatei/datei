@@ -2,8 +2,8 @@ version: '2'
 sql:
   - engine: 'postgresql'
     queries:
-      - 'datei.sql'
-      - 'datei_event.sql'
+      - 'file.sql'
+      - 'file_event.sql'
       - 'link.sql'
       - 'link_event.sql'
       - 'user_account_event.sql'

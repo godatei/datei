@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { email, form, FormField, FormRoot, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -12,7 +12,6 @@ import { AuthService } from '~/frontend/services/auth.service';
 
 @Component({
   selector: 'app-forgot',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     FormField,
     FormRoot,

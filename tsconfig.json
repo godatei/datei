@@ -14,10 +14,10 @@
     "importHelpers": true,
     "target": "ES2022",
     "module": "preserve",
-    "baseUrl": ".",
     "paths": {
-      "~/frontend/*": ["frontend/src/app/*"],
-      "~/api/*": ["frontend/src/api/*"]
+      "~/frontend/*": ["./frontend/src/app/*"],
+      "~/api/*": ["./frontend/src/api/*"],
+      "~/util/*": ["./frontend/src/util/*"]
     }
   },
   "angularCompilerOptions": {

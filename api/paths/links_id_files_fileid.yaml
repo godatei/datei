@@ -1,0 +1,27 @@
+delete:
+  operationId: RemoveFileFromLink
+  summary: Remove a file from a link
+  security:
+    - bearerHttpAuthentication: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: fileId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '204':
+      description: File removed
+    '400':
+      description: File is not part of this link
+    '403':
+      description: Link revoked
+    '404':
+      description: Link not found

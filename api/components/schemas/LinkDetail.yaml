@@ -2,10 +2,10 @@ allOf:
   - $ref: './Link.yaml'
   - type: object
     required:
-      - dateien
+      - files
     properties:
-      dateien:
+      files:
         type: array
         items:
-          $ref: './Datei.yaml'
-        description: Top-level dateien shared by the link
+          $ref: './File.yaml'
+        description: Top-level files shared by the link

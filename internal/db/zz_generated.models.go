@@ -12,50 +12,50 @@ import (
 	"github.com/google/uuid"
 )
 
-type DateiPermissionType string
+type FilePermissionType string
 
 const (
-	DateiPermissionTypeOwner     DateiPermissionType = "owner"
-	DateiPermissionTypeReadWrite DateiPermissionType = "read_write"
-	DateiPermissionTypeReadOnly  DateiPermissionType = "read_only"
+	FilePermissionTypeOwner     FilePermissionType = "owner"
+	FilePermissionTypeReadWrite FilePermissionType = "read_write"
+	FilePermissionTypeReadOnly  FilePermissionType = "read_only"
 )
 
-func (e *DateiPermissionType) Scan(src interface{}) error {
+func (e *FilePermissionType) Scan(src interface{}) error {
 	switch s := src.(type) {
 	case []byte:
-		*e = DateiPermissionType(s)
+		*e = FilePermissionType(s)
 	case string:
-		*e = DateiPermissionType(s)
+		*e = FilePermissionType(s)
 	default:
-		return fmt.Errorf("unsupported scan type for DateiPermissionType: %T", src)
+		return fmt.Errorf("unsupported scan type for FilePermissionType: %T", src)
 	}
 	return nil
 }
 
-type NullDateiPermissionType struct {
-	DateiPermissionType DateiPermissionType
-	Valid               bool // Valid is true if DateiPermissionType is not NULL
+type NullFilePermissionType struct {
+	FilePermissionType FilePermissionType
+	Valid              bool // Valid is true if FilePermissionType is not NULL
 }
 
 // Scan implements the Scanner interface.
-func (ns *NullDateiPermissionType) Scan(value interface{}) error {
+func (ns *NullFilePermissionType) Scan(value interface{}) error {
 	if value == nil {
-		ns.DateiPermissionType, ns.Valid = "", false
+		ns.FilePermissionType, ns.Valid = "", false
 		return nil
 	}
 	ns.Valid = true
-	return ns.DateiPermissionType.Scan(value)
+	return ns.FilePermissionType.Scan(value)
 }
 
 // Value implements the driver Valuer interface.
-func (ns NullDateiPermissionType) Value() (driver.Value, error) {
+func (ns NullFilePermissionType) Value() (driver.Value, error) {
 	if !ns.Valid {
 		return nil, nil
 	}
-	return string(ns.DateiPermissionType), nil
+	return string(ns.FilePermissionType), nil
 }
 
-type DateiEvent struct {
+type FileEvent struct {
 	ID            int64     `db:"id"`
 	StreamID      uuid.UUID `db:"stream_id"`
 	StreamVersion int32     `db:"stream_version"`
@@ -64,21 +64,21 @@ type DateiEvent struct {
 	CreatedAt     time.Time `db:"created_at"`
 }
 
-type DateiPermissionProjection struct {
-	ID             uuid.UUID           `db:"id"`
-	DateiID        uuid.UUID           `db:"datei_id"`
-	UserAccountID  *uuid.UUID          `db:"user_account_id"`
-	UserGroupID    *uuid.UUID          `db:"user_group_id"`
-	PermissionType DateiPermissionType `db:"permission_type"`
-	IsFavorite     bool                `db:"is_favorite"`
-	CreatedAt      time.Time           `db:"created_at"`
+type FilePermissionProjection struct {
+	ID             uuid.UUID          `db:"id"`
+	FileID         uuid.UUID          `db:"file_id"`
+	UserAccountID  *uuid.UUID         `db:"user_account_id"`
+	UserGroupID    *uuid.UUID         `db:"user_group_id"`
+	PermissionType FilePermissionType `db:"permission_type"`
+	IsFavorite     bool               `db:"is_favorite"`
+	CreatedAt      time.Time          `db:"created_at"`
 }
 
-type DateiProjection struct {
+type FileProjection struct {
 	ID            uuid.UUID   `db:"id"`
 	ParentID      *uuid.UUID  `db:"parent_id"`
 	IsDirectory   bool        `db:"is_directory"`
-	LinkedDateiID *uuid.UUID  `db:"linked_datei_id"`
+	LinkedFileID  *uuid.UUID  `db:"linked_file_id"`
 	Name          string      `db:"name"`
 	S3Key         *string     `db:"s3_key"`
 	Size          *int64      `db:"size"`
@@ -94,12 +94,6 @@ type DateiProjection struct {
 	TrashedBy     *uuid.UUID  `db:"trashed_by"`
 }
 
-type LinkDateiProjection struct {
-	LinkID  uuid.UUID `db:"link_id"`
-	DateiID uuid.UUID `db:"datei_id"`
-	AddedAt time.Time `db:"added_at"`
-}
-
 type LinkEvent struct {
 	ID            int64     `db:"id"`
 	StreamID      uuid.UUID `db:"stream_id"`
@@ -107,6 +101,12 @@ type LinkEvent struct {
 	EventType     string    `db:"event_type"`
 	EventData     []byte    `db:"event_data"`
 	CreatedAt     time.Time `db:"created_at"`
+}
+
+type LinkFileProjection struct {
+	LinkID  uuid.UUID `db:"link_id"`
+	FileID  uuid.UUID `db:"file_id"`
+	AddedAt time.Time `db:"added_at"`
 }
 
 type LinkProjection struct {
@@ -117,9 +117,9 @@ type LinkProjection struct {
 	Code      *string    `db:"code"`
 	ExpiresAt *time.Time `db:"expires_at"`
 	RevokedAt *time.Time `db:"revoked_at"`
+	OpenCount int64      `db:"open_count"`
 	CreatedAt time.Time  `db:"created_at"`
 	UpdatedAt time.Time  `db:"updated_at"`
-	OpenCount int64      `db:"open_count"`
 }
 
 type UserAccountEmailProjection struct {

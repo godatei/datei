@@ -1,0 +1,22 @@
+type: object
+required:
+  - name
+  - ownerName
+  - items
+properties:
+  name:
+    type: string
+    description: Display name of the link
+  ownerName:
+    type: string
+    description: Display name of the user who created the link
+  expiresAt:
+    type: string
+    format: date-time
+    nullable: true
+    description: When the link expires; null if it never expires
+  items:
+    type: array
+    items:
+      $ref: './File.yaml'
+    description: Array of File objects accessible via the public link

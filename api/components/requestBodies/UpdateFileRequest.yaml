@@ -1,0 +1,15 @@
+type: object
+properties:
+  name:
+    type: string
+    description: New name for the File (optional)
+    nullable: true
+  updateParentId:
+    type: boolean
+    description: Whether to move the File to a new parent directory
+    nullable: true
+  parentId:
+    type: string
+    format: uuid
+    description: New parent directory ID (null moves to root; only used when updateParentId is true)
+    nullable: true

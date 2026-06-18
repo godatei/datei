@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/authjwt"
 	"github.com/godatei/datei/internal/config"
-	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v3/jwa"
 	"github.com/lestrrat-go/jwx/v3/jwt"
@@ -80,23 +80,23 @@ func ParseSessionToken(tokenString string) (SessionClaims, error) {
 		jwt.WithValidate(true),
 	)
 	if err != nil {
-		return SessionClaims{}, dateierrors.ErrLinkUnauthorized
+		return SessionClaims{}, apperrors.ErrLinkUnauthorized
 	}
 	var kind string
 	if err := token.Get(authjwt.KindKey, &kind); err != nil || kind != publicLinkTokenKind {
-		return SessionClaims{}, dateierrors.ErrLinkUnauthorized
+		return SessionClaims{}, apperrors.ErrLinkUnauthorized
 	}
 	sub, ok := token.Subject()
 	if !ok {
-		return SessionClaims{}, dateierrors.ErrLinkUnauthorized
+		return SessionClaims{}, apperrors.ErrLinkUnauthorized
 	}
 	id, err := uuid.Parse(sub)
 	if err != nil {
-		return SessionClaims{}, fmt.Errorf("invalid link id in token: %w", errors.Join(err, dateierrors.ErrLinkUnauthorized))
+		return SessionClaims{}, fmt.Errorf("invalid link id in token: %w", errors.Join(err, apperrors.ErrLinkUnauthorized))
 	}
 	var fingerprint string
 	if err := token.Get(linkFingerprintClaim, &fingerprint); err != nil || fingerprint == "" {
-		return SessionClaims{}, dateierrors.ErrLinkUnauthorized
+		return SessionClaims{}, apperrors.ErrLinkUnauthorized
 	}
 	return SessionClaims{LinkID: id, Fingerprint: fingerprint}, nil
 }

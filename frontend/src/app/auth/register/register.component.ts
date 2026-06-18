@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { email, form, FormField, FormRoot, required } from '@angular/forms/signals';
 import { NgOptimizedImage } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -18,7 +18,6 @@ import {
 
 @Component({
   selector: 'app-register',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     NgOptimizedImage,
     FormField,

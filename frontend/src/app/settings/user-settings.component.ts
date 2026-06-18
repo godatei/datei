@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { AuthService } from '~/frontend/services/auth.service';
 import { SettingsService } from '~/frontend/services/settings.service';
 import { createSelfUserPort, UserSnapshot } from '~/frontend/users/user-data.port';
@@ -9,7 +9,6 @@ import { UserProfileComponent } from '~/frontend/users/user-profile.component';
 
 @Component({
   selector: 'app-user-settings',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [UserProfileComponent, UserEmailsComponent, UserPasswordComponent, UserMfaComponent],
   templateUrl: './user-settings.component.html',
 })

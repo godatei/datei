@@ -1,13 +1,5 @@
 import { DatePipe } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-} from '@angular/core';
+import { Component, computed, effect, inject, resource, signal } from '@angular/core';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
@@ -26,7 +18,7 @@ import {
   LinkFormDialogComponent,
   LinkFormDialogData,
 } from '~/frontend/links/link-form-dialog/link-form-dialog.component';
-import { buildShareUrl } from 'frontend/src/util/share-url';
+import { buildShareUrl } from '~/util/share-url';
 
 export type LinkStatusFilter = 'active' | 'expired' | 'revoked';
 
@@ -34,7 +26,6 @@ export type LinkStatusFilter = 'active' | 'expired' | 'revoked';
   selector: 'app-links-list',
   templateUrl: './links-list.component.html',
   styleUrl: './links-list.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatePipe,
     MatButtonModule,

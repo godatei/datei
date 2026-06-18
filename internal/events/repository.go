@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/godatei/datei/internal/dateierrors"
+	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/db"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -47,7 +47,7 @@ func (r *GenericRepository) LoadByID(ctx context.Context, id uuid.UUID, agg Aggr
 	}
 
 	if len(eventList) == 0 {
-		return fmt.Errorf("%s not found: %w", r.entityName, dateierrors.ErrNotFound)
+		return fmt.Errorf("%s not found: %w", r.entityName, apperrors.ErrNotFound)
 	}
 
 	agg.Replay(eventList)

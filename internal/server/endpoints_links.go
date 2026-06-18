@@ -4,13 +4,17 @@ import (
 	"context"
 	"errors"
 
-	"github.com/godatei/datei/internal/dateierrors"
+	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/link"
 	"github.com/godatei/datei/pkg/api"
 )
 
+type linkServer struct {
+	svc *link.Service
+}
+
 // ListLinks implements [StrictServerInterface].
-func (s *server) ListLinks(
+func (s *linkServer) ListLinks(
 	ctx context.Context,
 	request ListLinksRequestObject,
 ) (ListLinksResponseObject, error) {
@@ -27,7 +31,7 @@ func (s *server) ListLinks(
 		status = string(*request.Params.Status)
 	}
 
-	result, err := s.linkService.ListLinks(ctx, link.ListLinksInput{
+	result, err := s.svc.ListLinks(ctx, link.ListLinksInput{
 		Status: status,
 		Limit:  limit,
 		Offset: offset,
@@ -42,7 +46,7 @@ func (s *server) ListLinks(
 }
 
 // CreateLink implements [StrictServerInterface].
-func (s *server) CreateLink(
+func (s *linkServer) CreateLink(
 	ctx context.Context,
 	request CreateLinkRequestObject,
 ) (CreateLinkResponseObject, error) {
@@ -50,14 +54,14 @@ func (s *server) CreateLink(
 		return CreateLink400Response{}, nil
 	}
 
-	result, err := s.linkService.CreateLink(ctx, link.CreateLinkInput{
+	result, err := s.svc.CreateLink(ctx, link.CreateLinkInput{
 		Name:      request.Body.Name,
 		ExpiresAt: request.Body.ExpiresAt,
 		Code:      request.Body.Code,
-		DateiIDs:  request.Body.DateiIds,
+		FileIDs:   request.Body.FileIds,
 	})
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrInvalidInput) {
+		if errors.Is(err, apperrors.ErrInvalidInput) {
 			return CreateLink400Response{}, nil
 		}
 		return nil, err
@@ -66,13 +70,13 @@ func (s *server) CreateLink(
 }
 
 // GetLink implements [StrictServerInterface].
-func (s *server) GetLink(
+func (s *linkServer) GetLink(
 	ctx context.Context,
 	request GetLinkRequestObject,
 ) (GetLinkResponseObject, error) {
-	result, err := s.linkService.GetLink(ctx, request.Id)
+	result, err := s.svc.GetLink(ctx, request.Id)
 	if err != nil {
-		if errors.Is(err, dateierrors.ErrLinkNotFound) {
+		if errors.Is(err, apperrors.ErrLinkNotFound) {
 			return GetLink404Response{}, nil
 		}
 		return nil, err
@@ -81,7 +85,7 @@ func (s *server) GetLink(
 }
 
 // UpdateLink implements [StrictServerInterface].
-func (s *server) UpdateLink(
+func (s *linkServer) UpdateLink(
 	ctx context.Context,
 	request UpdateLinkRequestObject,
 ) (UpdateLinkResponseObject, error) {
@@ -102,14 +106,14 @@ func (s *server) UpdateLink(
 		input.ClearExpiration = *request.Body.ClearExpiration
 	}
 
-	result, err := s.linkService.UpdateLink(ctx, input)
+	result, err := s.svc.UpdateLink(ctx, input)
 	if err != nil {
 		switch {
-		case errors.Is(err, dateierrors.ErrLinkNotFound):
+		case errors.Is(err, apperrors.ErrLinkNotFound):
 			return UpdateLink404Response{}, nil
-		case errors.Is(err, dateierrors.ErrLinkRevoked):
+		case errors.Is(err, apperrors.ErrLinkRevoked):
 			return UpdateLink403Response{}, nil
-		case errors.Is(err, dateierrors.ErrInvalidInput):
+		case errors.Is(err, apperrors.ErrInvalidInput):
 			return UpdateLink400Response{}, nil
 		default:
 			return nil, err
@@ -119,16 +123,16 @@ func (s *server) UpdateLink(
 }
 
 // RevokeLink implements [StrictServerInterface].
-func (s *server) RevokeLink(
+func (s *linkServer) RevokeLink(
 	ctx context.Context,
 	request RevokeLinkRequestObject,
 ) (RevokeLinkResponseObject, error) {
-	err := s.linkService.RevokeLink(ctx, request.Id)
+	err := s.svc.RevokeLink(ctx, request.Id)
 	if err != nil {
 		switch {
-		case errors.Is(err, dateierrors.ErrLinkNotFound):
+		case errors.Is(err, apperrors.ErrLinkNotFound):
 			return RevokeLink404Response{}, nil
-		case errors.Is(err, dateierrors.ErrLinkRevoked):
+		case errors.Is(err, apperrors.ErrLinkRevoked):
 			return RevokeLink403Response{}, nil
 		default:
 			return nil, err
@@ -138,16 +142,16 @@ func (s *server) RevokeLink(
 }
 
 // RotateLinkKey implements [StrictServerInterface].
-func (s *server) RotateLinkKey(
+func (s *linkServer) RotateLinkKey(
 	ctx context.Context,
 	request RotateLinkKeyRequestObject,
 ) (RotateLinkKeyResponseObject, error) {
-	result, err := s.linkService.RotateKey(ctx, request.Id)
+	result, err := s.svc.RotateKey(ctx, request.Id)
 	if err != nil {
 		switch {
-		case errors.Is(err, dateierrors.ErrLinkNotFound):
+		case errors.Is(err, apperrors.ErrLinkNotFound):
 			return RotateLinkKey404Response{}, nil
-		case errors.Is(err, dateierrors.ErrLinkRevoked):
+		case errors.Is(err, apperrors.ErrLinkRevoked):
 			return RotateLinkKey403Response{}, nil
 		default:
 			return nil, err
@@ -156,50 +160,50 @@ func (s *server) RotateLinkKey(
 	return RotateLinkKey200JSONResponse(*result), nil
 }
 
-// AddDateiToLink implements [StrictServerInterface].
-func (s *server) AddDateiToLink(
+// AddFileToLink implements [StrictServerInterface].
+func (s *linkServer) AddFileToLink(
 	ctx context.Context,
-	request AddDateiToLinkRequestObject,
-) (AddDateiToLinkResponseObject, error) {
+	request AddFileToLinkRequestObject,
+) (AddFileToLinkResponseObject, error) {
 	if request.Body == nil {
-		return AddDateiToLink400Response{}, nil
+		return AddFileToLink400Response{}, nil
 	}
 
-	result, err := s.linkService.AddDateiToLink(ctx, request.Id, request.Body.DateiId)
+	result, err := s.svc.AddFileToLink(ctx, request.Id, request.Body.FileId)
 	if err != nil {
 		switch {
-		case errors.Is(err, dateierrors.ErrLinkNotFound):
-			return AddDateiToLink404Response{}, nil
-		case errors.Is(err, dateierrors.ErrLinkRevoked):
-			return AddDateiToLink403Response{}, nil
-		case errors.Is(err, dateierrors.ErrLinkDateiAlreadyAdded):
-			return AddDateiToLink409Response{}, nil
-		case errors.Is(err, dateierrors.ErrInvalidInput):
-			return AddDateiToLink400Response{}, nil
+		case errors.Is(err, apperrors.ErrLinkNotFound):
+			return AddFileToLink404Response{}, nil
+		case errors.Is(err, apperrors.ErrLinkRevoked):
+			return AddFileToLink403Response{}, nil
+		case errors.Is(err, apperrors.ErrLinkFileAlreadyAdded):
+			return AddFileToLink409Response{}, nil
+		case errors.Is(err, apperrors.ErrInvalidInput):
+			return AddFileToLink400Response{}, nil
 		default:
 			return nil, err
 		}
 	}
-	return AddDateiToLink200JSONResponse(*result), nil
+	return AddFileToLink200JSONResponse(*result), nil
 }
 
-// RemoveDateiFromLink implements [StrictServerInterface].
-func (s *server) RemoveDateiFromLink(
+// RemoveFileFromLink implements [StrictServerInterface].
+func (s *linkServer) RemoveFileFromLink(
 	ctx context.Context,
-	request RemoveDateiFromLinkRequestObject,
-) (RemoveDateiFromLinkResponseObject, error) {
-	err := s.linkService.RemoveDateiFromLink(ctx, request.Id, request.DateiId)
+	request RemoveFileFromLinkRequestObject,
+) (RemoveFileFromLinkResponseObject, error) {
+	err := s.svc.RemoveFileFromLink(ctx, request.Id, request.FileId)
 	if err != nil {
 		switch {
-		case errors.Is(err, dateierrors.ErrLinkNotFound):
-			return RemoveDateiFromLink404Response{}, nil
-		case errors.Is(err, dateierrors.ErrLinkRevoked):
-			return RemoveDateiFromLink403Response{}, nil
-		case errors.Is(err, dateierrors.ErrLinkDateiNotShared):
-			return RemoveDateiFromLink400Response{}, nil
+		case errors.Is(err, apperrors.ErrLinkNotFound):
+			return RemoveFileFromLink404Response{}, nil
+		case errors.Is(err, apperrors.ErrLinkRevoked):
+			return RemoveFileFromLink403Response{}, nil
+		case errors.Is(err, apperrors.ErrLinkFileNotShared):
+			return RemoveFileFromLink400Response{}, nil
 		default:
 			return nil, err
 		}
 	}
-	return RemoveDateiFromLink204Response{}, nil
+	return RemoveFileFromLink204Response{}, nil
 }

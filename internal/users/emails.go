@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/godatei/datei/internal/dateierrors"
+	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/pkg/api"
 	"github.com/google/uuid"
@@ -31,13 +31,13 @@ func (s *UserService) RemoveEmail(ctx context.Context, userID uuid.UUID, emailID
 	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return dateierrors.ErrNotFound
+			return apperrors.ErrNotFound
 		}
 		return fmt.Errorf("failed to get email: %w", err)
 	}
 
 	if email.IsPrimary {
-		return dateierrors.ErrInvalidInput
+		return apperrors.ErrInvalidInput
 	}
 
 	agg, err := s.repository.LoadByID(ctx, userID)
@@ -46,7 +46,7 @@ func (s *UserService) RemoveEmail(ctx context.Context, userID uuid.UUID, emailID
 	}
 
 	if err := agg.RemoveEmail(emailID, time.Now()); err != nil {
-		return dateierrors.ErrInvalidInput
+		return apperrors.ErrInvalidInput
 	}
 
 	if err := s.repository.Save(ctx, agg); err != nil {
@@ -64,13 +64,13 @@ func (s *UserService) SetPrimaryEmail(ctx context.Context, userID uuid.UUID, ema
 	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return dateierrors.ErrNotFound
+			return apperrors.ErrNotFound
 		}
 		return fmt.Errorf("failed to get email: %w", err)
 	}
 
 	if email.VerifiedAt == nil {
-		return dateierrors.ErrInvalidInput
+		return apperrors.ErrInvalidInput
 	}
 
 	if email.IsPrimary {
@@ -88,7 +88,7 @@ func (s *UserService) SetPrimaryEmail(ctx context.Context, userID uuid.UUID, ema
 	}
 
 	if err := agg.SetPrimaryEmail(primary.ID, emailID, time.Now()); err != nil {
-		return dateierrors.ErrInvalidInput
+		return apperrors.ErrInvalidInput
 	}
 
 	if err := s.repository.Save(ctx, agg); err != nil {

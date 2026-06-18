@@ -6,8 +6,8 @@ properties:
   items:
     type: array
     items:
-      $ref: './TrashedDatei.yaml'
-    description: Array of trashed Datei objects
+      $ref: './TrashedFile.yaml'
+    description: Array of trashed File objects
   total:
     type: integer
     description: Total number of items (before pagination)

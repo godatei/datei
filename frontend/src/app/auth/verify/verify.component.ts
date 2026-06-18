@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,7 +9,6 @@ import { SettingsService } from '~/frontend/services/settings.service';
 
 @Component({
   selector: 'app-verify',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [MatCardModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule],
   templateUrl: './verify.component.html',
   host: { class: 'block' },

@@ -7,17 +7,17 @@ import { filter, map } from 'rxjs/operators';
 import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
-import { RestoreDateiRequest } from '../../models/restore-datei-request';
+import { RestoreFileRequest } from '../../models/restore-file-request';
 
 export interface RestoreTrash$Params {
-  dateiId: string;
-      body: RestoreDateiRequest
+  fileId: string;
+      body: RestoreFileRequest
 }
 
 export function restoreTrash(http: HttpClient, rootUrl: string, params: RestoreTrash$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
   const rb = new RequestBuilder(rootUrl, restoreTrash.PATH, 'post');
   if (params) {
-    rb.path('dateiId', params.dateiId, {});
+    rb.path('fileId', params.fileId, {});
     rb.body(params.body, 'application/json');
   }
 
@@ -31,4 +31,4 @@ export function restoreTrash(http: HttpClient, rootUrl: string, params: RestoreT
   );
 }
 
-restoreTrash.PATH = '/api/v1/trash/{dateiId}/restore';
+restoreTrash.PATH = '/api/v1/trash/{fileId}/restore';

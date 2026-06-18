@@ -69,7 +69,7 @@ frontend/src/
 ├── app/              # Angular application
 ```
 
-Each domain package (e.g., `internal/datei/`, `internal/users/`) is self-contained with: `events.go` (event structs, `ApplyTo`, registration, store constructor), `aggregate.go`, `repository.go`, `projections.go`, `mapping.go`, and service files. The shared `internal/events/` package provides the `DomainEvent` interface, generic `EventStore`, generic `Base[A, E]` aggregate, and serialization registry.
+Each domain package (e.g., `internal/file/`, `internal/users/`) is self-contained with: `events.go` (event structs, `ApplyTo`, registration, store constructor), `aggregate.go`, `repository.go`, `projections.go`, `mapping.go`, and service files. The shared `internal/events/` package provides the `DomainEvent` interface, generic `EventStore`, generic `Base[A, E]` aggregate, and serialization registry.
 
 ## Development Workflow
 
@@ -113,7 +113,7 @@ When implementing a new feature, follow these steps **in order**. Steps are anno
    - Add request/response schemas in `api/components/schemas/` and `api/components/requestBodies/`
 
 3. **Write the SQL queries** in `internal/db/*.sql` _(skip if frontend-only)_
-   - Add projection queries in `internal/db/datei.sql` (or a new `.sql` file)
+   - Add projection queries in `internal/db/file.sql` (or a new `.sql` file)
    - Use sqlc comment format: `-- name: QueryName :exec` or `:one` or `:many`
 
 4. **Run code generation**: `mise run generate`
@@ -126,7 +126,7 @@ All event sourcing code lives in the domain package (`internal/<domain>/`). Foll
 
 5. **Define the event** in `internal/<domain>/events.go`
    - Create a struct implementing the domain's `Event` interface (`DomainEvent` + `ApplyTo(*Aggregate)`)
-   - Use JSON tags for serialization; `EventType()` returns a PascalCase string (e.g., `"DateiRenamed"`)
+   - Use JSON tags for serialization; `EventType()` returns a PascalCase string (e.g., `"FileRenamed"`)
    - Implement `ApplyTo(*Aggregate)` to update aggregate state from the event
    - Register the event in `init()` via `events.RegisterEvent("EventName", func() events.DomainEvent { return &EventStruct{} })`
 
@@ -220,7 +220,7 @@ HTTP Request → Server Endpoint → Service → db.Queries (read from projectio
 
 ### Error Handling
 
-- Define sentinel errors in `internal/dateierrors/`
+- Define sentinel errors in `internal/apperrors/`
 - Wrap errors with context: `fmt.Errorf("failed to do X: %w", err)`
 - Check with `errors.Is()`
 - Map domain errors to HTTP status codes in endpoint handlers:
@@ -338,7 +338,7 @@ This project uses Angular Material 21 with Material 3 theming. All UI must follo
 
 Facts about the system that are non-obvious and have caused incorrect agent assumptions in the past.
 
-- **Datei hierarchy cycles are prevented by application logic for normal moves**: `parent_id` on `datei_projection` is used to represent a tree in application-managed data, but that is enforced by `Service.UpdateDatei` (`internal/datei/service.go`), not by a database-level cycle constraint. When moving a directory, `Service.UpdateDatei` walks the full ancestor path of the target parent via `GetDateiPath` and returns `ErrCycleDetected` if the moving directory appears anywhere in that chain. Files are never the parent of anything, so only directory moves need this check. Do not flag potential cycles for normal service-driven directory moves — the guard is already there.
+- **File hierarchy cycles are prevented by application logic for normal moves**: `parent_id` on `file_projection` is used to represent a tree in application-managed data, but that is enforced by `Service.UpdateFile` (`internal/file/service.go`), not by a database-level cycle constraint. When moving a directory, `Service.UpdateFile` walks the full ancestor path of the target parent via `GetFilePath` and returns `ErrCycleDetected` if the moving directory appears anywhere in that chain. Files are never the parent of anything, so only directory moves need this check. Do not flag potential cycles for normal service-driven directory moves — the guard is already there.
 
 ## Maintaining This File
 

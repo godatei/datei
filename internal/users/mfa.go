@@ -8,7 +8,7 @@ import (
 	"image/png"
 	"time"
 
-	"github.com/godatei/datei/internal/dateierrors"
+	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/security"
 	"github.com/google/uuid"
 	"github.com/pquerna/otp"
@@ -28,7 +28,7 @@ func (s *UserService) SetupMFA(ctx context.Context, userID uuid.UUID) (*SetupMFA
 	}
 
 	if user.MfaEnabled {
-		return nil, dateierrors.ErrMFAAlreadyEnabled
+		return nil, apperrors.ErrMFAAlreadyEnabled
 	}
 
 	email, err := q.GetPrimaryEmailForUser(ctx, userID)
@@ -52,7 +52,7 @@ func (s *UserService) SetupMFA(ctx context.Context, userID uuid.UUID) (*SetupMFA
 		return nil, fmt.Errorf("failed to load user: %w", err)
 	}
 	if err := agg.InitiateMFASetup(key.Secret(), time.Now()); err != nil {
-		return nil, dateierrors.ErrInvalidInput
+		return nil, apperrors.ErrInvalidInput
 	}
 	if err := s.repository.Save(ctx, agg); err != nil {
 		return nil, fmt.Errorf("failed to save MFA secret: %w", err)
@@ -91,13 +91,13 @@ func (s *UserService) EnableMFA(ctx context.Context, input EnableMFAInput) (*Ena
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 	if user.MfaEnabled {
-		return nil, dateierrors.ErrMFAAlreadyEnabled
+		return nil, apperrors.ErrMFAAlreadyEnabled
 	}
 	if user.MfaSecret == nil {
-		return nil, dateierrors.ErrMFANotSetUp
+		return nil, apperrors.ErrMFANotSetUp
 	}
 	if !totp.Validate(input.Code, *user.MfaSecret) {
-		return nil, dateierrors.ErrMFAInvalidCode
+		return nil, apperrors.ErrMFAInvalidCode
 	}
 
 	codes, hashedCodes, err := generateAndHashRecoveryCodes()
@@ -110,7 +110,7 @@ func (s *UserService) EnableMFA(ctx context.Context, input EnableMFAInput) (*Ena
 		return nil, fmt.Errorf("failed to load user: %w", err)
 	}
 	if err := agg.EnableMFA(hashedCodes, time.Now()); err != nil {
-		return nil, dateierrors.ErrInvalidInput
+		return nil, apperrors.ErrInvalidInput
 	}
 	if err := s.repository.Save(ctx, agg); err != nil {
 		return nil, fmt.Errorf("failed to enable MFA: %w", err)
@@ -135,10 +135,10 @@ func (s *UserService) DisableMFA(ctx context.Context, input DisableMFAInput) err
 		return fmt.Errorf("failed to get user: %w", err)
 	}
 	if !user.MfaEnabled {
-		return dateierrors.ErrMFANotEnabled
+		return apperrors.ErrMFANotEnabled
 	}
 	if err := security.VerifyPassword(input.Password, user.PasswordHash, user.PasswordSalt); err != nil {
-		return dateierrors.ErrInvalidCredentials
+		return apperrors.ErrInvalidCredentials
 	}
 
 	agg, err := s.repository.LoadByID(ctx, input.UserID)
@@ -146,7 +146,7 @@ func (s *UserService) DisableMFA(ctx context.Context, input DisableMFAInput) err
 		return fmt.Errorf("failed to load user: %w", err)
 	}
 	if err := agg.DisableMFA(time.Now()); err != nil {
-		return dateierrors.ErrInvalidInput
+		return apperrors.ErrInvalidInput
 	}
 	if err := s.repository.Save(ctx, agg); err != nil {
 		return fmt.Errorf("failed to disable MFA: %w", err)
@@ -169,10 +169,10 @@ func (s *UserService) RegenerateMFARecoveryCodes(
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 	if !user.MfaEnabled {
-		return nil, dateierrors.ErrMFANotEnabled
+		return nil, apperrors.ErrMFANotEnabled
 	}
 	if err := security.VerifyPassword(input.Password, user.PasswordHash, user.PasswordSalt); err != nil {
-		return nil, dateierrors.ErrInvalidCredentials
+		return nil, apperrors.ErrInvalidCredentials
 	}
 
 	codes, hashedCodes, err := generateAndHashRecoveryCodes()
@@ -185,7 +185,7 @@ func (s *UserService) RegenerateMFARecoveryCodes(
 		return nil, fmt.Errorf("failed to load user: %w", err)
 	}
 	if err := agg.RegenerateRecoveryCodes(hashedCodes, time.Now()); err != nil {
-		return nil, dateierrors.ErrInvalidInput
+		return nil, apperrors.ErrInvalidInput
 	}
 	if err := s.repository.Save(ctx, agg); err != nil {
 		return nil, fmt.Errorf("failed to regenerate recovery codes: %w", err)

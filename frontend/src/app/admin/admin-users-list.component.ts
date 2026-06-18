@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  resource,
-  signal,
-} from '@angular/core';
+import { Component, computed, inject, resource, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
@@ -23,7 +16,6 @@ import { AdminCreateUserDialogComponent } from './admin-create-user-dialog.compo
 
 @Component({
   selector: 'app-admin-users-list',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     MatButtonModule,
     MatCardModule,

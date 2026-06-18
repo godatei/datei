@@ -9,14 +9,14 @@ export interface CreateLinkRequest {
   code?: string | null;
 
   /**
-   * IDs of dateien to share (may be empty)
-   */
-  dateiIds: Array<string>;
-
-  /**
    * Expiration timestamp; omit or null for "never expires"
    */
   expiresAt?: string | null;
+
+  /**
+   * IDs of files to share (may be empty)
+   */
+  fileIds: Array<string>;
 
   /**
    * Display name of the link (mandatory, may not be blank)

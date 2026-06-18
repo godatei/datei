@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/godatei/datei/internal/dateierrors"
+	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/events"
 	"github.com/google/uuid"
 )
@@ -24,7 +24,7 @@ type Aggregate struct {
 	Code      *string
 	ExpiresAt *time.Time
 	RevokedAt *time.Time
-	dateiIDs  map[uuid.UUID]struct{}
+	fileIDs   map[uuid.UUID]struct{}
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -51,7 +51,7 @@ func (a *Aggregate) Create(
 	key string,
 	code *string,
 	expiresAt *time.Time,
-	dateiIDs []uuid.UUID,
+	fileIDs []uuid.UUID,
 	now time.Time,
 ) error {
 	if id == uuid.Nil {
@@ -77,7 +77,7 @@ func (a *Aggregate) Create(
 		Key:       key,
 		Code:      code,
 		ExpiresAt: expiresAt,
-		DateiIDs:  dateiIDs,
+		FileIDs:   fileIDs,
 		CreatedAt: now,
 	})
 	return nil
@@ -142,36 +142,36 @@ func (a *Aggregate) RotateKey(newKey string, now time.Time) error {
 	return nil
 }
 
-func (a *Aggregate) AddDatei(dateiID uuid.UUID, now time.Time) error {
-	if err := a.checkActive("add datei"); err != nil {
+func (a *Aggregate) AddFile(fileID uuid.UUID, now time.Time) error {
+	if err := a.checkActive("add file"); err != nil {
 		return err
 	}
-	if dateiID == uuid.Nil {
-		return errors.New("invalid datei id")
+	if fileID == uuid.Nil {
+		return errors.New("invalid file id")
 	}
-	if _, exists := a.dateiIDs[dateiID]; exists {
-		return fmt.Errorf("datei already added to link: %w", dateierrors.ErrLinkDateiAlreadyAdded)
+	if _, exists := a.fileIDs[fileID]; exists {
+		return fmt.Errorf("file already added to link: %w", apperrors.ErrLinkFileAlreadyAdded)
 	}
 
-	a.recordEvent(LinkDateiAddedEvent{
+	a.recordEvent(LinkFileAddedEvent{
 		ID:      a.ID,
-		DateiID: dateiID,
+		FileID:  fileID,
 		AddedAt: now,
 	})
 	return nil
 }
 
-func (a *Aggregate) RemoveDatei(dateiID uuid.UUID, now time.Time) error {
-	if err := a.checkActive("remove datei"); err != nil {
+func (a *Aggregate) RemoveFile(fileID uuid.UUID, now time.Time) error {
+	if err := a.checkActive("remove file"); err != nil {
 		return err
 	}
-	if _, exists := a.dateiIDs[dateiID]; !exists {
-		return fmt.Errorf("datei not part of link: %w", dateierrors.ErrLinkDateiNotShared)
+	if _, exists := a.fileIDs[fileID]; !exists {
+		return fmt.Errorf("file not part of link: %w", apperrors.ErrLinkFileNotShared)
 	}
 
-	a.recordEvent(LinkDateiRemovedEvent{
+	a.recordEvent(LinkFileRemovedEvent{
 		ID:        a.ID,
-		DateiID:   dateiID,
+		FileID:    fileID,
 		RemovedAt: now,
 	})
 	return nil
@@ -197,7 +197,7 @@ func (a *Aggregate) Revoke(now time.Time) error {
 		return errors.New("cannot revoke: link not created")
 	}
 	if a.RevokedAt != nil {
-		return fmt.Errorf("link already revoked: %w", dateierrors.ErrLinkRevoked)
+		return fmt.Errorf("link already revoked: %w", apperrors.ErrLinkRevoked)
 	}
 
 	a.recordEvent(LinkRevokedEvent{
@@ -212,7 +212,7 @@ func (a *Aggregate) checkActive(action string) error {
 		return errors.New("cannot " + action + ": link not created")
 	}
 	if a.RevokedAt != nil {
-		return fmt.Errorf("cannot %s: %w", action, dateierrors.ErrLinkRevoked)
+		return fmt.Errorf("cannot %s: %w", action, apperrors.ErrLinkRevoked)
 	}
 	return nil
 }
@@ -221,10 +221,10 @@ func (a *Aggregate) checkActive(action string) error {
 // validators (required, non-whitespace-only, max length) at the domain layer.
 func validateName(name string) error {
 	if strings.TrimSpace(name) == "" {
-		return fmt.Errorf("name cannot be empty: %w", dateierrors.ErrInvalidInput)
+		return fmt.Errorf("name cannot be empty: %w", apperrors.ErrInvalidInput)
 	}
 	if len(name) > linkNameMaxLen {
-		return fmt.Errorf("name exceeds %d chars: %w", linkNameMaxLen, dateierrors.ErrInvalidInput)
+		return fmt.Errorf("name exceeds %d chars: %w", linkNameMaxLen, apperrors.ErrInvalidInput)
 	}
 	return nil
 }
@@ -236,7 +236,7 @@ func validateExpiresAt(expiresAt *time.Time, now time.Time) error {
 		return nil
 	}
 	if !expiresAt.After(now) {
-		return fmt.Errorf("expiration must be in the future: %w", dateierrors.ErrInvalidInput)
+		return fmt.Errorf("expiration must be in the future: %w", apperrors.ErrInvalidInput)
 	}
 	return nil
 }

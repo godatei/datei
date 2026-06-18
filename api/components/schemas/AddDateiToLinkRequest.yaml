@@ -1,8 +1,0 @@
-type: object
-required:
-  - dateiId
-properties:
-  dateiId:
-    type: string
-    format: uuid
-    description: ID of the datei to add to the link

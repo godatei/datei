@@ -6,10 +6,10 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { BehaviorSubject, of } from 'rxjs';
 
-import { Datei } from '~/api/models';
+import { File } from '~/api/models';
 import { DashboardComponent } from '~/frontend/dashboard/dashboard.component';
 
-const makeDir = (id: string): Datei => ({
+const makeDir = (id: string): File => ({
   id,
   name: 'folder',
   isDirectory: true,
@@ -17,7 +17,7 @@ const makeDir = (id: string): Datei => ({
   updatedAt: '2024-01-01T00:00:00Z',
 });
 
-const makeFile = (id: string): Datei => ({
+const makeFile = (id: string): File => ({
   id,
   name: 'file.txt',
   isDirectory: false,
@@ -63,13 +63,13 @@ describe('DashboardComponent', () => {
   });
 
   it('should compile', () => {
-    httpTesting.expectOne('/api/v1/datei').flush(EMPTY_LIST);
+    httpTesting.expectOne('/api/v1/files').flush(EMPTY_LIST);
     expect(component).toBeTruthy();
   });
 
   describe('row double-click', () => {
     it('navigates into a directory', () => {
-      httpTesting.expectOne('/api/v1/datei').flush(EMPTY_LIST);
+      httpTesting.expectOne('/api/v1/files').flush(EMPTY_LIST);
       component['onRowDblClick'](makeDir('dir-123'));
       expect(routerNavigate).toHaveBeenCalledWith(
         [],
@@ -78,64 +78,64 @@ describe('DashboardComponent', () => {
     });
 
     it('does not navigate for a file', () => {
-      httpTesting.expectOne('/api/v1/datei').flush(EMPTY_LIST);
+      httpTesting.expectOne('/api/v1/files').flush(EMPTY_LIST);
       component['onRowDblClick'](makeFile('file-123'));
       expect(routerNavigate).not.toHaveBeenCalled();
-      httpTesting.expectOne('/api/v1/datei/file-123/download').flush(new Blob());
+      httpTesting.expectOne('/api/v1/files/file-123/download').flush(new Blob());
     });
   });
 
-  describe('listDatei params', () => {
+  describe('listFiles params', () => {
     it('omits parentId query param at the root', () => {
       const req = httpTesting.expectOne(
-        (r) => r.url === '/api/v1/datei' && !r.params.has('parentId'),
+        (r) => r.url === '/api/v1/files' && !r.params.has('parentId'),
       );
       expect(req.request.method).toBe('GET');
       req.flush(EMPTY_LIST);
     });
 
     it('includes parentId as a query param when navigating into a subdirectory', () => {
-      httpTesting.expectOne('/api/v1/datei').flush(EMPTY_LIST);
+      httpTesting.expectOne('/api/v1/files').flush(EMPTY_LIST);
 
       queryParamMap$.next(convertToParamMap({ parentId: 'dir-456' }));
       fixture.detectChanges();
 
       const req = httpTesting.expectOne(
-        (r) => r.url === '/api/v1/datei' && r.params.get('parentId') === 'dir-456',
+        (r) => r.url === '/api/v1/files' && r.params.get('parentId') === 'dir-456',
       );
       expect(req.request.method).toBe('GET');
       req.flush(EMPTY_LIST);
-      httpTesting.expectOne('/api/v1/datei/dir-456/path').flush([]);
+      httpTesting.expectOne('/api/v1/files/dir-456/path').flush([]);
     });
   });
 
-  describe('createDatei body', () => {
+  describe('createFile body', () => {
     it('includes parentId in the multipart body when in a subdirectory', () => {
-      httpTesting.expectOne('/api/v1/datei').flush(EMPTY_LIST);
+      httpTesting.expectOne('/api/v1/files').flush(EMPTY_LIST);
 
       queryParamMap$.next(convertToParamMap({ parentId: 'dir-789' }));
       fixture.detectChanges();
       httpTesting
-        .expectOne((r) => r.url === '/api/v1/datei' && r.params.get('parentId') === 'dir-789')
+        .expectOne((r) => r.url === '/api/v1/files' && r.params.get('parentId') === 'dir-789')
         .flush(EMPTY_LIST);
-      httpTesting.expectOne('/api/v1/datei/dir-789/path').flush([]);
+      httpTesting.expectOne('/api/v1/files/dir-789/path').flush([]);
 
       dialogOpen.mockReturnValue({ afterClosed: () => of('New Folder') });
       component['openNewFolderDialog']();
 
-      const req = httpTesting.expectOne((r) => r.url === '/api/v1/datei' && r.method === 'POST');
+      const req = httpTesting.expectOne((r) => r.url === '/api/v1/files' && r.method === 'POST');
       expect(req.request.body.get('name')).toBe('New Folder');
       expect(req.request.body.get('parentId')).toBe('dir-789');
       req.flush(makeDir('new-dir'));
     });
 
     it('omits parentId from the multipart body at the root', () => {
-      httpTesting.expectOne('/api/v1/datei').flush(EMPTY_LIST);
+      httpTesting.expectOne('/api/v1/files').flush(EMPTY_LIST);
 
       dialogOpen.mockReturnValue({ afterClosed: () => of('Root Folder') });
       component['openNewFolderDialog']();
 
-      const req = httpTesting.expectOne((r) => r.url === '/api/v1/datei' && r.method === 'POST');
+      const req = httpTesting.expectOne((r) => r.url === '/api/v1/files' && r.method === 'POST');
       expect(req.request.body.get('name')).toBe('Root Folder');
       expect(req.request.body.get('parentId')).toBeNull();
       req.flush(makeDir('new-dir'));

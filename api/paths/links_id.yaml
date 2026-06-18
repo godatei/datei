@@ -1,6 +1,6 @@
 get:
   operationId: GetLink
-  summary: Get a single link with its top-level dateien
+  summary: Get a single link with its top-level files
   security:
     - bearerHttpAuthentication: []
   parameters:

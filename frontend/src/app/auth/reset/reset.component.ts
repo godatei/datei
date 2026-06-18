@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { form, FormRoot } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -15,7 +15,6 @@ import {
 
 @Component({
   selector: 'app-reset',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     FormRoot,
     MatCardModule,

@@ -7,9 +7,9 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/authjwt"
 	"github.com/godatei/datei/internal/config"
-	"github.com/godatei/datei/internal/dateierrors"
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/mailer"
 	"github.com/godatei/datei/internal/security"
@@ -64,7 +64,7 @@ func (s *UserService) Login(ctx context.Context, input LoginInput) (*LoginOutput
 			}
 
 			if matchedCodeID == nil {
-				return nil, dateierrors.ErrMFAInvalidCode
+				return nil, apperrors.ErrMFAInvalidCode
 			}
 
 			agg, err := s.repository.LoadByID(ctx, user.ID)
@@ -109,16 +109,17 @@ func (s *UserService) Login(ctx context.Context, input LoginInput) (*LoginOutput
 }
 
 type ValidateCredentialsOutput struct {
-	UserID        uuid.UUID
-	Name          string
-	Email         string
-	EmailVerified bool
-	RequiresMFA   bool
+	UserAccount UserAccount
+	Email       string
 }
 
 // ValidateCredentials verifies email/password without generating a JWT or
 // recording a login event. Use this for protocol-level auth (e.g. WebDAV
 // Basic Auth) where a login event per request would be too noisy.
+//
+// Returns apperrors.ErrMFARequired for MFA-enabled accounts: such accounts
+// cannot authenticate over credential-only protocols. On success the returned
+// output is always fully populated.
 func (s *UserService) ValidateCredentials(
 	ctx context.Context,
 	email, password string,
@@ -128,18 +129,15 @@ func (s *UserService) ValidateCredentials(
 		return nil, err
 	}
 	if user.MfaEnabled {
-		return &ValidateCredentialsOutput{RequiresMFA: true}, nil
+		return nil, apperrors.ErrMFARequired
 	}
 	primaryEmail, err := s.queries().GetPrimaryEmailForUser(ctx, user.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get primary email: %w", err)
 	}
-	emailVerified := !config.AuthEmailVerificationRequired() || primaryEmail.VerifiedAt != nil
 	return &ValidateCredentialsOutput{
-		UserID:        user.ID,
-		Name:          user.Name,
-		Email:         primaryEmail.Email,
-		EmailVerified: emailVerified,
+		UserAccount: userFromProjection(user),
+		Email:       primaryEmail.Email,
 	}, nil
 }
 
@@ -148,12 +146,18 @@ func (s *UserService) verifyCredentials(ctx context.Context, email, password str
 	user, err := s.queries().GetUserAccountByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return db.UserAccountProjection{}, dateierrors.ErrInvalidCredentials
+			return db.UserAccountProjection{}, apperrors.ErrInvalidCredentials
 		}
 		return db.UserAccountProjection{}, fmt.Errorf("failed to get user: %w", err)
 	}
 	if err := security.VerifyPassword(password, user.PasswordHash, user.PasswordSalt); err != nil {
-		return db.UserAccountProjection{}, dateierrors.ErrInvalidCredentials
+		return db.UserAccountProjection{}, apperrors.ErrInvalidCredentials
+	}
+	// Archived accounts must not be able to obtain a session via any credential
+	// flow (login JWT or WebDAV Basic Auth). Treat them like invalid credentials
+	// so we don't reveal that the account exists.
+	if user.ArchivedAt != nil {
+		return db.UserAccountProjection{}, apperrors.ErrInvalidCredentials
 	}
 	return user, nil
 }
@@ -166,14 +170,14 @@ type RegisterInput struct {
 
 func (s *UserService) Register(ctx context.Context, input RegisterInput) error {
 	if !config.AuthRegistrationEnabled() {
-		return dateierrors.ErrRegistrationDisabled
+		return apperrors.ErrRegistrationDisabled
 	}
 
 	if input.Email == "" || input.Password == "" || input.Name == "" {
-		return dateierrors.ErrInvalidInput
+		return apperrors.ErrInvalidInput
 	}
 	if len(input.Password) < 8 {
-		return dateierrors.ErrInvalidInput
+		return apperrors.ErrInvalidInput
 	}
 
 	q := s.queries()
@@ -182,7 +186,7 @@ func (s *UserService) Register(ctx context.Context, input RegisterInput) error {
 		return fmt.Errorf("failed to check existing user: %w", err)
 	}
 	if exists {
-		return dateierrors.ErrEmailAlreadyInUse
+		return apperrors.ErrEmailAlreadyInUse
 	}
 
 	passwordHash, passwordSalt, err := security.HashPassword(input.Password)
