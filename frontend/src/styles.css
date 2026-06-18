@@ -54,6 +54,13 @@ tr {
   }
 }
 
+/* The collapsed rail is exactly one icon-column wide and its header is pinned to
+   that same width; hide horizontal overflow so the scroll container never shows
+   a horizontal scrollbar. Vertical scroll stays available for short viewports. */
+.nav-rail .mat-drawer-inner-container {
+  overflow-x: hidden;
+}
+
 /* Compact variant of matIconButton for inline-with-text contexts.
    The touch target stays at the M3 default (48px) via the overlay element. */
 .mat-icon-button-compact {
