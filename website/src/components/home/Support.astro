@@ -1,0 +1,54 @@
+---
+import '@material/web/button/filled-button.js';
+import {Icon} from 'astro-icon/components';
+---
+
+<section class="support">
+  <h2><span class="accent-yellow">Support</span> the project</h2>
+  <p>
+    Support Datei by contributing on
+    <a
+      class="support-link"
+      href="https://github.com/godatei/datei"
+      target="_blank"
+      rel="noopener noreferrer">GitHub</a
+    >.
+  </p>
+  <md-filled-button href="https://github.com/godatei/datei" target="_blank">
+    <Icon slot="icon" name="lucide:github" />
+    View on GitHub
+  </md-filled-button>
+</section>
+
+<style>
+  .support {
+    text-align: center;
+    padding: 3rem 0 1rem;
+  }
+
+  .support h2 {
+    margin: 0;
+    font-size: clamp(2.25rem, 5vw, 3.25rem);
+  }
+
+  .accent-yellow {
+    color: var(--datei-brand-yellow);
+  }
+
+  .support p {
+    font-size: 1.2rem;
+    color: var(--md-sys-color-on-surface-variant);
+    max-width: 42rem;
+    margin: 1.25rem auto 2rem;
+  }
+
+  .support-link {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  .support-link:hover {
+    color: var(--md-sys-color-primary);
+  }
+</style>

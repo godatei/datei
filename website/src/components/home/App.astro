@@ -1,0 +1,89 @@
+---
+
+---
+
+<section class="mobile">
+  <div class="mobile-text">
+    <h2>Download the <span class="accent-green">mobile app</span></h2>
+    <p>
+      Download the app and easily back up all kinds of files to your own server.
+    </p>
+  </div>
+  <div class="app-download">
+    <div class="mobile-actions">
+      <a class="badge" href="#" aria-label="Download Datei on the App Store">
+        <img
+          src="/brand/app-store-badge.png"
+          alt="Download on the App Store"
+          width="188"
+          height="56"
+        />
+      </a>
+      <a class="badge" href="#" aria-label="Get Datei on Google Play">
+        <img
+          src="/brand/google-play-badge.svg"
+          alt="Get it on Google Play"
+          width="168"
+          height="56"
+        />
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .mobile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4rem;
+    margin: 2rem 0;
+    padding: 4rem 1.5rem;
+    text-align: center;
+    background-color: var(--md-sys-color-surface-container);
+    border-radius: 1.5rem;
+  }
+
+  .mobile-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-width: 42rem;
+  }
+
+  .mobile-text h2 {
+    margin: 0;
+    font-size: clamp(2.25rem, 5vw, 3.25rem);
+  }
+
+  .accent-green {
+    color: var(--datei-brand-green);
+  }
+
+  .mobile-text p {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  .app-download {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .mobile-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 2.5rem;
+  }
+
+  .badge img {
+    display: block;
+    width: auto;
+    height: 56px;
+  }
+</style>

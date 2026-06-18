@@ -3,3 +3,5 @@
 **/dist/*
 CHANGELOG.md
 frontend/src/api/**/*
+# The website is a standalone package with its own prettier config and plugins
+website/

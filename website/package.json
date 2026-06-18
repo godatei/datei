@@ -1,0 +1,39 @@
+{
+  "name": "godatei.com",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "check": "astro check",
+    "lint": "prettier --check .",
+    "format": "prettier --write ."
+  },
+  "packageManager": "pnpm@11.7.0",
+  "engines": {
+    "node": "26"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^6.0.3",
+    "@astrojs/sitemap": "^3.7.3",
+    "@iconify-json/lucide": "^1.2.111",
+    "@iconify-json/material-symbols": "1.2.78",
+    "@material/web": "^2.4.1",
+    "@semantic-ui/astro-lit": "^5.3.0",
+    "@webcomponents/template-shadowroot": "^0.2.1",
+    "astro": "^6.4.5",
+    "astro-icon": "^1.1.5",
+    "lit": "^3.3.3",
+    "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "prettier": "^3.8.4",
+    "prettier-plugin-astro": "^0.14.1",
+    "prettier-plugin-organize-imports": "^4.3.0",
+    "typescript": "^6.0.3"
+  }
+}

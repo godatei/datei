@@ -1,0 +1,19 @@
+---
+// import App from '~/components/home/App.astro';
+import Features from '~/components/home/Features.astro';
+import Hero from '~/components/home/Hero.astro';
+import Support from '~/components/home/Support.astro';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+
+const title =
+  'Datei - High performance self-hosted document management solution';
+const description =
+  'Open Source, High Performance, WebDAV support, Time Travel.';
+---
+
+<BaseLayout title={title} description={description}>
+  <Hero description={description} />
+  <Features />
+  {/* <App /> */}
+  <Support />
+</BaseLayout>

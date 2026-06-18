@@ -1,0 +1,55 @@
+---
+import {Font} from 'astro:assets';
+import Footer from '~/components/Footer.astro';
+import Header from '~/components/Header.astro';
+import '~/styles/global.css';
+
+export interface Props {
+  title: string;
+  description: string;
+}
+
+const {title, description} = Astro.props;
+const ogUrl = Astro.url.href;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <script is:inline>
+      const stored = localStorage.getItem('theme');
+      const dark = stored
+        ? stored === 'dark'
+        : window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (stored === 'light' || stored === 'dark') {
+        document.documentElement.style.colorScheme = stored;
+      }
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={ogUrl} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+
+    <link rel="icon" type="image/svg+xml" href="/datei-logo.svg" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <Font cssVariable="--font-google-sans" preload />
+    <Font cssVariable="--font-google-sans-code" />
+  </head>
+  <body>
+    <Header />
+    <main>
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

@@ -1,0 +1,70 @@
+---
+import '@material/web/labs/card/outlined-card.js';
+import {Icon} from 'astro-icon/components';
+
+const features = [
+  {
+    title: 'Self-hosted',
+    icon: 'material-symbols:dns',
+    description:
+      'Run Datei on your own infrastructure and keep full control over your files.',
+  },
+  {
+    title: 'Open source',
+    icon: 'lucide:github',
+    description:
+      'Datei is developed in the open. Read the source, open issues, and contribute on GitHub.',
+  },
+  {
+    title: 'Built to last',
+    icon: 'material-symbols:history',
+    description:
+      'An event-sourced core keeps a full history of every change to your files.',
+  },
+  {
+    title: 'Intelligent',
+    icon: 'material-symbols:auto-awesome',
+    description:
+      'Auto organize, label and bring up documents when you need them.',
+  },
+];
+---
+
+<section class="features" aria-label="Features">
+  {
+    features.map(feature => (
+      <md-outlined-card>
+        <Icon name={feature.icon} size={28} />
+        <h2>{feature.title}</h2>
+        <p>{feature.description}</p>
+      </md-outlined-card>
+    ))
+  }
+</section>
+
+<style>
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 1.5rem;
+    padding: 2rem 0;
+  }
+
+  .features md-outlined-card {
+    padding: 1.5rem;
+  }
+
+  .features [data-icon] {
+    color: var(--md-sys-color-primary);
+  }
+
+  .features h2 {
+    margin: 0.75rem 0 0;
+    font-size: 1.25rem;
+  }
+
+  .features p {
+    margin: 0.5rem 0 0;
+    color: var(--md-sys-color-on-surface-variant);
+  }
+</style>

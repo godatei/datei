@@ -1,0 +1,45 @@
+---
+import '@material/web/iconbutton/icon-button.js';
+import {Icon} from 'astro-icon/components';
+---
+
+<md-icon-button id="theme-toggle" aria-label="Switch theme">
+  <Icon class="icon-to-dark" name="material-symbols:dark-mode" />
+  <Icon class="icon-to-light" name="material-symbols:light-mode" />
+</md-icon-button>
+
+<script>
+  const btn = document.getElementById('theme-toggle');
+  if (btn) {
+    const setLabel = () => {
+      const dark = document.documentElement.dataset.theme === 'dark';
+      btn.setAttribute(
+        'aria-label',
+        dark ? 'Switch to light theme' : 'Switch to dark theme',
+      );
+    };
+    setLabel();
+    btn.addEventListener('click', () => {
+      const next =
+        document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.style.colorScheme = next;
+      document.documentElement.dataset.theme = next;
+      localStorage.setItem('theme', next);
+      setLabel();
+    });
+  }
+</script>
+
+<style>
+  .icon-to-light {
+    display: none;
+  }
+
+  :global(html[data-theme='dark']) .icon-to-dark {
+    display: none;
+  }
+
+  :global(html[data-theme='dark']) .icon-to-light {
+    display: inline-flex;
+  }
+</style>

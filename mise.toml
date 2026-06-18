@@ -2,11 +2,12 @@
 env_shell_expand = false
 
 [tools]
+git-lfs = "3.7.1"
+github-cli = "2.95.0"
 go = "1.26.4"
 golangci-lint = "2.12.2"
 node = "26"
 pnpm = "11.8.0"
-github-cli = "2.95.0"
 watchexec = "2.5.1"
 
 [env]

@@ -1,0 +1,100 @@
+---
+title: 'Introducing Datei'
+description: 'Datei is an open source, self-hosted file management platform. This is the first post on the new Datei blog.'
+publishDate: 2026-06-17
+lastUpdated: 2026-06-17
+slug: 'introducing-datei'
+authors:
+  - name: 'Philip Miglinci'
+    role: 'Co-Founder'
+    image: '/src/assets/blog/authors/pmig.jpg'
+    linkedIn: https://www.linkedin.com/in/pmigat/
+    gitHub: https://github.com/pmig
+image: '/src/assets/datei-gradient.svg'
+tags:
+  - 'announcement'
+---
+
+Welcome to the Datei blog!
+
+> **"Datei" is German for _file_.**
+>
+> But also for document. And dataset. Basically anything you really don't want
+> to lose.
+
+Datei is an open source, self-hosted file management platform. The source code
+is available on [GitHub](https://github.com/godatei/datei).
+
+## Do we need another document management solution?
+
+Yes. I've used Google Drive for years, and it no longer cuts it. I want my
+personal documents organized and fully under my control.
+
+So I'm using this post to share how I think we should organize our documents, and
+to put the values we're building Datei on into writing. Code gets cheaper every
+day; the vision behind it should only get sharper.
+
+## Datei core values
+
+### 1. Performance
+
+Performance comes from technical excellence. We don't want to ship software
+that's inefficient, wastes memory, or runs loops it doesn't need. It should
+always take the optimal path. Good design counts just as much: when something is
+designed well you find the button faster, and when it's built well you get the
+response quicker.
+
+It's also the sum of many small choices and trade-offs. We picked Go, PostgreSQL,
+and object storage.
+
+And it's not just the software that should be fast. We want fast releases and
+blazing-fast community support too.
+
+### 2. Integrated
+
+You get documents from everywhere: emails, letters, messages, chats, downloads.
+They land on your laptop, your phone, or on paper.
+
+We want to support standard formats like WebDAV, so you can bring whatever client
+you like and still plug Datei into the way you already work.
+
+WebDAV also makes moving in easy: point your file manager at Datei and copy your
+existing documents straight over, no separate migration tool required.
+
+### 3. Secure
+
+Your documents have to be safe, protected from third-party access and accidental
+deletion. So we don't just store the latest version of a document; we keep the
+full history of every version with event sourcing. You can time-travel to any
+point in its history. That history is what unlocks the rest, more intelligence,
+more automation, more performance, because you can always undo _every_ step. It's
+the same confidence you get working with code.
+
+### 4. Intelligent
+
+Why do we still use folders? Why do we tag things by hand? Why can't we just
+search every document?
+
+Datei gives every document a markdown representation, makes search actually work,
+and lets your agents read your documents. Fair question: doesn't that ship
+everything off to inference servers? Today, partly, yes. But local models keep
+getting better, and you'll be self-sufficient sooner than you think.
+
+### 5. Sustainable
+
+We build in the open, and we build to last. We're a VC- and YC-backed company
+(S24), and Datei isn't our first product. We sunset a
+[package manager for Kubernetes](https://github.com/glasskube/glasskube) and we
+run a [software distribution platform](https://github.com/distr-sh/distr) that we
+hope to use to ship Datei itself one day.
+
+## Who is Datei for?
+
+We want anyone to be able to self-host Datei. If you're comfortable setting up
+and maintaining your own infrastructure, you can use it for free for your
+personal documents. In return you get the latest version as it lands, and we hope
+you'll send feedback, tell people about it, and enjoy using it.
+
+## How to get started with Datei
+
+Head over to the [documentation](/docs/) to learn more and run it yourself.

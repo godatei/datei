@@ -1,0 +1,405 @@
+---
+import '@material/web/button/filled-tonal-button.js';
+import '@material/web/labs/card/outlined-card.js';
+import {Icon} from 'astro-icon/components';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+
+const title = 'Roadmap';
+const description =
+  'Where Datei is headed: what we are building now, what comes next, and what we have already shipped.';
+
+interface RoadmapItem {
+  icon: string;
+  title: string;
+  description: string;
+  date?: string;
+  href?: string;
+  ref?: string;
+}
+
+interface Phase {
+  id: string;
+  label: string;
+  blurb: string;
+  icon: string;
+  accent: string;
+  container: string;
+  onContainer: string;
+  items: RoadmapItem[];
+}
+
+const phases: Phase[] = [
+  {
+    id: 'now',
+    label: 'Now',
+    blurb: 'What we are actively building.',
+    icon: 'material-symbols:bolt',
+    accent: 'var(--md-sys-color-primary)',
+    container: 'var(--md-sys-color-primary-container)',
+    onContainer: 'var(--md-sys-color-on-primary-container)',
+    items: [
+      {
+        icon: 'material-symbols:auto-awesome',
+        title: 'Intelligent organization',
+        description:
+          'Automatically sort, label, and surface documents so you do not have to file everything by hand.',
+      },
+      {
+        icon: 'material-symbols:search',
+        title: 'Full-text search & OCR',
+        description:
+          'Search inside scanned files and PDFs, not just by filename.',
+      },
+    ],
+  },
+  {
+    id: 'next',
+    label: 'Next',
+    blurb: 'Lined up once the current work lands.',
+    icon: 'material-symbols:arrow-forward',
+    accent: 'var(--md-sys-color-tertiary)',
+    container: 'var(--md-sys-color-tertiary-container)',
+    onContainer: 'var(--md-sys-color-on-tertiary-container)',
+    items: [
+      {
+        icon: 'material-symbols:phone-iphone',
+        title: 'Mobile capture apps',
+        description:
+          'Snap a receipt or contract on iOS and Android and have it land straight in Datei.',
+      },
+      {
+        icon: 'material-symbols:sync',
+        title: 'Desktop sync client',
+        description: 'Keep a local folder in sync with your Datei instance.',
+      },
+      {
+        icon: 'material-symbols:rule',
+        title: 'Workflows & rules',
+        description:
+          'Trigger actions when documents arrive: move, tag, notify, or archive.',
+      },
+      {
+        icon: 'material-symbols:move-to-inbox',
+        title: 'Import & migration tools',
+        description:
+          'Bring documents over from existing folders and other document tools.',
+      },
+    ],
+  },
+  {
+    id: 'later',
+    label: 'Later',
+    blurb: 'Ideas we want to explore. Not committed yet.',
+    icon: 'material-symbols:schedule',
+    accent: 'var(--md-sys-color-secondary)',
+    container: 'var(--md-sys-color-secondary-container)',
+    onContainer: 'var(--md-sys-color-on-secondary-container)',
+    items: [
+      {
+        icon: 'material-symbols:folder-shared',
+        title: 'Group folders',
+        description:
+          'Share a folder with family, a team, or your accountant and work on documents together.',
+      },
+      {
+        icon: 'material-symbols:extension',
+        title: 'Plugins & extensions',
+        description: 'Let the community extend Datei with custom integrations.',
+      },
+    ],
+  },
+  {
+    id: 'shipped',
+    label: 'Shipped',
+    blurb: 'Already part of Datei today.',
+    icon: 'material-symbols:check-circle',
+    accent: 'var(--datei-brand-green)',
+    container: 'light-dark(#c7eea7, #1f3700)',
+    onContainer: 'light-dark(#1c3700, #c7eea7)',
+    items: [
+      {
+        icon: 'material-symbols:flag',
+        title: 'Getting started',
+        description:
+          'The first commit and the foundation everything else is built on.',
+        date: '2026-02-18',
+        href: 'https://github.com/godatei/datei/commit/a3a7f4670d6accf06a0b5ed8526f01a502bf16b8',
+        ref: 'a3a7f46',
+      },
+      {
+        icon: 'material-symbols:dns',
+        title: 'Self-hosted storage',
+        description:
+          'Run Datei on your own infrastructure with a storage bucket and database you fully own.',
+        date: '2026-02-26',
+        href: 'https://github.com/godatei/datei/pull/19',
+        ref: '#19',
+      },
+      {
+        icon: 'material-symbols:history',
+        title: 'Event-sourced core',
+        description:
+          'Every change is stored as an event, giving you a complete, auditable history of your files.',
+        date: '2026-03-03',
+        href: 'https://github.com/godatei/datei/pull/40',
+        ref: '#40',
+      },
+      {
+        icon: 'material-symbols:security',
+        title: 'Multi-factor auth',
+        description:
+          'Protect your account with TOTP-based two-factor authentication and QR-code setup.',
+        date: '2026-04-20',
+        href: 'https://github.com/godatei/datei/pull/44',
+        ref: '#44',
+      },
+      {
+        icon: 'material-symbols:folder',
+        title: 'Files & folders',
+        description:
+          'Organize documents in a familiar hierarchy with safe moves between folders.',
+        date: '2026-04-28',
+        href: 'https://github.com/godatei/datei/pull/133',
+        ref: '#133',
+      },
+      {
+        icon: 'material-symbols:image',
+        title: 'Previews & thumbnails',
+        description:
+          'Quickly preview PDFs and documents without downloading them.',
+        date: '2026-04-29',
+        href: 'https://github.com/godatei/datei/pull/141',
+        ref: '#141',
+      },
+      {
+        icon: 'material-symbols:cloud',
+        title: 'WebDAV support',
+        description:
+          'Access your Datei storage over WebDAV straight from your file manager.',
+        date: '2026-05-07',
+        href: 'https://github.com/godatei/datei/pull/178',
+        ref: '#178',
+      },
+      {
+        icon: 'material-symbols:link',
+        title: 'Share links',
+        description:
+          'Share documents with links you can expire or revoke at any time.',
+        date: '2026-05-27',
+        href: 'https://github.com/godatei/datei/pull/174',
+        ref: '#174',
+      },
+      {
+        icon: 'material-symbols:public',
+        title: 'Public website & docs',
+        description:
+          'The site you are reading, plus guides for running Datei yourself.',
+        date: '2026-06-11',
+        href: 'https://github.com/godatei/datei/pull/227',
+        ref: '#227',
+      },
+    ],
+  },
+];
+---
+
+<BaseLayout title={title} description={description}>
+  <header class="page-header">
+    <h1>Roadmap</h1>
+    <p>
+      Datei is still very early, so this is a list of plans and not promises. We
+      avoid hard dates on purpose. To follow the work as it happens, watch the
+      project on GitHub.
+    </p>
+    <md-filled-tonal-button
+      href="https://github.com/godatei/datei"
+      target="_blank">
+      <Icon slot="icon" name="lucide:github" />
+      Follow on GitHub
+    </md-filled-tonal-button>
+  </header>
+
+  {
+    phases.map(phase => (
+      <section
+        class="phase"
+        aria-labelledby={`phase-${phase.id}`}
+        style={`--accent:${phase.accent};--container:${phase.container};--on-container:${phase.onContainer};`}>
+        <div class="phase-head">
+          <span class="phase-pill" id={`phase-${phase.id}`}>
+            <Icon name={phase.icon} size={18} />
+            {phase.label}
+          </span>
+          <span class="phase-blurb">{phase.blurb}</span>
+        </div>
+        <ul class="timeline">
+          {phase.items.map(item => (
+            <li class="item">
+              <md-outlined-card>
+                <div class="item-head">
+                  <Icon name={item.icon} size={24} />
+                  <h3>
+                    {item.title}
+                    {item.href && item.ref && (
+                      <a
+                        class="item-ref"
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer">
+                        ({item.ref})
+                      </a>
+                    )}
+                  </h3>
+                </div>
+                <p>{item.description}</p>
+                {item.date && (
+                  <time datetime={item.date}>
+                    {new Date(item.date).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      timeZone: 'UTC',
+                    })}
+                  </time>
+                )}
+              </md-outlined-card>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))
+  }
+</BaseLayout>
+
+<style>
+  .page-header {
+    text-align: center;
+    max-width: 42rem;
+    margin: 0 auto;
+    padding: 1rem 0 1.5rem;
+  }
+
+  .page-header p {
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 1.125rem;
+    margin: 1rem 0 1.75rem;
+  }
+
+  .phase {
+    margin-top: 3.5rem;
+  }
+
+  .phase-head {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.875rem;
+  }
+
+  .phase-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.9rem;
+    border-radius: 9999px;
+    background-color: var(--container);
+    color: var(--on-container);
+    font-weight: 600;
+    font-size: 1rem;
+  }
+
+  .phase-blurb {
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  .timeline {
+    list-style: none;
+    position: relative;
+    margin: 1.5rem 0 0;
+    padding: 0;
+  }
+
+  .timeline {
+    --rail: 0.75rem;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: calc(var(--rail) - 1px);
+    top: 0.5rem;
+    bottom: 0.5rem;
+    width: 2px;
+    background-color: color-mix(
+      in srgb,
+      var(--accent) 35%,
+      var(--md-sys-color-outline-variant)
+    );
+  }
+
+  .item {
+    position: relative;
+    padding-left: 2.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .item::before {
+    content: '';
+    box-sizing: border-box;
+    position: absolute;
+    left: var(--rail);
+    top: 1.5rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 9999px;
+    transform: translateX(-50%);
+    background-color: var(--accent);
+    border: 3px solid var(--md-sys-color-surface);
+  }
+
+  .item md-outlined-card {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .item-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .item-head [data-icon] {
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .item h3 {
+    margin: 0;
+    font-size: 1.15rem;
+  }
+
+  .item-ref {
+    margin-left: 0.375rem;
+    font-family:
+      var(--font-google-sans-code), ui-monospace, SFMono-Regular, Menlo,
+      Consolas, monospace;
+    font-size: 0.8125rem;
+    font-weight: 400;
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  .item-ref:hover {
+    color: var(--md-sys-color-primary);
+  }
+
+  .item p {
+    margin: 0.5rem 0 0;
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  .item time {
+    display: block;
+    margin-top: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--md-sys-color-on-surface-variant);
+  }
+</style>

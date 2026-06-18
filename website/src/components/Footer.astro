@@ -1,0 +1,154 @@
+---
+import '@material/web/divider/divider.js';
+import '@material/web/iconbutton/icon-button.js';
+import {Icon} from 'astro-icon/components';
+import ThemedImage from '~/components/ThemedImage.astro';
+import ThemeToggle from '~/components/ThemeToggle.astro';
+
+const year = new Date().getFullYear();
+
+const columns = [
+  {
+    heading: 'Download',
+    links: [
+      // {label: 'Android', href: '#'},
+      // {label: 'iOS', href: '#'},
+      {label: 'Server', href: '/docs/'},
+    ],
+  },
+  {
+    heading: 'Sites',
+    links: [
+      {label: 'Documentation', href: '/docs/'},
+      {label: 'Blog', href: '/blog/'},
+    ],
+  },
+  {
+    heading: 'Miscellaneous',
+    links: [{label: 'Roadmap', href: '/roadmap/'}],
+  },
+];
+---
+
+<footer>
+  <md-divider></md-divider>
+  <div class="content">
+    <div class="columns">
+      {
+        columns.map(column => (
+          <nav aria-label={column.heading}>
+            <h2>{column.heading}</h2>
+            <ul>
+              {column.links.map(link => (
+                <li>
+                  <a href={link.href}>{link.label}</a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        ))
+      }
+    </div>
+
+    <md-divider></md-divider>
+
+    <div class="bottom">
+      <a class="brand" href="/" aria-label="Datei home">
+        <ThemedImage
+          lightSrc="/brand/datei-wordmark-light.svg"
+          darkSrc="/brand/datei-wordmark-dark.svg"
+          alt="Datei"
+        />
+      </a>
+      <p class="copyright">
+        <span aria-hidden="true">&copy;</span>
+        {year} Datei. All rights reserved.
+      </p>
+      <div class="actions">
+        <md-icon-button
+          href="https://github.com/godatei/datei"
+          target="_blank"
+          aria-label="Datei on GitHub">
+          <Icon name="lucide:github" />
+        </md-icon-button>
+        <ThemeToggle />
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+  footer {
+    background-color: var(--md-sys-color-surface-container-low);
+  }
+
+  .content {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 2rem;
+  }
+
+  .columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .columns h2 {
+    margin: 0 0 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--md-sys-color-on-surface);
+  }
+
+  .columns ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .columns a {
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  .columns a:hover {
+    color: var(--md-sys-color-primary);
+  }
+
+  .bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  .copyright {
+    margin: 0;
+    font-size: 0.875rem;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .brand :global(img) {
+    height: 32px;
+    width: auto;
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+</style>

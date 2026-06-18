@@ -1,0 +1,83 @@
+---
+import '@material/web/button/filled-button.js';
+import '@material/web/button/filled-tonal-button.js';
+import {Image} from 'astro:assets';
+import gradient from '~/assets/datei-gradient.svg';
+
+interface Props {
+  description: string;
+}
+
+const {description} = Astro.props;
+---
+
+<section class="hero">
+  <div class="hero-content">
+    <h1>
+      Self-hosted <span class="accent-pink">document management</span> solution
+    </h1>
+    <p>{description}</p>
+    <div class="actions">
+      <md-filled-button href="/docs/">Download</md-filled-button>
+      <md-filled-tonal-button href="/docs/">Demo Version</md-filled-tonal-button
+      >
+    </div>
+  </div>
+  <a class="hero-shot" href="/blog/introducing-datei/">
+    <Image
+      src={gradient}
+      alt="Read the introduction blog post: Datei is German for file."
+      width={1200}
+      loading="eager"
+    />
+  </a>
+</section>
+
+<style>
+  .hero {
+    text-align: center;
+    padding: 4rem 0 3rem;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.5rem, 6vw, 3.5rem);
+    margin: 0;
+  }
+
+  .accent-pink {
+    color: var(--datei-brand-pink);
+  }
+
+  .hero p {
+    font-size: 1.25rem;
+    color: var(--md-sys-color-on-surface-variant);
+    max-width: 36rem;
+    margin: 1.25rem auto 0;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .hero-shot {
+    display: block;
+    width: min(100%, 60rem);
+    margin: 3rem auto 0;
+    overflow: hidden;
+    border-radius: 1rem;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    box-shadow:
+      0 1px 3px rgb(0 0 0 / 0.12),
+      0 12px 32px rgb(0 0 0 / 0.18);
+  }
+
+  .hero-shot img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+</style>
