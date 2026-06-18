@@ -28,7 +28,7 @@ require (
 	github.com/wneessen/go-mail v0.7.3
 	golang.org/x/crypto v0.53.0
 	golang.org/x/image v0.42.0
-	golang.org/x/net v0.55.0
+	golang.org/x/net v0.56.0
 )
 
 require (
