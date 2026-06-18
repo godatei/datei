@@ -25,8 +25,7 @@ Owning every part of the stack is what keeps you in control of the data you
 collect.
 
 Read our [introduction blog post](/blog/introducing-datei/) to learn where
-we're headed. Follow the [roadmap](/roadmap/) to see what's next, and sign up
-for our [newsletter](/newsletter/) to get early access.
+we're headed. Follow the [roadmap](/roadmap/) to see what's next.
 
 ## Getting started
 
