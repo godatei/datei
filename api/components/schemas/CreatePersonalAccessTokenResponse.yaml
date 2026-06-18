@@ -1,0 +1,13 @@
+type: object
+required:
+  - token
+  - accessToken
+properties:
+  token:
+    type: string
+    description: >-
+      The plaintext token (prefixed with "datei-"). Shown only once at creation
+      time; only its hash is stored server-side and it can never be retrieved
+      again.
+  accessToken:
+    $ref: './PersonalAccessToken.yaml'

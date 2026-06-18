@@ -1,0 +1,17 @@
+delete:
+  operationId: RevokePersonalAccessToken
+  summary: Revoke a personal access token
+  security:
+    - bearerHttpAuthentication: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '204':
+      description: Token revoked
+    '404':
+      description: Token not found

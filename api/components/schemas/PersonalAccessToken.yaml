@@ -1,0 +1,22 @@
+type: object
+required:
+  - id
+  - label
+  - createdAt
+properties:
+  id:
+    type: string
+    format: uuid
+    description: Unique identifier
+  label:
+    type: string
+    description: Human-readable label describing the token's purpose
+  expiresAt:
+    type: string
+    format: date-time
+    nullable: true
+    description: Expiration timestamp; null if the token never expires
+  createdAt:
+    type: string
+    format: date-time
+    description: Creation timestamp

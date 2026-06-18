@@ -108,39 +108,6 @@ func (s *UserService) Login(ctx context.Context, input LoginInput) (*LoginOutput
 	return &LoginOutput{Token: tokenString}, nil
 }
 
-type ValidateCredentialsOutput struct {
-	UserAccount UserAccount
-	Email       string
-}
-
-// ValidateCredentials verifies email/password without generating a JWT or
-// recording a login event. Use this for protocol-level auth (e.g. WebDAV
-// Basic Auth) where a login event per request would be too noisy.
-//
-// Returns apperrors.ErrMFARequired for MFA-enabled accounts: such accounts
-// cannot authenticate over credential-only protocols. On success the returned
-// output is always fully populated.
-func (s *UserService) ValidateCredentials(
-	ctx context.Context,
-	email, password string,
-) (*ValidateCredentialsOutput, error) {
-	user, err := s.verifyCredentials(ctx, email, password)
-	if err != nil {
-		return nil, err
-	}
-	if user.MfaEnabled {
-		return nil, apperrors.ErrMFARequired
-	}
-	primaryEmail, err := s.queries().GetPrimaryEmailForUser(ctx, user.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get primary email: %w", err)
-	}
-	return &ValidateCredentialsOutput{
-		UserAccount: userFromProjection(user),
-		Email:       primaryEmail.Email,
-	}, nil
-}
-
 // verifyCredentials fetches the user by email and verifies the password hash.
 func (s *UserService) verifyCredentials(ctx context.Context, email, password string) (db.UserAccountProjection, error) {
 	user, err := s.queries().GetUserAccountByEmail(ctx, email)

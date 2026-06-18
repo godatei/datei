@@ -115,6 +115,23 @@ type CreateLinkRequest struct {
 	Name string `json:"name"`
 }
 
+// CreatePersonalAccessTokenRequest defines model for CreatePersonalAccessTokenRequest.
+type CreatePersonalAccessTokenRequest struct {
+	// ExpiresAt Expiration timestamp; omit or null for "never expires"
+	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
+
+	// Label Human-readable label describing the token's purpose
+	Label string `json:"label"`
+}
+
+// CreatePersonalAccessTokenResponse defines model for CreatePersonalAccessTokenResponse.
+type CreatePersonalAccessTokenResponse struct {
+	AccessToken PersonalAccessToken `json:"accessToken"`
+
+	// Token The plaintext token (prefixed with "datei-"). Shown only once at creation time; only its hash is stored server-side and it can never be retrieved again.
+	Token string `json:"token"`
+}
+
 // DisableMFARequest defines model for DisableMFARequest.
 type DisableMFARequest struct {
 	Password string `json:"password"`
@@ -298,6 +315,11 @@ type ListLinksResponse struct {
 	Total int `json:"total"`
 }
 
+// ListPersonalAccessTokensResponse defines model for ListPersonalAccessTokensResponse.
+type ListPersonalAccessTokensResponse struct {
+	Tokens []PersonalAccessToken `json:"tokens"`
+}
+
 // ListPublicLinkFilesResponse defines model for ListPublicLinkFilesResponse.
 type ListPublicLinkFilesResponse struct {
 	// ExpiresAt When the link expires; null if it never expires
@@ -343,6 +365,21 @@ type LoginResponse struct {
 // MFARecoveryCodesStatusResponse defines model for MFARecoveryCodesStatusResponse.
 type MFARecoveryCodesStatusResponse struct {
 	RemainingCodes int `json:"remainingCodes"`
+}
+
+// PersonalAccessToken defines model for PersonalAccessToken.
+type PersonalAccessToken struct {
+	// CreatedAt Creation timestamp
+	CreatedAt time.Time `json:"createdAt"`
+
+	// ExpiresAt Expiration timestamp; null if the token never expires
+	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
+
+	// Id Unique identifier
+	Id openapi_types.UUID `json:"id"`
+
+	// Label Human-readable label describing the token's purpose
+	Label string `json:"label"`
 }
 
 // RegenerateMFARecoveryCodesRequest defines model for RegenerateMFARecoveryCodesRequest.
@@ -645,6 +682,9 @@ type RegenerateMFARecoveryCodesJSONRequestBody = RegenerateMFARecoveryCodesReque
 
 // ConfirmResetPasswordJSONRequestBody defines body for ConfirmResetPassword for application/json ContentType.
 type ConfirmResetPasswordJSONRequestBody = ConfirmResetPasswordRequest
+
+// CreatePersonalAccessTokenJSONRequestBody defines body for CreatePersonalAccessToken for application/json ContentType.
+type CreatePersonalAccessTokenJSONRequestBody = CreatePersonalAccessTokenRequest
 
 // UpdateUserJSONRequestBody defines body for UpdateUser for application/json ContentType.
 type UpdateUserJSONRequestBody = UpdateUserRequest

@@ -20,20 +20,6 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: public; Type: SCHEMA; Schema: -; Owner: -
---
-
--- *not* creating schema, since initdb creates it
-
-
---
--- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
---
-
-COMMENT ON SCHEMA public IS '';
-
-
---
 -- Name: file_permission_type; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -185,6 +171,21 @@ CREATE TABLE public.link_projection (
     updated_at timestamp with time zone NOT NULL,
     CONSTRAINT ck_link_projection_code_length CHECK (((code IS NULL) OR ((length(code) >= 1) AND (length(code) <= 128)))),
     CONSTRAINT ck_link_projection_name_length CHECK (((length(name) >= 1) AND (length(name) <= 255)))
+);
+
+
+--
+-- Name: user_account_access_token_projection; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_account_access_token_projection (
+    id uuid DEFAULT uuidv7() NOT NULL,
+    user_account_id uuid NOT NULL,
+    label text NOT NULL,
+    token_hash bytea NOT NULL,
+    expires_at timestamp with time zone,
+    revoked_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 

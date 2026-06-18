@@ -320,3 +320,49 @@ func (a *Aggregate) RecordLogin(now time.Time) error {
 	})
 	return nil
 }
+
+func (a *Aggregate) CreateAccessToken(
+	tokenID uuid.UUID, label string, tokenHash []byte, expiresAt *time.Time, now time.Time,
+) error {
+	if a.ID == uuid.Nil {
+		return errors.New("user not created")
+	}
+	if tokenID == uuid.Nil {
+		return errors.New("invalid token id")
+	}
+	if label == "" {
+		return errors.New("label cannot be empty")
+	}
+	if len(tokenHash) == 0 {
+		return errors.New("token hash cannot be empty")
+	}
+	if expiresAt != nil && !expiresAt.After(now) {
+		return errors.New("expiration must be in the future")
+	}
+
+	a.recordEvent(UserAccessTokenCreatedEvent{
+		ID:        a.ID,
+		TokenID:   tokenID,
+		Label:     label,
+		TokenHash: tokenHash,
+		ExpiresAt: expiresAt,
+		CreatedAt: now,
+	})
+	return nil
+}
+
+func (a *Aggregate) RevokeAccessToken(tokenID uuid.UUID, now time.Time) error {
+	if a.ID == uuid.Nil {
+		return errors.New("user not created")
+	}
+	if tokenID == uuid.Nil {
+		return errors.New("invalid token id")
+	}
+
+	a.recordEvent(UserAccessTokenRevokedEvent{
+		ID:        a.ID,
+		TokenID:   tokenID,
+		RevokedAt: now,
+	})
+	return nil
+}

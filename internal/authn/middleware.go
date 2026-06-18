@@ -10,6 +10,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/authjwt"
+	"github.com/godatei/datei/internal/security"
 	"github.com/godatei/datei/internal/users"
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v3/jwt"
@@ -42,6 +43,8 @@ type claims struct {
 // The OapiRequestValidator only calls this for routes with a security requirement;
 // routes with `security: []` in the spec are skipped automatically.
 func OpenAPIAuthFunc(userSvc *users.UserService) openapi3filter.AuthenticationFunc {
+	// ctx is the request's own context: the validator threads r.Context() through
+	// unchanged, so it carries client-disconnect cancellation.
 	return func(ctx context.Context, input *openapi3filter.AuthenticationInput) error {
 		if input.SecurityScheme.Type != "http" || input.SecurityScheme.Scheme != "Bearer" {
 			return fmt.Errorf("unsupported security scheme: %s/%s",
@@ -59,96 +62,88 @@ func OpenAPIAuthFunc(userSvc *users.UserService) openapi3filter.AuthenticationFu
 			return errors.New("invalid Authorization header format")
 		}
 
-		token, err := authjwt.ParseToken(tokenString)
+		action, err := requiredAction(input)
 		if err != nil {
-			slog.Debug("auth: token verification failed", "path", r.URL.Path, "error", err)
-			return fmt.Errorf("invalid token: %w", err)
+			return err
 		}
 
-		claims, err := extractClaims(token)
+		var (
+			account  *users.UserAccount
+			identity *EmailIdentity
+		)
+		// Personal access tokens are prefixed and carry no JWT claims; route them
+		// to the token auth path instead of JWT verification.
+		if strings.HasPrefix(tokenString, security.AccessTokenPrefix) {
+			account, identity, err = authenticateAccessToken(ctx, userSvc, tokenString, action)
+		} else {
+			account, identity, err = authenticateJWT(ctx, userSvc, tokenString, action)
+		}
 		if err != nil {
-			slog.Debug("auth: failed to extract claims", "path", r.URL.Path, "error", err)
-			return fmt.Errorf("failed to extract claims: %w", err)
+			return err
 		}
 
-		if ext, ok := input.RequestValidationInput.Route.Operation.Extensions["x-required-action"]; ok {
-			extStr, ok := ext.(string)
-			if !ok {
-				return fmt.Errorf("x-required-action extension must be a string")
-			}
-			required, err := authjwt.ParseAction(extStr)
-			if err != nil {
-				return fmt.Errorf("invalid x-required-action extension: %w", err)
-			}
-			if claims.action != required {
-				return fmt.Errorf("token action %q not allowed for this endpoint", claims.action)
-			}
-		} else if claims.action != "" {
-			return fmt.Errorf("token action %q not allowed for this endpoint", claims.action)
-		}
-
-		//nolint:contextcheck // use r.Context() so the lookup is cancelled on client disconnect
-		account, err := userSvc.GetUser(r.Context(), claims.userID)
-		if err != nil {
-			if errors.Is(err, apperrors.ErrNotFound) {
-				slog.Debug("auth: user not found", "path", r.URL.Path, "user_id", claims.userID)
-				return fmt.Errorf("user not found: %w", err)
-			}
-			slog.Error("auth: failed to load user", "path", r.URL.Path, "user_id", claims.userID, "error", err)
-			return fmt.Errorf("failed to load user: %w", err)
-		}
-		if account.Archived {
-			slog.Debug("auth: user is archived", "path", r.URL.Path, "user_id", claims.userID)
-			return errors.New("user is archived")
-		}
-
-		identity := EmailIdentity{Email: claims.email}
-		//nolint:contextcheck // must use r.Context(), not func ctx
-		*r = *r.WithContext(PopulateContext(r.Context(), identity, account))
-
+		*r = *r.WithContext(PopulateContext(ctx, *identity, *account))
 		return nil
 	}
 }
 
-// GetEmailIdentity retrieves the session Identity from the request context.
-func GetEmailIdentity(ctx context.Context) (EmailIdentity, error) {
-	if id, ok := ctx.Value(emailContextKey{}).(EmailIdentity); ok {
-		return id, nil
+// requiredAction reads the x-required-action OpenAPI extension for the route,
+// returning the empty action when the endpoint is not action-scoped.
+func requiredAction(input *openapi3filter.AuthenticationInput) (authjwt.Action, error) {
+	ext, ok := input.RequestValidationInput.Route.Operation.Extensions["x-required-action"]
+	if !ok {
+		return "", nil
 	}
-	return EmailIdentity{}, ErrNoAuthentication
-}
-
-// RequireEmailIdentity panics if no Identity is present (use after Middleware).
-func RequireEmailIdentity(ctx context.Context) EmailIdentity {
-	id, err := GetEmailIdentity(ctx)
+	extStr, ok := ext.(string)
+	if !ok {
+		return "", errors.New("x-required-action extension must be a string")
+	}
+	action, err := authjwt.ParseAction(extStr)
 	if err != nil {
-		panic(err)
+		return "", fmt.Errorf("invalid x-required-action extension: %w", err)
 	}
-	return id
+	return action, nil
 }
 
-// GetCurrentUser retrieves the authenticated user from ctx.
-func GetCurrentUser(ctx context.Context) (users.UserAccount, error) {
-	if user, ok := ctx.Value(userContextKey{}).(users.UserAccount); ok {
-		return user, nil
-	}
-	return users.UserAccount{}, ErrNoAuthentication
-}
-
-// RequireCurrentUser panics if no user is present (use after Middleware).
-func RequireCurrentUser(ctx context.Context) users.UserAccount {
-	user, err := GetCurrentUser(ctx)
+// authenticateJWT validates a Bearer identity JWT against the required action
+// and resolves the owning account and identity.
+func authenticateJWT(
+	ctx context.Context,
+	userSvc *users.UserService,
+	tokenString string,
+	action authjwt.Action,
+) (*users.UserAccount, *EmailIdentity, error) {
+	token, err := authjwt.ParseToken(tokenString)
 	if err != nil {
-		panic(err)
+		slog.Debug("auth: token verification failed", "error", err)
+		return nil, nil, fmt.Errorf("invalid token: %w", err)
 	}
-	return user
-}
 
-// PopulateContext injects the EmailIdentity and the authenticated user into ctx.
-func PopulateContext(ctx context.Context, identity EmailIdentity, user users.UserAccount) context.Context {
-	ctx = context.WithValue(ctx, emailContextKey{}, identity)
-	ctx = context.WithValue(ctx, userContextKey{}, user)
-	return ctx
+	claims, err := extractClaims(token)
+	if err != nil {
+		slog.Debug("auth: failed to extract claims", "error", err)
+		return nil, nil, fmt.Errorf("failed to extract claims: %w", err)
+	}
+
+	if claims.action != action {
+		return nil, nil, fmt.Errorf("token action %q not allowed for this endpoint", claims.action)
+	}
+
+	account, err := userSvc.GetUser(ctx, claims.userID)
+	if err != nil {
+		if errors.Is(err, apperrors.ErrNotFound) {
+			slog.Debug("auth: user not found", "user_id", claims.userID)
+			return nil, nil, fmt.Errorf("user not found: %w", err)
+		}
+		slog.Error("auth: failed to load user", "user_id", claims.userID, "error", err)
+		return nil, nil, fmt.Errorf("failed to load user: %w", err)
+	}
+	if account.Archived {
+		slog.Debug("auth: user is archived", "user_id", claims.userID)
+		return nil, nil, errors.New("user is archived")
+	}
+
+	return &account, &EmailIdentity{Email: claims.email}, nil
 }
 
 func extractClaims(token jwt.Token) (claims, error) {
@@ -184,4 +179,28 @@ func extractClaims(token jwt.Token) (claims, error) {
 	}
 
 	return c, nil
+}
+
+// authenticateAccessToken validates a personal access token presented as a
+// Bearer credential and resolves the owning account and identity. Access tokens
+// grant full account access but cannot satisfy action-scoped endpoints (e.g.
+// email verification), which require a purpose-built JWT.
+func authenticateAccessToken(
+	ctx context.Context, userSvc *users.UserService, tokenString string, action authjwt.Action,
+) (*users.UserAccount, *EmailIdentity, error) {
+	if action != "" {
+		return nil, nil, errors.New("access tokens cannot be used for action-scoped endpoints")
+	}
+
+	result, err := userSvc.AuthenticateAccessToken(ctx, tokenString)
+	if err != nil {
+		if errors.Is(err, apperrors.ErrInvalidCredentials) {
+			slog.Debug("auth: invalid access token")
+			return nil, nil, fmt.Errorf("invalid access token: %w", err)
+		}
+		slog.Error("auth: failed to authenticate access token", "error", err)
+		return nil, nil, fmt.Errorf("failed to authenticate access token: %w", err)
+	}
+
+	return &result.UserAccount, &EmailIdentity{Email: result.Email}, nil
 }

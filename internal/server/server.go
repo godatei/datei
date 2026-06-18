@@ -19,6 +19,7 @@ type server struct {
 	authServer
 	settingsServer
 	emailsServer
+	tokensServer
 	adminUsersServer
 	linkServer
 	publicLinkServer
@@ -36,6 +37,7 @@ func NewServer(
 		authServer:       authServer{svc: userSvc},
 		settingsServer:   settingsServer{svc: userSvc},
 		emailsServer:     emailsServer{svc: userSvc},
+		tokensServer:     tokensServer{svc: userSvc},
 		adminUsersServer: adminUsersServer{svc: userSvc},
 		linkServer:       linkServer{svc: linkSvc},
 		publicLinkServer: publicLinkServer{svc: publicLinkSvc},

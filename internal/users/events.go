@@ -65,6 +65,8 @@ func init() {
 	events.RegisterEvent("UserArchived", func() events.DomainEvent { return &UserArchivedEvent{} })
 	events.RegisterEvent("UserUnarchived", func() events.DomainEvent { return &UserUnarchivedEvent{} })
 	events.RegisterEvent("UserLoggedIn", func() events.DomainEvent { return &UserLoggedInEvent{} })
+	events.RegisterEvent("UserAccessTokenCreated", func() events.DomainEvent { return &UserAccessTokenCreatedEvent{} })
+	events.RegisterEvent("UserAccessTokenRevoked", func() events.DomainEvent { return &UserAccessTokenRevokedEvent{} })
 }
 
 // HashedRecoveryCode is stored in events for MFA recovery codes.
@@ -297,3 +299,29 @@ type UserLoggedInEvent struct {
 func (e UserLoggedInEvent) EventType() string    { return "UserLoggedIn" }
 func (e UserLoggedInEvent) StreamID() uuid.UUID  { return e.ID }
 func (e UserLoggedInEvent) ApplyTo(a *Aggregate) { a.LastLoggedInAt = &e.LoggedInAt }
+
+// UserAccessTokenCreatedEvent records a new personal access token. Only the
+// SHA-256 hash of the secret is carried (and persisted); the plaintext is shown
+// to the user once at creation time and never stored.
+type UserAccessTokenCreatedEvent struct {
+	ID        uuid.UUID  `json:"id"`
+	TokenID   uuid.UUID  `json:"token_id"`
+	Label     string     `json:"label"`
+	TokenHash []byte     `json:"token_hash"`
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+	CreatedAt time.Time  `json:"created_at"`
+}
+
+func (e UserAccessTokenCreatedEvent) EventType() string    { return "UserAccessTokenCreated" }
+func (e UserAccessTokenCreatedEvent) StreamID() uuid.UUID  { return e.ID }
+func (e UserAccessTokenCreatedEvent) ApplyTo(a *Aggregate) { a.UpdatedAt = e.CreatedAt }
+
+type UserAccessTokenRevokedEvent struct {
+	ID        uuid.UUID `json:"id"`
+	TokenID   uuid.UUID `json:"token_id"`
+	RevokedAt time.Time `json:"revoked_at"`
+}
+
+func (e UserAccessTokenRevokedEvent) EventType() string    { return "UserAccessTokenRevoked" }
+func (e UserAccessTokenRevokedEvent) StreamID() uuid.UUID  { return e.ID }
+func (e UserAccessTokenRevokedEvent) ApplyTo(a *Aggregate) { a.UpdatedAt = e.RevokedAt }

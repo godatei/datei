@@ -34,7 +34,6 @@ var (
 	ErrRegistrationDisabled    = errors.New("registration is disabled")
 	ErrCurrentPasswordRequired = errors.New("current password required")
 	ErrEmailMismatch           = errors.New("email does not match")
-	ErrMFARequired             = errors.New("MFA verification required")
 	ErrMFAAlreadyEnabled       = errors.New("MFA is already enabled")
 	ErrMFANotEnabled           = errors.New("MFA is not enabled")
 	ErrMFANotSetUp             = errors.New("MFA has not been set up")

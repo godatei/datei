@@ -1,0 +1,32 @@
+get:
+  operationId: ListPersonalAccessTokens
+  summary: List the authenticated user's personal access tokens
+  security:
+    - bearerHttpAuthentication: []
+  responses:
+    '200':
+      description: List of personal access tokens
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ListPersonalAccessTokensResponse.yaml'
+post:
+  operationId: CreatePersonalAccessToken
+  summary: Create a new personal access token
+  security:
+    - bearerHttpAuthentication: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/CreatePersonalAccessTokenRequest.yaml'
+  responses:
+    '201':
+      description: Token created; the plaintext token is returned once
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/CreatePersonalAccessTokenResponse.yaml'
+    '400':
+      description: Invalid request

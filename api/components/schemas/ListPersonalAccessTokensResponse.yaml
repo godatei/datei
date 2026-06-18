@@ -1,0 +1,8 @@
+type: object
+required:
+  - tokens
+properties:
+  tokens:
+    type: array
+    items:
+      $ref: './PersonalAccessToken.yaml'

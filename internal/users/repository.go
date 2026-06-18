@@ -75,6 +75,10 @@ func updateProjection(ctx context.Context, q *db.Queries, event events.DomainEve
 		return updateProjectionForUserUnarchived(ctx, q, &e)
 	case UserLoggedInEvent:
 		return updateProjectionForUserLoggedIn(ctx, q, &e)
+	case UserAccessTokenCreatedEvent:
+		return updateProjectionForUserAccessTokenCreated(ctx, q, &e)
+	case UserAccessTokenRevokedEvent:
+		return updateProjectionForUserAccessTokenRevoked(ctx, q, &e)
 	default:
 		return fmt.Errorf("unknown user event type: %s", event.EventType())
 	}
