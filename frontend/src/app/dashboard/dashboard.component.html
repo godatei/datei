@@ -145,7 +145,11 @@
         </td>
       </ng-container>
 
-      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+      <tr
+        mat-header-row
+        *matHeaderRowDef="displayedColumns; sticky: true"
+        [class.pointer-events-none]="drag.isDragging()"
+      ></tr>
       <tr
         mat-row
         *matRowDef="let row; columns: displayedColumns"
@@ -156,6 +160,7 @@
         (dblclick)="onRowDblClick(row)"
         class="select-none transition-colors"
         [class.opacity-50]="drag.isDragging() && selection.selectedIds().has(row.id)"
+        [class.pointer-events-none]="drag.isDragging() && selection.selectedIds().has(row.id)"
         [class.cursor-pointer]="!drag.isDragging()"
       ></tr>
     </table>
@@ -163,7 +168,7 @@
 
   <div
     appDragPreview
-    class="mat-bg-primary-container mat-text-on-primary-container mat-corner-full mat-shadow-3 fixed pointer-events-none flex items-center z-10 gap-2 px-4 py-2"
+    class="mat-bg-primary-container mat-text-on-primary-container mat-corner-full mat-shadow-3 fixed pointer-events-none flex items-center z-101 gap-2 px-4 py-2"
     aria-hidden="true"
   >
     <mat-icon aria-hidden="true">drive_file_move</mat-icon>
