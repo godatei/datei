@@ -27,12 +27,17 @@ func NewConfig(path string) error {
 	v.SetConfigName("config")
 
 	v.SetDefault("database.migrations", true)
+
+	v.SetDefault("server.host", "http://localhost:4200")
 	v.SetDefault("server.addr", "0.0.0.0:8080")
+	v.SetDefault("server.buffers.directory", "")
+
 	if buildconfig.IsDevelopment() {
 		v.SetDefault("logging.level", "debug")
 	} else {
 		v.SetDefault("logging.level", "info")
 	}
+
 	v.SetDefault("storage.s3.bucket", "")
 	v.SetDefault("storage.s3.create_bucket", "true")
 	v.SetDefault("storage.s3.endpoint", "")
@@ -40,9 +45,9 @@ func NewConfig(path string) error {
 	v.SetDefault("storage.s3.use_path_style", "")
 	v.SetDefault("storage.s3.access_key_id", "")
 	v.SetDefault("storage.s3.secret_access_key", "")
+
 	v.SetDefault("ocr.server_uri", "")
 
-	v.SetDefault("server.host", "http://localhost:4200")
 	v.SetDefault("auth.jwt_secret", "")
 	v.SetDefault("auth.token_expiration", "24h")
 	v.SetDefault("auth.registration_enabled", true)
@@ -74,8 +79,16 @@ func DatabaseMigrations() bool {
 	return v.GetBool("database.migrations")
 }
 
+func ServerHost() string {
+	return v.GetString("server.host")
+}
+
 func ServerAddr() string {
 	return v.GetString("server.addr")
+}
+
+func ServerBuffersDirectory() string {
+	return v.GetString("server.buffers.directory")
 }
 
 func LoggingLevel() string {
@@ -108,10 +121,6 @@ func OCRServerURI() string {
 
 type EventStoreConfig struct {
 	SnapshotThreshold int
-}
-
-func ServerHost() string {
-	return v.GetString("server.host")
 }
 
 func AuthJWTSecret() []byte {

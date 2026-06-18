@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/getkin/kin-openapi/openapi3filter"
+	"github.com/glasskube/pkg/seekbuf"
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/httprate"
@@ -67,6 +68,8 @@ func run(ctx context.Context, options Options) error {
 	if config.LoggingLevel() == "debug" {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
 	}
+
+	seekbuf.SetDefault(&seekbuf.FileBufferFactory{Dir: config.ServerBuffersDirectory()})
 
 	db, err := db.NewPool(ctx, config.DatabaseURI())
 	if err != nil {
