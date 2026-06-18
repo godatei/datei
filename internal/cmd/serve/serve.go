@@ -160,7 +160,8 @@ func run(ctx context.Context, options Options) error {
 	rootMux := chi.NewRouter()
 	rootMux.Use(chimiddleware.Recoverer)
 	rootMux.Use(chimiddleware.RequestID)
-	rootMux.Use(chimiddleware.RealIP)
+	rootMux.Use(chimiddleware.ClientIPFromRemoteAddr)
+	rootMux.Use(chimiddleware.ClientIPFromXFF())
 	rootMux.Use(slogchi.New(slog.Default()))
 
 	// API routes: OpenAPI validator handles auth via security schemes in the spec.
@@ -183,7 +184,10 @@ func run(ctx context.Context, options Options) error {
 		}))
 		r.Use(httprate.Limit(
 			100, 1*time.Minute,
-			httprate.WithKeyFuncs(httprate.KeyByRealIP, httprate.KeyByEndpoint),
+			httprate.WithKeyFuncs(
+				func(r *http.Request) (string, error) { return chimiddleware.GetClientIP(r.Context()), nil },
+				httprate.KeyByEndpoint,
+			),
 		))
 		server.HandlerWithOptions(strictHandler, server.ChiServerOptions{
 			BaseRouter: r,
