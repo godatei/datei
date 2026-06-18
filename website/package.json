@@ -24,7 +24,7 @@
     "@material/web": "^2.4.1",
     "@semantic-ui/astro-lit": "^5.3.0",
     "@webcomponents/template-shadowroot": "^0.2.1",
-    "astro": "^6.4.5",
+    "astro": "^6.4.6",
     "astro-icon": "^1.1.5",
     "lit": "^3.3.3",
     "sharp": "^0.34.5"
