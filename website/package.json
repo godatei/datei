@@ -20,7 +20,7 @@
     "@astrojs/mdx": "^6.0.3",
     "@astrojs/sitemap": "^3.7.3",
     "@iconify-json/lucide": "^1.2.111",
-    "@iconify-json/material-symbols": "1.2.78",
+    "@iconify-json/material-symbols": "1.2.79",
     "@material/web": "^2.4.1",
     "@semantic-ui/astro-lit": "^5.3.0",
     "@webcomponents/template-shadowroot": "^0.2.1",
