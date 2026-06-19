@@ -27,7 +27,7 @@
     "astro": "^6.4.5",
     "astro-icon": "^1.1.5",
     "lit": "^3.3.3",
-    "sharp": "^0.34.5"
+    "sharp": "^0.35.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
