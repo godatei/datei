@@ -10,7 +10,7 @@ import {
   passwordConfirmSchema,
 } from '~/frontend/auth/password-confirm/password-confirm.component';
 import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
-import type { BaseUserPort } from './user-data.port';
+import type { BaseUserPort } from '../user-data.port';
 
 @Component({
   selector: 'app-user-password',

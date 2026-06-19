@@ -1,5 +1,5 @@
 import { Component, computed, input } from '@angular/core';
-import { initials } from './initials';
+import { initials } from '../initials';
 
 @Component({
   selector: 'app-user-avatar',

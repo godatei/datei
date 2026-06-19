@@ -3,8 +3,8 @@ import { MatDividerModule } from '@angular/material/divider';
 import { AuthService } from '~/frontend/services/auth.service';
 import { SettingsService } from '~/frontend/services/settings.service';
 import { createSelfUserPort, UserSnapshot } from '~/frontend/users/user-data.port';
-import { UserEmailsComponent } from '~/frontend/users/user-emails.component';
-import { UserProfileComponent } from '~/frontend/users/user-profile.component';
+import { UserEmailsComponent } from '~/frontend/users/user-emails/user-emails.component';
+import { UserProfileComponent } from '~/frontend/users/user-profile/user-profile.component';
 
 @Component({
   selector: 'app-user-settings-profile',

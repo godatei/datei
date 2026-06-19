@@ -8,7 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
 import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
-import type { MfaSetupData, SelfUserPort } from './user-data.port';
+import type { MfaSetupData, SelfUserPort } from '../user-data.port';
 
 @Component({
   selector: 'app-user-mfa',

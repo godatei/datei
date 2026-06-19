@@ -10,7 +10,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
 import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
-import type { BaseUserPort } from './user-data.port';
+import type { BaseUserPort } from '../user-data.port';
 
 @Component({
   selector: 'app-user-emails',
@@ -27,15 +27,7 @@ import type { BaseUserPort } from './user-data.port';
     MatSnackBarModule,
   ],
   templateUrl: './user-emails.component.html',
-  styles: [
-    `
-      @reference 'tailwindcss';
-
-      .email-item-meta {
-        @apply flex gap-1;
-      }
-    `,
-  ],
+  styleUrl: './user-emails.component.css',
 })
 export class UserEmailsComponent {
   private readonly snackBar = inject(MatSnackBar);

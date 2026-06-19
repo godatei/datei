@@ -14,8 +14,8 @@ import { Api } from '~/api/api';
 import { listPersonalAccessTokens, revokePersonalAccessToken } from '~/api/functions';
 import type { PersonalAccessToken } from '~/api/models/personal-access-token';
 import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
-import { UserPatCreateDialogComponent } from './user-pat-create-dialog.component';
-import { UserPatRevokeDialogComponent } from './user-pat-revoke-dialog.component';
+import { UserPatCreateDialogComponent } from '../user-pat-create-dialog/user-pat-create-dialog.component';
+import { UserPatRevokeDialogComponent } from '../user-pat-revoke-dialog/user-pat-revoke-dialog.component';
 
 @Component({
   selector: 'app-user-personal-access-tokens',
@@ -29,15 +29,7 @@ import { UserPatRevokeDialogComponent } from './user-pat-revoke-dialog.component
     MatListModule,
   ],
   templateUrl: './user-personal-access-tokens.component.html',
-  styles: [
-    `
-      @reference 'tailwindcss';
-
-      .pat-item-meta {
-        @apply h-full flex! items-center;
-      }
-    `,
-  ],
+  styleUrl: './user-personal-access-tokens.component.css',
 })
 export class UserPersonalAccessTokensComponent {
   private readonly api = inject(Api);

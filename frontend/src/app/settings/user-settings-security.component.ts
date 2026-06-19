@@ -3,9 +3,9 @@ import { MatDividerModule } from '@angular/material/divider';
 import { AuthService } from '~/frontend/services/auth.service';
 import { SettingsService } from '~/frontend/services/settings.service';
 import { createSelfUserPort, UserSnapshot } from '~/frontend/users/user-data.port';
-import { UserMfaComponent } from '~/frontend/users/user-mfa.component';
-import { UserPasswordComponent } from '~/frontend/users/user-password.component';
-import { UserPersonalAccessTokensComponent } from '~/frontend/users/user-personal-access-tokens.component';
+import { UserMfaComponent } from '~/frontend/users/user-mfa/user-mfa.component';
+import { UserPasswordComponent } from '~/frontend/users/user-password/user-password.component';
+import { UserPersonalAccessTokensComponent } from '~/frontend/users/user-personal-access-tokens/user-personal-access-tokens.component';
 
 @Component({
   selector: 'app-user-settings-security',

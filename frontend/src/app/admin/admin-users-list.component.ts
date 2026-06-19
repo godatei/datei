@@ -10,7 +10,7 @@ import { RouterLink } from '@angular/router';
 import { Api } from '~/api/api';
 import { listUsersAdmin } from '~/api/functions';
 import type { AdminUserListItem } from '~/api/models/admin-user-list-item';
-import { UserAvatarComponent } from '~/frontend/users/user-avatar.component';
+import { UserAvatarComponent } from '~/frontend/users/user-avatar/user-avatar.component';
 import { AdminCreateUserDialogComponent } from './admin-create-user-dialog.component';
 
 @Component({
