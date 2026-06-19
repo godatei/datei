@@ -1,5 +1,4 @@
 import { Component, effect, inject, input, output, signal } from '@angular/core';
-import { MatCardModule } from '@angular/material/card';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Api } from '~/api/api';
@@ -8,7 +7,7 @@ import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
 
 @Component({
   selector: 'app-admin-role',
-  imports: [MatCardModule, MatSlideToggleModule, MatSnackBarModule],
+  imports: [MatSlideToggleModule, MatSnackBarModule],
   templateUrl: './admin-role.component.html',
 })
 export class AdminRoleComponent {

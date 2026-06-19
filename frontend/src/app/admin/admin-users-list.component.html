@@ -17,12 +17,10 @@
       }
     </div>
   } @else if (error()) {
-    <mat-card>
-      <mat-card-content class="flex items-center gap-3 py-6">
-        <mat-icon class="mat-text-error">error</mat-icon>
-        <span class="mat-text-error">Failed to load users.</span>
-      </mat-card-content>
-    </mat-card>
+    <div class="flex items-center gap-3 py-6 mat-bg-error-container mat-corner-md px-4">
+      <mat-icon class="mat-text-on-error-container">error</mat-icon>
+      <span class="mat-text-on-error-container">Failed to load users.</span>
+    </div>
   } @else {
     <mat-chip-listbox [value]="filter()" (change)="filter.set($event.value)" aria-label="Filter">
       <mat-chip-option value="all" selected>All</mat-chip-option>

@@ -1,67 +1,71 @@
-<mat-card>
-  <mat-card-header>
-    <mat-card-title>Personal Access Tokens</mat-card-title>
-    <div class="grow"></div>
+<section class="flex flex-col gap-4">
+  <div class="flex items-center gap-3">
+    <div class="grow">
+      <h3 class="mat-font-title-lg m-0">Personal Access Tokens</h3>
+      <p class="mat-font-body-md mat-text-on-surface-variant m-0">
+        Create access tokens for CLI or API usage.
+      </p>
+    </div>
     <button mat-flat-button (click)="openCreateDialog()">Create token</button>
-  </mat-card-header>
-  <mat-card-content class="flex flex-col gap-4">
-    <p class="mat-font-body-md mat-text-on-surface-variant m-0">
-      Create access tokens for CLI or API usage.
-    </p>
+  </div>
 
-    @if (createdToken()) {
-      <div class="mat-bg-secondary-container mat-corner-md p-3 flex flex-col gap-2">
-        <p class="mat-font-label-lg m-0">New token</p>
-        <code class="font-mono break-all">{{ createdToken() }}</code>
-        <p class="mat-font-body-sm m-0">
-          Copy this token now. You will not be able to see it again after closing this notice.
-        </p>
-        <div>
-          <button mat-button type="button" (click)="clearCreatedToken()">Hide token</button>
-        </div>
+  @if (createdToken()) {
+    <div class="mat-bg-secondary-container mat-corner-md p-3 flex flex-col gap-1">
+      <p class="mat-font-label-lg">New token</p>
+      <div class="flex items-center gap-2">
+        <code class="font-mono break-all select-all">{{ createdToken() }}</code>
+        <button mat-icon-button type="button" (click)="copyCreatedToken()" aria-label="Copy token">
+          <mat-icon>content_copy</mat-icon>
+        </button>
       </div>
-    }
+      <p class="mat-font-body-sm">
+        Copy this token now. You will not be able to see it again after closing this notice.
+      </p>
+      <div>
+        <button mat-button type="button" (click)="clearCreatedToken()">Hide token</button>
+      </div>
+    </div>
+  }
 
-    @if (loading()) {
-      <p class="mat-text-on-surface-variant m-0">Loading tokens...</p>
-    } @else if (loadingError()) {
-      <p class="mat-text-error m-0">Failed to load access tokens.</p>
-    } @else if (tokens().length === 0) {
-      <p class="mat-text-on-surface-variant m-0">No access tokens yet.</p>
-    } @else {
-      <mat-list>
-        @for (token of tokens(); track token.id; let last = $last) {
-          <mat-list-item [class.opacity-50]="expired(token)">
-            <mat-icon matListItemIcon>key</mat-icon>
-            <div matListItemTitle>{{ displayLabel(token) }}</div>
-            <span matListItemLine
-              >Created {{ token.createdAt | date: 'mediumDate' }}
-              &bull;
-              @if (token.expiresAt) {
-                @if (expired(token)) {
-                  Expired
-                } @else {
-                  Expires
-                }
-                {{ token.expiresAt | date: 'mediumDate' }}
+  @if (loading()) {
+    <p class="mat-text-on-surface-variant m-0">Loading tokens...</p>
+  } @else if (loadingError()) {
+    <p class="mat-text-error m-0">Failed to load access tokens.</p>
+  } @else if (tokens().length === 0) {
+    <p class="mat-text-on-surface-variant m-0">No access tokens yet.</p>
+  } @else {
+    <mat-list>
+      @for (token of tokens(); track token.id; let last = $last) {
+        <mat-list-item [class.opacity-50]="expired(token)">
+          <mat-icon matListItemIcon>key</mat-icon>
+          <div matListItemTitle>{{ displayLabel(token) }}</div>
+          <span matListItemLine
+            >Created {{ token.createdAt | date: 'mediumDate' }}
+            &bull;
+            @if (token.expiresAt) {
+              @if (expired(token)) {
+                Expired
               } @else {
-                No expiration date
+                Expires
               }
-            </span>
-            <div matListItemMeta class="pat-item-meta">
-              <button
-                mat-icon-button
-                type="button"
-                [disabled]="isRevoking(token)"
-                (click)="revokeToken(token)"
-                [attr.aria-label]="'Revoke token ' + displayLabel(token)"
-              >
-                <mat-icon>delete</mat-icon>
-              </button>
-            </div>
-          </mat-list-item>
-        }
-      </mat-list>
-    }
-  </mat-card-content>
-</mat-card>
+              {{ token.expiresAt | date: 'mediumDate' }}
+            } @else {
+              No expiration date
+            }
+          </span>
+          <div matListItemMeta class="pat-item-meta">
+            <button
+              mat-icon-button
+              type="button"
+              [disabled]="isRevoking(token)"
+              (click)="revokeToken(token)"
+              [attr.aria-label]="'Revoke token ' + displayLabel(token)"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </mat-list-item>
+      }
+    </mat-list>
+  }
+</section>

@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { MatDividerModule } from '@angular/material/divider';
 import { AuthService } from '~/frontend/services/auth.service';
 import { SettingsService } from '~/frontend/services/settings.service';
 import { createSelfUserPort, UserSnapshot } from '~/frontend/users/user-data.port';
@@ -7,7 +8,7 @@ import { UserProfileComponent } from '~/frontend/users/user-profile.component';
 
 @Component({
   selector: 'app-user-settings-profile',
-  imports: [UserProfileComponent, UserEmailsComponent],
+  imports: [MatDividerModule, UserProfileComponent, UserEmailsComponent],
   templateUrl: './user-settings-profile.component.html',
 })
 export class UserSettingsProfileComponent {

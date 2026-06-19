@@ -1,7 +1,7 @@
 import { Component, computed, inject, resource } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Api } from '~/api/api';
@@ -20,7 +20,7 @@ import { AdminRoleComponent } from './admin-role.component';
   selector: 'app-admin-user-detail',
   imports: [
     MatButtonModule,
-    MatCardModule,
+    MatDividerModule,
     MatIconModule,
     RouterLink,
     UserAvatarComponent,

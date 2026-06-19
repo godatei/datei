@@ -1,7 +1,8 @@
 import { DatePipe } from '@angular/common';
+import { Clipboard } from '@angular/cdk/clipboard';
+import { ClipboardModule } from '@angular/cdk/clipboard';
 import { Component, computed, inject, resource, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,8 +21,8 @@ import { UserPatRevokeDialogComponent } from './user-pat-revoke-dialog.component
   selector: 'app-user-personal-access-tokens',
   imports: [
     DatePipe,
+    ClipboardModule,
     MatButtonModule,
-    MatCardModule,
     MatDividerModule,
     MatIconModule,
     MatSnackBarModule,
@@ -40,6 +41,7 @@ import { UserPatRevokeDialogComponent } from './user-pat-revoke-dialog.component
 })
 export class UserPersonalAccessTokensComponent {
   private readonly api = inject(Api);
+  private readonly clipboard = inject(Clipboard);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
 
@@ -68,6 +70,18 @@ export class UserPersonalAccessTokensComponent {
 
   protected clearCreatedToken(): void {
     this.createdToken.set(null);
+  }
+
+  protected copyCreatedToken(): void {
+    const token = this.createdToken();
+    if (!token) return;
+
+    if (this.clipboard.copy(token)) {
+      this.snackBar.open('Token copied', 'OK', { duration: snackSuccessDuration });
+      return;
+    }
+
+    this.snackBar.open('Failed to copy token', 'Dismiss', { duration: snackErrorDuration });
   }
 
   protected isRevoking(token: PersonalAccessToken): boolean {

@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { MatDividerModule } from '@angular/material/divider';
 import { AuthService } from '~/frontend/services/auth.service';
 import { SettingsService } from '~/frontend/services/settings.service';
 import { createSelfUserPort, UserSnapshot } from '~/frontend/users/user-data.port';
@@ -8,7 +9,12 @@ import { UserPersonalAccessTokensComponent } from '~/frontend/users/user-persona
 
 @Component({
   selector: 'app-user-settings-security',
-  imports: [UserPasswordComponent, UserMfaComponent, UserPersonalAccessTokensComponent],
+  imports: [
+    MatDividerModule,
+    UserPasswordComponent,
+    UserMfaComponent,
+    UserPersonalAccessTokensComponent,
+  ],
   templateUrl: './user-settings-security.component.html',
 })
 export class UserSettingsSecurityComponent {
