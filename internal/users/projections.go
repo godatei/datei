@@ -189,10 +189,14 @@ func updateProjectionForUserLoggedIn(ctx context.Context, q *db.Queries, event *
 func updateProjectionForUserAccessTokenCreated(
 	ctx context.Context, q *db.Queries, event *UserAccessTokenCreatedEvent,
 ) error {
+	var label *string
+	if event.Label != "" {
+		label = &event.Label
+	}
 	return q.InsertAccessTokenProjection(ctx, db.InsertAccessTokenProjectionParams{
 		ID:            event.TokenID,
 		UserAccountID: event.ID,
-		Label:         event.Label,
+		Label:         label,
 		TokenHash:     event.TokenHash,
 		ExpiresAt:     event.ExpiresAt,
 		CreatedAt:     event.CreatedAt,

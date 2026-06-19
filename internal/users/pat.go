@@ -46,12 +46,16 @@ func (s *UserService) CreateAccessToken(
 	if err := s.repository.Save(ctx, agg); err != nil {
 		return nil, fmt.Errorf("failed to save user: %w", err)
 	}
+	var label *string
+	if input.Label != "" {
+		label = &input.Label
+	}
 
 	return &api.CreatePersonalAccessTokenResponse{
 		Token: plaintext,
 		AccessToken: api.PersonalAccessToken{
 			Id:        tokenID,
-			Label:     input.Label,
+			Label:     label,
 			ExpiresAt: input.ExpiresAt,
 			CreatedAt: now,
 		},

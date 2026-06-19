@@ -53,7 +53,7 @@ CREATE UNIQUE INDEX uq_user_account_email_projection_primary ON user_account_ema
 CREATE TABLE user_account_access_token_projection (
   id UUID PRIMARY KEY DEFAULT uuidv7(),
   user_account_id UUID NOT NULL REFERENCES user_account_projection(id) ON DELETE CASCADE,
-  label TEXT NOT NULL,
+  label TEXT,
   token_hash BYTEA NOT NULL UNIQUE,
   expires_at TIMESTAMPTZ,
   revoked_at TIMESTAMPTZ,

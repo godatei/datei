@@ -4,13 +4,23 @@ import { AdminUsersListComponent } from '~/frontend/admin/admin-users-list.compo
 import { DashboardComponent } from '~/frontend/dashboard/dashboard.component';
 import { adminGuard } from '~/frontend/guards/admin.guard';
 import { LinksListComponent } from '~/frontend/links/links-list/links-list.component';
+import { UserSettingsProfileComponent } from '~/frontend/settings/user-settings-profile.component';
+import { UserSettingsSecurityComponent } from '~/frontend/settings/user-settings-security.component';
 import { UserSettingsComponent } from '~/frontend/settings/user-settings.component';
 import { TrashComponent } from '~/frontend/trash/trash.component';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', component: DashboardComponent },
   { path: 'trash', component: TrashComponent },
-  { path: 'settings', component: UserSettingsComponent },
+  {
+    path: 'settings',
+    component: UserSettingsComponent,
+    children: [
+      { path: '', redirectTo: 'profile', pathMatch: 'full' },
+      { path: 'profile', component: UserSettingsProfileComponent },
+      { path: 'security', component: UserSettingsSecurityComponent },
+    ],
+  },
   { path: 'links', component: LinksListComponent },
   {
     path: 'admin',

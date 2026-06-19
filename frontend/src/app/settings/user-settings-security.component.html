@@ -1,0 +1,7 @@
+@if (user(); as u) {
+  <div class="flex flex-col gap-6">
+    <app-user-password [port]="port" [requireCurrentPassword]="true" />
+    <app-user-mfa [port]="port" [mfaEnabled]="u.mfaEnabled" (changed)="load()" />
+    <app-user-personal-access-tokens />
+  </div>
+}

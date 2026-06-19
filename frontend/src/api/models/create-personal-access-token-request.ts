@@ -4,12 +4,12 @@
 export interface CreatePersonalAccessTokenRequest {
 
   /**
-   * Expiration timestamp; omit or null for "never expires"
+   * Expiration timestamp; omit for "never expires"
    */
-  expiresAt?: string | null;
+  expiresAt?: string;
 
   /**
-   * Human-readable label describing the token's purpose
+   * Human-readable label describing the token's purpose; omit for unlabeled tokens
    */
-  label: string;
+  label?: string;
 }

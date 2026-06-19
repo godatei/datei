@@ -330,9 +330,6 @@ func (a *Aggregate) CreateAccessToken(
 	if tokenID == uuid.Nil {
 		return errors.New("invalid token id")
 	}
-	if label == "" {
-		return errors.New("label cannot be empty")
-	}
 	if len(tokenHash) == 0 {
 		return errors.New("token hash cannot be empty")
 	}

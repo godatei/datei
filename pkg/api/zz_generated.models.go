@@ -117,11 +117,11 @@ type CreateLinkRequest struct {
 
 // CreatePersonalAccessTokenRequest defines model for CreatePersonalAccessTokenRequest.
 type CreatePersonalAccessTokenRequest struct {
-	// ExpiresAt Expiration timestamp; omit or null for "never expires"
+	// ExpiresAt Expiration timestamp; omit for "never expires"
 	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
 
-	// Label Human-readable label describing the token's purpose
-	Label string `json:"label"`
+	// Label Human-readable label describing the token's purpose; omit for unlabeled tokens
+	Label *string `json:"label,omitempty"`
 }
 
 // CreatePersonalAccessTokenResponse defines model for CreatePersonalAccessTokenResponse.
@@ -372,14 +372,14 @@ type PersonalAccessToken struct {
 	// CreatedAt Creation timestamp
 	CreatedAt time.Time `json:"createdAt"`
 
-	// ExpiresAt Expiration timestamp; null if the token never expires
+	// ExpiresAt Expiration timestamp; omitted if the token never expires
 	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
 
 	// Id Unique identifier
 	Id openapi_types.UUID `json:"id"`
 
-	// Label Human-readable label describing the token's purpose
-	Label string `json:"label"`
+	// Label Human-readable label describing the token's purpose; omitted if unlabeled
+	Label *string `json:"label,omitempty"`
 }
 
 // RegenerateMFARecoveryCodesRequest defines model for RegenerateMFARecoveryCodesRequest.

@@ -1,10 +1,33 @@
-<div class="max-w-xl mx-auto flex flex-col gap-6 px-4 my-8">
-  <h2 class="mat-font-headline-sm m-0">Settings</h2>
+<div class="h-full flex flex-col">
+  <div class="grow flex flex-col md:flex-row">
+    <div class="mat-bg-surface-container-low p-6 md:self-stretch">
+      <h2 class="mat-font-headline-sm m-0">Settings</h2>
+      <nav class="md:w-56 shrink-0" aria-label="Settings sections">
+        <mat-nav-list>
+          <a
+            mat-list-item
+            routerLink="profile"
+            routerLinkActive
+            #profileRla="routerLinkActive"
+            [activated]="profileRla.isActive"
+          >
+            Profile
+          </a>
+          <a
+            mat-list-item
+            routerLink="security"
+            routerLinkActive
+            #securityRla="routerLinkActive"
+            [activated]="securityRla.isActive"
+          >
+            Security
+          </a>
+        </mat-nav-list>
+      </nav>
+    </div>
 
-  @if (user(); as u) {
-    <app-user-profile [port]="port" [name]="u.name" (changed)="load()" />
-    <app-user-emails [port]="port" />
-    <app-user-password [port]="port" [requireCurrentPassword]="true" />
-    <app-user-mfa [port]="port" [mfaEnabled]="u.mfaEnabled" (changed)="load()" />
-  }
+    <div class="max-w-3xl mx-auto flex flex-col gap-6 grow">
+      <router-outlet />
+    </div>
+  </div>
 </div>

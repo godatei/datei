@@ -1,7 +1,6 @@
 type: object
 required:
   - id
-  - label
   - createdAt
 properties:
   id:
@@ -10,12 +9,11 @@ properties:
     description: Unique identifier
   label:
     type: string
-    description: Human-readable label describing the token's purpose
+    description: Human-readable label describing the token's purpose; omitted if unlabeled
   expiresAt:
     type: string
     format: date-time
-    nullable: true
-    description: Expiration timestamp; null if the token never expires
+    description: Expiration timestamp; omitted if the token never expires
   createdAt:
     type: string
     format: date-time

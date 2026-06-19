@@ -300,7 +300,7 @@ This project uses Angular Material 21 with Material 3 theming. All UI must follo
 - Keep components small and focused on a single responsibility
 - Use `input()` and `output()` functions instead of decorators
 - Use `computed()` for derived state
-- Set `changeDetection: ChangeDetectionStrategy.OnPush` in `@Component` decorator
+- Do NOT add `changeDetection: ChangeDetectionStrategy.OnPush` in `@Component`; Angular v22+ defaults to OnPush
 - Always use external template files (`templateUrl`) — do not use inline `template:`
 - Prefer Signal Forms (`@angular/forms/signals`) over Reactive Forms and Template-driven forms (experimental, introduced in Angular 21)
 - Do NOT use `ngClass`, use `class` bindings instead

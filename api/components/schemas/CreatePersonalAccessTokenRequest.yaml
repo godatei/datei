@@ -1,14 +1,11 @@
 type: object
-required:
-  - label
 properties:
   label:
     type: string
     minLength: 1
     maxLength: 255
-    description: Human-readable label describing the token's purpose
+    description: Human-readable label describing the token's purpose; omit for unlabeled tokens
   expiresAt:
     type: string
     format: date-time
-    nullable: true
-    description: Expiration timestamp; omit or null for "never expires"
+    description: Expiration timestamp; omit for "never expires"

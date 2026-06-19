@@ -37,10 +37,14 @@ func (s *tokensServer) CreatePersonalAccessToken(
 	}
 
 	user := authn.RequireCurrentUser(ctx)
+	label := ""
+	if request.Body.Label != nil {
+		label = *request.Body.Label
+	}
 
 	result, err := s.svc.CreateAccessToken(ctx, users.CreateAccessTokenInput{
 		UserID:    user.ID,
-		Label:     request.Body.Label,
+		Label:     label,
 		ExpiresAt: request.Body.ExpiresAt,
 	})
 	if err != nil {

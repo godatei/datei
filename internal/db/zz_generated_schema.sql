@@ -181,7 +181,7 @@ CREATE TABLE public.link_projection (
 CREATE TABLE public.user_account_access_token_projection (
     id uuid DEFAULT uuidv7() NOT NULL,
     user_account_id uuid NOT NULL,
-    label text NOT NULL,
+    label text,
     token_hash bytea NOT NULL,
     expires_at timestamp with time zone,
     revoked_at timestamp with time zone,

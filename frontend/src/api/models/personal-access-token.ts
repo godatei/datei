@@ -9,9 +9,9 @@ export interface PersonalAccessToken {
   createdAt: string;
 
   /**
-   * Expiration timestamp; null if the token never expires
+   * Expiration timestamp; omitted if the token never expires
    */
-  expiresAt?: string | null;
+  expiresAt?: string;
 
   /**
    * Unique identifier
@@ -19,7 +19,7 @@ export interface PersonalAccessToken {
   id: string;
 
   /**
-   * Human-readable label describing the token's purpose
+   * Human-readable label describing the token's purpose; omitted if unlabeled
    */
-  label: string;
+  label?: string;
 }

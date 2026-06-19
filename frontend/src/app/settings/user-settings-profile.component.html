@@ -1,0 +1,6 @@
+@if (user(); as u) {
+  <div class="flex flex-col gap-6">
+    <app-user-profile [port]="port" [name]="u.name" (changed)="load()" />
+    <app-user-emails [port]="port" />
+  </div>
+}

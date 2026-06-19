@@ -125,7 +125,7 @@ type LinkProjection struct {
 type UserAccountAccessTokenProjection struct {
 	ID            uuid.UUID  `db:"id"`
 	UserAccountID uuid.UUID  `db:"user_account_id"`
-	Label         string     `db:"label"`
+	Label         *string    `db:"label"`
 	TokenHash     []byte     `db:"token_hash"`
 	ExpiresAt     *time.Time `db:"expires_at"`
 	RevokedAt     *time.Time `db:"revoked_at"`
