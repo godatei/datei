@@ -20,7 +20,7 @@ require (
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/lestrrat-go/jwx/v3 v3.1.1
 	github.com/oapi-codegen/nethttp-middleware v1.1.2
-	github.com/oapi-codegen/runtime v1.4.1
+	github.com/oapi-codegen/runtime v1.4.2
 	github.com/onsi/gomega v1.42.0
 	github.com/pquerna/otp v1.5.0
 	github.com/samber/slog-chi v1.19.1
@@ -28,7 +28,7 @@ require (
 	github.com/spf13/viper v1.21.0
 	github.com/wneessen/go-mail v0.7.3
 	golang.org/x/crypto v0.53.0
-	golang.org/x/image v0.42.0
+	golang.org/x/image v0.43.0
 	golang.org/x/net v0.56.0
 )
 
