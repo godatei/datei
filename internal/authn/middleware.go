@@ -10,6 +10,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/authjwt"
+	"github.com/godatei/datei/internal/httpauth"
 	"github.com/godatei/datei/internal/security"
 	"github.com/godatei/datei/internal/users"
 	"github.com/google/uuid"
@@ -57,8 +58,8 @@ func OpenAPIAuthFunc(userSvc *users.UserService) openapi3filter.AuthenticationFu
 			return errors.New("missing Authorization header")
 		}
 
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		if tokenString == authHeader {
+		tokenString, ok := httpauth.ParseBearer(authHeader)
+		if !ok {
 			return errors.New("invalid Authorization header format")
 		}
 

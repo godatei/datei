@@ -3,10 +3,10 @@ package linkauth
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/godatei/datei/internal/apperrors"
+	"github.com/godatei/datei/internal/httpauth"
 	"github.com/godatei/datei/internal/link"
 )
 
@@ -45,8 +45,8 @@ func OpenAPIAuthFunc() openapi3filter.AuthenticationFunc {
 		if authHeader == "" {
 			return fmt.Errorf("missing Authorization header: %w", apperrors.ErrLinkUnauthorized)
 		}
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		if tokenString == authHeader {
+		tokenString, ok := httpauth.ParseBearer(authHeader)
+		if !ok {
 			return fmt.Errorf("invalid Authorization header format: %w", apperrors.ErrLinkUnauthorized)
 		}
 		claims, err := link.ParseSessionToken(tokenString)

@@ -21,6 +21,7 @@ require (
 	github.com/lestrrat-go/jwx/v3 v3.1.1
 	github.com/oapi-codegen/nethttp-middleware v1.1.2
 	github.com/oapi-codegen/runtime v1.4.1
+	github.com/onsi/gomega v1.42.0
 	github.com/pquerna/otp v1.5.0
 	github.com/samber/slog-chi v1.19.1
 	github.com/spf13/cobra v1.10.2
@@ -65,6 +66,7 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/goccy/go-json v0.10.6 // indirect
 	github.com/google/cel-go v0.28.0 // indirect
+	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect

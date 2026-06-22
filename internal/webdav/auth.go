@@ -4,13 +4,13 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/httprate"
 	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/authn"
+	"github.com/godatei/datei/internal/httpauth"
 	"github.com/godatei/datei/internal/users"
 )
 
@@ -64,8 +64,7 @@ func BasicAuthMiddleware(userSvc *users.UserService) func(http.Handler) http.Han
 // extractToken pulls a personal access token from the request, preferring a
 // Bearer credential and falling back to the password field of HTTP Basic auth.
 func extractToken(r *http.Request) (string, bool) {
-	authHeader := r.Header.Get("Authorization")
-	if token, found := strings.CutPrefix(authHeader, "Bearer "); found && token != "" {
+	if token, ok := httpauth.ParseBearer(r.Header.Get("Authorization")); ok && token != "" {
 		return token, true
 	}
 	if _, password, ok := r.BasicAuth(); ok && password != "" {
