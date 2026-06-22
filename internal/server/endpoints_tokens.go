@@ -65,8 +65,11 @@ func (s *tokensServer) RevokePersonalAccessToken(
 
 	err := s.svc.RevokeAccessToken(ctx, user.ID, request.Id)
 	if err != nil {
-		if errors.Is(err, apperrors.ErrNotFound) {
+		switch {
+		case errors.Is(err, apperrors.ErrNotFound):
 			return RevokePersonalAccessToken404Response{}, nil
+		case errors.Is(err, apperrors.ErrConcurrentUpdate):
+			return RevokePersonalAccessToken409Response{}, nil
 		}
 		return nil, err
 	}

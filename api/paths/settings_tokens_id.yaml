@@ -15,3 +15,5 @@ delete:
       description: Token revoked
     '404':
       description: Token not found
+    '409':
+      description: Concurrent update conflict; retry the request

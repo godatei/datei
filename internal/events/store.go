@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/db"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -76,7 +77,8 @@ func (es *PostgresEventStore) AppendToStream(
 	}
 
 	if int(actualVersion) != expectedVersion {
-		return fmt.Errorf("optimistic lock failed: expected version %d, got %d", expectedVersion, actualVersion)
+		return fmt.Errorf("%w: expected version %d, got %d",
+			apperrors.ErrConcurrentUpdate, expectedVersion, actualVersion)
 	}
 
 	for i, event := range domainEvents {
