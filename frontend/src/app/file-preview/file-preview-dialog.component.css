@@ -1,0 +1,53 @@
+@reference 'tailwindcss';
+
+:host {
+  @apply flex h-full w-full items-center justify-center;
+}
+
+mat-icon {
+  color: var(--mat-sys-inverse-on-surface);
+}
+
+.lightbox__bar {
+  @apply fixed left-0 right-0 top-0 px-6 py-4 z-10 flex items-center justify-between gap-3;
+  color: var(--mat-sys-inverse-on-surface);
+}
+
+.lightbox__title {
+  @apply min-w-0 truncate;
+}
+
+.lightbox__actions {
+  @apply flex gap-1;
+}
+
+.lightbox__nav {
+  @apply absolute top-1/2 z-10 -translate-y-1/2;
+}
+
+.lightbox__nav--prev {
+  @apply left-2;
+}
+
+.lightbox__nav--next {
+  @apply right-2;
+}
+
+/* The forced icon color above overrides Material's disabled dimming, so dim
+   the chevron explicitly when navigation isn't available. */
+.lightbox__nav:disabled mat-icon {
+  opacity: 0.38;
+}
+
+.lightbox__figure {
+  @apply m-0 flex max-h-full max-w-full flex-col items-center gap-3;
+}
+
+.lightbox__img {
+  @apply block cursor-default rounded-xl object-contain;
+
+  /* Viewport-relative sizing has no Tailwind scale token; keep it explicit. */
+  max-width: 92vw;
+  max-height: 84vh;
+  box-shadow: var(--mat-sys-level5);
+}

@@ -1,0 +1,42 @@
+<div class="lightbox__bar">
+  <span class="lightbox__title mat-font-title-lg" [title]="current().name ?? ''">{{
+    current().name
+  }}</span>
+  <div class="lightbox__actions">
+    <button matIconButton aria-label="Download" [disabled]="!src()" (click)="download()">
+      <mat-icon>download</mat-icon>
+    </button>
+    <button matIconButton aria-label="Close preview" (click)="close()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+</div>
+
+@if (multiple) {
+  <button
+    matIconButton
+    class="lightbox__nav lightbox__nav--prev"
+    aria-label="Previous image"
+    [disabled]="!hasPrev()"
+    (click)="prev()"
+  >
+    <mat-icon>chevron_left</mat-icon>
+  </button>
+  <button
+    matIconButton
+    class="lightbox__nav lightbox__nav--next"
+    aria-label="Next image"
+    [disabled]="!hasNext()"
+    (click)="next()"
+  >
+    <mat-icon>chevron_right</mat-icon>
+  </button>
+}
+
+@if (loading()) {
+  <mat-spinner diameter="48" aria-label="Loading image" />
+} @else if (src(); as imgSrc) {
+  <figure class="lightbox__figure">
+    <img [src]="imgSrc" [alt]="current().name ?? ''" class="lightbox__img" />
+  </figure>
+}
