@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { AuthService } from '~/frontend/services/auth.service';
 import { SettingsService } from '~/frontend/services/settings.service';
@@ -8,7 +9,7 @@ import { UserProfileComponent } from '~/frontend/users/user-profile/user-profile
 
 @Component({
   selector: 'app-user-settings-profile',
-  imports: [MatDividerModule, UserProfileComponent, UserEmailsComponent],
+  imports: [MatButtonModule, MatDividerModule, UserProfileComponent, UserEmailsComponent],
   templateUrl: './user-settings-profile.component.html',
 })
 export class UserSettingsProfileComponent {
@@ -17,12 +18,23 @@ export class UserSettingsProfileComponent {
 
   protected readonly port = createSelfUserPort(this.settings, this.auth);
   protected readonly user = signal<UserSnapshot | undefined>(undefined);
+  protected readonly loadFailed = signal(false);
 
   constructor() {
     this.load();
   }
 
   protected load() {
+    this.loadFailed.set(false);
+    this.port.load().subscribe({
+      next: (u) => this.user.set(u),
+      error: () => this.loadFailed.set(true),
+    });
+  }
+
+  // Silent refresh after a profile change: updates the view without tearing it
+  // down (and without blanking it should the refresh fail).
+  protected refresh() {
     this.port.load().subscribe({
       next: (u) => this.user.set(u),
     });

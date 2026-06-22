@@ -1,6 +1,11 @@
-@if (user(); as u) {
+@if (loadFailed()) {
+  <div class="flex flex-col items-center gap-4 p-8 text-center">
+    <p class="mat-text-error m-0">Failed to load profile settings.</p>
+    <button mat-stroked-button (click)="load()">Retry</button>
+  </div>
+} @else if (user(); as u) {
   <div class="flex flex-col gap-10">
-    <app-user-profile [port]="port" [name]="u.name" (changed)="load()" />
+    <app-user-profile [port]="port" [name]="u.name" (changed)="refresh()" />
     <mat-divider />
     <app-user-emails [port]="port" />
   </div>
