@@ -1,0 +1,6 @@
+@reference "tailwindcss";
+
+code.access-token {
+  font: var(--mat-sys-body-large);
+  @apply font-mono break-all select-all text-center;
+}

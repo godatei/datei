@@ -1,6 +1,4 @@
 import { DatePipe } from '@angular/common';
-import { Clipboard } from '@angular/cdk/clipboard';
-import { ClipboardModule } from '@angular/cdk/clipboard';
 import { Component, computed, inject, resource, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
@@ -21,7 +19,6 @@ import { UserPatRevokeDialogComponent } from '../user-pat-revoke-dialog/user-pat
   selector: 'app-user-personal-access-tokens',
   imports: [
     DatePipe,
-    ClipboardModule,
     MatButtonModule,
     MatDividerModule,
     MatIconModule,
@@ -32,13 +29,11 @@ import { UserPatRevokeDialogComponent } from '../user-pat-revoke-dialog/user-pat
 })
 export class UserPersonalAccessTokensComponent {
   private readonly api = inject(Api);
-  private readonly clipboard = inject(Clipboard);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
 
   private readonly reloadKey = signal(0);
   protected readonly revokingTokenId = signal<string | null>(null);
-  protected readonly createdToken = signal<string | null>(null);
 
   protected readonly tokensResource = resource({
     params: () => this.reloadKey(),
@@ -53,26 +48,7 @@ export class UserPersonalAccessTokensComponent {
     const dialogRef = this.dialog.open(UserPatCreateDialogComponent);
     const created = await firstValueFrom(dialogRef.afterClosed());
     if (!created) return;
-
-    this.createdToken.set(created.token);
     this.reloadTokens();
-    this.snackBar.open('Access token created', 'OK', { duration: snackSuccessDuration });
-  }
-
-  protected clearCreatedToken(): void {
-    this.createdToken.set(null);
-  }
-
-  protected copyCreatedToken(): void {
-    const token = this.createdToken();
-    if (!token) return;
-
-    if (this.clipboard.copy(token)) {
-      this.snackBar.open('Token copied', 'OK', { duration: snackSuccessDuration });
-      return;
-    }
-
-    this.snackBar.open('Failed to copy token', 'Dismiss', { duration: snackErrorDuration });
   }
 
   protected isRevoking(token: PersonalAccessToken): boolean {
