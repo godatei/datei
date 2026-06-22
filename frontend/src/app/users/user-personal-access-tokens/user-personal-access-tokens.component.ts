@@ -3,7 +3,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, resource, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
-import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -18,14 +17,7 @@ import { UserPatRevokeDialogComponent } from '../user-pat-revoke-dialog/user-pat
 
 @Component({
   selector: 'app-user-personal-access-tokens',
-  imports: [
-    DatePipe,
-    MatButtonModule,
-    MatDividerModule,
-    MatIconModule,
-    MatSnackBarModule,
-    MatListModule,
-  ],
+  imports: [DatePipe, MatButtonModule, MatIconModule, MatSnackBarModule, MatListModule],
   templateUrl: './user-personal-access-tokens.component.html',
 })
 export class UserPersonalAccessTokensComponent {
