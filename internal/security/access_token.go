@@ -3,7 +3,7 @@ package security
 import (
 	"crypto/rand"
 	"crypto/sha256"
-	"encoding/base64"
+	"encoding/base32"
 	"fmt"
 	"strings"
 )
@@ -17,6 +17,8 @@ const AccessTokenPrefix = "datei-"
 // accessTokenBytes is the number of random bytes in a personal access token.
 const accessTokenBytes = 16
 
+var accessTokenEncoding = base32.StdEncoding.WithPadding(base32.NoPadding)
+
 // GenerateAccessToken returns a new personal access token. The plaintext is the
 // value shown to the user once: AccessTokenPrefix followed by the base64url
 // encoding of accessTokenBytes random bytes. The hash is the SHA-256 of the
@@ -27,7 +29,7 @@ func GenerateAccessToken() (plaintext string, hash []byte, err error) {
 	if _, err := rand.Read(b); err != nil {
 		return "", nil, fmt.Errorf("failed to generate access token: %w", err)
 	}
-	return AccessTokenPrefix + base64.RawURLEncoding.EncodeToString(b), hashAccessTokenSecret(b), nil
+	return AccessTokenPrefix + accessTokenEncoding.EncodeToString(b), hashAccessTokenSecret(b), nil
 }
 
 // HashPresentedAccessToken strips the prefix from a presented token, decodes
@@ -40,7 +42,7 @@ func HashPresentedAccessToken(presented string) (hash []byte, ok bool) {
 	if !found || secret == "" {
 		return nil, false
 	}
-	raw, err := base64.RawURLEncoding.DecodeString(secret)
+	raw, err := accessTokenEncoding.DecodeString(secret)
 	if err != nil || len(raw) != accessTokenBytes {
 		return nil, false
 	}
