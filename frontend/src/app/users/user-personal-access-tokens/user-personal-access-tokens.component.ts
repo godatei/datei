@@ -69,9 +69,17 @@ export class UserPersonalAccessTokensComponent {
       this.reloadTokens();
       this.snackBar.open('Access token revoked', 'OK', { duration: snackSuccessDuration });
     } catch (e) {
+      // 404 means the token was already revoked (double-click, two tabs, or a 409
+      // retry that raced a concurrent revoke). The desired end state is reached,
+      // so treat it as success rather than surfacing a misleading error.
+      if (e instanceof HttpErrorResponse && e.status === 404) {
+        this.reloadTokens();
+        this.snackBar.open('Access token revoked', 'OK', { duration: snackSuccessDuration });
+        return;
+      }
       console.error(e);
       // Reconcile the list with the server: a concurrent write may have changed
-      // it (e.g. the token was already revoked elsewhere) even though we failed.
+      // it even though we failed.
       this.reloadTokens();
       this.snackBar.open('Failed to revoke access token', 'Dismiss', {
         duration: snackErrorDuration,
