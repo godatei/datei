@@ -232,6 +232,12 @@ HTTP Request → Server Endpoint → Service → db.Queries (read from projectio
 
 - Use `new(value)` (e.g., `new(true)`, `new("foo")`) to create pointers to literals — do NOT write `xxxPtr` helper functions
 
+### Testing
+
+- Use [Gomega](https://onsi.github.io/gomega/) for all test assertions — do NOT hand-write `if got != want { t.Errorf(...) }` checks
+- Dot-import Gomega so matchers read fluently: `import . "github.com/onsi/gomega"`
+- In standard `testing` tests, bind Gomega to the test with `g := NewWithT(t)` and assert via `g.Expect(...)`
+
 ### List Endpoints
 
 - Every list endpoint accepts `limit` (default `100`) and `offset` (default `0`) query parameters
