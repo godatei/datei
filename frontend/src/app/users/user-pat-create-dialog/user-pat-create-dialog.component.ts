@@ -15,6 +15,7 @@ import { createPersonalAccessToken } from '~/api/functions';
 import type { CreatePersonalAccessTokenRequest } from '~/api/models/create-personal-access-token-request';
 import type { CreatePersonalAccessTokenResponse } from '~/api/models/create-personal-access-token-response';
 import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
+import { retryOnConflict } from '~/util/retry-on-conflict';
 
 interface UserPatCreateDialogData {
   initialLabel?: string;
@@ -77,9 +78,9 @@ export class UserPatCreateDialogComponent {
           if (trimmedLabel !== '') {
             body.label = trimmedLabel;
           }
-          this.response = await this.api.invoke(createPersonalAccessToken, {
-            body,
-          });
+          this.response = await retryOnConflict(() =>
+            this.api.invoke(createPersonalAccessToken, { body }),
+          );
           // The token is shown only once, so force an explicit dismissal to
           // guarantee the parent reloads the list with the new token.
           this.dialogRef.disableClose = true;

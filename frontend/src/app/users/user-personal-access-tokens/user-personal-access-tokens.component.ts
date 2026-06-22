@@ -12,6 +12,7 @@ import { Api } from '~/api/api';
 import { listPersonalAccessTokens, revokePersonalAccessToken } from '~/api/functions';
 import type { PersonalAccessToken } from '~/api/models/personal-access-token';
 import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
+import { retryOnConflict } from '~/util/retry-on-conflict';
 import { UserPatCreateDialogComponent } from '../user-pat-create-dialog/user-pat-create-dialog.component';
 import { UserPatRevokeDialogComponent } from '../user-pat-revoke-dialog/user-pat-revoke-dialog.component';
 
@@ -57,7 +58,7 @@ export class UserPersonalAccessTokensComponent {
 
     this.revokingTokenId.set(token.id);
     try {
-      await this.revokeWithRetry(token.id);
+      await retryOnConflict(() => this.api.invoke(revokePersonalAccessToken, { id: token.id }));
       this.reloadTokens();
       this.snackBar.open('Access token revoked', 'OK', { duration: snackSuccessDuration });
     } catch (e) {
@@ -78,22 +79,6 @@ export class UserPersonalAccessTokensComponent {
       });
     } finally {
       this.revokingTokenId.set(null);
-    }
-  }
-
-  // The API returns 409 for optimistic-lock conflicts on the shared user stream
-  // and asks the client to retry; the revoke did not take effect in that case.
-  private async revokeWithRetry(id: string, attempts = 3): Promise<void> {
-    for (let attempt = 0; attempt < attempts; attempt++) {
-      try {
-        await this.api.invoke(revokePersonalAccessToken, { id });
-        return;
-      } catch (e) {
-        if (e instanceof HttpErrorResponse && e.status === 409 && attempt < attempts - 1) {
-          continue;
-        }
-        throw e;
-      }
     }
   }
 
