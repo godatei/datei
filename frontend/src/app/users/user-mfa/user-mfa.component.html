@@ -7,7 +7,7 @@
       </p>
     </div>
 
-    @if (!mfaEnabled() && !setupData()) {
+    @if (!mfaEnabled() && !setupData() && !recoveryCodes()) {
       <button mat-flat-button (click)="setupMFA()" [disabled]="loading()">Set up MFA</button>
     }
   </div>
