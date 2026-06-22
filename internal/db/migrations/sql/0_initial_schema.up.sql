@@ -82,12 +82,6 @@ CREATE INDEX idx_user_account_event_created_at ON user_account_event(created_at 
 CREATE INDEX idx_user_account_event_event_type ON user_account_event(event_type);
 
 -- ============================================================================
--- File Permission Type
--- ============================================================================
-
-CREATE TYPE file_permission_type AS ENUM ('owner', 'read_write', 'read_only');
-
--- ============================================================================
 -- File Projection
 -- ============================================================================
 
@@ -118,32 +112,22 @@ CREATE INDEX idx_file_projection_content_search ON file_projection USING GIN(con
 -- ============================================================================
 -- File Permission Projection
 --
--- user_group_id has no FK: the user_group table is not yet event-sourced and
--- has been removed from this migration. The column is retained because
--- FilePermissionGranted/Revoked events still carry UserGroupID for forward
--- compatibility with a future groups domain.
+-- Grants a user account access to a file. Today every row denotes ownership
+-- (one per file, written when the file is created); the table is the single
+-- source of truth for file authorization. It can be extended later (e.g. a
+-- permission_type column, group grants) to support shared read/write access.
 -- ============================================================================
 
 CREATE TABLE file_permission_projection (
-  id UUID PRIMARY KEY,
   file_id UUID NOT NULL REFERENCES file_projection(id) ON DELETE CASCADE,
-  user_account_id UUID REFERENCES user_account_projection(id) ON DELETE RESTRICT,
-  user_group_id UUID,
-  permission_type file_permission_type NOT NULL,
-  is_favorite BOOLEAN NOT NULL DEFAULT false,
+  user_account_id UUID NOT NULL REFERENCES user_account_projection(id) ON DELETE RESTRICT,
   created_at TIMESTAMPTZ NOT NULL,
-  CONSTRAINT ck_file_permission_projection_grantee CHECK (
-    (user_account_id IS NOT NULL AND user_group_id IS NULL) OR
-    (user_account_id IS NULL AND user_group_id IS NOT NULL)
-  )
+  PRIMARY KEY (file_id, user_account_id)
 );
 
-CREATE INDEX idx_file_permission_projection_file_id ON file_permission_projection(file_id);
-CREATE INDEX idx_file_permission_projection_user_account_id ON file_permission_projection(user_account_id) WHERE user_account_id IS NOT NULL;
-CREATE INDEX idx_file_permission_projection_user_group_id ON file_permission_projection(user_group_id) WHERE user_group_id IS NOT NULL;
-CREATE UNIQUE INDEX uq_file_permission_projection_owner ON file_permission_projection(file_id) WHERE permission_type = 'owner';
-CREATE UNIQUE INDEX uq_file_permission_projection_user ON file_permission_projection(file_id, user_account_id) WHERE user_account_id IS NOT NULL;
-CREATE UNIQUE INDEX uq_file_permission_projection_group ON file_permission_projection(file_id, user_group_id) WHERE user_group_id IS NOT NULL;
+-- Reverse-lookup index for the "files visible to user X" join direction; the
+-- composite PK already covers the (file_id, user_account_id) probe direction.
+CREATE INDEX idx_file_permission_projection_user_account_id ON file_permission_projection(user_account_id);
 
 -- ============================================================================
 -- Link Event Store (public sharing domain)
