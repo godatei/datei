@@ -6,6 +6,8 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+const wantToken = "abc123"
+
 func TestParseBearer(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -13,9 +15,9 @@ func TestParseBearer(t *testing.T) {
 		wantToken string
 		wantOK    bool
 	}{
-		{name: "valid", header: "Bearer abc123", wantToken: "abc123", wantOK: true},
-		{name: "lowercase scheme", header: "bearer abc123", wantToken: "abc123", wantOK: true},
-		{name: "extra whitespace", header: "  Bearer    abc123  ", wantToken: "abc123", wantOK: true},
+		{name: "valid", header: "Bearer abc123", wantToken: wantToken, wantOK: true},
+		{name: "lowercase scheme", header: "bearer abc123", wantToken: wantToken, wantOK: true},
+		{name: "extra whitespace", header: "  Bearer    abc123  ", wantToken: wantToken, wantOK: true},
 		{name: "empty", header: "", wantOK: false},
 		{name: "missing token", header: "Bearer", wantOK: false},
 		{name: "wrong scheme", header: "Basic abc123", wantOK: false},
