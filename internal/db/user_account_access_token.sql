@@ -19,13 +19,16 @@ WHERE id = $2 AND revoked_at IS NULL;
 -- name: ListAccessTokensForUser :many
 -- Active (non-revoked) tokens for the settings list. Expired tokens are still
 -- returned so the owner can see and clean them up; the auth path filters expiry
--- separately.
-SELECT * FROM user_account_access_token_projection
+-- separately. token_hash is deliberately excluded so the hash never leaves the DB.
+SELECT id, user_account_id, label, expires_at, revoked_at, created_at
+FROM user_account_access_token_projection
 WHERE user_account_id = $1 AND revoked_at IS NULL
 ORDER BY created_at DESC;
 
 -- name: GetAccessTokenByID :one
-SELECT * FROM user_account_access_token_projection
+-- token_hash is deliberately excluded; callers only need revocation state.
+SELECT id, user_account_id, label, expires_at, revoked_at, created_at
+FROM user_account_access_token_projection
 WHERE id = $1 AND user_account_id = $2;
 
 -- name: GetActiveAccessTokenByHash :one

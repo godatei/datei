@@ -13,7 +13,8 @@ import (
 )
 
 const getAccessTokenByID = `-- name: GetAccessTokenByID :one
-SELECT id, user_account_id, label, token_hash, expires_at, revoked_at, created_at FROM user_account_access_token_projection
+SELECT id, user_account_id, label, expires_at, revoked_at, created_at
+FROM user_account_access_token_projection
 WHERE id = $1 AND user_account_id = $2
 `
 
@@ -22,14 +23,23 @@ type GetAccessTokenByIDParams struct {
 	UserAccountID uuid.UUID `db:"user_account_id"`
 }
 
-func (q *Queries) GetAccessTokenByID(ctx context.Context, arg GetAccessTokenByIDParams) (UserAccountAccessTokenProjection, error) {
+type GetAccessTokenByIDRow struct {
+	ID            uuid.UUID  `db:"id"`
+	UserAccountID uuid.UUID  `db:"user_account_id"`
+	Label         *string    `db:"label"`
+	ExpiresAt     *time.Time `db:"expires_at"`
+	RevokedAt     *time.Time `db:"revoked_at"`
+	CreatedAt     time.Time  `db:"created_at"`
+}
+
+// token_hash is deliberately excluded; callers only need revocation state.
+func (q *Queries) GetAccessTokenByID(ctx context.Context, arg GetAccessTokenByIDParams) (GetAccessTokenByIDRow, error) {
 	row := q.db.QueryRow(ctx, getAccessTokenByID, arg.ID, arg.UserAccountID)
-	var i UserAccountAccessTokenProjection
+	var i GetAccessTokenByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.UserAccountID,
 		&i.Label,
-		&i.TokenHash,
 		&i.ExpiresAt,
 		&i.RevokedAt,
 		&i.CreatedAt,
@@ -106,31 +116,40 @@ func (q *Queries) InsertAccessTokenProjection(ctx context.Context, arg InsertAcc
 
 const listAccessTokensForUser = `-- name: ListAccessTokensForUser :many
 
-SELECT id, user_account_id, label, token_hash, expires_at, revoked_at, created_at FROM user_account_access_token_projection
+SELECT id, user_account_id, label, expires_at, revoked_at, created_at
+FROM user_account_access_token_projection
 WHERE user_account_id = $1 AND revoked_at IS NULL
 ORDER BY created_at DESC
 `
+
+type ListAccessTokensForUserRow struct {
+	ID            uuid.UUID  `db:"id"`
+	UserAccountID uuid.UUID  `db:"user_account_id"`
+	Label         *string    `db:"label"`
+	ExpiresAt     *time.Time `db:"expires_at"`
+	RevokedAt     *time.Time `db:"revoked_at"`
+	CreatedAt     time.Time  `db:"created_at"`
+}
 
 // ============================================================================
 // Personal Access Token Read Queries
 // ============================================================================
 // Active (non-revoked) tokens for the settings list. Expired tokens are still
 // returned so the owner can see and clean them up; the auth path filters expiry
-// separately.
-func (q *Queries) ListAccessTokensForUser(ctx context.Context, userAccountID uuid.UUID) ([]UserAccountAccessTokenProjection, error) {
+// separately. token_hash is deliberately excluded so the hash never leaves the DB.
+func (q *Queries) ListAccessTokensForUser(ctx context.Context, userAccountID uuid.UUID) ([]ListAccessTokensForUserRow, error) {
 	rows, err := q.db.Query(ctx, listAccessTokensForUser, userAccountID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []UserAccountAccessTokenProjection
+	var items []ListAccessTokensForUserRow
 	for rows.Next() {
-		var i UserAccountAccessTokenProjection
+		var i ListAccessTokensForUserRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserAccountID,
 			&i.Label,
-			&i.TokenHash,
 			&i.ExpiresAt,
 			&i.RevokedAt,
 			&i.CreatedAt,
