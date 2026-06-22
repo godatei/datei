@@ -29,7 +29,6 @@ import { UserPatRevokeDialogComponent } from '../user-pat-revoke-dialog/user-pat
     MatListModule,
   ],
   templateUrl: './user-personal-access-tokens.component.html',
-  styleUrl: './user-personal-access-tokens.component.css',
 })
 export class UserPersonalAccessTokensComponent {
   private readonly api = inject(Api);

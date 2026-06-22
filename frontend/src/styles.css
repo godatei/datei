@@ -67,9 +67,23 @@ tr {
   --mat-icon-button-state-layer-size: 28px;
   --mat-icon-button-icon-size: 16px;
 }
+
 .mat-icon-button-compact .mat-icon {
   width: 16px;
   height: 16px;
   font-size: 16px;
   line-height: 16px;
+}
+
+mat-list.m3-baseline-list {
+  @apply flex flex-col gap-4;
+
+  mat-list-item {
+    border-radius: var(--mat-sys-corner-extra-small);
+    background-color: var(--mat-sys-surface-container-lowest);
+  }
+}
+
+[matListItemMeta].list-meta-flex {
+  @apply h-full flex! items-center gap-1;
 }

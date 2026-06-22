@@ -34,7 +34,7 @@
   } @else if (tokens().length === 0) {
     <p class="mat-text-on-surface-variant m-0">No access tokens yet.</p>
   } @else {
-    <mat-list>
+    <mat-list class="m3-baseline-list">
       @for (token of tokens(); track token.id; let last = $last) {
         <mat-list-item [class.opacity-50]="expired(token)">
           <mat-icon matListItemIcon>key</mat-icon>
@@ -53,7 +53,7 @@
               No expiration date
             }
           </span>
-          <div matListItemMeta class="pat-item-meta">
+          <div matListItemMeta class="list-meta-flex">
             <button
               mat-icon-button
               type="button"

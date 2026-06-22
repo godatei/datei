@@ -1,5 +1,0 @@
-@reference 'tailwindcss';
-
-.pat-item-meta {
-  @apply h-full flex! items-center;
-}

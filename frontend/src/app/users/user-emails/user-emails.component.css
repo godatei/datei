@@ -1,5 +1,0 @@
-@reference 'tailwindcss';
-
-.email-item-meta {
-  @apply flex gap-1;
-}

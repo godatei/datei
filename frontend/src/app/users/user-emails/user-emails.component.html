@@ -10,7 +10,7 @@
     @for (email of emails(); track email.id; let last = $last) {
       <mat-list-item>
         <span matListItemTitle class="break-all">{{ email.email }}</span>
-        <div matListItemMeta class="email-item-meta">
+        <div matListItemMeta class="list-meta-flex">
           <mat-chip-set>
             @if (email.isPrimary) {
               <mat-chip highlighted>Primary</mat-chip>

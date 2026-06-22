@@ -27,7 +27,6 @@ import type { BaseUserPort } from '../user-data.port';
     MatSnackBarModule,
   ],
   templateUrl: './user-emails.component.html',
-  styleUrl: './user-emails.component.css',
 })
 export class UserEmailsComponent {
   private readonly snackBar = inject(MatSnackBar);
