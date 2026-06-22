@@ -9,7 +9,7 @@ export interface CreatePersonalAccessTokenRequest {
   expiresAt?: string;
 
   /**
-   * Human-readable label describing the token's purpose; omit for unlabeled tokens
+   * Human-readable label describing the token's purpose; omit (or send empty/whitespace-only) for unlabeled tokens
    */
   label?: string;
 }

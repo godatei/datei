@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/godatei/datei/internal/apperrors"
@@ -39,23 +40,26 @@ func (s *UserService) CreateAccessToken(
 		return nil, fmt.Errorf("failed to load user: %w", err)
 	}
 
-	if err := agg.CreateAccessToken(tokenID, input.Label, hash, input.ExpiresAt, now); err != nil {
+	// Normalize so empty and whitespace-only labels are treated identically to an
+	// omitted label (i.e. an unlabeled token), matching the API schema.
+	label := strings.TrimSpace(input.Label)
+	if err := agg.CreateAccessToken(tokenID, label, hash, input.ExpiresAt, now); err != nil {
 		return nil, fmt.Errorf("%w: %w", apperrors.ErrInvalidInput, err)
 	}
 
 	if err := s.repository.Save(ctx, agg); err != nil {
 		return nil, fmt.Errorf("failed to save user: %w", err)
 	}
-	var label *string
-	if input.Label != "" {
-		label = &input.Label
+	var labelPtr *string
+	if label != "" {
+		labelPtr = &label
 	}
 
 	return &api.CreatePersonalAccessTokenResponse{
 		Token: plaintext,
 		AccessToken: api.PersonalAccessToken{
 			Id:        tokenID,
-			Label:     label,
+			Label:     labelPtr,
 			ExpiresAt: input.ExpiresAt,
 			CreatedAt: now,
 		},

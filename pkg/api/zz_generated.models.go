@@ -120,7 +120,7 @@ type CreatePersonalAccessTokenRequest struct {
 	// ExpiresAt Expiration timestamp; omit for "never expires"
 	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
 
-	// Label Human-readable label describing the token's purpose; omit for unlabeled tokens
+	// Label Human-readable label describing the token's purpose; omit (or send empty/whitespace-only) for unlabeled tokens
 	Label *string `json:"label,omitempty"`
 }
 

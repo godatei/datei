@@ -2,9 +2,8 @@ type: object
 properties:
   label:
     type: string
-    minLength: 1
     maxLength: 255
-    description: Human-readable label describing the token's purpose; omit for unlabeled tokens
+    description: Human-readable label describing the token's purpose; omit (or send empty/whitespace-only) for unlabeled tokens
   expiresAt:
     type: string
     format: date-time
