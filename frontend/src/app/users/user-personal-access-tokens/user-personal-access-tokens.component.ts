@@ -1,4 +1,5 @@
 import { DatePipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, resource, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
@@ -64,16 +65,35 @@ export class UserPersonalAccessTokensComponent {
 
     this.revokingTokenId.set(token.id);
     try {
-      await this.api.invoke(revokePersonalAccessToken, { id: token.id });
+      await this.revokeWithRetry(token.id);
       this.reloadTokens();
       this.snackBar.open('Access token revoked', 'OK', { duration: snackSuccessDuration });
     } catch (e) {
       console.error(e);
+      // Reconcile the list with the server: a concurrent write may have changed
+      // it (e.g. the token was already revoked elsewhere) even though we failed.
+      this.reloadTokens();
       this.snackBar.open('Failed to revoke access token', 'Dismiss', {
         duration: snackErrorDuration,
       });
     } finally {
       this.revokingTokenId.set(null);
+    }
+  }
+
+  // The API returns 409 for optimistic-lock conflicts on the shared user stream
+  // and asks the client to retry; the revoke did not take effect in that case.
+  private async revokeWithRetry(id: string, attempts = 3): Promise<void> {
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      try {
+        await this.api.invoke(revokePersonalAccessToken, { id });
+        return;
+      } catch (e) {
+        if (e instanceof HttpErrorResponse && e.status === 409 && attempt < attempts - 1) {
+          continue;
+        }
+        throw e;
+      }
     }
   }
 
