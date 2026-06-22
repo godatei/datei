@@ -6,7 +6,7 @@ import { provideNativeDateAdapter } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { startOfTomorrow } from 'date-fns';
+import { endOfDay, startOfTomorrow } from 'date-fns';
 import { Api } from '~/api/api';
 import { createPersonalAccessToken } from '~/api/functions';
 import type { CreatePersonalAccessTokenRequest } from '~/api/models/create-personal-access-token-request';
@@ -57,7 +57,9 @@ export class UserPatCreateDialogComponent {
           const { label, expiresAt } = this.model();
           const trimmedLabel = label.trim();
           const body: CreatePersonalAccessTokenRequest = {
-            expiresAt: expiresAt ? expiresAt.toISOString() : undefined,
+            // The picker yields local midnight; send end-of-day so the instant is
+            // unambiguously in the future regardless of the client's UTC offset.
+            expiresAt: expiresAt ? endOfDay(expiresAt).toISOString() : undefined,
           };
           if (trimmedLabel !== '') {
             body.label = trimmedLabel;
