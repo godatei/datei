@@ -35,12 +35,13 @@ func GenerateAccessToken() (plaintext string, hash []byte, err error) {
 // lookup against the stored hash. ok is false if the value is not a
 // well-formed personal access token.
 func HashPresentedAccessToken(presented string) (hash []byte, ok bool) {
+	presented = strings.TrimSpace(presented)
 	secret, found := strings.CutPrefix(presented, AccessTokenPrefix)
 	if !found || secret == "" {
 		return nil, false
 	}
 	raw, err := base64.RawURLEncoding.DecodeString(secret)
-	if err != nil {
+	if err != nil || len(raw) != accessTokenBytes {
 		return nil, false
 	}
 	return hashAccessTokenSecret(raw), true
