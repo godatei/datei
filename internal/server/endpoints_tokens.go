@@ -48,8 +48,11 @@ func (s *tokensServer) CreatePersonalAccessToken(
 		ExpiresAt: request.Body.ExpiresAt,
 	})
 	if err != nil {
-		if errors.Is(err, apperrors.ErrInvalidInput) {
+		switch {
+		case errors.Is(err, apperrors.ErrInvalidInput):
 			return CreatePersonalAccessToken400Response{}, nil
+		case errors.Is(err, apperrors.ErrConcurrentUpdate):
+			return CreatePersonalAccessToken409Response{}, nil
 		}
 		return nil, err
 	}

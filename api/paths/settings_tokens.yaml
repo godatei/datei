@@ -30,3 +30,5 @@ post:
             $ref: '../components/schemas/CreatePersonalAccessTokenResponse.yaml'
     '400':
       description: Invalid request
+    '409':
+      description: Concurrent update conflict; retry the request

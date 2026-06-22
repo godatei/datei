@@ -3833,6 +3833,14 @@ func (response CreatePersonalAccessToken400Response) VisitCreatePersonalAccessTo
 	return nil
 }
 
+type CreatePersonalAccessToken409Response struct {
+}
+
+func (response CreatePersonalAccessToken409Response) VisitCreatePersonalAccessTokenResponse(w http.ResponseWriter) error {
+	w.WriteHeader(409)
+	return nil
+}
+
 type RevokePersonalAccessTokenRequestObject struct {
 	Id openapi_types.UUID `json:"id"`
 }
@@ -5839,13 +5847,14 @@ var swaggerSpec = []string{
 	"pME98GLJMHXcpna8dO5itTlxELkKdFnEhc939z8k8jovCETUH4JKGGea9XJxQPHtgth3bkFSwRDGJtZa",
 	"ng33SsDCZZkfoxY1tNR++xhsXDU8qHtqV92tYDvJ72oFusbXDnbfV3StUNY3rf985hFzRhMH3xp5gyxQ",
 	"PwcXv8QIvC936FBA75t2PYGBwn1XPT5roT1Yyl5svf4cvtBLTYdM6Qus95Uy/HrgiRPXRqZd5t8r+2JJ",
-	"RhnHLuM2SsdUHbcTPIHj5weGGKFP5EbmDIZZ5XmkEFq6DN3a2lEjCogEdy2//SPDiauwfWVoK1cuOrsz",
-	"3arswg1oZsS9z367spB/Uq6BxqHC281u2wFJufIIVCBJIUVVL7xj+UnSmNdoPT9zTM3VzSsnh8zS27g7",
-	"5vEoscemm5WP7IjQOtB3S8VDPrFvfkrSbyiYobOql/1gD9ZDhswjzxbsFjnfkFY7HBt4V+pFdDAyi+HI",
-	"le1kJPNBGx03808MYToAxqOgavq/gcH70Fhqd7vXbcKFPx/a2wiZuBY7Z8P4k41nJiIxGxywHf6aH/T0",
-	"vtnslHKtcXgAG93rZaxN7DXj8Zm5P3rn79tTaT9d3OOa+OpRW+q6q0diH9lj3E7bZYU668ZnkQ0zx5Uf",
-	"eaSEmz9K147XHMnzS5Uw6NmxkRsTM+DXR7aLSs0/3GR78bMdbpStcg6AGWd195hobzc1MyCiCg+YVnaQ",
-	"pm3rD7ZuawB9bPQmqZ5qHdlR74RVAXj3smeUj95pyLus01Jh2/f3xEdkKbfPiGKWtp/16en/AwAA//8=",
+	"RhnHLuM2SsdUHbcTPIHNEhbC1Z2uAbV/8jZx9Z6vzEpy5WKFe84yDLFTn+COzDwMM9zzSES01B26+7Wj",
+	"RpQhHYtuVY7iBjQzSqPPCryykH9Srg3HoYLkzZ7dAXm78ghUIEkhRVV1vGMRS9KY1+hOP3NMWdYtMCeH",
+	"zPXbuMfm8Sixx9adlaftiNAyC3ZL6EM+sS+HStJvbpihs6oj/mAn10MG3iOPH+wWf9+QVjscG3jj6kV0",
+	"ML6LQc2V7Yck80FLHzfzTwyEOgDGo6B6OmADs/mhsdTu1rPbhAuiPrS3ETKULXbOhvEnG49VRCI/OGA7",
+	"/DU/6Omgs9kp5Rrs8AA2upfUWOHY6wzgY3V/dODft7/TfgC5x8HxNai2YHZXv8Y+1ce4nbbLCnXujs9F",
+	"G2aOKz/ySGk7fxTAHa/FkueXKu3Qs2MjwyZmwK+PbJemmn+4yfbirTvcKFsrHQAzzuruSdLenmxmQEQV",
+	"HjA57SCt39affd3WAPrY6HBSPfg6si/fCavC+O590CgfvdOQd1mnpcK27xKKT9FSbh8jxVxvP+vT0/8H",
+	"AAD//w==",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
