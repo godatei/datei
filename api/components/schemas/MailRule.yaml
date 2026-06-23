@@ -1,0 +1,55 @@
+type: object
+required:
+  - id
+  - accountId
+  - name
+  - order
+  - enabled
+  - folder
+  - maxAgeDays
+  - action
+  - createdAt
+  - updatedAt
+properties:
+  id:
+    type: string
+    format: uuid
+  accountId:
+    type: string
+    format: uuid
+  name:
+    type: string
+  order:
+    type: integer
+    description: Rules are applied in ascending order
+  enabled:
+    type: boolean
+  folder:
+    type: string
+    description: IMAP folder to scan (e.g. INBOX)
+  filterFrom:
+    type: string
+    description: Only process mails whose From address contains this value
+  filterSubject:
+    type: string
+    description: Only process mails whose subject contains this value
+  maxAgeDays:
+    type: integer
+    description: Only process mails newer than this many days
+  attachmentPattern:
+    type: string
+    description: Comma-separated filename globs (e.g. "*.pdf,*.docx"); empty means all attachments
+  action:
+    type: string
+    enum: [mark_as_read]
+    description: Action performed on a mail once its attachments have been consumed
+  targetDirectoryId:
+    type: string
+    format: uuid
+    description: Directory the attachments are stored in; omitted means the account owner's root
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time

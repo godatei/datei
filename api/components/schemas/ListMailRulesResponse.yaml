@@ -1,0 +1,12 @@
+type: object
+required:
+  - items
+  - total
+properties:
+  items:
+    type: array
+    items:
+      $ref: './MailRule.yaml'
+  total:
+    type: integer
+    description: Total number of rules matching the query

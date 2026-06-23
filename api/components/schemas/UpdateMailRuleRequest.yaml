@@ -1,0 +1,40 @@
+type: object
+required:
+  - name
+  - maxAgeDays
+  - action
+properties:
+  accountId:
+    type: string
+    format: uuid
+    description: Move the rule to this account; omit to keep its current account
+  name:
+    type: string
+    minLength: 1
+    maxLength: 255
+  order:
+    type: integer
+    default: 0
+  enabled:
+    type: boolean
+    default: true
+  folder:
+    type: string
+    default: INBOX
+  filterFrom:
+    type: string
+  filterSubject:
+    type: string
+  maxAgeDays:
+    type: integer
+    minimum: 1
+  attachmentPattern:
+    type: string
+    description: Comma-separated filename globs (e.g. "*.pdf,*.docx"); empty means all attachments
+  action:
+    type: string
+    enum: [mark_as_read]
+  targetDirectoryId:
+    type: string
+    format: uuid
+    description: Directory the attachments are stored in; omit for the account owner's root

@@ -1,0 +1,87 @@
+<h2 mat-dialog-title>{{ isEdit() ? 'Edit rule' : 'Add rule' }}</h2>
+<form [formRoot]="ruleForm" class="block w-full">
+  <mat-dialog-content>
+    <div class="flex flex-col gap-2">
+      <mat-form-field appearance="outline">
+        <mat-label>Account</mat-label>
+        <mat-select [formField]="ruleForm.accountId">
+          @for (account of accounts; track account.id) {
+            <mat-option [value]="account.id">{{ account.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Name</mat-label>
+        <input matInput [formField]="ruleForm.name" autocomplete="off" />
+      </mat-form-field>
+
+      <div class="flex gap-2">
+        <mat-form-field appearance="outline" class="grow">
+          <mat-label>Folder</mat-label>
+          <input matInput [formField]="ruleForm.folder" autocomplete="off" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="grow">
+          <mat-label>Order</mat-label>
+          <input matInput type="number" [formField]="ruleForm.order" />
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Maximum age (days)</mat-label>
+        <input matInput type="number" [formField]="ruleForm.maxAgeDays" />
+        <mat-hint>Only process mails newer than this</mat-hint>
+        <mat-error>
+          @let maxAgeErrs = ruleForm.maxAgeDays().errors();
+          @if (maxAgeErrs.length > 0 && ruleForm.maxAgeDays().touched()) {
+            @if (maxAgeErrs[0].kind === 'min') {
+              Maximum age must be at least 1 day
+            }
+          }
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>From contains (optional)</mat-label>
+        <input matInput [formField]="ruleForm.filterFrom" autocomplete="off" />
+        <mat-hint>Empty matches all.</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Subject contains (optional)</mat-label>
+        <input matInput [formField]="ruleForm.filterSubject" autocomplete="off" />
+        <mat-hint>Empty matches all.</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Attachment pattern (optional)</mat-label>
+        <input matInput [formField]="ruleForm.attachmentPattern" autocomplete="off" />
+        <mat-hint>Comma-separated globs, e.g. *.pdf,*.docx. Empty matches all.</mat-hint>
+      </mat-form-field>
+
+      <div class="flex items-center gap-2 mb-2">
+        <span class="mat-font-body-md grow">
+          Target directory: <strong>{{ targetDirectoryLabel() }}</strong>
+        </span>
+        <button mat-stroked-button type="button" (click)="chooseDirectory()">Choose...</button>
+      </div>
+
+      @if (errorMessage()) {
+        <p class="mat-text-error mat-font-body-sm m-0">{{ errorMessage() }}</p>
+      }
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="cancel()" [disabled]="ruleForm().submitting()">
+      Cancel
+    </button>
+    <button
+      mat-flat-button
+      type="submit"
+      [disabled]="ruleForm().invalid() || ruleForm().submitting()"
+    >
+      Save
+    </button>
+  </mat-dialog-actions>
+</form>

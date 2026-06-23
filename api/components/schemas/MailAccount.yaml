@@ -1,0 +1,37 @@
+type: object
+required:
+  - id
+  - name
+  - imapHost
+  - imapPort
+  - username
+  - security
+  - createdAt
+  - updatedAt
+properties:
+  id:
+    type: string
+    format: uuid
+    description: Unique identifier
+  name:
+    type: string
+    description: Human-readable account name
+  imapHost:
+    type: string
+    description: IMAP server hostname
+  imapPort:
+    type: integer
+    description: IMAP server port
+  username:
+    type: string
+    description: IMAP login username
+  security:
+    type: string
+    enum: [ssl, starttls, none]
+    description: Transport security used for the IMAP connection
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time

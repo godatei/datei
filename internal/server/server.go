@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/godatei/datei/internal/email"
 	"github.com/godatei/datei/internal/file"
 	"github.com/godatei/datei/internal/link"
 	"github.com/godatei/datei/internal/users"
@@ -23,6 +24,7 @@ type server struct {
 	adminUsersServer
 	linkServer
 	publicLinkServer
+	mailServer
 }
 
 func NewServer(
@@ -30,6 +32,7 @@ func NewServer(
 	userSvc *users.UserService,
 	linkSvc *link.Service,
 	publicLinkSvc *link.PublicService,
+	mailSvc *email.Service,
 ) *server {
 	return &server{
 		fileServer:       fileServer{svc: fileSvc},
@@ -41,6 +44,7 @@ func NewServer(
 		adminUsersServer: adminUsersServer{svc: userSvc},
 		linkServer:       linkServer{svc: linkSvc},
 		publicLinkServer: publicLinkServer{svc: publicLinkSvc},
+		mailServer:       mailServer{svc: mailSvc},
 	}
 }
 

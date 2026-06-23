@@ -1,0 +1,58 @@
+<h2 mat-dialog-title>{{ isEdit() ? 'Edit mail account' : 'Add mail account' }}</h2>
+<form [formRoot]="accountForm" class="block w-md max-w-full">
+  <mat-dialog-content>
+    <div class="flex flex-col gap-2">
+      <mat-form-field appearance="outline">
+        <mat-label>Name</mat-label>
+        <input matInput [formField]="accountForm.name" autocomplete="off" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>IMAP host</mat-label>
+        <input matInput [formField]="accountForm.imapHost" autocomplete="off" />
+      </mat-form-field>
+
+      <div class="flex gap-2">
+        <mat-form-field appearance="outline" class="grow">
+          <mat-label>Port</mat-label>
+          <input matInput type="number" [formField]="accountForm.imapPort" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="grow">
+          <mat-label>Security</mat-label>
+          <mat-select
+            [formField]="accountForm.security"
+            (selectionChange)="onSecurityChange($event.value)"
+          >
+            <mat-option value="ssl">SSL/TLS</mat-option>
+            <mat-option value="starttls">STARTTLS</mat-option>
+            <mat-option value="none">None</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Username</mat-label>
+        <input matInput [formField]="accountForm.username" autocomplete="off" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ isEdit() ? 'New password' : 'Password' }}</mat-label>
+        <input matInput type="password" [formField]="accountForm.password" autocomplete="off" />
+        @if (isEdit()) {
+          <mat-hint>Leave blank to keep the current password</mat-hint>
+        }
+      </mat-form-field>
+
+      @if (errorMessage()) {
+        <p class="mat-text-error mat-font-body-sm m-0">{{ errorMessage() }}</p>
+      }
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="cancel()" [disabled]="accountForm().submitting()">
+      Cancel
+    </button>
+    <button mat-flat-button type="submit" [disabled]="accountForm().submitting()">Save</button>
+  </mat-dialog-actions>
+</form>

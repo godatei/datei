@@ -1,0 +1,127 @@
+@if (loading()) {
+  <p class="mat-text-on-surface-variant m-0">Loading...</p>
+} @else if (loadingError()) {
+  <p class="mat-text-error m-0">Failed to load mail settings.</p>
+} @else {
+  <div class="flex flex-col gap-8">
+    <section class="flex flex-col gap-4">
+      <div class="flex items-center gap-3">
+        <div class="grow">
+          <h3 class="mat-font-title-lg m-0">Accounts</h3>
+          <p class="mat-font-body-md mat-text-on-surface-variant m-0">
+            Connect IMAP mailboxes to import attachments automatically.
+          </p>
+        </div>
+        <button mat-flat-button (click)="addAccount()" class="shrink-0">Add account</button>
+      </div>
+
+      @if (accounts().length === 0) {
+        <p class="mat-text-on-surface-variant m-0">No mail accounts yet.</p>
+      } @else {
+        <mat-list class="m3-expressive-list">
+          @for (account of accounts(); track account.id) {
+            <mat-list-item>
+              <mat-icon matListItemIcon>mail</mat-icon>
+              <div matListItemTitle>{{ account.name }}</div>
+              <span matListItemLine>
+                {{ account.username }} &bull; {{ account.imapHost }}:{{ account.imapPort }}
+              </span>
+              <div matListItemMeta class="list-meta-flex">
+                <button
+                  mat-icon-button
+                  type="button"
+                  [disabled]="testingAccountId() === account.id"
+                  (click)="testAccount(account)"
+                  matTooltip="Test connection"
+                  [attr.aria-label]="'Test connection for ' + account.name"
+                >
+                  <mat-icon>cable</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="editAccount(account)"
+                  matTooltip="Edit account"
+                  [attr.aria-label]="'Edit account ' + account.name"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="deleteAccount(account)"
+                  matTooltip="Delete account"
+                  [attr.aria-label]="'Delete account ' + account.name"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </mat-list-item>
+          }
+        </mat-list>
+      }
+    </section>
+
+    <section class="flex flex-col gap-4">
+      <div class="flex items-center gap-3">
+        <div class="grow">
+          <h3 class="mat-font-title-lg m-0">Rules</h3>
+          <p class="mat-font-body-md mat-text-on-surface-variant m-0">
+            Define how attachments are imported. Each rule belongs to one account.
+          </p>
+        </div>
+        <button
+          mat-flat-button
+          (click)="addRule()"
+          class="shrink-0"
+          [disabled]="accounts().length === 0"
+        >
+          Add rule
+        </button>
+      </div>
+
+      @if (rules().length === 0) {
+        <p class="mat-text-on-surface-variant m-0">No rules yet.</p>
+      } @else {
+        <mat-list class="m3-expressive-list">
+          @for (rule of rules(); track rule.id) {
+            <mat-list-item>
+              <mat-icon matListItemIcon>filter_alt</mat-icon>
+              <div matListItemTitle>{{ rule.name }}</div>
+              <span matListItemLine>
+                {{ accountName(rule.accountId) }} &bull; {{ rule.folder }} &bull;
+                {{ rule.maxAgeDays }} days
+              </span>
+              <div matListItemMeta class="list-meta-flex">
+                <mat-slide-toggle
+                  [checked]="rule.enabled"
+                  (change)="toggleRule(rule, $event.checked)"
+                  [matTooltip]="rule.enabled ? 'Enabled' : 'Disabled'"
+                  [attr.aria-label]="(rule.enabled ? 'Disable' : 'Enable') + ' rule ' + rule.name"
+                />
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="editRule(rule)"
+                  matTooltip="Edit rule"
+                  [attr.aria-label]="'Edit rule ' + rule.name"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="deleteRule(rule)"
+                  matTooltip="Delete rule"
+                  [attr.aria-label]="'Delete rule ' + rule.name"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </mat-list-item>
+          }
+        </mat-list>
+      }
+    </section>
+  </div>
+}

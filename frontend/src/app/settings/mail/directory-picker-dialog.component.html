@@ -1,0 +1,38 @@
+<h2 mat-dialog-title>Choose target directory</h2>
+<mat-dialog-content>
+  <div class="w-md max-w-full">
+    <nav class="flex flex-wrap items-center gap-1 mb-2" aria-label="Directory path">
+      @for (crumb of path(); track $index; let last = $last) {
+        <button mat-button type="button" class="min-w-0" [disabled]="last" (click)="goTo($index)">
+          {{ crumb.name }}
+        </button>
+        @if (!last) {
+          <mat-icon class="mat-text-on-surface-variant">chevron_right</mat-icon>
+        }
+      }
+    </nav>
+
+    @if (loading()) {
+      <p class="mat-text-on-surface-variant m-0">Loading...</p>
+    } @else if (error()) {
+      <p class="mat-text-error m-0">Failed to load directories.</p>
+    } @else if (directories().length === 0) {
+      <p class="mat-text-on-surface-variant m-0">No subdirectories here.</p>
+    } @else {
+      <mat-list>
+        @for (dir of directories(); track dir.id) {
+          <mat-list-item (click)="enter(dir)" class="cursor-pointer">
+            <mat-icon matListItemIcon>folder</mat-icon>
+            <div matListItemTitle>{{ dir.name }}</div>
+          </mat-list-item>
+        }
+      </mat-list>
+    }
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  <button mat-flat-button type="button" (click)="selectCurrent()">
+    Select "{{ current().name }}"
+  </button>
+</mat-dialog-actions>

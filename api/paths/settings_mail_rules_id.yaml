@@ -1,0 +1,57 @@
+parameters:
+  - name: ruleId
+    in: path
+    required: true
+    schema:
+      type: string
+      format: uuid
+get:
+  operationId: GetMailRule
+  summary: Get a mail rule
+  security:
+    - bearerHttpAuthentication: []
+  responses:
+    '200':
+      description: Mail rule
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/MailRule.yaml'
+    '404':
+      description: Rule not found
+put:
+  operationId: UpdateMailRule
+  summary: Update a mail rule
+  security:
+    - bearerHttpAuthentication: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/UpdateMailRuleRequest.yaml'
+  responses:
+    '200':
+      description: Mail rule updated
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/MailRule.yaml'
+    '400':
+      description: Invalid request
+    '404':
+      description: Rule not found
+    '409':
+      description: Concurrent update conflict; retry the request
+delete:
+  operationId: DeleteMailRule
+  summary: Delete a mail rule
+  security:
+    - bearerHttpAuthentication: []
+  responses:
+    '204':
+      description: Rule deleted
+    '404':
+      description: Rule not found
+    '409':
+      description: Concurrent update conflict; retry the request

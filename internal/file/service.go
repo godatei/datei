@@ -210,10 +210,16 @@ type CreateFileInput struct {
 	ContentType string
 }
 
-// CreateFile creates a new file record with optional file upload
+// CreateFile creates a new file record with optional file upload, owned by the
+// authenticated user.
 func (s *Service) CreateFile(ctx context.Context, input CreateFileInput) (*api.File, error) {
-	userID := authn.RequireCurrentUser(ctx).ID
+	return s.CreateFileForOwner(ctx, authn.RequireCurrentUser(ctx).ID, input)
+}
 
+// CreateFileForOwner creates a new file record owned by ownerID. It takes the
+// owner explicitly so callers without an authenticated request context (e.g.
+// the email ingestion poller) can create files on a user's behalf.
+func (s *Service) CreateFileForOwner(ctx context.Context, userID uuid.UUID, input CreateFileInput) (*api.File, error) {
 	if input.ParentID != nil {
 		queries := db.New(s.db)
 		parent, err := queries.GetFileProjectionForUser(ctx, db.GetFileProjectionForUserParams{

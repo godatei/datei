@@ -87,3 +87,42 @@ mat-list.m3-baseline-list {
 [matListItemMeta].list-meta-flex {
   @apply h-full flex! items-center gap-1;
 }
+
+mat-list.m3-expressive-list {
+  @apply flex flex-col gap-1;
+
+  mat-list-item {
+    @apply flex! items-center!;
+
+    border-radius: var(--mat-sys-corner-extra-small);
+    background-color: var(--mat-sys-surface-container-lowest);
+
+    &:first-child {
+      border-top-left-radius: var(--mat-sys-corner-large);
+      border-top-right-radius: var(--mat-sys-corner-large);
+    }
+
+    &:last-child {
+      border-bottom-left-radius: var(--mat-sys-corner-large);
+      border-bottom-right-radius: var(--mat-sys-corner-large);
+    }
+
+    .mdc-list-item__start {
+      @apply my-0! self-auto!;
+    }
+
+    .mdc-list-item__content {
+      @apply flex flex-col justify-center;
+    }
+
+    [matListItemTitle],
+    [matListItemLine] {
+      @apply m-0!;
+
+      &::before,
+      &::after {
+        @apply hidden!;
+      }
+    }
+  }
+}

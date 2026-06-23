@@ -1,0 +1,56 @@
+get:
+  operationId: ListMailAccounts
+  summary: List the authenticated user's mail accounts
+  security:
+    - bearerHttpAuthentication: []
+  parameters:
+    - name: limit
+      in: query
+      description: Maximum number of results
+      schema:
+        type: integer
+        default: 100
+    - name: offset
+      in: query
+      description: Number of results to skip
+      schema:
+        type: integer
+        default: 0
+  responses:
+    '200':
+      description: List of mail accounts
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ListMailAccountsResponse.yaml'
+post:
+  operationId: CreateMailAccount
+  summary: Create a new mail account
+  security:
+    - bearerHttpAuthentication: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/CreateMailAccountRequest.yaml'
+  responses:
+    '201':
+      description: Mail account created
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/MailAccount.yaml'
+    '400':
+      description: Invalid request or failed connection test
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+            required:
+              - message
+    '409':
+      description: Concurrent update conflict; retry the request

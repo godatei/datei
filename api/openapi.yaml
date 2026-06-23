@@ -45,6 +45,16 @@ paths:
     $ref: ./paths/settings_tokens.yaml
   /api/v1/settings/tokens/{id}:
     $ref: ./paths/settings_tokens_id.yaml
+  /api/v1/settings/mail/accounts:
+    $ref: ./paths/settings_mail_accounts.yaml
+  /api/v1/settings/mail/accounts/{accountId}:
+    $ref: ./paths/settings_mail_accounts_id.yaml
+  /api/v1/settings/mail/accounts/{accountId}/test:
+    $ref: ./paths/settings_mail_accounts_id_test.yaml
+  /api/v1/settings/mail/rules:
+    $ref: ./paths/settings_mail_rules.yaml
+  /api/v1/settings/mail/rules/{ruleId}:
+    $ref: ./paths/settings_mail_rules_id.yaml
 
   # Admin (authentication + admin role required)
   /api/v1/admin/users:

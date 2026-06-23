@@ -19,6 +19,26 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+--
+-- Name: mail_action; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.mail_action AS ENUM (
+    'mark_as_read'
+);
+
+
+--
+-- Name: mail_security; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.mail_security AS ENUM (
+    'ssl',
+    'starttls',
+    'none'
+);
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -159,6 +179,149 @@ CREATE TABLE public.link_projection (
 
 
 --
+-- Name: mail_account_event; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.mail_account_event (
+    id bigint NOT NULL,
+    stream_id uuid NOT NULL,
+    stream_version integer NOT NULL,
+    event_type character varying NOT NULL,
+    event_data jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT ck_mail_account_event_stream_version CHECK ((stream_version > 0))
+);
+
+
+--
+-- Name: mail_account_event_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.mail_account_event_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: mail_account_event_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.mail_account_event_id_seq OWNED BY public.mail_account_event.id;
+
+
+--
+-- Name: mail_account_projection; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.mail_account_projection (
+    id uuid NOT NULL,
+    owner_id uuid NOT NULL,
+    name text NOT NULL,
+    imap_host text NOT NULL,
+    imap_port integer NOT NULL,
+    username text NOT NULL,
+    password_encrypted bytea NOT NULL,
+    security public.mail_security NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL,
+    CONSTRAINT ck_mail_account_projection_port CHECK (((imap_port >= 1) AND (imap_port <= 65535)))
+);
+
+
+--
+-- Name: mail_processed_message; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.mail_processed_message (
+    id bigint NOT NULL,
+    account_id uuid NOT NULL,
+    folder text NOT NULL,
+    uid_validity bigint NOT NULL,
+    imap_uid bigint NOT NULL,
+    processed_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: mail_processed_message_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.mail_processed_message_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: mail_processed_message_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.mail_processed_message_id_seq OWNED BY public.mail_processed_message.id;
+
+
+--
+-- Name: mail_rule_event; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.mail_rule_event (
+    id bigint NOT NULL,
+    stream_id uuid NOT NULL,
+    stream_version integer NOT NULL,
+    event_type character varying NOT NULL,
+    event_data jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT ck_mail_rule_event_stream_version CHECK ((stream_version > 0))
+);
+
+
+--
+-- Name: mail_rule_event_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.mail_rule_event_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: mail_rule_event_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.mail_rule_event_id_seq OWNED BY public.mail_rule_event.id;
+
+
+--
+-- Name: mail_rule_projection; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.mail_rule_projection (
+    id uuid NOT NULL,
+    account_id uuid NOT NULL,
+    name text NOT NULL,
+    sort_order integer DEFAULT 0 NOT NULL,
+    enabled boolean DEFAULT true NOT NULL,
+    folder text DEFAULT 'INBOX'::text NOT NULL,
+    filter_from text,
+    filter_subject text,
+    max_age_days integer NOT NULL,
+    attachment_pattern text,
+    action public.mail_action NOT NULL,
+    target_directory_id uuid,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL,
+    CONSTRAINT ck_mail_rule_projection_max_age CHECK ((max_age_days > 0))
+);
+
+
+--
 -- Name: user_account_access_token_projection; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -268,6 +431,27 @@ ALTER TABLE ONLY public.file_event ALTER COLUMN id SET DEFAULT nextval('public.f
 --
 
 ALTER TABLE ONLY public.link_event ALTER COLUMN id SET DEFAULT nextval('public.link_event_id_seq'::regclass);
+
+
+--
+-- Name: mail_account_event id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.mail_account_event ALTER COLUMN id SET DEFAULT nextval('public.mail_account_event_id_seq'::regclass);
+
+
+--
+-- Name: mail_processed_message id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.mail_processed_message ALTER COLUMN id SET DEFAULT nextval('public.mail_processed_message_id_seq'::regclass);
+
+
+--
+-- Name: mail_rule_event id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.mail_rule_event ALTER COLUMN id SET DEFAULT nextval('public.mail_rule_event_id_seq'::regclass);
 
 
 --
