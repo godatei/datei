@@ -10,12 +10,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { DomSanitizer, SafeResourceUrl, SafeUrl } from '@angular/platform-browser';
 import { Api } from '~/api/api';
 import { downloadFile } from '~/api/functions';
 import { File } from '~/api/models';
-import { snackErrorDuration } from '~/frontend/constants';
 import { triggerDownload } from '~/util/download';
 import { isPreviewable } from '~/util/previewable';
 
@@ -42,7 +40,6 @@ export class FilePreviewDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<FilePreviewDialogComponent>);
   private readonly api = inject(Api);
   private readonly sanitizer = inject(DomSanitizer);
-  private readonly snackBar = inject(MatSnackBar);
 
   protected readonly items = this.data.files.filter(isPreviewable);
   protected readonly index = signal(
@@ -61,6 +58,7 @@ export class FilePreviewDialogComponent {
   );
 
   protected readonly loading = signal(true);
+  protected readonly error = signal(false);
   private readonly url = signal<string | null>(null);
 
   // The element rendering the blob dictates the sanitizer context: <img> is a
@@ -105,10 +103,15 @@ export class FilePreviewDialogComponent {
     void this.load();
   }
 
+  protected retry(): void {
+    void this.load();
+  }
+
   private async load(): Promise<void> {
     const item = this.current();
     const token = ++this.loadToken;
     this.loading.set(true);
+    this.error.set(false);
     try {
       const response = await this.api.invoke$Response(downloadFile, { id: item.id });
       if (this.destroyed || token !== this.loadToken) return;
@@ -119,8 +122,13 @@ export class FilePreviewDialogComponent {
     } catch (e) {
       if (this.destroyed || token !== this.loadToken) return;
       console.error(e);
-      this.snackBar.open('Failed to load file', 'Dismiss', { duration: snackErrorDuration });
-      this.dialogRef.close();
+      // Keep the dialog open with an error state so the user can retry this
+      // file or navigate to another one. Drop the stale blob/URL so the toolbar
+      // can't act on the file that failed to load.
+      this.revoke();
+      this.blob = null;
+      this.error.set(true);
+      this.loading.set(false);
     }
   }
 
