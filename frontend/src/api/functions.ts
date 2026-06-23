@@ -39,6 +39,12 @@ export type { RemoveEmail$Params as RemoveEmail$Params } from './fn/operations/r
 export { removeEmail as removeEmail } from './fn/operations/remove-email';
 export type { SetPrimaryEmail$Params as SetPrimaryEmail$Params } from './fn/operations/set-primary-email';
 export { setPrimaryEmail as setPrimaryEmail } from './fn/operations/set-primary-email';
+export type { ListPersonalAccessTokens$Params as ListPersonalAccessTokens$Params } from './fn/operations/list-personal-access-tokens';
+export { listPersonalAccessTokens as listPersonalAccessTokens } from './fn/operations/list-personal-access-tokens';
+export type { CreatePersonalAccessToken$Params as CreatePersonalAccessToken$Params } from './fn/operations/create-personal-access-token';
+export { createPersonalAccessToken as createPersonalAccessToken } from './fn/operations/create-personal-access-token';
+export type { RevokePersonalAccessToken$Params as RevokePersonalAccessToken$Params } from './fn/operations/revoke-personal-access-token';
+export { revokePersonalAccessToken as revokePersonalAccessToken } from './fn/operations/revoke-personal-access-token';
 export type { ListUsersAdmin$Params as ListUsersAdmin$Params } from './fn/operations/list-users-admin';
 export { listUsersAdmin as listUsersAdmin } from './fn/operations/list-users-admin';
 export type { CreateUserAdmin$Params as CreateUserAdmin$Params } from './fn/operations/create-user-admin';

@@ -1,6 +1,5 @@
 import { Component, effect, inject, input, output, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Api } from '~/api/api';
@@ -9,7 +8,7 @@ import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
 
 @Component({
   selector: 'app-admin-archive',
-  imports: [MatButtonModule, MatCardModule, MatIconModule, MatSnackBarModule],
+  imports: [MatButtonModule, MatIconModule, MatSnackBarModule],
   templateUrl: './admin-archive.component.html',
 })
 export class AdminArchiveComponent {

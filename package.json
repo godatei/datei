@@ -8,7 +8,7 @@
     "test": "ng test --watch=false",
     "test:watch": "ng test --watch",
     "lint": "prettier --check . && ng lint",
-    "format": "prettier --write . && ng lint --fix",
+    "format": "prettier --write --list-different . && ng lint --fix",
     "generate-openapi-bundle": "redocly bundle api/openapi.yaml -o dist/openapi.yaml",
     "generate-openapi-client": "rm -rf frontend/src/api && ng-openapi-gen --input dist/openapi.yaml --output frontend/src/api"
   },

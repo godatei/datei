@@ -1,0 +1,53 @@
+<section class="flex flex-col gap-4">
+  <div class="flex items-center gap-3">
+    <div class="grow">
+      <h3 class="mat-font-title-lg m-0">Personal Access Tokens</h3>
+      <p class="mat-font-body-md mat-text-on-surface-variant m-0">
+        Create access tokens for WebDAV, CLI or API usage.
+      </p>
+    </div>
+    <button mat-flat-button (click)="openCreateDialog()">Create token</button>
+  </div>
+
+  @if (loading()) {
+    <p class="mat-text-on-surface-variant m-0">Loading tokens...</p>
+  } @else if (loadingError()) {
+    <p class="mat-text-error m-0">Failed to load access tokens.</p>
+  } @else if (tokens().length === 0) {
+    <p class="mat-text-on-surface-variant m-0">No access tokens yet.</p>
+  } @else {
+    <mat-list class="m3-baseline-list">
+      @for (token of tokens(); track token.id; let last = $last) {
+        <mat-list-item [class.opacity-50]="expired(token)">
+          <mat-icon matListItemIcon>key</mat-icon>
+          <div matListItemTitle>{{ displayLabel(token) }}</div>
+          <span matListItemLine
+            >Created {{ token.createdAt | date: 'mediumDate' }}
+            &bull;
+            @if (token.expiresAt) {
+              @if (expired(token)) {
+                Expired
+              } @else {
+                Expires
+              }
+              {{ token.expiresAt | date: 'mediumDate' }}
+            } @else {
+              No expiration date
+            }
+          </span>
+          <div matListItemMeta class="list-meta-flex">
+            <button
+              mat-icon-button
+              type="button"
+              [disabled]="isRevoking(token)"
+              (click)="revokeToken(token)"
+              [attr.aria-label]="'Revoke token ' + displayLabel(token)"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </mat-list-item>
+      }
+    </mat-list>
+  }
+</section>

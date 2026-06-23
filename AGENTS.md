@@ -233,6 +233,12 @@ HTTP Request → Server Endpoint → Service → db.Queries (read from projectio
 
 - Use `new(value)` (e.g., `new(true)`, `new("foo")`) to create pointers to literals — do NOT write `xxxPtr` helper functions
 
+### Testing
+
+- Use [Gomega](https://onsi.github.io/gomega/) for all test assertions — do NOT hand-write `if got != want { t.Errorf(...) }` checks
+- Dot-import Gomega so matchers read fluently: `import . "github.com/onsi/gomega"`
+- In standard `testing` tests, bind Gomega to the test with `g := NewWithT(t)` and assert via `g.Expect(...)`
+
 ### List Endpoints
 
 - Every list endpoint accepts `limit` (default `100`) and `offset` (default `0`) query parameters
@@ -301,7 +307,7 @@ This project uses Angular Material 21 with Material 3 theming. All UI must follo
 - Keep components small and focused on a single responsibility
 - Use `input()` and `output()` functions instead of decorators
 - Use `computed()` for derived state
-- Set `changeDetection: ChangeDetectionStrategy.OnPush` in `@Component` decorator
+- Do NOT add `changeDetection: ChangeDetectionStrategy.OnPush` in `@Component`; Angular v22+ defaults to OnPush
 - Always use external template files (`templateUrl`) — do not use inline `template:`
 - Prefer Signal Forms (`@angular/forms/signals`) over Reactive Forms and Template-driven forms (experimental, introduced in Angular 21)
 - Do NOT use `ngClass`, use `class` bindings instead

@@ -26,6 +26,27 @@ func MapEmailProjectionSliceToAPI(rows []db.UserAccountEmailProjection) []api.Us
 	return emails
 }
 
+// MapAccessTokenProjectionToAPI converts a db.ListAccessTokensForUserRow
+// to an api.PersonalAccessToken. The token hash is never read from the DB.
+func MapAccessTokenProjectionToAPI(row *db.ListAccessTokensForUserRow) api.PersonalAccessToken {
+	return api.PersonalAccessToken{
+		Id:        row.ID,
+		Label:     row.Label,
+		ExpiresAt: row.ExpiresAt,
+		CreatedAt: row.CreatedAt,
+	}
+}
+
+// MapAccessTokenProjectionSliceToAPI converts a slice of access-token
+// projections to the API shape.
+func MapAccessTokenProjectionSliceToAPI(rows []db.ListAccessTokensForUserRow) []api.PersonalAccessToken {
+	tokens := make([]api.PersonalAccessToken, len(rows))
+	for i := range rows {
+		tokens[i] = MapAccessTokenProjectionToAPI(&rows[i])
+	}
+	return tokens
+}
+
 func toAdminUserListItem(row db.ListUserAccountProjectionsRow) api.AdminUserListItem {
 	item := api.AdminUserListItem{
 		Id:             row.ID,

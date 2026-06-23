@@ -1,16 +1,16 @@
 import { Component, computed, inject, input, resource, signal } from '@angular/core';
 import { email, form, FormField, FormRoot, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatListModule } from '@angular/material/list';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
 import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
-import type { BaseUserPort } from './user-data.port';
+import type { BaseUserPort } from '../user-data.port';
 
 @Component({
   selector: 'app-user-emails',
@@ -18,12 +18,12 @@ import type { BaseUserPort } from './user-data.port';
     FormField,
     FormRoot,
     MatButtonModule,
-    MatCardModule,
     MatChipsModule,
     MatDividerModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
+    MatListModule,
     MatSnackBarModule,
   ],
   templateUrl: './user-emails.component.html',

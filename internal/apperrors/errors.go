@@ -6,6 +6,10 @@ var (
 	// Generic input-validation error, shared across all domains.
 	ErrInvalidInput = errors.New("invalid input")
 
+	// ErrConcurrentUpdate signals an optimistic-lock conflict: the aggregate's
+	// event stream advanced between load and save. Callers may retry.
+	ErrConcurrentUpdate = errors.New("concurrent update conflict")
+
 	ErrIsDirectory          = errors.New("cannot download directory")
 	ErrNotFound             = errors.New("file not found")
 	ErrNoContent            = errors.New("file has no content")
@@ -34,7 +38,6 @@ var (
 	ErrRegistrationDisabled    = errors.New("registration is disabled")
 	ErrCurrentPasswordRequired = errors.New("current password required")
 	ErrEmailMismatch           = errors.New("email does not match")
-	ErrMFARequired             = errors.New("MFA verification required")
 	ErrMFAAlreadyEnabled       = errors.New("MFA is already enabled")
 	ErrMFANotEnabled           = errors.New("MFA is not enabled")
 	ErrMFANotSetUp             = errors.New("MFA has not been set up")

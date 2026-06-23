@@ -7,6 +7,7 @@ DROP TABLE IF EXISTS file_permission_projection CASCADE;
 DROP TABLE IF EXISTS file_projection CASCADE;
 DROP TABLE IF EXISTS user_account_event CASCADE;
 DROP TABLE IF EXISTS file_event CASCADE;
+DROP TABLE IF EXISTS user_account_access_token_projection CASCADE;
 DROP TABLE IF EXISTS user_account_email_projection CASCADE;
 DROP TABLE IF EXISTS user_account_mfa_recovery_code_projection CASCADE;
 DROP TABLE IF EXISTS user_account_projection CASCADE;

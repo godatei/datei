@@ -1,17 +1,17 @@
 import { Component, computed, inject, resource } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Api } from '~/api/api';
 import { getUserAdmin } from '~/api/functions';
 import { AuthService } from '~/frontend/services/auth.service';
-import { UserAvatarComponent } from '~/frontend/users/user-avatar.component';
+import { UserAvatarComponent } from '~/frontend/users/user-avatar/user-avatar.component';
 import { createAdminUserPort, UserSnapshot } from '~/frontend/users/user-data.port';
-import { UserEmailsComponent } from '~/frontend/users/user-emails.component';
-import { UserPasswordComponent } from '~/frontend/users/user-password.component';
-import { UserProfileComponent } from '~/frontend/users/user-profile.component';
+import { UserEmailsComponent } from '~/frontend/users/user-emails/user-emails.component';
+import { UserPasswordComponent } from '~/frontend/users/user-password/user-password.component';
+import { UserProfileComponent } from '~/frontend/users/user-profile/user-profile.component';
 import { AdminArchiveComponent } from './admin-archive.component';
 import { AdminMfaComponent } from './admin-mfa.component';
 import { AdminRoleComponent } from './admin-role.component';
@@ -20,7 +20,7 @@ import { AdminRoleComponent } from './admin-role.component';
   selector: 'app-admin-user-detail',
   imports: [
     MatButtonModule,
-    MatCardModule,
+    MatDividerModule,
     MatIconModule,
     RouterLink,
     UserAvatarComponent,

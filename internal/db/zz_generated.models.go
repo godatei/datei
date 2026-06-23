@@ -73,6 +73,16 @@ type LinkProjection struct {
 	UpdatedAt time.Time  `db:"updated_at"`
 }
 
+type UserAccountAccessTokenProjection struct {
+	ID            uuid.UUID  `db:"id"`
+	UserAccountID uuid.UUID  `db:"user_account_id"`
+	Label         *string    `db:"label"`
+	TokenHash     []byte     `db:"token_hash"`
+	ExpiresAt     *time.Time `db:"expires_at"`
+	RevokedAt     *time.Time `db:"revoked_at"`
+	CreatedAt     time.Time  `db:"created_at"`
+}
+
 type UserAccountEmailProjection struct {
 	ID            uuid.UUID  `db:"id"`
 	UserAccountID uuid.UUID  `db:"user_account_id"`

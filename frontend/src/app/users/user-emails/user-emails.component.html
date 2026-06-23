@@ -1,0 +1,67 @@
+<section class="flex flex-col gap-4">
+  <div>
+    <h3 class="mat-font-title-lg m-0">Email Addresses</h3>
+    <p class="mat-font-body-md mat-text-on-surface-variant m-0">
+      Control email addresses and verification status
+    </p>
+  </div>
+
+  <mat-list>
+    @for (email of emails(); track email.id; let last = $last) {
+      <mat-list-item>
+        <span matListItemTitle class="break-all">{{ email.email }}</span>
+        <div matListItemMeta class="list-meta-flex">
+          <mat-chip-set>
+            @if (email.isPrimary) {
+              <mat-chip highlighted>Primary</mat-chip>
+            }
+            @if (email.verified) {
+              <mat-chip>Verified</mat-chip>
+            } @else {
+              <mat-chip class="opacity-70">Unverified</mat-chip>
+            }
+          </mat-chip-set>
+          @if (!email.isPrimary && email.verified) {
+            <button mat-button (click)="setPrimary(email.id)" [disabled]="loading()">
+              Set primary
+            </button>
+          }
+          @if (!email.isPrimary) {
+            <button
+              mat-icon-button
+              color="warn"
+              (click)="removeEmail(email.id)"
+              [disabled]="loading()"
+              [attr.aria-label]="'Remove ' + email.email"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          }
+        </div>
+      </mat-list-item>
+    }
+  </mat-list>
+  <form class="flex flex-col gap-2 mt-4" [formRoot]="addEmailForm">
+    <mat-form-field class="w-full" appearance="outline">
+      <mat-label>Add email address</mat-label>
+      <input matInput [formField]="addEmailForm.email" type="email" />
+      <mat-error>
+        @let errs = addEmailForm.email().errors();
+        @if (errs.length > 0 && addEmailForm.email().touched()) {
+          @if (errs[0].kind === 'email') {
+            Enter a valid email address
+          } @else if (errs[0].kind === 'required') {
+            Email is required
+          }
+        }
+      </mat-error>
+    </mat-form-field>
+    <button
+      mat-flat-button
+      type="submit"
+      [disabled]="addEmailForm().submitting() || addEmailForm().invalid()"
+    >
+      Add email
+    </button>
+  </form>
+</section>

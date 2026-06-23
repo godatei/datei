@@ -2,10 +2,7 @@ package link
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/base64"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
@@ -33,17 +30,6 @@ func NewService(
 		db:         pool,
 		repository: repository,
 	}
-}
-
-// generateKey returns a 12-byte random key encoded as base64-url (16 ASCII
-// characters), suitable for use as a URL slug. 96 bits of entropy keeps keys
-// unguessable while keeping share URLs reasonably short.
-func generateKey() (string, error) {
-	var b [12]byte
-	if _, err := rand.Read(b[:]); err != nil {
-		return "", fmt.Errorf("failed to generate key: %w", err)
-	}
-	return base64.RawURLEncoding.EncodeToString(b[:]), nil
 }
 
 type CreateLinkInput struct {

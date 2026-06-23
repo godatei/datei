@@ -1,0 +1,10 @@
+type: object
+properties:
+  label:
+    type: string
+    maxLength: 255
+    description: Human-readable label describing the token's purpose; omit (or send empty/whitespace-only) for unlabeled tokens
+  expiresAt:
+    type: string
+    format: date-time
+    description: Expiration timestamp; omit for "never expires"

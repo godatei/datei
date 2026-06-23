@@ -47,6 +47,21 @@ CREATE TABLE user_account_email_projection (
 CREATE INDEX idx_user_account_email_projection_user_account_id ON user_account_email_projection(user_account_id);
 CREATE UNIQUE INDEX uq_user_account_email_projection_primary ON user_account_email_projection(user_account_id) WHERE is_primary = true;
 
+-- Personal Access Tokens. Only the SHA-256 hash of the token is stored (no
+-- salt, by design: SHA-256 over 128 bits of entropy is not brute-forceable, and
+-- the unsalted hash gives a cheap unique-index lookup on the auth hot path).
+CREATE TABLE user_account_access_token_projection (
+  id UUID PRIMARY KEY DEFAULT uuidv7(),
+  user_account_id UUID NOT NULL REFERENCES user_account_projection(id) ON DELETE CASCADE,
+  label TEXT,
+  token_hash BYTEA NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ,
+  revoked_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_user_account_access_token_projection_user_account_id ON user_account_access_token_projection(user_account_id);
+
 -- ============================================================================
 -- Event Stores
 -- ============================================================================

@@ -1,0 +1,27 @@
+<section class="flex flex-col gap-4">
+  <div>
+    <h3 class="mat-font-title-lg m-0">Profile</h3>
+    <p class="mat-font-body-md mat-text-on-surface-variant m-0">Manage display name</p>
+  </div>
+  <form class="flex flex-col gap-3" [formRoot]="profileForm">
+    <mat-form-field class="w-full" appearance="outline">
+      <mat-label>Name</mat-label>
+      <input matInput [formField]="profileForm.name" />
+      <mat-error>
+        @let nameErrs = profileForm.name().errors();
+        @if (
+          nameErrs.length > 0 && nameErrs[0].kind === 'required' && profileForm.name().touched()
+        ) {
+          Name is required
+        }
+      </mat-error>
+    </mat-form-field>
+    <button
+      mat-flat-button
+      type="submit"
+      [disabled]="profileForm().submitting() || !profileForm().dirty() || profileForm().invalid()"
+    >
+      Save
+    </button>
+  </form>
+</section>

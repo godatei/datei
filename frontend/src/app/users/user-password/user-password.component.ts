@@ -1,7 +1,6 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { form, FormField, FormRoot } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -11,7 +10,7 @@ import {
   passwordConfirmSchema,
 } from '~/frontend/auth/password-confirm/password-confirm.component';
 import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
-import type { BaseUserPort } from './user-data.port';
+import type { BaseUserPort } from '../user-data.port';
 
 @Component({
   selector: 'app-user-password',
@@ -19,7 +18,6 @@ import type { BaseUserPort } from './user-data.port';
     FormField,
     FormRoot,
     MatButtonModule,
-    MatCardModule,
     MatFormFieldModule,
     MatInputModule,
     MatSnackBarModule,

@@ -1,6 +1,5 @@
 import { Component, computed, inject, resource, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,14 +10,13 @@ import { RouterLink } from '@angular/router';
 import { Api } from '~/api/api';
 import { listUsersAdmin } from '~/api/functions';
 import type { AdminUserListItem } from '~/api/models/admin-user-list-item';
-import { UserAvatarComponent } from '~/frontend/users/user-avatar.component';
+import { UserAvatarComponent } from '~/frontend/users/user-avatar/user-avatar.component';
 import { AdminCreateUserDialogComponent } from './admin-create-user-dialog.component';
 
 @Component({
   selector: 'app-admin-users-list',
   imports: [
     MatButtonModule,
-    MatCardModule,
     MatChipsModule,
     MatDividerModule,
     MatIconModule,

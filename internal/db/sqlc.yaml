@@ -8,6 +8,7 @@ sql:
       - 'link_event.sql'
       - 'user_account_event.sql'
       - 'user_account.sql'
+      - 'user_account_access_token.sql'
     schema: 'zz_generated_schema.sql'
     gen:
       go:

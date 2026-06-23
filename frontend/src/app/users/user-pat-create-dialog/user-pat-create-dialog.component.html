@@ -1,0 +1,60 @@
+@if (createdToken(); as token) {
+  <h2 mat-dialog-title>Access token created</h2>
+  <mat-dialog-content>
+    <div class="flex flex-col gap-4 w-md max-w-full">
+      <p class="mat-text-on-surface-variant mat-font-body-md">
+        Copy this token now. You will not be able to see it again after closing this dialog.
+      </p>
+      <div class="flex items-center justify-center gap-2 min-h-12">
+        <code class="access-token">{{ token }}</code>
+        <button mat-icon-button type="button" (click)="copyCreatedToken()" aria-label="Copy token">
+          <mat-icon>content_copy</mat-icon>
+        </button>
+      </div>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-flat-button type="button" (click)="done()">Done</button>
+  </mat-dialog-actions>
+} @else {
+  <h2 mat-dialog-title>Create access token</h2>
+  <form [formRoot]="tokenForm" class="block w-md max-w-full">
+    <mat-dialog-content>
+      <div class="flex flex-col gap-2">
+        <p class="mat-text-on-surface-variant mat-font-body-md m-0">
+          The token value is shown only once after creation.
+        </p>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Label (optional)</mat-label>
+          <input matInput [formField]="tokenForm.label" autocomplete="off" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Expires (optional)</mat-label>
+          <input
+            matInput
+            [matDatepicker]="expiryPicker"
+            [min]="tomorrow"
+            [formField]="tokenForm.expiresAt"
+          />
+          <mat-hint>Leave blank for never</mat-hint>
+          <mat-datepicker-toggle matIconSuffix [for]="expiryPicker"></mat-datepicker-toggle>
+          <mat-datepicker #expiryPicker></mat-datepicker>
+        </mat-form-field>
+
+        @if (errorMessage()) {
+          <p class="mat-text-error mat-font-body-sm m-0">{{ errorMessage() }}</p>
+        }
+      </div>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button type="button" (click)="cancel()" [disabled]="tokenForm().submitting()">
+        Cancel
+      </button>
+      <button mat-flat-button type="submit" [disabled]="tokenForm().submitting()">
+        Create token
+      </button>
+    </mat-dialog-actions>
+  </form>
+}
