@@ -11,7 +11,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { DomSanitizer, SafeResourceUrl, SafeUrl } from '@angular/platform-browser';
 import { Api } from '~/api/api';
 import { downloadFile } from '~/api/functions';
 import { File } from '~/api/models';
@@ -56,11 +56,28 @@ export class FilePreviewDialogComponent {
   protected readonly hasNext = computed(() => this.index() < this.items.length - 1);
   protected readonly multiple = this.items.length > 1;
 
+  protected readonly kind = computed<'image' | 'pdf'>(() =>
+    this.current().mimeType === 'application/pdf' ? 'pdf' : 'image',
+  );
+
   protected readonly loading = signal(true);
-  protected readonly src = signal<SafeUrl | null>(null);
+  private readonly url = signal<string | null>(null);
+
+  // The element rendering the blob dictates the sanitizer context: <img> is a
+  // URL context, while <embed>/<iframe> are resource-URL contexts. Only the one
+  // matching the current kind is non-null.
+  protected readonly imageSrc = computed<SafeUrl | null>(() => {
+    const u = this.url();
+    return u !== null && this.kind() === 'image' ? this.sanitizer.bypassSecurityTrustUrl(u) : null;
+  });
+  protected readonly pdfSrc = computed<SafeResourceUrl | null>(() => {
+    const u = this.url();
+    return u !== null && this.kind() === 'pdf'
+      ? this.sanitizer.bypassSecurityTrustResourceUrl(u)
+      : null;
+  });
 
   private blob: Blob | null = null;
-  private objectUrl: string | null = null;
   // Guards against an earlier, slower request overwriting the result of a more
   // recent navigation; only the latest token is allowed to commit.
   private loadToken = 0;
@@ -91,21 +108,21 @@ export class FilePreviewDialogComponent {
       if (token !== this.loadToken) return;
       this.revoke();
       this.blob = response.body as Blob;
-      this.objectUrl = URL.createObjectURL(this.blob);
-      this.src.set(this.sanitizer.bypassSecurityTrustUrl(this.objectUrl));
+      this.url.set(URL.createObjectURL(this.blob));
       this.loading.set(false);
     } catch (e) {
       if (token !== this.loadToken) return;
       console.error(e);
-      this.snackBar.open('Failed to load image', 'Dismiss', { duration: snackErrorDuration });
+      this.snackBar.open('Failed to load file', 'Dismiss', { duration: snackErrorDuration });
       this.dialogRef.close();
     }
   }
 
   private revoke(): void {
-    if (this.objectUrl) {
-      URL.revokeObjectURL(this.objectUrl);
-      this.objectUrl = null;
+    const u = this.url();
+    if (u !== null) {
+      URL.revokeObjectURL(u);
+      this.url.set(null);
     }
   }
 

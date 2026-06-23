@@ -44,10 +44,21 @@ mat-icon {
 }
 
 .lightbox__img {
-  @apply block cursor-default rounded-xl object-contain;
+  @apply block cursor-default object-contain;
 
   /* Viewport-relative sizing has no Tailwind scale token; keep it explicit. */
   max-width: 92vw;
   max-height: 84vh;
   box-shadow: var(--mat-sys-level5);
+  border-radius: var(--mat-sys-corner-large);
+}
+
+.lightbox__pdf {
+  @apply border-0;
+
+  /* PDFs fill the viewport rather than scaling to intrinsic size like images. */
+  width: 90vw;
+  height: 88vh;
+  box-shadow: var(--mat-sys-level5);
+  border-radius: var(--mat-sys-corner-large);
 }

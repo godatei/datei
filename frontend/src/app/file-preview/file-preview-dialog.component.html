@@ -3,7 +3,7 @@
     current().name
   }}</span>
   <div class="lightbox__actions">
-    <button matIconButton aria-label="Download" [disabled]="!src()" (click)="download()">
+    <button matIconButton aria-label="Download" [disabled]="loading()" (click)="download()">
       <mat-icon>download</mat-icon>
     </button>
     <button matIconButton aria-label="Close preview" (click)="close()">
@@ -34,9 +34,16 @@
 }
 
 @if (loading()) {
-  <mat-spinner diameter="48" aria-label="Loading image" />
-} @else if (src(); as imgSrc) {
+  <mat-spinner diameter="48" aria-label="Loading file" />
+} @else if (kind() === 'pdf') {
+  <embed
+    [src]="pdfSrc()"
+    type="application/pdf"
+    class="lightbox__pdf"
+    [title]="current().name ?? ''"
+  />
+} @else {
   <figure class="lightbox__figure">
-    <img [src]="imgSrc" [alt]="current().name ?? ''" class="lightbox__img" />
+    <img [src]="imageSrc()" [alt]="current().name ?? ''" class="lightbox__img" />
   </figure>
 }
