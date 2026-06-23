@@ -156,9 +156,10 @@ func (s *PublicService) ListPublicLinkFiles(
 	// The public viewer renders the full folder contents in one shot — no
 	// pagination yet — so request all rows.
 	children, err := queries.ListFileProjectionsByParent(ctx, db.ListFileProjectionsByParentParams{
+		UserID:   row.OwnerID,
 		ParentID: parentID,
-		Limit:    publicListChildrenLimit,
-		Offset:   0,
+		Lim:      publicListChildrenLimit,
+		Off:      0,
 	})
 	if err != nil {
 		return nil, err
@@ -202,7 +203,7 @@ func (s *PublicService) DownloadPublicLinkFile(
 		return nil, apperrors.ErrLinkFileNotShared
 	}
 
-	return s.fileSvc.DownloadFile(ctx, fileID)
+	return s.fileSvc.DownloadSharedFile(ctx, fileID)
 }
 
 // lookupLinkByKey returns the projection row for unlock; it checks the link is

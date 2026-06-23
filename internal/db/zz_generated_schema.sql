@@ -19,31 +19,6 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
---
--- Name: public; Type: SCHEMA; Schema: -; Owner: -
---
-
--- *not* creating schema, since initdb creates it
-
-
---
--- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
---
-
-COMMENT ON SCHEMA public IS '';
-
-
---
--- Name: file_permission_type; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.file_permission_type AS ENUM (
-    'owner',
-    'read_write',
-    'read_only'
-);
-
-
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -87,14 +62,9 @@ ALTER SEQUENCE public.file_event_id_seq OWNED BY public.file_event.id;
 --
 
 CREATE TABLE public.file_permission_projection (
-    id uuid NOT NULL,
     file_id uuid NOT NULL,
-    user_account_id uuid,
-    user_group_id uuid,
-    permission_type public.file_permission_type NOT NULL,
-    is_favorite boolean DEFAULT false NOT NULL,
-    created_at timestamp with time zone NOT NULL,
-    CONSTRAINT ck_file_permission_projection_grantee CHECK ((((user_account_id IS NOT NULL) AND (user_group_id IS NULL)) OR ((user_account_id IS NULL) AND (user_group_id IS NOT NULL))))
+    user_account_id uuid NOT NULL,
+    created_at timestamp with time zone NOT NULL
 );
 
 

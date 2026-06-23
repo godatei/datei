@@ -5,55 +5,10 @@
 package db
 
 import (
-	"database/sql/driver"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 )
-
-type FilePermissionType string
-
-const (
-	FilePermissionTypeOwner     FilePermissionType = "owner"
-	FilePermissionTypeReadWrite FilePermissionType = "read_write"
-	FilePermissionTypeReadOnly  FilePermissionType = "read_only"
-)
-
-func (e *FilePermissionType) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = FilePermissionType(s)
-	case string:
-		*e = FilePermissionType(s)
-	default:
-		return fmt.Errorf("unsupported scan type for FilePermissionType: %T", src)
-	}
-	return nil
-}
-
-type NullFilePermissionType struct {
-	FilePermissionType FilePermissionType
-	Valid              bool // Valid is true if FilePermissionType is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullFilePermissionType) Scan(value interface{}) error {
-	if value == nil {
-		ns.FilePermissionType, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.FilePermissionType.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullFilePermissionType) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.FilePermissionType), nil
-}
 
 type FileEvent struct {
 	ID            int64     `db:"id"`
@@ -65,13 +20,9 @@ type FileEvent struct {
 }
 
 type FilePermissionProjection struct {
-	ID             uuid.UUID          `db:"id"`
-	FileID         uuid.UUID          `db:"file_id"`
-	UserAccountID  *uuid.UUID         `db:"user_account_id"`
-	UserGroupID    *uuid.UUID         `db:"user_group_id"`
-	PermissionType FilePermissionType `db:"permission_type"`
-	IsFavorite     bool               `db:"is_favorite"`
-	CreatedAt      time.Time          `db:"created_at"`
+	FileID        uuid.UUID `db:"file_id"`
+	UserAccountID uuid.UUID `db:"user_account_id"`
+	CreatedAt     time.Time `db:"created_at"`
 }
 
 type FileProjection struct {

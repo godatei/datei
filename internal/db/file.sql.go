@@ -13,75 +13,90 @@ import (
 )
 
 const countFileProjectionsByParent = `-- name: CountFileProjectionsByParent :one
-SELECT COUNT(*) FROM file_projection WHERE parent_id = $1 AND trashed_at IS NULL
+SELECT COUNT(*) FROM file_projection f
+ JOIN file_permission_projection p ON p.file_id = f.id AND p.user_account_id = $1::uuid
+ WHERE f.parent_id = $2 AND f.trashed_at IS NULL
 `
 
-func (q *Queries) CountFileProjectionsByParent(ctx context.Context, parentID *uuid.UUID) (int64, error) {
-	row := q.db.QueryRow(ctx, countFileProjectionsByParent, parentID)
+type CountFileProjectionsByParentParams struct {
+	UserID   uuid.UUID  `db:"user_id"`
+	ParentID *uuid.UUID `db:"parent_id"`
+}
+
+func (q *Queries) CountFileProjectionsByParent(ctx context.Context, arg CountFileProjectionsByParentParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countFileProjectionsByParent, arg.UserID, arg.ParentID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
 const countRootFileProjections = `-- name: CountRootFileProjections :one
-SELECT COUNT(*) FROM file_projection WHERE parent_id IS NULL AND trashed_at IS NULL
+SELECT COUNT(*) FROM file_projection f
+ JOIN file_permission_projection p ON p.file_id = f.id AND p.user_account_id = $1::uuid
+ WHERE f.parent_id IS NULL AND f.trashed_at IS NULL
 `
 
-func (q *Queries) CountRootFileProjections(ctx context.Context) (int64, error) {
-	row := q.db.QueryRow(ctx, countRootFileProjections)
+func (q *Queries) CountRootFileProjections(ctx context.Context, userID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countRootFileProjections, userID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
 const countTrashedFile = `-- name: CountTrashedFile :one
-SELECT COUNT(*) FROM file_projection WHERE trashed_at IS NOT NULL
+SELECT COUNT(*) FROM file_projection f
+ JOIN file_permission_projection p ON p.file_id = f.id AND p.user_account_id = $1::uuid
+ WHERE f.trashed_at IS NOT NULL
 `
 
-func (q *Queries) CountTrashedFile(ctx context.Context) (int64, error) {
-	row := q.db.QueryRow(ctx, countTrashedFile)
+func (q *Queries) CountTrashedFile(ctx context.Context, userID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countTrashedFile, userID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
 const countUntrashedFileByIDs = `-- name: CountUntrashedFileByIDs :one
-SELECT COUNT(*)::int FROM file_projection
- WHERE id = ANY($1::uuid[]) AND trashed_at IS NULL
+SELECT COUNT(*)::int FROM file_projection f
+ JOIN file_permission_projection p ON p.file_id = f.id AND p.user_account_id = $1::uuid
+ WHERE f.id = ANY($2::uuid[]) AND f.trashed_at IS NULL
 `
 
-// Counts how many of the given UUIDs refer to files that exist AND are not
-// trashed. Callers compare against len(input) to reject requests that point
-// at missing or trashed rows.
-func (q *Queries) CountUntrashedFileByIDs(ctx context.Context, dollar_1 []uuid.UUID) (int32, error) {
-	row := q.db.QueryRow(ctx, countUntrashedFileByIDs, dollar_1)
+type CountUntrashedFileByIDsParams struct {
+	UserID uuid.UUID   `db:"user_id"`
+	Ids    []uuid.UUID `db:"ids"`
+}
+
+// Counts how many of the given UUIDs refer to files that exist, are accessible
+// to the given user, AND are not trashed. Callers compare against len(input) to
+// reject requests that point at missing, trashed, or non-accessible rows.
+func (q *Queries) CountUntrashedFileByIDs(ctx context.Context, arg CountUntrashedFileByIDsParams) (int32, error) {
+	row := q.db.QueryRow(ctx, countUntrashedFileByIDs, arg.UserID, arg.Ids)
 	var column_1 int32
 	err := row.Scan(&column_1)
 	return column_1, err
 }
 
-const deleteFilePermissionProjection = `-- name: DeleteFilePermissionProjection :exec
-DELETE FROM file_permission_projection
- WHERE id = $1
-`
-
-func (q *Queries) DeleteFilePermissionProjection(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteFilePermissionProjection, id)
-	return err
-}
-
 const getFilePath = `-- name: GetFilePath :many
 WITH RECURSIVE ancestors(id, parent_id, name, trashed_at, depth) AS (
-  SELECT d.id, d.parent_id, d.name, d.trashed_at, 0 FROM file_projection d WHERE d.id = $1
+  SELECT d.id, d.parent_id, d.name, d.trashed_at, 0
+  FROM file_projection d
+  JOIN file_permission_projection perm ON perm.file_id = d.id AND perm.user_account_id = $1::uuid
+  WHERE d.id = $2
   UNION ALL
-  SELECT p.id, p.parent_id, p.name, p.trashed_at, a.depth + 1
-  FROM file_projection p
-  INNER JOIN ancestors a ON p.id = a.parent_id
+  SELECT parent.id, parent.parent_id, parent.name, parent.trashed_at, a.depth + 1
+  FROM file_projection parent
+  INNER JOIN ancestors a ON parent.id = a.parent_id
   WHERE a.trashed_at IS NULL
 )
 SELECT id, name, trashed_at FROM ancestors
 ORDER BY depth DESC
 `
+
+type GetFilePathParams struct {
+	UserID uuid.UUID `db:"user_id"`
+	FileID uuid.UUID `db:"file_id"`
+}
 
 type GetFilePathRow struct {
 	ID        uuid.UUID  `db:"id"`
@@ -89,8 +104,10 @@ type GetFilePathRow struct {
 	TrashedAt *time.Time `db:"trashed_at"`
 }
 
-func (q *Queries) GetFilePath(ctx context.Context, id uuid.UUID) ([]GetFilePathRow, error) {
-	rows, err := q.db.Query(ctx, getFilePath, id)
+// Walks ancestors of a file the user can access. The anchor is permission-checked;
+// ancestors share the same owner (single-owner trees) so the chain needs no recheck.
+func (q *Queries) GetFilePath(ctx context.Context, arg GetFilePathParams) ([]GetFilePathRow, error) {
+	rows, err := q.db.Query(ctx, getFilePath, arg.UserID, arg.FileID)
 	if err != nil {
 		return nil, err
 	}
@@ -111,23 +128,31 @@ func (q *Queries) GetFilePath(ctx context.Context, id uuid.UUID) ([]GetFilePathR
 
 const getFilePathIncludingTrashed = `-- name: GetFilePathIncludingTrashed :many
 WITH RECURSIVE ancestors(id, parent_id, name, depth) AS (
-  SELECT d.id, d.parent_id, d.name, 0 FROM file_projection d WHERE d.id = $1
+  SELECT d.id, d.parent_id, d.name, 0
+  FROM file_projection d
+  JOIN file_permission_projection perm ON perm.file_id = d.id AND perm.user_account_id = $1::uuid
+  WHERE d.id = $2
   UNION ALL
-  SELECT p.id, p.parent_id, p.name, a.depth + 1
-  FROM file_projection p
-  INNER JOIN ancestors a ON p.id = a.parent_id
+  SELECT parent.id, parent.parent_id, parent.name, a.depth + 1
+  FROM file_projection parent
+  INNER JOIN ancestors a ON parent.id = a.parent_id
 )
 SELECT id, name FROM ancestors
 ORDER BY depth DESC
 `
+
+type GetFilePathIncludingTrashedParams struct {
+	UserID uuid.UUID `db:"user_id"`
+	FileID uuid.UUID `db:"file_id"`
+}
 
 type GetFilePathIncludingTrashedRow struct {
 	ID   uuid.UUID `db:"id"`
 	Name string    `db:"name"`
 }
 
-func (q *Queries) GetFilePathIncludingTrashed(ctx context.Context, id uuid.UUID) ([]GetFilePathIncludingTrashedRow, error) {
-	rows, err := q.db.Query(ctx, getFilePathIncludingTrashed, id)
+func (q *Queries) GetFilePathIncludingTrashed(ctx context.Context, arg GetFilePathIncludingTrashedParams) ([]GetFilePathIncludingTrashedRow, error) {
+	rows, err := q.db.Query(ctx, getFilePathIncludingTrashed, arg.UserID, arg.FileID)
 	if err != nil {
 		return nil, err
 	}
@@ -150,6 +175,8 @@ const getFileProjectionByID = `-- name: GetFileProjectionByID :one
 SELECT id, parent_id, is_directory, linked_file_id, name, s3_key, size, checksum, mime_type, content_md, content_search, created_at, updated_at, trashed_at, created_by, updated_by, trashed_by FROM file_projection WHERE id = $1
 `
 
+// Access-agnostic lookup by id (no permission check). Used by the public-link
+// viewer plane, which authorizes via link scope rather than file ownership.
 func (q *Queries) GetFileProjectionByID(ctx context.Context, id uuid.UUID) (FileProjection, error) {
 	row := q.db.QueryRow(ctx, getFileProjectionByID, id)
 	var i FileProjection
@@ -176,16 +203,19 @@ func (q *Queries) GetFileProjectionByID(ctx context.Context, id uuid.UUID) (File
 }
 
 const getFileProjectionByParentAndName = `-- name: GetFileProjectionByParentAndName :one
-SELECT id, parent_id, is_directory, linked_file_id, name, s3_key, size, checksum, mime_type, content_md, content_search, created_at, updated_at, trashed_at, created_by, updated_by, trashed_by FROM file_projection WHERE parent_id = $1 AND name = $2 AND trashed_at IS NULL
+SELECT f.id, f.parent_id, f.is_directory, f.linked_file_id, f.name, f.s3_key, f.size, f.checksum, f.mime_type, f.content_md, f.content_search, f.created_at, f.updated_at, f.trashed_at, f.created_by, f.updated_by, f.trashed_by FROM file_projection f
+ JOIN file_permission_projection p ON p.file_id = f.id AND p.user_account_id = $1::uuid
+ WHERE f.parent_id = $2 AND f.name = $3 AND f.trashed_at IS NULL
 `
 
 type GetFileProjectionByParentAndNameParams struct {
+	UserID   uuid.UUID  `db:"user_id"`
 	ParentID *uuid.UUID `db:"parent_id"`
 	Name     string     `db:"name"`
 }
 
 func (q *Queries) GetFileProjectionByParentAndName(ctx context.Context, arg GetFileProjectionByParentAndNameParams) (FileProjection, error) {
-	row := q.db.QueryRow(ctx, getFileProjectionByParentAndName, arg.ParentID, arg.Name)
+	row := q.db.QueryRow(ctx, getFileProjectionByParentAndName, arg.UserID, arg.ParentID, arg.Name)
 	var i FileProjection
 	err := row.Scan(
 		&i.ID,
@@ -214,22 +244,71 @@ WITH RECURSIVE path_walk AS (
   SELECT d.id, 1::int AS depth
   FROM file_projection d
   WHERE d.parent_id IS NULL
-    AND d.name = ($1::text[])[1]
+    AND d.name = ($2::text[])[1]
     AND d.trashed_at IS NULL
   UNION ALL
   SELECT d.id, pw.depth + 1
   FROM file_projection d
   JOIN path_walk pw ON d.parent_id = pw.id
-  WHERE d.name = ($1::text[])[pw.depth + 1]
+  WHERE d.name = ($2::text[])[pw.depth + 1]
     AND d.trashed_at IS NULL
 )
 SELECT dp.id, dp.parent_id, dp.is_directory, dp.linked_file_id, dp.name, dp.s3_key, dp.size, dp.checksum, dp.mime_type, dp.content_md, dp.content_search, dp.created_at, dp.updated_at, dp.trashed_at, dp.created_by, dp.updated_by, dp.trashed_by FROM file_projection dp
 JOIN path_walk pw ON dp.id = pw.id
-WHERE pw.depth = array_length($1::text[], 1)
+JOIN file_permission_projection p ON p.file_id = dp.id AND p.user_account_id = $1::uuid
+WHERE pw.depth = array_length($2::text[], 1)
 `
 
-func (q *Queries) GetFileProjectionByPath(ctx context.Context, dollar_1 []string) (FileProjection, error) {
-	row := q.db.QueryRow(ctx, getFileProjectionByPath, dollar_1)
+type GetFileProjectionByPathParams struct {
+	UserID   uuid.UUID `db:"user_id"`
+	Segments []string  `db:"segments"`
+}
+
+// Resolves a name path to a file the user can access. The recursive walk matches
+// purely on parent/name (trees are single-owner and disjoint per user); the final
+// permission join restricts the result to the requesting user's own subtree.
+func (q *Queries) GetFileProjectionByPath(ctx context.Context, arg GetFileProjectionByPathParams) (FileProjection, error) {
+	row := q.db.QueryRow(ctx, getFileProjectionByPath, arg.UserID, arg.Segments)
+	var i FileProjection
+	err := row.Scan(
+		&i.ID,
+		&i.ParentID,
+		&i.IsDirectory,
+		&i.LinkedFileID,
+		&i.Name,
+		&i.S3Key,
+		&i.Size,
+		&i.Checksum,
+		&i.MimeType,
+		&i.ContentMd,
+		&i.ContentSearch,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.TrashedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+		&i.TrashedBy,
+	)
+	return i, err
+}
+
+const getFileProjectionForUser = `-- name: GetFileProjectionForUser :one
+SELECT f.id, f.parent_id, f.is_directory, f.linked_file_id, f.name, f.s3_key, f.size, f.checksum, f.mime_type, f.content_md, f.content_search, f.created_at, f.updated_at, f.trashed_at, f.created_by, f.updated_by, f.trashed_by FROM file_projection f
+ JOIN file_permission_projection p ON p.file_id = f.id AND p.user_account_id = $1::uuid
+ WHERE f.id = $2
+`
+
+type GetFileProjectionForUserParams struct {
+	UserID uuid.UUID `db:"user_id"`
+	ID     uuid.UUID `db:"id"`
+}
+
+// Ownership-scoped lookup: returns the file only if the given user has a
+// file_permission_projection entry for it. Any entry currently means "owner"
+// (see InsertFilePermissionProjection on create); the join is the single
+// authorization gate and extends naturally to shared read/write grants later.
+func (q *Queries) GetFileProjectionForUser(ctx context.Context, arg GetFileProjectionForUserParams) (FileProjection, error) {
+	row := q.db.QueryRow(ctx, getFileProjectionForUser, arg.UserID, arg.ID)
 	var i FileProjection
 	err := row.Scan(
 		&i.ID,
@@ -254,11 +333,18 @@ func (q *Queries) GetFileProjectionByPath(ctx context.Context, dollar_1 []string
 }
 
 const getRootFileProjectionByName = `-- name: GetRootFileProjectionByName :one
-SELECT id, parent_id, is_directory, linked_file_id, name, s3_key, size, checksum, mime_type, content_md, content_search, created_at, updated_at, trashed_at, created_by, updated_by, trashed_by FROM file_projection WHERE parent_id IS NULL AND name = $1 AND trashed_at IS NULL
+SELECT f.id, f.parent_id, f.is_directory, f.linked_file_id, f.name, f.s3_key, f.size, f.checksum, f.mime_type, f.content_md, f.content_search, f.created_at, f.updated_at, f.trashed_at, f.created_by, f.updated_by, f.trashed_by FROM file_projection f
+ JOIN file_permission_projection p ON p.file_id = f.id AND p.user_account_id = $1::uuid
+ WHERE f.parent_id IS NULL AND f.name = $2 AND f.trashed_at IS NULL
 `
 
-func (q *Queries) GetRootFileProjectionByName(ctx context.Context, name string) (FileProjection, error) {
-	row := q.db.QueryRow(ctx, getRootFileProjectionByName, name)
+type GetRootFileProjectionByNameParams struct {
+	UserID uuid.UUID `db:"user_id"`
+	Name   string    `db:"name"`
+}
+
+func (q *Queries) GetRootFileProjectionByName(ctx context.Context, arg GetRootFileProjectionByNameParams) (FileProjection, error) {
+	row := q.db.QueryRow(ctx, getRootFileProjectionByName, arg.UserID, arg.Name)
 	var i FileProjection
 	err := row.Scan(
 		&i.ID,
@@ -284,28 +370,18 @@ func (q *Queries) GetRootFileProjectionByName(ctx context.Context, name string) 
 
 const insertFilePermissionProjection = `-- name: InsertFilePermissionProjection :exec
 INSERT INTO file_permission_projection
- (id, file_id, user_account_id, user_group_id, permission_type, created_at)
- VALUES ($1, $2, $3, $4, $5, $6)
+ (file_id, user_account_id, created_at)
+ VALUES ($1, $2, $3)
 `
 
 type InsertFilePermissionProjectionParams struct {
-	ID             uuid.UUID          `db:"id"`
-	FileID         uuid.UUID          `db:"file_id"`
-	UserAccountID  *uuid.UUID         `db:"user_account_id"`
-	UserGroupID    *uuid.UUID         `db:"user_group_id"`
-	PermissionType FilePermissionType `db:"permission_type"`
-	CreatedAt      time.Time          `db:"created_at"`
+	FileID        uuid.UUID `db:"file_id"`
+	UserAccountID uuid.UUID `db:"user_account_id"`
+	CreatedAt     time.Time `db:"created_at"`
 }
 
 func (q *Queries) InsertFilePermissionProjection(ctx context.Context, arg InsertFilePermissionProjectionParams) error {
-	_, err := q.db.Exec(ctx, insertFilePermissionProjection,
-		arg.ID,
-		arg.FileID,
-		arg.UserAccountID,
-		arg.UserGroupID,
-		arg.PermissionType,
-		arg.CreatedAt,
-	)
+	_, err := q.db.Exec(ctx, insertFilePermissionProjection, arg.FileID, arg.UserAccountID, arg.CreatedAt)
 	return err
 }
 
@@ -379,18 +455,26 @@ func (q *Queries) ListFileProjections(ctx context.Context) ([]FileProjection, er
 }
 
 const listFileProjectionsByParent = `-- name: ListFileProjectionsByParent :many
-SELECT id, parent_id, is_directory, linked_file_id, name, s3_key, size, checksum, mime_type, content_md, content_search, created_at, updated_at, trashed_at, created_by, updated_by, trashed_by FROM file_projection WHERE parent_id = $1 AND trashed_at IS NULL ORDER BY is_directory DESC, name ASC
-LIMIT $2 OFFSET $3
+SELECT f.id, f.parent_id, f.is_directory, f.linked_file_id, f.name, f.s3_key, f.size, f.checksum, f.mime_type, f.content_md, f.content_search, f.created_at, f.updated_at, f.trashed_at, f.created_by, f.updated_by, f.trashed_by FROM file_projection f
+ JOIN file_permission_projection p ON p.file_id = f.id AND p.user_account_id = $1::uuid
+ WHERE f.parent_id = $2 AND f.trashed_at IS NULL ORDER BY f.is_directory DESC, f.name ASC
+LIMIT $4 OFFSET $3
 `
 
 type ListFileProjectionsByParentParams struct {
+	UserID   uuid.UUID  `db:"user_id"`
 	ParentID *uuid.UUID `db:"parent_id"`
-	Limit    int32      `db:"limit"`
-	Offset   int32      `db:"offset"`
+	Off      int32      `db:"off"`
+	Lim      int32      `db:"lim"`
 }
 
 func (q *Queries) ListFileProjectionsByParent(ctx context.Context, arg ListFileProjectionsByParentParams) ([]FileProjection, error) {
-	rows, err := q.db.Query(ctx, listFileProjectionsByParent, arg.ParentID, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, listFileProjectionsByParent,
+		arg.UserID,
+		arg.ParentID,
+		arg.Off,
+		arg.Lim,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -428,17 +512,20 @@ func (q *Queries) ListFileProjectionsByParent(ctx context.Context, arg ListFileP
 }
 
 const listRootFileProjections = `-- name: ListRootFileProjections :many
-SELECT id, parent_id, is_directory, linked_file_id, name, s3_key, size, checksum, mime_type, content_md, content_search, created_at, updated_at, trashed_at, created_by, updated_by, trashed_by FROM file_projection WHERE parent_id IS NULL AND trashed_at IS NULL ORDER BY is_directory DESC, name ASC
-LIMIT $1 OFFSET $2
+SELECT f.id, f.parent_id, f.is_directory, f.linked_file_id, f.name, f.s3_key, f.size, f.checksum, f.mime_type, f.content_md, f.content_search, f.created_at, f.updated_at, f.trashed_at, f.created_by, f.updated_by, f.trashed_by FROM file_projection f
+ JOIN file_permission_projection p ON p.file_id = f.id AND p.user_account_id = $1::uuid
+ WHERE f.parent_id IS NULL AND f.trashed_at IS NULL ORDER BY f.is_directory DESC, f.name ASC
+LIMIT $3 OFFSET $2
 `
 
 type ListRootFileProjectionsParams struct {
-	Limit  int32 `db:"limit"`
-	Offset int32 `db:"offset"`
+	UserID uuid.UUID `db:"user_id"`
+	Off    int32     `db:"off"`
+	Lim    int32     `db:"lim"`
 }
 
 func (q *Queries) ListRootFileProjections(ctx context.Context, arg ListRootFileProjectionsParams) ([]FileProjection, error) {
-	rows, err := q.db.Query(ctx, listRootFileProjections, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, listRootFileProjections, arg.UserID, arg.Off, arg.Lim)
 	if err != nil {
 		return nil, err
 	}
@@ -476,17 +563,20 @@ func (q *Queries) ListRootFileProjections(ctx context.Context, arg ListRootFileP
 }
 
 const listTrashedFile = `-- name: ListTrashedFile :many
-SELECT id, parent_id, is_directory, linked_file_id, name, s3_key, size, checksum, mime_type, content_md, content_search, created_at, updated_at, trashed_at, created_by, updated_by, trashed_by FROM file_projection WHERE trashed_at IS NOT NULL ORDER BY trashed_at DESC
-LIMIT $1 OFFSET $2
+SELECT f.id, f.parent_id, f.is_directory, f.linked_file_id, f.name, f.s3_key, f.size, f.checksum, f.mime_type, f.content_md, f.content_search, f.created_at, f.updated_at, f.trashed_at, f.created_by, f.updated_by, f.trashed_by FROM file_projection f
+ JOIN file_permission_projection p ON p.file_id = f.id AND p.user_account_id = $1::uuid
+ WHERE f.trashed_at IS NOT NULL ORDER BY f.trashed_at DESC
+LIMIT $3 OFFSET $2
 `
 
 type ListTrashedFileParams struct {
-	Limit  int32 `db:"limit"`
-	Offset int32 `db:"offset"`
+	UserID uuid.UUID `db:"user_id"`
+	Off    int32     `db:"off"`
+	Lim    int32     `db:"lim"`
 }
 
 func (q *Queries) ListTrashedFile(ctx context.Context, arg ListTrashedFileParams) ([]FileProjection, error) {
-	rows, err := q.db.Query(ctx, listTrashedFile, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, listTrashedFile, arg.UserID, arg.Off, arg.Lim)
 	if err != nil {
 		return nil, err
 	}
