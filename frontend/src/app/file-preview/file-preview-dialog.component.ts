@@ -81,10 +81,16 @@ export class FilePreviewDialogComponent {
   // Guards against an earlier, slower request overwriting the result of a more
   // recent navigation; only the latest token is allowed to commit.
   private loadToken = 0;
+  // A download can still be in flight when the dialog closes; this prevents a
+  // late response from creating an object URL that nothing would ever revoke.
+  private destroyed = false;
 
   constructor() {
     void this.load();
-    inject(DestroyRef).onDestroy(() => this.revoke());
+    inject(DestroyRef).onDestroy(() => {
+      this.destroyed = true;
+      this.revoke();
+    });
   }
 
   protected prev(): void {
@@ -105,13 +111,13 @@ export class FilePreviewDialogComponent {
     this.loading.set(true);
     try {
       const response = await this.api.invoke$Response(downloadFile, { id: item.id });
-      if (token !== this.loadToken) return;
+      if (this.destroyed || token !== this.loadToken) return;
       this.revoke();
       this.blob = response.body as Blob;
       this.url.set(URL.createObjectURL(this.blob));
       this.loading.set(false);
     } catch (e) {
-      if (token !== this.loadToken) return;
+      if (this.destroyed || token !== this.loadToken) return;
       console.error(e);
       this.snackBar.open('Failed to load file', 'Dismiss', { duration: snackErrorDuration });
       this.dialogRef.close();
