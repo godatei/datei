@@ -55,8 +55,6 @@ func init() {
 	events.RegisterEvent("FileRestored", func() events.DomainEvent { return &FileRestoredEvent{} })
 	events.RegisterEvent("FileLinked", func() events.DomainEvent { return &FileLinkedEvent{} })
 	events.RegisterEvent("FileUnlinked", func() events.DomainEvent { return &FileUnlinkedEvent{} })
-	events.RegisterEvent("FilePermissionGranted", func() events.DomainEvent { return &FilePermissionGrantedEvent{} })
-	events.RegisterEvent("FilePermissionRevoked", func() events.DomainEvent { return &FilePermissionRevokedEvent{} })
 }
 
 // ============================================================================
@@ -198,34 +196,3 @@ func (e FileUnlinkedEvent) ApplyTo(a *Aggregate) {
 	a.UpdatedAt = e.UnlinkedAt
 	a.UpdatedBy = e.UnlinkedBy
 }
-
-// ============================================================================
-// Permission Events
-// ============================================================================
-
-type FilePermissionGrantedEvent struct {
-	ID             uuid.UUID  `json:"id"`
-	FileID         uuid.UUID  `json:"file_id"`
-	UserAccountID  *uuid.UUID `json:"user_account_id,omitempty"`
-	UserGroupID    *uuid.UUID `json:"user_group_id,omitempty"`
-	PermissionType string     `json:"permission_type"`
-	GrantedBy      uuid.UUID  `json:"granted_by"`
-	GrantedAt      time.Time  `json:"granted_at"`
-}
-
-func (e FilePermissionGrantedEvent) EventType() string    { return "FilePermissionGranted" }
-func (e FilePermissionGrantedEvent) StreamID() uuid.UUID  { return e.FileID }
-func (e FilePermissionGrantedEvent) ApplyTo(_ *Aggregate) {}
-
-type FilePermissionRevokedEvent struct {
-	ID            uuid.UUID  `json:"id"`
-	FileID        uuid.UUID  `json:"file_id"`
-	UserAccountID *uuid.UUID `json:"user_account_id,omitempty"`
-	UserGroupID   *uuid.UUID `json:"user_group_id,omitempty"`
-	RevokedBy     uuid.UUID  `json:"revoked_by"`
-	RevokedAt     time.Time  `json:"revoked_at"`
-}
-
-func (e FilePermissionRevokedEvent) EventType() string    { return "FilePermissionRevoked" }
-func (e FilePermissionRevokedEvent) StreamID() uuid.UUID  { return e.FileID }
-func (e FilePermissionRevokedEvent) ApplyTo(_ *Aggregate) {}

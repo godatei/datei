@@ -155,6 +155,7 @@ type ListFilesOutput struct {
 // ListFiles retrieves all file records with pagination
 func (s *Service) ListFiles(ctx context.Context, input ListFilesInput) (*ListFilesOutput, error) {
 	queries := db.New(s.db)
+	ownerID := authn.RequireCurrentUser(ctx).ID
 
 	limit := int32(input.Limit)
 	if limit <= 0 {
@@ -167,23 +168,28 @@ func (s *Service) ListFiles(ctx context.Context, input ListFilesInput) (*ListFil
 	var err error
 
 	if input.ParentID != nil {
-		total, err = queries.CountFileProjectionsByParent(ctx, input.ParentID)
+		total, err = queries.CountFileProjectionsByParent(ctx, db.CountFileProjectionsByParentParams{
+			UserID:   ownerID,
+			ParentID: input.ParentID,
+		})
 		if err != nil {
 			return nil, err
 		}
 		projections, err = queries.ListFileProjectionsByParent(ctx, db.ListFileProjectionsByParentParams{
+			UserID:   ownerID,
 			ParentID: input.ParentID,
-			Limit:    limit,
-			Offset:   offset,
+			Lim:      limit,
+			Off:      offset,
 		})
 	} else {
-		total, err = queries.CountRootFileProjections(ctx)
+		total, err = queries.CountRootFileProjections(ctx, ownerID)
 		if err != nil {
 			return nil, err
 		}
 		projections, err = queries.ListRootFileProjections(ctx, db.ListRootFileProjectionsParams{
-			Limit:  limit,
-			Offset: offset,
+			UserID: ownerID,
+			Lim:    limit,
+			Off:    offset,
 		})
 	}
 	if err != nil {
@@ -206,9 +212,14 @@ type CreateFileInput struct {
 
 // CreateFile creates a new file record with optional file upload
 func (s *Service) CreateFile(ctx context.Context, input CreateFileInput) (*api.File, error) {
+	userID := authn.RequireCurrentUser(ctx).ID
+
 	if input.ParentID != nil {
 		queries := db.New(s.db)
-		parent, err := queries.GetFileProjectionByID(ctx, *input.ParentID)
+		parent, err := queries.GetFileProjectionForUser(ctx, db.GetFileProjectionForUserParams{
+			UserID: userID,
+			ID:     *input.ParentID,
+		})
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, apperrors.ErrParentNotFound
 		} else if err != nil {
@@ -225,8 +236,6 @@ func (s *Service) CreateFile(ctx context.Context, input CreateFileInput) (*api.F
 	isDirectory := input.Reader == nil
 	id := uuid.New()
 	now := time.Now()
-
-	userID := authn.RequireCurrentUser(ctx).ID
 
 	agg := &Aggregate{}
 	if err := agg.Create(id, input.ParentID, isDirectory, input.FileName, userID, now); err != nil {
@@ -267,15 +276,38 @@ type DownloadFileOutput struct {
 
 // DownloadFile retrieves a file for download
 func (s *Service) DownloadFile(ctx context.Context, fileID uuid.UUID) (*DownloadFileOutput, error) {
-	queries := db.New(s.db)
+	ownerID := authn.RequireCurrentUser(ctx).ID
 
-	projection, err := queries.GetFileProjectionByID(ctx, fileID)
+	projection, err := db.New(s.db).GetFileProjectionForUser(ctx, db.GetFileProjectionForUserParams{
+		UserID: ownerID,
+		ID:     fileID,
+	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, apperrors.ErrNotFound
 	} else if err != nil {
 		return nil, err
 	}
 
+	return s.downloadProjection(ctx, &projection)
+}
+
+// DownloadSharedFile downloads a file without an ownership check. It serves the
+// public-link viewer path, where authorization is established by link scope
+// (see link.PublicService) rather than by file ownership.
+func (s *Service) DownloadSharedFile(ctx context.Context, fileID uuid.UUID) (*DownloadFileOutput, error) {
+	projection, err := db.New(s.db).GetFileProjectionByID(ctx, fileID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, apperrors.ErrNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return s.downloadProjection(ctx, &projection)
+}
+
+func (s *Service) downloadProjection(
+	ctx context.Context, projection *db.FileProjection,
+) (*DownloadFileOutput, error) {
 	if projection.IsDirectory {
 		return nil, apperrors.ErrIsDirectory
 	}
@@ -310,13 +342,13 @@ type UpdateFileInput struct {
 
 // UpdateFile updates a file record with optional name, move, and/or file.
 func (s *Service) UpdateFile(ctx context.Context, input UpdateFileInput) (*api.File, error) {
-	agg, err := s.repository.LoadByID(ctx, input.ID)
+	now := time.Now()
+	userID := authn.RequireCurrentUser(ctx).ID
+
+	agg, err := s.loadOwnedAggregate(ctx, input.ID, userID)
 	if err != nil {
 		return nil, err
 	}
-
-	now := time.Now()
-	userID := authn.RequireCurrentUser(ctx).ID
 
 	if input.Name != nil {
 		if err := agg.Rename(*input.Name, userID, now); err != nil {
@@ -327,7 +359,7 @@ func (s *Service) UpdateFile(ctx context.Context, input UpdateFileInput) (*api.F
 	if input.MoveRequested {
 		if input.NewParentID != nil {
 			queries := db.New(s.db)
-			if err := s.validateMoveTarget(ctx, queries, input.ID, *input.NewParentID, agg.IsDirectory); err != nil {
+			if err := s.validateMoveTarget(ctx, queries, userID, input.ID, *input.NewParentID, agg.IsDirectory); err != nil {
 				return nil, err
 			}
 		}
@@ -374,8 +406,12 @@ func (s *Service) GetThumbnail(
 	ctx context.Context, fileID uuid.UUID, ifNoneMatch string,
 ) (*GetThumbnailOutput, error) {
 	queries := db.New(s.db)
+	ownerID := authn.RequireCurrentUser(ctx).ID
 
-	projection, err := queries.GetFileProjectionByID(ctx, fileID)
+	projection, err := queries.GetFileProjectionForUser(ctx, db.GetFileProjectionForUserParams{
+		UserID: ownerID,
+		ID:     fileID,
+	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, apperrors.ErrNotFound
 	} else if err != nil {
@@ -437,8 +473,9 @@ func (s *Service) GetThumbnail(
 // The chain is truncated at the first trashed ancestor: that ancestor is included but its own parents are not.
 func (s *Service) GetFilePath(ctx context.Context, fileID uuid.UUID) ([]api.FilePathItem, error) {
 	queries := db.New(s.db)
+	ownerID := authn.RequireCurrentUser(ctx).ID
 
-	rows, err := queries.GetFilePath(ctx, fileID)
+	rows, err := queries.GetFilePath(ctx, db.GetFilePathParams{FileID: fileID, UserID: ownerID})
 	if err != nil {
 		return nil, err
 	}
@@ -459,7 +496,11 @@ func (s *Service) GetFilePath(ctx context.Context, fileID uuid.UUID) ([]api.File
 // FindFileByPath resolves a slash-split path of segments to a single file in one query.
 // Returns apperrors.ErrNotFound if any segment along the path does not exist.
 func (s *Service) FindFileByPath(ctx context.Context, segments []string) (*api.File, error) {
-	proj, err := db.New(s.db).GetFileProjectionByPath(ctx, segments)
+	ownerID := authn.RequireCurrentUser(ctx).ID
+	proj, err := db.New(s.db).GetFileProjectionByPath(ctx, db.GetFileProjectionByPathParams{
+		Segments: segments,
+		UserID:   ownerID,
+	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, apperrors.ErrNotFound
 	} else if err != nil {
@@ -472,12 +513,17 @@ func (s *Service) FindFileByPath(ctx context.Context, segments []string) (*api.F
 // Returns apperrors.ErrNotFound if no match exists.
 func (s *Service) FindFileByName(ctx context.Context, parentID *uuid.UUID, name string) (*api.File, error) {
 	queries := db.New(s.db)
+	ownerID := authn.RequireCurrentUser(ctx).ID
 	var proj db.FileProjection
 	var err error
 	if parentID == nil {
-		proj, err = queries.GetRootFileProjectionByName(ctx, name)
+		proj, err = queries.GetRootFileProjectionByName(ctx, db.GetRootFileProjectionByNameParams{
+			UserID: ownerID,
+			Name:   name,
+		})
 	} else {
 		proj, err = queries.GetFileProjectionByParentAndName(ctx, db.GetFileProjectionByParentAndNameParams{
+			UserID:   ownerID,
 			ParentID: parentID,
 			Name:     name,
 		})
@@ -496,18 +542,21 @@ const maxDirChildren = 10_000
 // parent (or root items if parentID is nil).
 func (s *Service) ListFileChildren(ctx context.Context, parentID *uuid.UUID) ([]api.File, error) {
 	queries := db.New(s.db)
+	ownerID := authn.RequireCurrentUser(ctx).ID
 	var projs []db.FileProjection
 	var err error
 	if parentID == nil {
 		projs, err = queries.ListRootFileProjections(ctx, db.ListRootFileProjectionsParams{
-			Limit:  maxDirChildren,
-			Offset: 0,
+			UserID: ownerID,
+			Lim:    maxDirChildren,
+			Off:    0,
 		})
 	} else {
 		projs, err = queries.ListFileProjectionsByParent(ctx, db.ListFileProjectionsByParentParams{
+			UserID:   ownerID,
 			ParentID: parentID,
-			Limit:    maxDirChildren,
-			Offset:   0,
+			Lim:      maxDirChildren,
+			Off:      0,
 		})
 	}
 	if err != nil {
@@ -531,6 +580,7 @@ type ListTrashOutput struct {
 // ListTrash retrieves root-level trashed file records with pagination.
 func (s *Service) ListTrash(ctx context.Context, input ListTrashInput) (*ListTrashOutput, error) {
 	queries := db.New(s.db)
+	ownerID := authn.RequireCurrentUser(ctx).ID
 
 	limit := int32(input.Limit)
 	if limit <= 0 {
@@ -538,14 +588,15 @@ func (s *Service) ListTrash(ctx context.Context, input ListTrashInput) (*ListTra
 	}
 	offset := int32(max(input.Offset, 0))
 
-	total, err := queries.CountTrashedFile(ctx)
+	total, err := queries.CountTrashedFile(ctx, ownerID)
 	if err != nil {
 		return nil, err
 	}
 
 	projections, err := queries.ListTrashedFile(ctx, db.ListTrashedFileParams{
-		Limit:  limit,
-		Offset: offset,
+		UserID: ownerID,
+		Lim:    limit,
+		Off:    offset,
 	})
 	if err != nil {
 		return nil, err
@@ -556,7 +607,10 @@ func (s *Service) ListTrash(ctx context.Context, input ListTrashInput) (*ListTra
 		p := &projections[i]
 		var originPath *[]api.FilePathItem
 		if p.ParentID != nil {
-			rows, err := queries.GetFilePathIncludingTrashed(ctx, *p.ParentID)
+			rows, err := queries.GetFilePathIncludingTrashed(ctx, db.GetFilePathIncludingTrashedParams{
+				FileID: *p.ParentID,
+				UserID: ownerID,
+			})
 			if err != nil {
 				return nil, fmt.Errorf("get origin path for %s: %w", p.ID, err)
 			}
@@ -587,6 +641,7 @@ type ListTrashChildrenInput struct {
 // ListTrashChildren lists the direct children of a trashed directory.
 func (s *Service) ListTrashChildren(ctx context.Context, input ListTrashChildrenInput) (*ListFilesOutput, error) {
 	queries := db.New(s.db)
+	ownerID := authn.RequireCurrentUser(ctx).ID
 
 	limit := input.Limit
 	if limit <= 0 {
@@ -594,7 +649,10 @@ func (s *Service) ListTrashChildren(ctx context.Context, input ListTrashChildren
 	}
 	offset := max(input.Offset, 0)
 
-	parent, err := queries.GetFileProjectionByID(ctx, input.ParentID)
+	parent, err := queries.GetFileProjectionForUser(ctx, db.GetFileProjectionForUserParams{
+		UserID: ownerID,
+		ID:     input.ParentID,
+	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, apperrors.ErrParentNotFound
@@ -609,7 +667,7 @@ func (s *Service) ListTrashChildren(ctx context.Context, input ListTrashChildren
 	// A directory is browsable in trash if it is directly trashed or has a trashed ancestor.
 	inTrash := parent.TrashedAt != nil
 	if !inTrash {
-		path, err := queries.GetFilePath(ctx, input.ParentID)
+		path, err := queries.GetFilePath(ctx, db.GetFilePathParams{FileID: input.ParentID, UserID: ownerID})
 		if err != nil {
 			return nil, err
 		}
@@ -624,15 +682,19 @@ func (s *Service) ListTrashChildren(ctx context.Context, input ListTrashChildren
 		return nil, apperrors.ErrParentNotTrashed
 	}
 
-	total, err := queries.CountFileProjectionsByParent(ctx, &input.ParentID)
+	total, err := queries.CountFileProjectionsByParent(ctx, db.CountFileProjectionsByParentParams{
+		UserID:   ownerID,
+		ParentID: &input.ParentID,
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	projections, err := queries.ListFileProjectionsByParent(ctx, db.ListFileProjectionsByParentParams{
+		UserID:   ownerID,
 		ParentID: &input.ParentID,
-		Limit:    int32(limit),
-		Offset:   int32(offset),
+		Lim:      int32(limit),
+		Off:      int32(offset),
 	})
 	if err != nil {
 		return nil, err
@@ -646,12 +708,12 @@ func (s *Service) ListTrashChildren(ctx context.Context, input ListTrashChildren
 
 // DeleteFile soft-deletes a file record
 func (s *Service) DeleteFile(ctx context.Context, fileID uuid.UUID) error {
-	agg, err := s.repository.LoadByID(ctx, fileID)
+	userID := authn.RequireCurrentUser(ctx).ID
+	agg, err := s.loadOwnedAggregate(ctx, fileID, userID)
 	if err != nil {
 		return err
 	}
 
-	userID := authn.RequireCurrentUser(ctx).ID
 	if err := agg.Trash(userID, time.Now()); err != nil {
 		return err
 	}
@@ -668,18 +730,22 @@ type RestoreFileInput struct {
 // parentId == nil moves the item to root.
 func (s *Service) RestoreFile(ctx context.Context, input RestoreFileInput) error {
 	queries := db.New(s.db)
-	projection, err := queries.GetFileProjectionByID(ctx, input.ID)
+	userID := authn.RequireCurrentUser(ctx).ID
+
+	projection, err := queries.GetFileProjectionForUser(ctx, db.GetFileProjectionForUserParams{
+		UserID: userID,
+		ID:     input.ID,
+	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return apperrors.ErrNotFound
 	} else if err != nil {
 		return err
 	}
 
-	userID := authn.RequireCurrentUser(ctx).ID
 	now := time.Now()
 
 	if input.ParentID != nil {
-		if err := s.validateMoveTarget(ctx, queries, input.ID, *input.ParentID, projection.IsDirectory); err != nil {
+		if err := s.validateMoveTarget(ctx, queries, userID, input.ID, *input.ParentID, projection.IsDirectory); err != nil {
 			return err
 		}
 	}
@@ -689,7 +755,7 @@ func (s *Service) RestoreFile(ctx context.Context, input RestoreFileInput) error
 		if projection.ParentID == nil {
 			return apperrors.ErrNotInTrash
 		}
-		parentPath, err := queries.GetFilePath(ctx, *projection.ParentID)
+		parentPath, err := queries.GetFilePath(ctx, db.GetFilePathParams{FileID: *projection.ParentID, UserID: userID})
 		if err != nil {
 			return err
 		}
@@ -705,7 +771,7 @@ func (s *Service) RestoreFile(ctx context.Context, input RestoreFileInput) error
 		}
 	}
 
-	agg, err := s.repository.LoadByID(ctx, input.ID)
+	agg, err := s.loadOwnedAggregate(ctx, input.ID, userID)
 	if err != nil {
 		return err
 	}
@@ -720,16 +786,42 @@ func (s *Service) RestoreFile(ctx context.Context, input RestoreFileInput) error
 	return s.repository.Save(ctx, agg)
 }
 
+// loadOwnedAggregate authorizes access via the file_permission_projection table
+// (the single source of truth for ownership) and then loads the aggregate.
+// It returns apperrors.ErrNotFound when the user has no permission entry, so
+// cross-user access is indistinguishable from a missing file.
+func (s *Service) loadOwnedAggregate(ctx context.Context, id, ownerID uuid.UUID) (*Aggregate, error) {
+	if _, err := db.New(s.db).GetFileProjectionForUser(ctx, db.GetFileProjectionForUserParams{
+		UserID: ownerID,
+		ID:     id,
+	}); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, apperrors.ErrNotFound
+		}
+		return nil, err
+	}
+
+	agg, err := s.repository.LoadByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return agg, nil
+}
+
 // validateMoveTarget checks that targetParentID is a valid, accessible (non-trashed) directory,
 // and (for directory items) that moving itemID there would not create a cycle.
 func (s *Service) validateMoveTarget(
 	ctx context.Context,
 	queries *db.Queries,
+	ownerID uuid.UUID,
 	itemID uuid.UUID,
 	targetParentID uuid.UUID,
 	itemIsDirectory bool,
 ) error {
-	parent, err := queries.GetFileProjectionByID(ctx, targetParentID)
+	parent, err := queries.GetFileProjectionForUser(ctx, db.GetFileProjectionForUserParams{
+		UserID: ownerID,
+		ID:     targetParentID,
+	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return apperrors.ErrParentNotFound
 	} else if err != nil {
@@ -742,7 +834,7 @@ func (s *Service) validateMoveTarget(
 	// Walk the target's ancestor path to detect both trashed ancestors and cycles.
 	// GetFilePath includes the target itself and stops above the first trashed node,
 	// but includes that node — so any trashed entry means the target is inside trash.
-	pathRows, err := queries.GetFilePath(ctx, targetParentID)
+	pathRows, err := queries.GetFilePath(ctx, db.GetFilePathParams{FileID: targetParentID, UserID: ownerID})
 	if err != nil {
 		return err
 	}

@@ -57,10 +57,6 @@ func updateProjection(ctx context.Context, q *db.Queries, event events.DomainEve
 		return updateProjectionForFileLinked(ctx, q, &e)
 	case FileUnlinkedEvent:
 		return updateProjectionForFileUnlinked(ctx, q, &e)
-	case FilePermissionGrantedEvent:
-		return updateProjectionForFilePermissionGranted(ctx, q, &e)
-	case FilePermissionRevokedEvent:
-		return updateProjectionForFilePermissionRevoked(ctx, q, &e)
 	default:
 		return fmt.Errorf("unknown file event type: %s", event.EventType())
 	}

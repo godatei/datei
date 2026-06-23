@@ -199,6 +199,7 @@ HTTP Request → Server Endpoint → Service → db.Queries (read from projectio
 
 - Config: `internal/db/sqlc.yaml`
 - Queries go in `internal/db/*.sql` files using the `-- name: QueryName :verb` format
+- Use named parameters (`@user_id`, `@parent_id`), never positional `$1`/`$2` — names produce self-documenting `Params` struct fields and survive column reordering. `LIMIT`/`OFFSET` are reserved words, so name those params `@lim`/`@off`
 - Schema: `internal/db/zz_generated_schema.sql` (exported from live DB via `mise import-db-schema`)
 - Run `mise run generate:backend` after editing `.sql` files
 - Uses pgx/v5 driver with `google/uuid` UUID type overrides

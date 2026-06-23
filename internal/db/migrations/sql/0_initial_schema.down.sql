@@ -11,5 +11,3 @@ DROP TABLE IF EXISTS user_account_access_token_projection CASCADE;
 DROP TABLE IF EXISTS user_account_email_projection CASCADE;
 DROP TABLE IF EXISTS user_account_mfa_recovery_code_projection CASCADE;
 DROP TABLE IF EXISTS user_account_projection CASCADE;
-
-DROP TYPE IF EXISTS file_permission_type CASCADE;

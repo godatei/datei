@@ -20,6 +20,19 @@ func updateProjectionForFileCreated(ctx context.Context, q *db.Queries, event *F
 		return fmt.Errorf("failed to insert file_projection: %w", err)
 	}
 
+	// Ownership is modeled as a file_permission_projection row rather than a
+	// column on file_projection, so it can later carry shared read/write grants.
+	// For now the creator gets the sole entry; access checks treat any entry as
+	// access (see GetFileProjectionForUser). The row is keyed by its natural
+	// (file_id, user_account_id), so this handler is deterministic on replay.
+	if err := q.InsertFilePermissionProjection(ctx, db.InsertFilePermissionProjectionParams{
+		FileID:        event.ID,
+		UserAccountID: event.CreatedBy,
+		CreatedAt:     event.CreatedAt,
+	}); err != nil {
+		return fmt.Errorf("failed to insert owner file_permission_projection: %w", err)
+	}
+
 	return nil
 }
 
@@ -115,39 +128,6 @@ func updateProjectionForFileUnlinked(ctx context.Context, q *db.Queries, event *
 	})
 	if err != nil {
 		return fmt.Errorf("failed to update file_projection: %w", err)
-	}
-
-	return nil
-}
-
-func updateProjectionForFilePermissionGranted(
-	ctx context.Context,
-	q *db.Queries,
-	event *FilePermissionGrantedEvent,
-) error {
-	err := q.InsertFilePermissionProjection(ctx, db.InsertFilePermissionProjectionParams{
-		ID:             event.ID,
-		FileID:         event.FileID,
-		UserAccountID:  event.UserAccountID,
-		UserGroupID:    event.UserGroupID,
-		PermissionType: db.FilePermissionType(event.PermissionType),
-		CreatedAt:      event.GrantedAt,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to insert file_permission_projection: %w", err)
-	}
-
-	return nil
-}
-
-func updateProjectionForFilePermissionRevoked(
-	ctx context.Context,
-	q *db.Queries,
-	event *FilePermissionRevokedEvent,
-) error {
-	err := q.DeleteFilePermissionProjection(ctx, event.ID)
-	if err != nil {
-		return fmt.Errorf("failed to delete from file_permission_projection: %w", err)
 	}
 
 	return nil

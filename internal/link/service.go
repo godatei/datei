@@ -46,7 +46,10 @@ func (s *Service) CreateLink(ctx context.Context, input CreateLinkInput) (*api.L
 
 	queries := db.New(s.db)
 	if len(input.FileIDs) > 0 {
-		count, err := queries.CountUntrashedFileByIDs(ctx, input.FileIDs)
+		count, err := queries.CountUntrashedFileByIDs(ctx, db.CountUntrashedFileByIDsParams{
+			UserID: userID,
+			Ids:    input.FileIDs,
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -217,7 +220,10 @@ func (s *Service) AddFileToLink(ctx context.Context, linkID, fileID uuid.UUID) (
 	}
 
 	queries := db.New(s.db)
-	count, err := queries.CountUntrashedFileByIDs(ctx, []uuid.UUID{fileID})
+	count, err := queries.CountUntrashedFileByIDs(ctx, db.CountUntrashedFileByIDsParams{
+		UserID: agg.OwnerID,
+		Ids:    []uuid.UUID{fileID},
+	})
 	if err != nil {
 		return nil, err
 	}
