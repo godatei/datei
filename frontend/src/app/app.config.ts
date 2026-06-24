@@ -1,7 +1,14 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import {
+  ApplicationConfig,
+  inject,
+  provideAppInitializer,
+  provideBrowserGlobalErrorListeners,
+} from '@angular/core';
 import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
-import { MAT_ICON_DEFAULT_OPTIONS } from '@angular/material/icon';
+import { MAT_ICON_DEFAULT_OPTIONS, MatIconRegistry } from '@angular/material/icon';
+import { DomSanitizer } from '@angular/platform-browser';
+import { registerFileLsicons } from '~/util/file-icons';
 
 import { routes } from '~/frontend/app.routes';
 import { tokenInterceptor } from '~/frontend/services/auth.service';
@@ -21,5 +28,7 @@ export const appConfig: ApplicationConfig = {
     ),
     // Route every <mat-icon> through Material Symbols (variable) by default.
     { provide: MAT_ICON_DEFAULT_OPTIONS, useValue: { fontSet: 'material-symbols-outlined' } },
+    // Register lsicon file-type SVGs so <mat-icon svgIcon="lsicon:..."> works.
+    provideAppInitializer(() => registerFileLsicons(inject(MatIconRegistry), inject(DomSanitizer))),
   ],
 };

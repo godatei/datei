@@ -7,6 +7,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -21,7 +22,7 @@ import {
   updateFile$FormData,
 } from '~/api/functions';
 import { File } from '~/api/models';
-import { ThumbnailIconComponent } from './thumbnail-icon.component';
+import { FileIconComponent } from './file-icon.component';
 import { FilePreviewService } from '~/frontend/file-preview/file-preview.service';
 import { NewFolderDialogComponent } from './new-folder-dialog.component';
 import { RenameFileDialogComponent, RenameFileDialogData } from './rename-file-dialog.component';
@@ -36,6 +37,7 @@ import { SmartDatePipe } from '~/frontend/pipes/smart-date.pipe';
 import { triggerDownload } from '~/util/download';
 import { isPreviewable } from '~/util/previewable';
 import { buildShareUrl } from '~/util/share-url';
+import { AuthService } from '~/frontend/services/auth.service';
 import { DragDropDirective, DropEvent } from './drag-drop.directive';
 import { DragPreviewDirective } from './drag-preview.directive';
 import { DragItemDirective } from './drag-row.directive';
@@ -43,6 +45,13 @@ import { DropTargetDirective } from './drop-target.directive';
 import { SelectionDirective } from './selection.directive';
 import { SelectionItemDirective } from './selection-item.directive';
 import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
 
 @Component({
   selector: 'app-dashboard',
@@ -55,9 +64,10 @@ import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
     MatButtonModule,
     MatChipsModule,
     MatTableModule,
+    MatSortModule,
     SmartDatePipe,
     BytesPipe,
-    ThumbnailIconComponent,
+    FileIconComponent,
     DragDropDirective,
     DragPreviewDirective,
     DragItemDirective,
@@ -75,6 +85,21 @@ export class DashboardComponent {
   private readonly clipboard = inject(Clipboard);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
+  private readonly currentUserId = computed(() => this.auth.getClaims()?.sub);
+
+  protected ownerLabel(file: File): string {
+    return this.isOwnedByMe(file) ? 'me' : (file.createdBy ?? '');
+  }
+
+  protected ownerInitials(file: File): string {
+    const source = this.isOwnedByMe(file) ? (this.auth.userName() ?? '') : (file.createdBy ?? '');
+    return initials(source);
+  }
+
+  private isOwnedByMe(file: File): boolean {
+    return !file.createdBy || file.createdBy === this.currentUserId();
+  }
 
   private readonly refresh = signal(0);
   private readonly queryParams = toSignal(this.route.queryParamMap);
@@ -94,19 +119,32 @@ export class DashboardComponent {
   });
 
   protected readonly dataSource = new MatTableDataSource<File>([]);
-  protected readonly displayedColumns = [
-    'icon',
-    'name',
-    'mimeType',
-    'size',
-    'createdAt',
-    'updatedAt',
-    'actions',
-  ];
+  protected readonly displayedColumns = ['name', 'owner', 'updatedAt', 'size', 'actions'];
   protected readonly selection = viewChild.required<SelectionDirective<File>>(SelectionDirective);
+  protected readonly sort = viewChild(MatSort);
   protected readonly uploading = signal(false);
 
   constructor() {
+    this.dataSource.sortingDataAccessor = (file, column) => {
+      switch (column) {
+        case 'name':
+          return file.name?.toLowerCase() ?? '';
+        case 'owner':
+          return this.ownerLabel(file).toLowerCase();
+        case 'updatedAt':
+          return new Date(file.updatedAt).getTime();
+        case 'size':
+          return file.size ?? 0;
+        default:
+          return '';
+      }
+    };
+
+    effect(() => {
+      const sort = this.sort();
+      if (sort) this.dataSource.sort = sort;
+    });
+
     effect(() => {
       this.dataSource.data = this.listFilesResource.value()?.items ?? [];
       this.selection().clear();
