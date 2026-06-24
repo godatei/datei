@@ -93,6 +93,13 @@
   min-height: 2.25rem;
 }
 
+/* Breadcrumb trails read as a heading rather than small, primary-colored
+   button text. */
+nav[aria-label='Breadcrumb'] .mat-mdc-button {
+  font: var(--mat-sys-title-large);
+  color: var(--mat-sys-on-surface);
+}
+
 .mat-mdc-row:hover {
   background: var(--mat-sys-surface-container-low);
 }
