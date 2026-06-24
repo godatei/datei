@@ -1,19 +1,19 @@
-import { Component, computed, inject, OnInit, resource, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
-import { MatListModule } from '@angular/material/list';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Api } from '~/api/api';
 import { snackErrorDuration } from '~/frontend/constants';
-import { getFilePath, listFiles, restoreTrash } from '~/api/functions';
+import { getFilePath, restoreTrash } from '~/api/functions';
 import { File, FilePathItem } from '~/api/models';
+import {
+  DirectoryPickerComponent,
+  DirectorySelection,
+} from '~/frontend/components/directory-picker.component';
 
 @Component({
   templateUrl: './restore-dialog.component.html',
-  styleUrl: './restore-dialog.component.css',
-  imports: [MatButtonModule, MatDialogModule, MatIconModule, MatListModule, MatProgressBarModule],
+  imports: [MatButtonModule, MatDialogModule, DirectoryPickerComponent],
 })
 export class RestoreDialogComponent implements OnInit {
   protected readonly data = inject<File>(MAT_DIALOG_DATA);
@@ -21,20 +21,8 @@ export class RestoreDialogComponent implements OnInit {
   private readonly api = inject(Api);
   private readonly snack = inject(MatSnackBar);
 
-  protected readonly navItems = signal<FilePathItem[]>([]);
-  protected readonly currentNavItem = computed(() => {
-    const items = this.navItems();
-    return items.length > 0 ? items[items.length - 1] : undefined;
-  });
-
-  protected readonly currentContents = resource({
-    params: () => {
-      const items = this.navItems();
-      return { parentId: items.length > 0 ? items[items.length - 1]?.id : undefined };
-    },
-    loader: async ({ params }) =>
-      (await this.api.invoke(listFiles, params)).items.filter((it) => it.isDirectory),
-  });
+  protected readonly initialPath = signal<FilePathItem[]>([]);
+  protected readonly selectedParent = signal<DirectorySelection | undefined>(undefined);
 
   public async ngOnInit(): Promise<void> {
     if (this.data.parentId) {
@@ -42,7 +30,7 @@ export class RestoreDialogComponent implements OnInit {
         // initialize the directory picker with the original parent unless it is also trashed
         const path = await this.api.invoke(getFilePath, { id: this.data.parentId });
         if (!path.some((it) => it.trashed)) {
-          this.navItems.set(path);
+          this.initialPath.set(path);
         }
       } catch (e) {
         console.error(e);
@@ -53,23 +41,9 @@ export class RestoreDialogComponent implements OnInit {
     }
   }
 
-  protected navigateTo(item: File) {
-    this.navItems.update((items) => items.concat({ id: item.id, name: item.name ?? '' }));
-  }
-
-  protected navigateUpTo(id?: string) {
-    this.navItems.update((items) => {
-      if (id === undefined) {
-        return [];
-      }
-      const i = items.findIndex((it) => it.id === id);
-      return i >= 0 ? items.slice(0, i + 1) : [];
-    });
-  }
-
   protected async restore() {
+    const parent = this.selectedParent();
     try {
-      const parent = this.currentNavItem();
       await this.api.invoke(restoreTrash, {
         fileId: this.data.id,
         body: { parentId: parent?.id ?? null },

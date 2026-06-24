@@ -1,0 +1,33 @@
+@reference 'tailwindcss';
+
+:host {
+  @apply block;
+}
+
+.breadcrumb {
+  scrollbar-width: none;
+  border-bottom-color: var(--mat-sys-outline-variant);
+}
+
+.breadcrumb::-webkit-scrollbar {
+  @apply hidden;
+}
+
+.breadcrumb-btn {
+  @apply px-2;
+}
+
+.empty-state {
+  @apply flex flex-col items-center justify-center gap-2 my-2;
+
+  color: var(--mat-sys-on-surface-variant);
+
+  mat-icon {
+    @apply text-4xl;
+    @apply size-9;
+  }
+}
+
+mat-action-list {
+  @apply pt-0!;
+}

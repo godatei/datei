@@ -1,25 +1,19 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { form, FormField, FormRoot, min, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
-import {
-  MAT_DIALOG_DATA,
-  MatDialog,
-  MatDialogModule,
-  MatDialogRef,
-} from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { firstValueFrom } from 'rxjs';
 import { Api } from '~/api/api';
-import { createMailRule, updateMailRule } from '~/api/functions';
+import { createMailRule, getFilePath, updateMailRule } from '~/api/functions';
 import type { MailAccount } from '~/api/models/mail-account';
 import type { MailRule } from '~/api/models/mail-rule';
 import { retryOnConflict } from '~/util/retry-on-conflict';
 import {
-  DirectoryPickerDialogComponent,
+  DirectoryPickerComponent,
   DirectorySelection,
-} from './directory-picker-dialog.component';
+} from '~/frontend/components/directory-picker.component';
 
 export interface MailRuleDialogData {
   accounts: MailAccount[];
@@ -49,11 +43,11 @@ interface MailRuleFormModel {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    DirectoryPickerComponent,
   ],
 })
-export class MailRuleDialogComponent {
+export class MailRuleDialogComponent implements OnInit {
   private readonly api = inject(Api);
-  private readonly dialog = inject(MatDialog);
   private readonly data = inject<MailRuleDialogData>(MAT_DIALOG_DATA);
   private readonly dialogRef = inject(MatDialogRef<MailRuleDialogComponent, MailRule | undefined>);
 
@@ -65,8 +59,22 @@ export class MailRuleDialogComponent {
     this.data.rule?.targetDirectoryId,
   );
   protected readonly targetDirectoryLabel = signal<string>(
-    this.data.rule?.targetDirectoryId ? 'Selected directory' : 'Root',
+    this.data.rule?.targetDirectoryId ? 'Selected directory' : 'My files',
   );
+
+  public async ngOnInit(): Promise<void> {
+    const directoryId = this.data.rule?.targetDirectoryId;
+    if (!directoryId) return;
+    try {
+      const path = await this.api.invoke(getFilePath, { id: directoryId });
+      const name = path[path.length - 1]?.name;
+      if (name) this.targetDirectoryLabel.set(name);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  protected readonly pickerOpen = signal(false);
+  protected readonly pendingSelection = signal<DirectorySelection | undefined>(undefined);
 
   protected readonly model = signal<MailRuleFormModel>({
     accountId: this.data.rule?.accountId ?? this.data.accounts[0]?.id ?? '',
@@ -129,16 +137,15 @@ export class MailRuleDialogComponent {
     },
   );
 
-  protected async chooseDirectory(): Promise<void> {
-    const dialogRef = this.dialog.open<
-      DirectoryPickerDialogComponent,
-      unknown,
-      DirectorySelection | undefined
-    >(DirectoryPickerDialogComponent);
-    const selection = await firstValueFrom(dialogRef.afterClosed());
-    if (!selection) return;
-    this.targetDirectoryId.set(selection.id);
-    this.targetDirectoryLabel.set(selection.name);
+  protected togglePicker(): void {
+    this.pickerOpen.update((open) => !open);
+  }
+
+  protected confirmDirectory(): void {
+    const selection = this.pendingSelection();
+    this.targetDirectoryId.set(selection?.id);
+    this.targetDirectoryLabel.set(selection?.name ?? 'My files');
+    this.pickerOpen.set(false);
   }
 
   protected cancel(): void {

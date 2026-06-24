@@ -64,8 +64,21 @@
         <span class="mat-font-body-md grow">
           Target directory: <strong>{{ targetDirectoryLabel() }}</strong>
         </span>
-        <button mat-stroked-button type="button" (click)="chooseDirectory()">Choose...</button>
+        <button mat-stroked-button type="button" (click)="togglePicker()">
+          {{ pickerOpen() ? 'Close' : 'Choose...' }}
+        </button>
       </div>
+
+      @if (pickerOpen()) {
+        <div class="mat-bg-surface-container-low mat-corner-md mat-border-subtle p-3">
+          <app-directory-picker (currentChange)="pendingSelection.set($event)" />
+          <div class="flex justify-end mt-2">
+            <button mat-flat-button type="button" (click)="confirmDirectory()">
+              Select "{{ pendingSelection()?.name ?? 'My files' }}"
+            </button>
+          </div>
+        </div>
+      }
 
       @if (errorMessage()) {
         <p class="mat-text-error mat-font-body-sm m-0">{{ errorMessage() }}</p>
