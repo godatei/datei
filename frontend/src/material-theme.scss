@@ -7,6 +7,10 @@
 
 @include mat.system-classes();
 
+// Roboto Flex (variable) is Material 3 Expressive's recommended typeface. Fall
+// back to system Roboto, then a generic sans.
+$datei-font-family: ('Roboto Flex Variable', 'Roboto', 'Helvetica Neue', sans-serif);
+
 html {
   height: 100%;
   @include mat.theme(
@@ -15,7 +19,10 @@ html {
         primary: mat.$azure-palette,
         tertiary: mat.$blue-palette,
       ),
-      typography: Roboto,
+      typography: (
+        plain-family: $datei-font-family,
+        brand-family: $datei-font-family,
+      ),
       density: 0,
     )
   );

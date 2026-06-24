@@ -31,7 +31,7 @@
   </nav>
 
   <div
-    class="flex items-center gap-1 px-1 py-0.5 min-h-11 mat-corner-sm transition-all"
+    class="flex items-center gap-1 px-1 py-0.5 min-h-11 mat-corner-full transition-all"
     [class.mat-bg-secondary-container]="selection.isAnySelected()"
   >
     @if (selection.isAnySelected()) {
@@ -94,12 +94,12 @@
 
       <ng-container matColumnDef="createdAt">
         <th mat-header-cell *matHeaderCellDef>Created At</th>
-        <td mat-cell *matCellDef="let element">{{ element.createdAt | date }}</td>
+        <td mat-cell *matCellDef="let element">{{ element.createdAt | smartDate }}</td>
       </ng-container>
 
       <ng-container matColumnDef="updatedAt">
         <th mat-header-cell *matHeaderCellDef>Updated At</th>
-        <td mat-cell *matCellDef="let element">{{ element.updatedAt | date }}</td>
+        <td mat-cell *matCellDef="let element">{{ element.updatedAt | smartDate }}</td>
       </ng-container>
 
       <ng-container matColumnDef="mimeType">
@@ -116,7 +116,7 @@
             (click)="$event.stopPropagation()"
             aria-label="More actions"
           >
-            <mat-icon>more_vert</mat-icon>
+            <mat-icon class="material-symbols-light">more_vert</mat-icon>
           </button>
           <mat-menu #rowMenu="matMenu">
             <button mat-menu-item (click)="openRenameDialog(element)">

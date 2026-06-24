@@ -1,6 +1,7 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
+import { MAT_ICON_DEFAULT_OPTIONS } from '@angular/material/icon';
 
 import { routes } from '~/frontend/app.routes';
 import { tokenInterceptor } from '~/frontend/services/auth.service';
@@ -18,5 +19,7 @@ export const appConfig: ApplicationConfig = {
       withXhr(),
       withInterceptors([tokenInterceptor, publicLinkTokenInterceptor, errorInterceptor]),
     ),
+    // Route every <mat-icon> through Material Symbols (variable) by default.
+    { provide: MAT_ICON_DEFAULT_OPTIONS, useValue: { fontSet: 'material-symbols-outlined' } },
   ],
 };

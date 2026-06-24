@@ -6,7 +6,7 @@
     </button>
   </nav>
 
-  <div class="flex items-center gap-1 px-1 py-0.5 min-h-11 mat-corner-sm">
+  <div class="flex items-center gap-1 px-1 py-0.5 min-h-11 mat-corner-full">
     <mat-chip-listbox
       [value]="selectedTab()"
       (change)="onFilterChange($event.value)"
@@ -49,7 +49,7 @@
 
       <ng-container matColumnDef="createdAt">
         <th mat-header-cell *matHeaderCellDef>Created</th>
-        <td mat-cell *matCellDef="let link">{{ link.createdAt | date }}</td>
+        <td mat-cell *matCellDef="let link">{{ link.createdAt | smartDate }}</td>
       </ng-container>
 
       <ng-container matColumnDef="expiresAt">
@@ -115,7 +115,7 @@
         <th mat-header-cell *matHeaderCellDef></th>
         <td mat-cell *matCellDef="let link" class="w-12 text-right">
           <button matIconButton [matMenuTriggerFor]="rowMenu" aria-label="More actions">
-            <mat-icon>more_vert</mat-icon>
+            <mat-icon class="material-symbols-light">more_vert</mat-icon>
           </button>
           <mat-menu #rowMenu="matMenu">
             <a mat-menu-item [href]="shareUrl(link)" target="_blank" rel="noopener">

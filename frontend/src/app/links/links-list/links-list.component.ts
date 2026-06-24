@@ -14,6 +14,7 @@ import { getLink, listLinks, revokeLink, rotateLinkKey } from '~/api/functions';
 import type { Link } from '~/api/models/link';
 import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
 import { RelativeDatePipe } from '~/frontend/pipes/relative-date.pipe';
+import { SmartDatePipe } from '~/frontend/pipes/smart-date.pipe';
 import {
   LinkFormDialogComponent,
   LinkFormDialogData,
@@ -35,6 +36,7 @@ export type LinkStatusFilter = 'active' | 'expired' | 'revoked';
     MatTableModule,
     MatTooltipModule,
     RelativeDatePipe,
+    SmartDatePipe,
   ],
 })
 export class LinksListComponent {

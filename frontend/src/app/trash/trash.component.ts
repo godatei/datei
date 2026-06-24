@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, resource, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -15,6 +14,7 @@ import { ThumbnailIconComponent } from '~/frontend/dashboard/thumbnail-icon.comp
 import { SelectionDirective } from '~/frontend/dashboard/selection.directive';
 import { SelectionItemDirective } from '~/frontend/dashboard/selection-item.directive';
 import { RestoreDialogComponent } from './restore-dialog/restore-dialog.component';
+import { SmartDatePipe } from '~/frontend/pipes/smart-date.pipe';
 import { filter } from 'rxjs';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { snackSuccessDuration } from '~/frontend/constants';
@@ -24,7 +24,7 @@ import { snackSuccessDuration } from '~/frontend/constants';
   templateUrl: './trash.component.html',
   host: { class: 'flex flex-col grow min-h-0' },
   imports: [
-    DatePipe,
+    SmartDatePipe,
     MatButtonModule,
     MatChipsModule,
     MatIconModule,

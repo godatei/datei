@@ -278,6 +278,10 @@ This project uses Angular Material 21 with Material 3 theming. All UI must follo
 | **Border**        | `mat-border` (outline), `mat-border-subtle` (outline-variant)                                                                                                                                                                                                                 |
 | **Shadow**        | `mat-shadow-1` … `mat-shadow-5`                                                                                                                                                                                                                                               |
 
+### Icons
+
+Single variable icon font: Material Symbols Outlined, set as the global default font set in `app.config.ts`. Write `<mat-icon>delete</mat-icon>` (no per-icon `fontSet`). Icons are **filled by default**; modifier classes (in `styles.css`): `.material-symbols-outline` (outline variation, e.g. inactive nav items) and `.material-symbols-light` (subtle indicators). Do NOT reintroduce the removed static `@fontsource/material-icons*` packages.
+
 ### Angular Best Practices
 
 - Always use standalone components over NgModules
