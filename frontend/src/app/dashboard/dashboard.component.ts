@@ -11,7 +11,6 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router } from '@angular/router';
-import { DomSanitizer } from '@angular/platform-browser';
 import { Api } from '~/api/api';
 import {
   addFileToLink,
@@ -24,10 +23,7 @@ import {
 } from '~/api/functions';
 import { File } from '~/api/models';
 import { ThumbnailIconComponent } from './thumbnail-icon.component';
-import {
-  ImagePreviewDialogComponent,
-  ImagePreviewDialogData,
-} from './image-preview-dialog.component';
+import { FilePreviewService } from '~/frontend/file-preview/file-preview.service';
 import { NewFolderDialogComponent } from './new-folder-dialog.component';
 import { RenameFileDialogComponent, RenameFileDialogData } from './rename-file-dialog.component';
 import {
@@ -38,6 +34,7 @@ import { LinkPickerDialogComponent } from '~/frontend/links/link-picker-dialog/l
 import type { Link } from '~/api/models/link';
 import { BytesPipe } from '~/frontend/pipes/bytes.pipe';
 import { triggerDownload } from '~/util/download';
+import { isPreviewable } from '~/util/previewable';
 import { buildShareUrl } from '~/util/share-url';
 import { DragDropDirective, DropEvent } from './drag-drop.directive';
 import { DragPreviewDirective } from './drag-preview.directive';
@@ -74,8 +71,8 @@ export class DashboardComponent {
   private readonly api = inject(Api);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
+  private readonly filePreview = inject(FilePreviewService);
   private readonly clipboard = inject(Clipboard);
-  private readonly sanitizer = inject(DomSanitizer);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -123,29 +120,10 @@ export class DashboardComponent {
       return;
     }
     const name = row.name ?? '';
-    if (row.mimeType?.startsWith('image/')) {
-      void this.previewImage(row.id, name);
+    if (isPreviewable(row)) {
+      this.filePreview.open(this.dataSource.data, row.id);
     } else {
       void this.downloadFile(row.id, name);
-    }
-  }
-
-  private async previewImage(id: string, name: string): Promise<void> {
-    try {
-      const response = await this.api.invoke$Response(downloadFile, { id });
-      const url = URL.createObjectURL(response.body as Blob);
-      const ref = this.dialog.open(ImagePreviewDialogComponent, {
-        data: {
-          src: this.sanitizer.bypassSecurityTrustUrl(url),
-          name,
-        } satisfies ImagePreviewDialogData,
-        maxWidth: '90vw',
-        maxHeight: '90vh',
-      });
-      ref.afterClosed().subscribe(() => URL.revokeObjectURL(url));
-    } catch (e) {
-      console.error(e);
-      this.snackBar.open('Failed to load image', 'Dismiss', { duration: snackErrorDuration });
     }
   }
 
