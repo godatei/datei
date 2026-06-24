@@ -19,21 +19,14 @@
   </div>
 
   <div class="grow min-h-0 overflow-auto">
-    <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
-      <ng-container matColumnDef="icon">
-        <th mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let _" class="w-20">
-          <mat-icon class="mat-text-on-surface-variant">link</mat-icon>
-        </td>
-      </ng-container>
-
+    <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8">
       <ng-container matColumnDef="name">
-        <th mat-header-cell *matHeaderCellDef>Name</th>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
         <td mat-cell *matCellDef="let link">{{ link.name }}</td>
       </ng-container>
 
       <ng-container matColumnDef="contents">
-        <th mat-header-cell *matHeaderCellDef>Contents</th>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Contents</th>
         <td mat-cell *matCellDef="let link" i18n="@@linkContentsCounts">
           {link.folderCount, plural, =1 {one folder} other {{{ link.folderCount }} folders}},
           {link.fileCount, plural, =1 {one file} other {{{ link.fileCount }} files}}
@@ -41,19 +34,19 @@
       </ng-container>
 
       <ng-container matColumnDef="opens">
-        <th mat-header-cell *matHeaderCellDef>Opened</th>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Opened</th>
         <td mat-cell *matCellDef="let link" i18n="@@linkOpenedCount">
           {link.openCount, plural, =0 {never} =1 {1 time} other {{{ link.openCount }} times}}
         </td>
       </ng-container>
 
       <ng-container matColumnDef="createdAt">
-        <th mat-header-cell *matHeaderCellDef>Created</th>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Created</th>
         <td mat-cell *matCellDef="let link">{{ link.createdAt | smartDate }}</td>
       </ng-container>
 
       <ng-container matColumnDef="expiresAt">
-        <th mat-header-cell *matHeaderCellDef>Expires</th>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Expires</th>
         <td mat-cell *matCellDef="let link">
           @if (link.expiresAt) {
             <span [matTooltip]="link.expiresAt | date: 'medium'">
