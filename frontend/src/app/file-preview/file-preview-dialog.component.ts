@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  DestroyRef,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -26,7 +19,6 @@ export interface FilePreviewDialogData {
   selector: 'app-file-preview-dialog',
   templateUrl: './file-preview-dialog.component.html',
   styleUrl: './file-preview-dialog.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'lightbox',
     '(click)': 'onBackdropClick($event)',
