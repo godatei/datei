@@ -17,16 +17,16 @@ export default defineConfig({
   fonts: [
     {
       provider: fontProviders.google(),
-      name: 'Google Sans',
-      cssVariable: '--font-google-sans',
+      name: 'Roboto Flex',
+      cssVariable: '--font-roboto-flex',
       weights: ['400 700'],
-      styles: ['normal', 'italic'],
+      styles: ['normal'],
       display: 'swap',
     },
     {
       provider: fontProviders.google(),
-      name: 'Google Sans Code',
-      cssVariable: '--font-google-sans-code',
+      name: 'Roboto Mono',
+      cssVariable: '--font-roboto-mono',
       weights: ['400 600'],
       display: 'swap',
     },
