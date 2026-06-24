@@ -6,7 +6,7 @@
     </p>
   </div>
 
-  <mat-list>
+  <mat-list class="m3-baseline-list">
     @for (email of emails(); track email.id; let last = $last) {
       <mat-list-item>
         <span matListItemTitle class="break-all">{{ email.email }}</span>

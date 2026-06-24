@@ -149,7 +149,13 @@ mat-list.m3-baseline-list {
 
   mat-list-item {
     border-radius: var(--mat-sys-corner-extra-small);
-    background-color: var(--mat-sys-surface-container-lowest);
+    background-color: var(--datei-shell-background);
+    /* Match single-line rows (e.g. emails) to the two-line row height used by
+       the tokens list, so both lists share the same vertical padding. */
+    --mat-list-list-item-one-line-container-height: var(
+      --mat-list-list-item-two-line-container-height,
+      64px
+    );
   }
 }
 

@@ -9,7 +9,7 @@ import { ownerLabel } from '~/util/owner';
   selector: 'app-owner-cell',
   template: `
     <div class="flex items-center gap-2">
-      <app-user-avatar [name]="avatarName()" size="xs" />
+      <app-user-avatar [name]="avatarName()" size="2xs" />
       <span>{{ label() }}</span>
     </div>
   `,
