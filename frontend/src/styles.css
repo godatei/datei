@@ -1,8 +1,15 @@
 @import '@fontsource-variable/roboto-flex';
-/* `full` slice is the only one that carries the FILL axis (it ships a second
-   filled master per glyph), which the active/selected states rely on. The
-   lighter `index`/`standard` slices are weight-only and can't fill. */
-@import '@fontsource-variable/material-symbols-outlined/full.css';
+
+/* Material Symbols subset: only the icons the app uses, kept as a variable font
+   (FILL 0..1, wght 300..400) so the filled/outline/light states still work.
+   Vendored at frontend/public/fonts; regenerate with `pnpm generate:material-symbols`. */
+@font-face {
+  font-family: 'Material Symbols Outlined Variable';
+  font-style: normal;
+  font-weight: 300 400;
+  font-display: block;
+  src: url('/fonts/material-symbols-outlined-subset.woff2') format('woff2-variations');
+}
 
 /* Material Symbols (variable) is the single icon font for the app. The default
    is the filled, regular-weight style; modifier classes switch to the outline

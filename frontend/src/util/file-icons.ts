@@ -1,8 +1,7 @@
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
-import { icons as lsicon } from '@iconify-json/lsicon';
-import { getIconData, iconToHTML, iconToSVG, replaceIDs } from '@iconify/utils';
 import { File } from '~/api/models';
+import { LSICON_SVGS } from './lsicon-svgs.generated';
 
 export const LSICON_NAMESPACE = 'lsicon';
 
@@ -79,11 +78,6 @@ function categorize(file: File): FileCategory {
   return 'other';
 }
 
-/** All lsicon names the file list can render, so they can be pre-registered. */
-export const FILE_LSICONS: readonly string[] = [
-  ...new Set(Object.values(CATEGORY_ICON).filter((name): name is string => name !== null)),
-];
-
 /** lsicon name for a file, or `null` to fall back to a Material Symbols icon. */
 export function lsiconForFile(file: File): string | null {
   return CATEGORY_ICON[categorize(file)];
@@ -94,13 +88,9 @@ export function fileIconColor(file: File): string {
   return CATEGORY_COLOR[categorize(file)];
 }
 
-/** Registers the file-type lsicon SVGs with Angular Material's icon registry. */
+/** Registers the pre-rendered file-type lsicon SVGs with Material's registry. */
 export function registerFileLsicons(registry: MatIconRegistry, sanitizer: DomSanitizer): void {
-  for (const name of FILE_LSICONS) {
-    const data = getIconData(lsicon, name);
-    if (!data) continue;
-    const rendered = iconToSVG(data);
-    const svg = iconToHTML(replaceIDs(rendered.body), rendered.attributes);
+  for (const [name, svg] of Object.entries(LSICON_SVGS)) {
     registry.addSvgIconLiteralInNamespace(
       LSICON_NAMESPACE,
       name,

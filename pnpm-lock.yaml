@@ -35,18 +35,9 @@ importers:
       '@angular/router':
         specifier: ^22.0.0
         version: 22.0.2(@angular/common@22.0.2(@angular/core@22.0.2(@angular/compiler@22.0.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.0.2(@angular/compiler@22.0.2)(rxjs@7.8.2))(@angular/platform-browser@22.0.2(@angular/common@22.0.2(@angular/core@22.0.2(@angular/compiler@22.0.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.0.2(@angular/compiler@22.0.2)(rxjs@7.8.2)))(rxjs@7.8.2)
-      '@fontsource-variable/material-symbols-outlined':
-        specifier: ^5.2.45
-        version: 5.2.45
       '@fontsource-variable/roboto-flex':
         specifier: ^5.2.8
         version: 5.2.8
-      '@iconify-json/lsicon':
-        specifier: ^1.2.5
-        version: 1.2.5
-      '@iconify/utils':
-        specifier: ^3.1.3
-        version: 3.1.3
       date-fns:
         specifier: ^4.1.0
         version: 4.4.0
@@ -78,6 +69,12 @@ importers:
       '@eslint/js':
         specifier: ^10.0.0
         version: 10.0.1(eslint@10.5.0(jiti@2.7.0))
+      '@iconify-json/lsicon':
+        specifier: ^1.2.5
+        version: 1.2.5
+      '@iconify/utils':
+        specifier: ^3.1.3
+        version: 3.1.3
       '@redocly/cli':
         specifier: ^2.19.2
         version: 2.32.0(@opentelemetry/api@1.9.1)(core-js@3.49.0)
@@ -905,9 +902,6 @@ packages:
   '@faker-js/faker@7.6.0':
     resolution: {integrity: sha512-XK6BTq1NDMo9Xqw/YkYyGjSsg44fbNwYRx7QK2CuoQgyy+f1rrTDHoExVM5PsyXCtfl2vs2vVJ0MN0yN6LppRw==}
     engines: {node: '>=14.0.0', npm: '>=6.0.0'}
-
-  '@fontsource-variable/material-symbols-outlined@5.2.45':
-    resolution: {integrity: sha512-Hx6KX6W3rtMWEte72lTmV/4dJIpcAOi/tappR19Tz2dbvlWpboGqu0m7sJu7uIlLlDNuHjr/QComLCap6gSCug==}
 
   '@fontsource-variable/roboto-flex@5.2.8':
     resolution: {integrity: sha512-Q9zbz+P2VrDeIxBu9YAIG+eYpLmQF5FIJEEwAWn8En9Lao1TOISnoYcywGV+jSv7LGsHEndCR8hveXPnvCBEQQ==}
@@ -4970,8 +4964,6 @@ snapshots:
   '@exodus/schemasafe@1.3.0': {}
 
   '@faker-js/faker@7.6.0': {}
-
-  '@fontsource-variable/material-symbols-outlined@5.2.45': {}
 
   '@fontsource-variable/roboto-flex@5.2.8': {}
 

@@ -282,6 +282,10 @@ This project uses Angular Material 21 with Material 3 theming. All UI must follo
 
 Single variable icon font: Material Symbols Outlined, set as the global default font set in `app.config.ts`. Write `<mat-icon>delete</mat-icon>` (no per-icon `fontSet`). Icons are **filled by default**; modifier classes (in `styles.css`): `.material-symbols-outline` (outline variation, e.g. inactive nav items) and `.material-symbols-light` (subtle indicators). Do NOT reintroduce the removed static `@fontsource/material-icons*` packages.
 
+**Subsetting (important):** the font is a vendored subset at `frontend/public/fonts/material-symbols-outlined-subset.woff2` (a few dozen KB instead of ~3.8 MB), declared via a custom `@font-face` in `styles.css`. It is generated from the Google Fonts `icon_names` API by `pnpm generate:material-symbols`. Icon names are **discovered by scanning the source** (no hand-maintained list): `<mat-icon>…</mat-icon>` blocks in `.html` and inline `.ts` templates (both bare ligatures like `delete` and quoted names inside interpolations like `x ? 'visibility_off' : 'visibility'`), plus TS `icon: '…'` properties and `*_ICON* = '…'` constants. The API ignores unknown names, so occasional over-matches are harmless. If you reference an icon in a way none of these patterns catch, extend the regexes in `frontend/scripts/generate-material-symbols.mjs`. After adding any new icon, rerun the script and commit the regenerated `.woff2`.
+
+**File-type icons** use [lsicon](https://icon-sets.iconify.design/lsicon/) (Iconify) for known MIME types, rendered as `<mat-icon svgIcon="lsicon:...">` via `app-file-icon`. The used SVGs are pre-rendered into `frontend/src/util/lsicon-svgs.generated.ts` by `pnpm generate:lsicon` (keep the name list in that script in sync with `CATEGORY_ICON` in `frontend/src/util/file-icons.ts`); the `@iconify*` packages are devDependencies so the full dataset never enters the bundle.
+
 ### Angular Best Practices
 
 - Always use standalone components over NgModules
