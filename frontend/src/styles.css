@@ -1,11 +1,14 @@
-@import '@fontsource/roboto/300.css';
-@import '@fontsource/roboto/400.css';
-@import '@fontsource/roboto/500.css';
-@import '@fontsource/material-icons';
-@import '@fontsource/material-icons-outlined';
+@import '@fontsource-variable/roboto-flex';
+/* `full` slice is the only one that carries the FILL axis (it ships a second
+   filled master per glyph), which the active/selected states rely on. The
+   lighter `index`/`standard` slices are weight-only and can't fill. */
+@import '@fontsource-variable/material-symbols-outlined/full.css';
 
-.material-icons,
-.material-icons-outlined {
+/* Material Symbols (variable) is the single icon font for the app. The default
+   is the filled, regular-weight style; modifier classes switch to the outline
+   variation or drop to a lighter weight (subtle indicators). */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined Variable';
   font-weight: normal;
   font-style: normal;
   font-size: 24px;
@@ -19,14 +22,27 @@
   -webkit-font-feature-settings: 'liga';
   font-feature-settings: 'liga';
   -webkit-font-smoothing: antialiased;
+  font-variation-settings:
+    'FILL' 1,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
 }
 
-.material-icons {
-  font-family: 'Material Icons';
+.material-symbols-outlined.material-symbols-outline {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
 }
 
-.material-icons-outlined {
-  font-family: 'Material Icons Outlined';
+.material-symbols-outlined.material-symbols-light {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 300,
+    'GRAD' 0,
+    'opsz' 24;
 }
 
 @import 'tailwindcss';
@@ -43,21 +59,40 @@
    utilities, so concrete values are set here. */
 .mat-mdc-table {
   --mat-table-background-color: var(--datei-container-background);
+  --mat-table-row-item-label-text-color: var(--mat-sys-on-surface-variant);
+  --mat-table-header-headline-color: var(--mat-sys-on-surface-variant);
+  --mat-table-row-item-outline-color: var(--mat-sys-outline-variant);
   background: var(--datei-container-background);
+}
+
+/* Tighter, Google-style line height in table cells. */
+.mat-mdc-cell,
+.mat-mdc-header-cell {
+  line-height: 1.25;
 }
 
 .mat-mdc-header-cell {
   background: var(--datei-container-background);
 }
 
-tr {
-  &:hover {
-    background: var(--mat-sys-surface-container-low);
-  }
+/* First (name) column reads as the row's primary label: full-strength color and
+   heavier weight against the lighter rest of the row. */
+.mat-mdc-cell.mat-column-name {
+  font-weight: 600;
+  color: var(--mat-sys-on-surface);
+}
 
-  &.selection-item-selected {
-    background: var(--mat-sys-secondary-container);
-  }
+/* Dropdown menus use the lightest surface (white). */
+.mat-mdc-menu-panel {
+  --mat-menu-container-color: var(--mat-sys-surface-container-lowest);
+}
+
+.mat-mdc-row:hover {
+  background: var(--mat-sys-surface-container-low);
+}
+
+tr.selection-item-selected {
+  background: var(--mat-sys-secondary-container);
 }
 
 /* The collapsed rail is exactly one icon-column wide and its header is pinned to
@@ -92,4 +127,30 @@ mat-list.m3-baseline-list {
 
 [matListItemMeta].list-meta-flex {
   @apply h-full flex! items-center gap-1;
+}
+
+/* Overlay-style scrollbars: a thin rounded thumb floating over a transparent
+   track, so scroll regions don't reserve a permanent gutter. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: 9999px;
+  background-color: color-mix(in srgb, var(--mat-sys-on-surface) 25%, transparent);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--mat-sys-on-surface) 40%, transparent);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
 }

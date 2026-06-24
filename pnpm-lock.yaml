@@ -35,15 +35,12 @@ importers:
       '@angular/router':
         specifier: ^22.0.0
         version: 22.0.2(@angular/common@22.0.2(@angular/core@22.0.2(@angular/compiler@22.0.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.0.2(@angular/compiler@22.0.2)(rxjs@7.8.2))(@angular/platform-browser@22.0.2(@angular/common@22.0.2(@angular/core@22.0.2(@angular/compiler@22.0.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.0.2(@angular/compiler@22.0.2)(rxjs@7.8.2)))(rxjs@7.8.2)
-      '@fontsource/material-icons':
-        specifier: ^5.2.7
-        version: 5.2.7
-      '@fontsource/material-icons-outlined':
-        specifier: ^5.2.6
-        version: 5.2.6
-      '@fontsource/roboto':
-        specifier: ^5.2.10
-        version: 5.2.10
+      '@fontsource-variable/material-symbols-outlined':
+        specifier: ^5.2.45
+        version: 5.2.45
+      '@fontsource-variable/roboto-flex':
+        specifier: ^5.2.8
+        version: 5.2.8
       date-fns:
         specifier: ^4.1.0
         version: 4.4.0
@@ -900,14 +897,11 @@ packages:
     resolution: {integrity: sha512-XK6BTq1NDMo9Xqw/YkYyGjSsg44fbNwYRx7QK2CuoQgyy+f1rrTDHoExVM5PsyXCtfl2vs2vVJ0MN0yN6LppRw==}
     engines: {node: '>=14.0.0', npm: '>=6.0.0'}
 
-  '@fontsource/material-icons-outlined@5.2.6':
-    resolution: {integrity: sha512-99XKAkwnCg0s0/ywax+o3m01HSNM5gGzSBw+WnlWG2+WY3wOjcN+wXMfm4zP37Yme7Yze2DvKxF78tHWOrlwFw==}
+  '@fontsource-variable/material-symbols-outlined@5.2.45':
+    resolution: {integrity: sha512-Hx6KX6W3rtMWEte72lTmV/4dJIpcAOi/tappR19Tz2dbvlWpboGqu0m7sJu7uIlLlDNuHjr/QComLCap6gSCug==}
 
-  '@fontsource/material-icons@5.2.7':
-    resolution: {integrity: sha512-crPmK0L34lPGmS5GSGLasKpRGQzl95SxMsLM+QhBHPgR9uxSsyI5CUTb0cgoMpjtR+Bf1bC9QOe6pavoybbBwg==}
-
-  '@fontsource/roboto@5.2.10':
-    resolution: {integrity: sha512-8HlA5FtSfz//oFSr2eL7GFXAiE7eIkcGOtx7tjsLKq+as702x9+GU7K95iDeWFapHC4M2hv9RrpXKRTGGBI8Zg==}
+  '@fontsource-variable/roboto-flex@5.2.8':
+    resolution: {integrity: sha512-Q9zbz+P2VrDeIxBu9YAIG+eYpLmQF5FIJEEwAWn8En9Lao1TOISnoYcywGV+jSv7LGsHEndCR8hveXPnvCBEQQ==}
 
   '@gar/promise-retry@1.0.3':
     resolution: {integrity: sha512-GmzA9ckNokPypTg10pgpeHNQe7ph+iIKKmhKu3Ob9ANkswreCx7R3cKmY781K8QK3AqVL3xVh9A42JvIAbkkSA==}
@@ -4948,11 +4942,9 @@ snapshots:
 
   '@faker-js/faker@7.6.0': {}
 
-  '@fontsource/material-icons-outlined@5.2.6': {}
+  '@fontsource-variable/material-symbols-outlined@5.2.45': {}
 
-  '@fontsource/material-icons@5.2.7': {}
-
-  '@fontsource/roboto@5.2.10': {}
+  '@fontsource-variable/roboto-flex@5.2.8': {}
 
   '@gar/promise-retry@1.0.3': {}
 

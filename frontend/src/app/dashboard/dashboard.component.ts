@@ -1,5 +1,4 @@
 import { Clipboard } from '@angular/cdk/clipboard';
-import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, resource, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -37,6 +36,7 @@ import {
 import { LinkPickerDialogComponent } from '~/frontend/links/link-picker-dialog/link-picker-dialog.component';
 import type { Link } from '~/api/models/link';
 import { BytesPipe } from '~/frontend/pipes/bytes.pipe';
+import { SmartDatePipe } from '~/frontend/pipes/smart-date.pipe';
 import { triggerDownload } from '~/util/download';
 import { buildShareUrl } from '~/util/share-url';
 import { DragDropDirective, DropEvent } from './drag-drop.directive';
@@ -58,7 +58,7 @@ import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
     MatButtonModule,
     MatChipsModule,
     MatTableModule,
-    DatePipe,
+    SmartDatePipe,
     BytesPipe,
     ThumbnailIconComponent,
     DragDropDirective,
