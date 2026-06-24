@@ -21,12 +21,12 @@ export class OwnerCellComponent {
   private readonly auth = inject(AuthService);
   private readonly currentUserId = computed(() => this.auth.getClaims()?.sub);
   private readonly isMe = computed(() => {
-    const createdBy = this.file().createdBy;
-    return !createdBy || createdBy === this.currentUserId();
+    const ownerId = this.file().ownerId;
+    return !ownerId || ownerId === this.currentUserId();
   });
 
   protected readonly label = computed(() => ownerLabel(this.file(), this.currentUserId()));
   protected readonly avatarName = computed(() =>
-    this.isMe() ? (this.auth.userName() ?? '') : (this.file().createdBy ?? ''),
+    this.isMe() ? (this.auth.userName() ?? '') : (this.file().ownerName ?? ''),
   );
 }

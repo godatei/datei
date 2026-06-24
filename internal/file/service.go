@@ -196,8 +196,13 @@ func (s *Service) ListFiles(ctx context.Context, input ListFilesInput) (*ListFil
 		return nil, err
 	}
 
+	items := MapProjectionSliceToAPI(projections)
+	if err := s.setFileOwners(ctx, items); err != nil {
+		return nil, err
+	}
+
 	return &ListFilesOutput{
-		Items: MapProjectionSliceToAPI(projections),
+		Items: items,
 		Total: int(total),
 	}, nil
 }
@@ -263,7 +268,11 @@ func (s *Service) CreateFile(ctx context.Context, input CreateFileInput) (*api.F
 		s.startOCR(ctx, agg.ID, *agg.S3Key, *agg.Checksum, input.ContentType)
 	}
 
-	return MapAggregateToAPI(agg), nil
+	result := MapAggregateToAPI(agg)
+	if err := s.setFileOwner(ctx, result); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // DownloadFileOutput contains the response for downloading a file
@@ -390,7 +399,11 @@ func (s *Service) UpdateFile(ctx context.Context, input UpdateFileInput) (*api.F
 		s.startOCR(ctx, agg.ID, *agg.S3Key, *agg.Checksum, input.ContentType)
 	}
 
-	return MapAggregateToAPI(agg), nil
+	result := MapAggregateToAPI(agg)
+	if err := s.setFileOwner(ctx, result); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // GetThumbnailOutput contains the response for fetching a thumbnail.
@@ -506,7 +519,11 @@ func (s *Service) FindFileByPath(ctx context.Context, segments []string) (*api.F
 	} else if err != nil {
 		return nil, err
 	}
-	return MapProjectionToAPI(&proj), nil
+	result := MapProjectionToAPI(&proj)
+	if err := s.setFileOwner(ctx, result); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // FindFileByName finds a non-trashed file by name within a parent (or at root).
@@ -533,7 +550,11 @@ func (s *Service) FindFileByName(ctx context.Context, parentID *uuid.UUID, name 
 	} else if err != nil {
 		return nil, err
 	}
-	return MapProjectionToAPI(&proj), nil
+	result := MapProjectionToAPI(&proj)
+	if err := s.setFileOwner(ctx, result); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 const maxDirChildren = 10_000
@@ -562,7 +583,11 @@ func (s *Service) ListFileChildren(ctx context.Context, parentID *uuid.UUID) ([]
 	if err != nil {
 		return nil, err
 	}
-	return MapProjectionSliceToAPI(projs), nil
+	items := MapProjectionSliceToAPI(projs)
+	if err := s.setFileOwners(ctx, items); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 // ListTrashInput contains parameters for listing trashed file records.
@@ -626,6 +651,10 @@ func (s *Service) ListTrash(ctx context.Context, input ListTrashInput) (*ListTra
 		if mapped := MapProjectionToTrashedFile(p, originPath); mapped != nil {
 			items = append(items, *mapped)
 		}
+	}
+
+	if err := s.setTrashedFileOwners(ctx, items); err != nil {
+		return nil, err
 	}
 
 	return &ListTrashOutput{Items: items, Total: int(total)}, nil
@@ -700,8 +729,13 @@ func (s *Service) ListTrashChildren(ctx context.Context, input ListTrashChildren
 		return nil, err
 	}
 
+	items := MapProjectionSliceToAPI(projections)
+	if err := s.setFileOwners(ctx, items); err != nil {
+		return nil, err
+	}
+
 	return &ListFilesOutput{
-		Items: MapProjectionSliceToAPI(projections),
+		Items: items,
 		Total: int(total),
 	}, nil
 }
@@ -784,6 +818,80 @@ func (s *Service) RestoreFile(ctx context.Context, input RestoreFileInput) error
 		return err
 	}
 	return s.repository.Save(ctx, agg)
+}
+
+// fileOwners resolves the owner (id + display name) for the given file IDs,
+// keyed by file ID. Ownership is sourced from file_permission_projection (the
+// authoritative source), not the file's created_by column.
+func (s *Service) fileOwners(
+	ctx context.Context, ids []uuid.UUID,
+) (map[uuid.UUID]db.ListFileOwnersRow, error) {
+	if len(ids) == 0 {
+		return map[uuid.UUID]db.ListFileOwnersRow{}, nil
+	}
+	rows, err := db.New(s.db).ListFileOwners(ctx, ids)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list file owners: %w", err)
+	}
+	owners := make(map[uuid.UUID]db.ListFileOwnersRow, len(rows))
+	for _, r := range rows {
+		owners[r.FileID] = r
+	}
+	return owners, nil
+}
+
+// setFileOwner attaches the resolved owner to a single file response.
+func (s *Service) setFileOwner(ctx context.Context, f *api.File) error {
+	if f == nil {
+		return nil
+	}
+	owners, err := s.fileOwners(ctx, []uuid.UUID{f.Id})
+	if err != nil {
+		return err
+	}
+	if o, ok := owners[f.Id]; ok {
+		f.OwnerId = &o.OwnerID
+		f.OwnerName = &o.OwnerName
+	}
+	return nil
+}
+
+// setFileOwners attaches the resolved owner to each file in a list response.
+func (s *Service) setFileOwners(ctx context.Context, files []api.File) error {
+	ids := make([]uuid.UUID, len(files))
+	for i := range files {
+		ids[i] = files[i].Id
+	}
+	owners, err := s.fileOwners(ctx, ids)
+	if err != nil {
+		return err
+	}
+	for i := range files {
+		if o, ok := owners[files[i].Id]; ok {
+			files[i].OwnerId = &o.OwnerID
+			files[i].OwnerName = &o.OwnerName
+		}
+	}
+	return nil
+}
+
+// setTrashedFileOwners attaches the resolved owner to each trashed file.
+func (s *Service) setTrashedFileOwners(ctx context.Context, files []api.TrashedFile) error {
+	ids := make([]uuid.UUID, len(files))
+	for i := range files {
+		ids[i] = files[i].Id
+	}
+	owners, err := s.fileOwners(ctx, ids)
+	if err != nil {
+		return err
+	}
+	for i := range files {
+		if o, ok := owners[files[i].Id]; ok {
+			files[i].OwnerId = &o.OwnerID
+			files[i].OwnerName = &o.OwnerName
+		}
+	}
+	return nil
 }
 
 // loadOwnedAggregate authorizes access via the file_permission_projection table

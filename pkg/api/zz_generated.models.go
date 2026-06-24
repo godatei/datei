@@ -176,6 +176,12 @@ type File struct {
 	// Name Current name of the File
 	Name *string `json:"name"`
 
+	// OwnerId User ID of the file's owner (from the permission table)
+	OwnerId *openapi_types.UUID `json:"ownerId,omitempty"`
+
+	// OwnerName Display name of the file's owner
+	OwnerName *string `json:"ownerName,omitempty"`
+
 	// ParentId Parent directory ID
 	ParentId *openapi_types.UUID `json:"parentId,omitempty"`
 
@@ -447,6 +453,12 @@ type TrashedFile struct {
 
 	// OriginPath Full ancestor path of the parent directory at the time of trashing. Populated only for root-level trash items (when listing without parentId). Empty when the item was at root level.
 	OriginPath *[]FilePathItem `json:"originPath,omitempty"`
+
+	// OwnerId User ID of the file's owner (from the permission table)
+	OwnerId *openapi_types.UUID `json:"ownerId,omitempty"`
+
+	// OwnerName Display name of the file's owner
+	OwnerName *string `json:"ownerName,omitempty"`
 
 	// ParentId Parent directory ID
 	ParentId *openapi_types.UUID `json:"parentId,omitempty"`

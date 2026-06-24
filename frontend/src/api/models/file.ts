@@ -49,6 +49,16 @@ export interface File {
   name: string | null;
 
   /**
+   * User ID of the file's owner (from the permission table)
+   */
+  ownerId?: string | null;
+
+  /**
+   * Display name of the file's owner
+   */
+  ownerName?: string | null;
+
+  /**
    * Parent directory ID
    */
   parentId?: string | null;

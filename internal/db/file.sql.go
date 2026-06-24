@@ -412,6 +412,44 @@ func (q *Queries) InsertFileProjection(ctx context.Context, arg InsertFileProjec
 	return err
 }
 
+const listFileOwners = `-- name: ListFileOwners :many
+SELECT DISTINCT ON (p.file_id)
+  p.file_id, ua.id AS owner_id, ua.name AS owner_name
+FROM file_permission_projection p
+JOIN user_account_projection ua ON ua.id = p.user_account_id
+WHERE p.file_id = ANY($1::uuid[])
+ORDER BY p.file_id, p.created_at ASC
+`
+
+type ListFileOwnersRow struct {
+	FileID    uuid.UUID `db:"file_id"`
+	OwnerID   uuid.UUID `db:"owner_id"`
+	OwnerName string    `db:"owner_name"`
+}
+
+// Resolves the owner (id + display name) for each given file. Ownership lives in
+// file_permission_projection; the earliest entry per file is the owner (the
+// creator), which keeps the result single-valued even once shared grants exist.
+func (q *Queries) ListFileOwners(ctx context.Context, fileIds []uuid.UUID) ([]ListFileOwnersRow, error) {
+	rows, err := q.db.Query(ctx, listFileOwners, fileIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListFileOwnersRow
+	for rows.Next() {
+		var i ListFileOwnersRow
+		if err := rows.Scan(&i.FileID, &i.OwnerID, &i.OwnerName); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listFileProjections = `-- name: ListFileProjections :many
 SELECT id, parent_id, is_directory, linked_file_id, name, s3_key, size, checksum, mime_type, content_md, content_search, created_at, updated_at, trashed_at, created_by, updated_by, trashed_by FROM file_projection ORDER BY created_at DESC
 `
