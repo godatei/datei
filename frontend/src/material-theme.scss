@@ -19,6 +19,18 @@ html {
       density: 0,
     )
   );
+
+  // Shared background for the main content card and the tables/headers that sit
+  // on it, so they all read as one continuous surface.
+  --datei-container-background: var(--mat-sys-surface-container-lowest);
+
+  // The app shell: navigation rail, top bar and the surface behind the content
+  // card.
+  --datei-shell-background: var(--mat-sys-surface-container-low);
+
+  // Secondary navigation panels that sit on the content card (e.g. the settings
+  // sidebar): a step lighter than the shell, a step darker than the container.
+  --datei-subnav-background: var(--mat-sys-surface);
 }
 
 body {
@@ -32,7 +44,7 @@ body {
   // variables at https://material.angular.dev/guide/system-variables
   // The global background is the grey navigation surface; only the routed
   // content card sets an explicit white (surface) background on top of it.
-  background-color: var(--mat-sys-surface-container);
+  background-color: var(--datei-shell-background);
   color: var(--mat-sys-on-surface);
   font: var(--mat-sys-body-medium);
 
