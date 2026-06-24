@@ -85,6 +85,12 @@
 /* Dropdown menus use the lightest surface (white). */
 .mat-mdc-menu-panel {
   --mat-menu-container-color: var(--mat-sys-surface-container-lowest);
+  --mat-menu-item-label-text-line-height: 1.25rem;
+}
+
+/* Compact dropdown menu items (default is a roomy 48px). */
+.mat-mdc-menu-item {
+  min-height: 2.25rem;
 }
 
 .mat-mdc-row:hover {
