@@ -1,5 +1,5 @@
 <div
-  class="flex flex-col grow min-h-0 mx-5 mt-3"
+  class="flex flex-col grow min-h-0 mx-5 mt-5"
   appDragDrop
   #drag="appDragDrop"
   (dragStart)="onDrag($event)"
@@ -14,7 +14,6 @@
       [appDropTarget]="null"
       [dropTargetEnabled]="parentId() !== null"
     >
-      <mat-icon>home</mat-icon>
       My files
     </button>
     @for (item of pathResource.value(); track item.id; let last = $last) {
