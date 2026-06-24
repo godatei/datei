@@ -40,8 +40,13 @@
 /* Material tables: opaque sticky header plus row hover/selection backgrounds.
    Material sets `background: inherit` on rows, which overrides Tailwind bg
    utilities, so concrete values are set here. */
+.mat-mdc-table {
+  --mat-table-background-color: var(--datei-container-background);
+  background: var(--datei-container-background);
+}
+
 .mat-mdc-header-cell {
-  background: var(--mat-sys-surface);
+  background: var(--datei-container-background);
 }
 
 tr {
