@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, effect, inject, resource, signal } from '@angular/core';
+import { Component, computed, effect, inject, resource, signal, viewChild } from '@angular/core';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
@@ -7,6 +7,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Api } from '~/api/api';
@@ -26,6 +27,7 @@ export type LinkStatusFilter = 'active' | 'expired' | 'revoked';
 @Component({
   selector: 'app-links-list',
   templateUrl: './links-list.component.html',
+  styleUrls: ['./links-list.component.css'],
   host: { class: 'flex flex-col grow min-h-0' },
   imports: [
     DatePipe,
@@ -34,6 +36,7 @@ export type LinkStatusFilter = 'active' | 'expired' | 'revoked';
     MatIconModule,
     MatMenuModule,
     MatTableModule,
+    MatSortModule,
     MatTooltipModule,
     RelativeDatePipe,
     SmartDatePipe,
@@ -81,21 +84,36 @@ export class LinksListComponent {
   protected readonly dataSource = new MatTableDataSource<Link>([]);
   protected readonly displayedColumns = computed(() =>
     this.selectedTab() === 'revoked'
-      ? ['icon', 'name', 'contents', 'opens', 'createdAt', 'expiresAt', 'code']
-      : [
-          'icon',
-          'name',
-          'contents',
-          'opens',
-          'createdAt',
-          'expiresAt',
-          'code',
-          'shareUrl',
-          'actions',
-        ],
+      ? ['name', 'contents', 'opens', 'createdAt', 'expiresAt', 'code']
+      : ['name', 'contents', 'opens', 'createdAt', 'expiresAt', 'code', 'shareUrl', 'actions'],
   );
 
+  protected readonly sort = viewChild(MatSort);
+
   constructor() {
+    this.dataSource.sortingDataAccessor = (link, column) => {
+      switch (column) {
+        case 'name':
+          return link.name?.toLowerCase() ?? '';
+        case 'contents':
+          return (link.folderCount ?? 0) + (link.fileCount ?? 0);
+        case 'opens':
+          return link.openCount ?? 0;
+        case 'createdAt':
+          return new Date(link.createdAt).getTime();
+        case 'expiresAt':
+          // Links that never expire sort after all dated ones.
+          return link.expiresAt ? new Date(link.expiresAt).getTime() : Number.POSITIVE_INFINITY;
+        default:
+          return '';
+      }
+    };
+
+    effect(() => {
+      const sort = this.sort();
+      if (sort) this.dataSource.sort = sort;
+    });
+
     effect(() => {
       this.dataSource.data = this.visibleLinks();
     });
