@@ -38,6 +38,9 @@ html {
   // Secondary navigation panels that sit on the content card (e.g. the settings
   // sidebar): a step lighter than the shell, a step darker than the container.
   --datei-subnav-background: var(--mat-sys-surface);
+
+  // Compact row height shared by the file/trash tables (~40px).
+  --datei-table-row-height: 2.5rem;
 }
 
 body {

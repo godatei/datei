@@ -5,14 +5,18 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Api } from '~/api/api';
 import { getFilePath, listTrash, listTrashChildren } from '~/api/functions';
 import { File, TrashedFile } from '~/api/models';
-import { ThumbnailIconComponent } from '~/frontend/dashboard/thumbnail-icon.component';
+import { FileIconComponent } from '~/frontend/dashboard/file-icon.component';
 import { SelectionDirective } from '~/frontend/dashboard/selection.directive';
 import { SelectionItemDirective } from '~/frontend/dashboard/selection-item.directive';
+import { OwnerCellComponent } from '~/frontend/shared/owner-cell.component';
+import { AuthService } from '~/frontend/services/auth.service';
+import { ownerLabel } from '~/util/owner';
 import { RestoreDialogComponent } from './restore-dialog/restore-dialog.component';
 import { SmartDatePipe } from '~/frontend/pipes/smart-date.pipe';
 import { filter } from 'rxjs';
@@ -22,6 +26,7 @@ import { snackSuccessDuration } from '~/frontend/constants';
 @Component({
   selector: 'app-trash',
   templateUrl: './trash.component.html',
+  styleUrls: ['./trash.component.css'],
   host: { class: 'flex flex-col grow min-h-0' },
   imports: [
     SmartDatePipe,
@@ -30,7 +35,9 @@ import { snackSuccessDuration } from '~/frontend/constants';
     MatIconModule,
     MatMenuModule,
     MatTableModule,
-    ThumbnailIconComponent,
+    MatSortModule,
+    FileIconComponent,
+    OwnerCellComponent,
     SelectionDirective,
     SelectionItemDirective,
     MatSnackBarModule,
@@ -42,6 +49,8 @@ export class TrashComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly snack = inject(MatSnackBar);
+  private readonly auth = inject(AuthService);
+  private readonly currentUserId = computed(() => this.auth.getClaims()?.sub);
 
   private readonly queryParams = toSignal(this.route.queryParamMap);
   protected readonly parentId = computed(() => this.queryParams()?.get('parentId') ?? null);
@@ -64,14 +73,35 @@ export class TrashComponent {
 
   protected readonly displayedColumns = computed(() =>
     this.parentId()
-      ? ['icon', 'name', 'actions']
-      : ['icon', 'name', 'trashedAt', 'originPath', 'actions'],
+      ? ['name', 'owner', 'actions']
+      : ['name', 'owner', 'trashedAt', 'originPath', 'actions'],
   );
 
   protected readonly dataSource = new MatTableDataSource<File>([]);
   protected readonly selection = viewChild.required<SelectionDirective<File>>(SelectionDirective);
+  protected readonly sort = viewChild(MatSort);
 
   constructor() {
+    this.dataSource.sortingDataAccessor = (file, column) => {
+      switch (column) {
+        case 'name':
+          return file.name?.toLowerCase() ?? '';
+        case 'owner':
+          return ownerLabel(file, this.currentUserId()).toLowerCase();
+        case 'trashedAt':
+          return file.trashedAt ? new Date(file.trashedAt).getTime() : 0;
+        case 'originPath':
+          return this.formatOriginPath(file as TrashedFile).toLowerCase();
+        default:
+          return '';
+      }
+    };
+
+    effect(() => {
+      const sort = this.sort();
+      if (sort) this.dataSource.sort = sort;
+    });
+
     effect(() => {
       this.dataSource.data = this.trashResource.value()?.items ?? [];
       this.selection().clear();

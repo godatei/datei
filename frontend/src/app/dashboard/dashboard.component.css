@@ -1,25 +1,5 @@
-:host {
-  /* Compact files-table rows (~40px) — kept as a token, not a magic pixel. */
-  --datei-files-row-height: 2.5rem;
-}
-
 .mat-mdc-row {
-  height: var(--datei-files-row-height);
-}
-
-.owner-avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 1.25rem;
-  height: 1.25rem;
-  border-radius: var(--mat-sys-corner-full, 9999px);
-  background: var(--mat-sys-primary-container);
-  color: var(--mat-sys-on-primary-container);
-  font-size: 0.625rem;
-  font-weight: 600;
-  line-height: 1;
+  height: var(--datei-table-row-height);
 }
 
 /* Rows highlighted as drop targets while dragging. The shared header/hover/

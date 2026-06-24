@@ -85,12 +85,7 @@
 
       <ng-container matColumnDef="owner">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>Owner</th>
-        <td mat-cell *matCellDef="let element">
-          <div class="flex items-center gap-2">
-            <span class="owner-avatar" aria-hidden="true">{{ ownerInitials(element) }}</span>
-            <span>{{ ownerLabel(element) }}</span>
-          </div>
-        </td>
+        <td mat-cell *matCellDef="let element"><app-owner-cell [file]="element" /></td>
       </ng-container>
 
       <ng-container matColumnDef="updatedAt">

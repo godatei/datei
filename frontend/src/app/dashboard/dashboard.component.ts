@@ -48,13 +48,8 @@ import { DropTargetDirective } from './drop-target.directive';
 import { SelectionDirective } from './selection.directive';
 import { SelectionItemDirective } from './selection-item.directive';
 import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return '?';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
+import { OwnerCellComponent } from '~/frontend/shared/owner-cell.component';
+import { ownerLabel } from '~/util/owner';
 
 @Component({
   selector: 'app-dashboard',
@@ -71,6 +66,7 @@ function initials(name: string): string {
     SmartDatePipe,
     BytesPipe,
     FileIconComponent,
+    OwnerCellComponent,
     DragDropDirective,
     DragPreviewDirective,
     DragItemDirective,
@@ -90,19 +86,6 @@ export class DashboardComponent {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
   private readonly currentUserId = computed(() => this.auth.getClaims()?.sub);
-
-  protected ownerLabel(file: File): string {
-    return this.isOwnedByMe(file) ? 'me' : (file.createdBy ?? '');
-  }
-
-  protected ownerInitials(file: File): string {
-    const source = this.isOwnedByMe(file) ? (this.auth.userName() ?? '') : (file.createdBy ?? '');
-    return initials(source);
-  }
-
-  private isOwnedByMe(file: File): boolean {
-    return !file.createdBy || file.createdBy === this.currentUserId();
-  }
 
   private readonly refresh = signal(0);
   private readonly queryParams = toSignal(this.route.queryParamMap);
@@ -133,7 +116,7 @@ export class DashboardComponent {
         case 'name':
           return file.name?.toLowerCase() ?? '';
         case 'owner':
-          return this.ownerLabel(file).toLowerCase();
+          return ownerLabel(file, this.currentUserId()).toLowerCase();
         case 'updatedAt':
           return new Date(file.updatedAt).getTime();
         case 'size':
