@@ -34,7 +34,6 @@ export const routes: Routes = [
       { path: 'reset', component: ResetComponent },
       {
         path: '',
-        loadComponent: () => import('~/frontend/nav/nav.component').then((m) => m.NavComponent),
         loadChildren: () => import('~/frontend/app-logged-in.routes').then((m) => m.routes),
       },
     ],
