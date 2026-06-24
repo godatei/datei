@@ -51,12 +51,12 @@ export interface File {
   /**
    * User ID of the file's owner (from the permission table)
    */
-  ownerId?: string | null;
+  ownerId: string;
 
   /**
    * Display name of the file's owner
    */
-  ownerName?: string | null;
+  ownerName: string;
 
   /**
    * Parent directory ID

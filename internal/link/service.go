@@ -9,6 +9,7 @@ import (
 	"github.com/godatei/datei/internal/apperrors"
 	"github.com/godatei/datei/internal/authn"
 	"github.com/godatei/datei/internal/db"
+	"github.com/godatei/datei/internal/file"
 	"github.com/godatei/datei/pkg/api"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -294,9 +295,13 @@ func (s *Service) aggregateToLinkDetail(ctx context.Context, agg *Aggregate) (*a
 	if err != nil {
 		return nil, err
 	}
-	return MapAggregateToLinkDetail(
+	detail := MapAggregateToLinkDetail(
 		agg, files, int(counts.FileCount), int(counts.FolderCount), int(counts.OpenCount),
-	), nil
+	)
+	if err := file.AttachOwners(ctx, queries, detail.Files); err != nil {
+		return nil, err
+	}
+	return detail, nil
 }
 
 func normalizeOptionalCode(code *string) *string {

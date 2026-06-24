@@ -418,7 +418,7 @@ SELECT DISTINCT ON (p.file_id)
 FROM file_permission_projection p
 JOIN user_account_projection ua ON ua.id = p.user_account_id
 WHERE p.file_id = ANY($1::uuid[])
-ORDER BY p.file_id, p.created_at ASC
+ORDER BY p.file_id, p.created_at ASC, p.user_account_id ASC
 `
 
 type ListFileOwnersRow struct {
@@ -430,6 +430,7 @@ type ListFileOwnersRow struct {
 // Resolves the owner (id + display name) for each given file. Ownership lives in
 // file_permission_projection; the earliest entry per file is the owner (the
 // creator), which keeps the result single-valued even once shared grants exist.
+// user_account_id is a deterministic tie-breaker for entries sharing created_at.
 func (q *Queries) ListFileOwners(ctx context.Context, fileIds []uuid.UUID) ([]ListFileOwnersRow, error) {
 	rows, err := q.db.Query(ctx, listFileOwners, fileIds)
 	if err != nil {

@@ -177,10 +177,10 @@ type File struct {
 	Name *string `json:"name"`
 
 	// OwnerId User ID of the file's owner (from the permission table)
-	OwnerId *openapi_types.UUID `json:"ownerId,omitempty"`
+	OwnerId openapi_types.UUID `json:"ownerId"`
 
 	// OwnerName Display name of the file's owner
-	OwnerName *string `json:"ownerName,omitempty"`
+	OwnerName string `json:"ownerName"`
 
 	// ParentId Parent directory ID
 	ParentId *openapi_types.UUID `json:"parentId,omitempty"`
@@ -455,10 +455,10 @@ type TrashedFile struct {
 	OriginPath *[]FilePathItem `json:"originPath,omitempty"`
 
 	// OwnerId User ID of the file's owner (from the permission table)
-	OwnerId *openapi_types.UUID `json:"ownerId,omitempty"`
+	OwnerId openapi_types.UUID `json:"ownerId"`
 
 	// OwnerName Display name of the file's owner
-	OwnerName *string `json:"ownerName,omitempty"`
+	OwnerName string `json:"ownerName"`
 
 	// ParentId Parent directory ID
 	ParentId *openapi_types.UUID `json:"parentId,omitempty"`

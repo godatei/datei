@@ -102,7 +102,8 @@ export class LinksListComponent {
         case 'createdAt':
           return new Date(link.createdAt).getTime();
         case 'expiresAt':
-          // Links that never expire sort after all dated ones.
+          // Never-expiring links rank as the furthest-future date: last when
+          // sorting ascending, first when descending.
           return link.expiresAt ? new Date(link.expiresAt).getTime() : Number.POSITIVE_INFINITY;
         default:
           return '';
