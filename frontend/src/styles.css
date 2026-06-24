@@ -35,6 +35,7 @@
 
 .auth-card {
   --mat-card-content-padding: 2rem 2rem 1.5rem;
+  --mat-card-elevated-container-color: var(--mat-sys-surface-container-lowest);
 }
 
 /* Material tables: opaque sticky header plus row hover/selection backgrounds.
