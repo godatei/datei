@@ -30,8 +30,12 @@ export interface FilePreviewDialogData {
   host: {
     class: 'lightbox',
     '(click)': 'onBackdropClick($event)',
-    '(keydown.arrowleft)': 'prev()',
-    '(keydown.arrowright)': 'next()',
+    // Listen on the document, not the host: navigation disables the focused
+    // toolbar button mid-load, which drops focus to <body> and would otherwise
+    // stop host-scoped key events from firing. The dialog is modal and the
+    // listener is torn down with the component, so global scope is safe here.
+    '(document:keydown.arrowleft)': 'prev()',
+    '(document:keydown.arrowright)': 'next()',
   },
   imports: [MatButtonModule, MatIconModule, MatProgressSpinnerModule],
 })
