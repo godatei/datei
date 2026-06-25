@@ -17,7 +17,7 @@
     <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8">
       <ng-container matColumnDef="name">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
-        <td mat-cell *matCellDef="let link">{{ link.name }}</td>
+        <td mat-cell *matCellDef="let link" class="primary-cell">{{ link.name }}</td>
       </ng-container>
 
       <ng-container matColumnDef="contents">

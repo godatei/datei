@@ -64,9 +64,9 @@
   background: var(--datei-container-background);
 }
 
-/* First (name) column reads as the row's primary label: full-strength color and
-   heavier weight against the lighter rest of the row. */
-.mat-mdc-cell.mat-column-name {
+/* The row's primary label (name column): full-strength color and heavier weight
+   against the lighter rest of the row. */
+.mat-mdc-cell.primary-cell {
   font-weight: 500;
   color: var(--mat-sys-on-surface);
 }
