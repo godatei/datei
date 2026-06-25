@@ -178,20 +178,20 @@ INSERT INTO mail_rule_projection
 `
 
 type InsertMailRuleProjectionParams struct {
-	ID                uuid.UUID  `db:"id"`
-	AccountID         uuid.UUID  `db:"account_id"`
-	Name              string     `db:"name"`
-	SortOrder         int32      `db:"sort_order"`
-	Enabled           bool       `db:"enabled"`
-	Folder            string     `db:"folder"`
-	FilterFrom        *string    `db:"filter_from"`
-	FilterSubject     *string    `db:"filter_subject"`
-	MaxAgeDays        int32      `db:"max_age_days"`
-	AttachmentPattern *string    `db:"attachment_pattern"`
-	Action            MailAction `db:"action"`
-	TargetDirectoryID *uuid.UUID `db:"target_directory_id"`
-	CreatedAt         time.Time  `db:"created_at"`
-	UpdatedAt         time.Time  `db:"updated_at"`
+	ID                uuid.UUID   `db:"id"`
+	AccountID         uuid.UUID   `db:"account_id"`
+	Name              string      `db:"name"`
+	SortOrder         int32       `db:"sort_order"`
+	Enabled           bool        `db:"enabled"`
+	Folder            string      `db:"folder"`
+	FilterFrom        *string     `db:"filter_from"`
+	FilterSubject     *string     `db:"filter_subject"`
+	MaxAgeDays        int32       `db:"max_age_days"`
+	AttachmentPattern *string     `db:"attachment_pattern"`
+	Action            *MailAction `db:"action"`
+	TargetDirectoryID *uuid.UUID  `db:"target_directory_id"`
+	CreatedAt         time.Time   `db:"created_at"`
+	UpdatedAt         time.Time   `db:"updated_at"`
 }
 
 // ============================================================================
@@ -495,19 +495,19 @@ UPDATE mail_rule_projection
 `
 
 type UpdateMailRuleProjectionParams struct {
-	AccountID         uuid.UUID  `db:"account_id"`
-	Name              string     `db:"name"`
-	SortOrder         int32      `db:"sort_order"`
-	Enabled           bool       `db:"enabled"`
-	Folder            string     `db:"folder"`
-	FilterFrom        *string    `db:"filter_from"`
-	FilterSubject     *string    `db:"filter_subject"`
-	MaxAgeDays        int32      `db:"max_age_days"`
-	AttachmentPattern *string    `db:"attachment_pattern"`
-	Action            MailAction `db:"action"`
-	TargetDirectoryID *uuid.UUID `db:"target_directory_id"`
-	UpdatedAt         time.Time  `db:"updated_at"`
-	ID                uuid.UUID  `db:"id"`
+	AccountID         uuid.UUID   `db:"account_id"`
+	Name              string      `db:"name"`
+	SortOrder         int32       `db:"sort_order"`
+	Enabled           bool        `db:"enabled"`
+	Folder            string      `db:"folder"`
+	FilterFrom        *string     `db:"filter_from"`
+	FilterSubject     *string     `db:"filter_subject"`
+	MaxAgeDays        int32       `db:"max_age_days"`
+	AttachmentPattern *string     `db:"attachment_pattern"`
+	Action            *MailAction `db:"action"`
+	TargetDirectoryID *uuid.UUID  `db:"target_directory_id"`
+	UpdatedAt         time.Time   `db:"updated_at"`
+	ID                uuid.UUID   `db:"id"`
 }
 
 func (q *Queries) UpdateMailRuleProjection(ctx context.Context, arg UpdateMailRuleProjectionParams) error {

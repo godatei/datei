@@ -104,9 +104,17 @@ func (p *Poller) processRule(
 	}
 	uidValidity := int64(selectData.UIDValidity)
 
+	// Reprocessing is prevented by the mail_processed_message table, not the IMAP
+	// \Seen flag. Mirroring paperless-ngx, only exclude seen mail when the rule's
+	// action is "mark as read": then \Seen is a meaningful "already handled"
+	// marker and skipping it is a safe efficiency win. For other actions
+	// (including none) the flag isn't a reliable processed-marker, so we scan by
+	// age and let the processed table decide.
 	criteria := &imap.SearchCriteria{
-		NotFlag: []imap.Flag{imap.FlagSeen},
-		Since:   time.Now().AddDate(0, 0, -int(rule.MaxAgeDays)),
+		Since: time.Now().AddDate(0, 0, -int(rule.MaxAgeDays)),
+	}
+	if rule.Action != nil && Action(*rule.Action) == ActionMarkAsRead {
+		criteria.NotFlag = []imap.Flag{imap.FlagSeen}
 	}
 	searchData, err := client.UIDSearch(criteria, nil).Wait()
 	if err != nil {
@@ -178,8 +186,10 @@ func (p *Poller) processMessage(
 		return fmt.Errorf("record processed: %w", err)
 	}
 
-	if err := performAction(client, Action(rule.Action), uid); err != nil {
-		return fmt.Errorf("perform action: %w", err)
+	if rule.Action != nil {
+		if err := performAction(client, Action(*rule.Action), uid); err != nil {
+			return fmt.Errorf("perform action: %w", err)
+		}
 	}
 	return nil
 }

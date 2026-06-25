@@ -7,7 +7,11 @@ export interface UpdateMailRuleRequest {
    * Move the rule to this account; omit to keep its current account
    */
   accountId?: string;
-  action: 'mark_as_read';
+
+  /**
+   * Omit for no action once attachments are consumed
+   */
+  action?: 'mark_as_read';
 
   /**
    * Comma-separated filename globs (e.g. "*.pdf,*.docx"); empty means all attachments

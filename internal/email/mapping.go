@@ -50,11 +50,21 @@ func MapRuleProjectionToAPI(p *db.MailRuleProjection) *api.MailRule {
 		FilterSubject:     p.FilterSubject,
 		MaxAgeDays:        int(p.MaxAgeDays),
 		AttachmentPattern: p.AttachmentPattern,
-		Action:            api.MailRuleAction(p.Action),
+		Action:            mapRuleAction(p.Action),
 		TargetDirectoryId: p.TargetDirectoryID,
 		CreatedAt:         p.CreatedAt,
 		UpdatedAt:         p.UpdatedAt,
 	}
+}
+
+// mapRuleAction converts the nullable projection action enum to the API enum; a
+// NULL action (no action) maps to nil so it is omitted from the response.
+func mapRuleAction(a *db.MailAction) *api.MailRuleAction {
+	if a == nil {
+		return nil
+	}
+	v := api.MailRuleAction(*a)
+	return &v
 }
 
 // MapRuleProjectionSliceToAPI converts a slice of db.MailRuleProjection.

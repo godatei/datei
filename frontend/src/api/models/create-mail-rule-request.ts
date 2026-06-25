@@ -7,7 +7,11 @@ export interface CreateMailRuleRequest {
    * Account the rule belongs to
    */
   accountId: string;
-  action: 'mark_as_read';
+
+  /**
+   * Omit for no action once attachments are consumed
+   */
+  action?: 'mark_as_read';
 
   /**
    * Comma-separated filename globs (e.g. "*.pdf,*.docx"); empty means all attachments

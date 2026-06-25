@@ -276,7 +276,7 @@ type RuleInput struct {
 	FilterSubject     *string
 	MaxAgeDays        int
 	AttachmentPattern *string
-	Action            Action
+	Action            *Action
 	TargetDirectoryID *uuid.UUID
 }
 

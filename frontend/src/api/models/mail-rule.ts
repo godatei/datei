@@ -5,9 +5,9 @@ export interface MailRule {
   accountId: string;
 
   /**
-   * Action performed on a mail once its attachments have been consumed
+   * Action performed on a mail once its attachments have been consumed; omitted means no action
    */
-  action: 'mark_as_read';
+  action?: 'mark_as_read';
 
   /**
    * Comma-separated filename globs (e.g. "*.pdf,*.docx"); empty means all attachments

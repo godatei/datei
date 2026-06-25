@@ -241,8 +241,10 @@ type CreateMailAccountRequestSecurity string
 // CreateMailRuleRequest defines model for CreateMailRuleRequest.
 type CreateMailRuleRequest struct {
 	// AccountId Account the rule belongs to
-	AccountId openapi_types.UUID          `json:"accountId"`
-	Action    CreateMailRuleRequestAction `json:"action"`
+	AccountId openapi_types.UUID `json:"accountId"`
+
+	// Action Omit for no action once attachments are consumed
+	Action *CreateMailRuleRequestAction `json:"action,omitempty"`
 
 	// AttachmentPattern Comma-separated filename globs (e.g. "*.pdf,*.docx"); empty means all attachments
 	AttachmentPattern *string `json:"attachmentPattern,omitempty"`
@@ -258,7 +260,7 @@ type CreateMailRuleRequest struct {
 	TargetDirectoryId *openapi_types.UUID `json:"targetDirectoryId,omitempty"`
 }
 
-// CreateMailRuleRequestAction defines model for CreateMailRuleRequest.Action.
+// CreateMailRuleRequestAction Omit for no action once attachments are consumed
 type CreateMailRuleRequestAction string
 
 // CreatePersonalAccessTokenRequest defines model for CreatePersonalAccessTokenRequest.
@@ -560,8 +562,8 @@ type MailAccountSecurity string
 type MailRule struct {
 	AccountId openapi_types.UUID `json:"accountId"`
 
-	// Action Action performed on a mail once its attachments have been consumed
-	Action MailRuleAction `json:"action"`
+	// Action Action performed on a mail once its attachments have been consumed; omitted means no action
+	Action *MailRuleAction `json:"action,omitempty"`
 
 	// AttachmentPattern Comma-separated filename globs (e.g. "*.pdf,*.docx"); empty means all attachments
 	AttachmentPattern *string   `json:"attachmentPattern,omitempty"`
@@ -590,7 +592,7 @@ type MailRule struct {
 	UpdatedAt         time.Time           `json:"updatedAt"`
 }
 
-// MailRuleAction Action performed on a mail once its attachments have been consumed
+// MailRuleAction Action performed on a mail once its attachments have been consumed; omitted means no action
 type MailRuleAction string
 
 // PersonalAccessToken defines model for PersonalAccessToken.
@@ -780,8 +782,10 @@ type UpdateMailAccountRequestSecurity string
 // UpdateMailRuleRequest defines model for UpdateMailRuleRequest.
 type UpdateMailRuleRequest struct {
 	// AccountId Move the rule to this account; omit to keep its current account
-	AccountId *openapi_types.UUID         `json:"accountId,omitempty"`
-	Action    UpdateMailRuleRequestAction `json:"action"`
+	AccountId *openapi_types.UUID `json:"accountId,omitempty"`
+
+	// Action Omit for no action once attachments are consumed
+	Action *UpdateMailRuleRequestAction `json:"action,omitempty"`
 
 	// AttachmentPattern Comma-separated filename globs (e.g. "*.pdf,*.docx"); empty means all attachments
 	AttachmentPattern *string `json:"attachmentPattern,omitempty"`
@@ -797,7 +801,7 @@ type UpdateMailRuleRequest struct {
 	TargetDirectoryId *openapi_types.UUID `json:"targetDirectoryId,omitempty"`
 }
 
-// UpdateMailRuleRequestAction defines model for UpdateMailRuleRequest.Action.
+// UpdateMailRuleRequestAction Omit for no action once attachments are consumed
 type UpdateMailRuleRequestAction string
 
 // UpdateUserEmailRequest defines model for UpdateUserEmailRequest.

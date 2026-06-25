@@ -171,7 +171,7 @@ type MailRuleCreatedEvent struct {
 	FilterSubject     *string    `json:"filter_subject,omitempty"`
 	MaxAgeDays        int        `json:"max_age_days"`
 	AttachmentPattern *string    `json:"attachment_pattern,omitempty"`
-	Action            Action     `json:"action"`
+	Action            *Action    `json:"action,omitempty"`
 	TargetDirectoryID *uuid.UUID `json:"target_directory_id,omitempty"`
 	CreatedAt         time.Time  `json:"created_at"`
 }
@@ -206,7 +206,7 @@ type MailRuleUpdatedEvent struct {
 	FilterSubject     *string    `json:"filter_subject,omitempty"`
 	MaxAgeDays        int        `json:"max_age_days"`
 	AttachmentPattern *string    `json:"attachment_pattern,omitempty"`
-	Action            Action     `json:"action"`
+	Action            *Action    `json:"action,omitempty"`
 	TargetDirectoryID *uuid.UUID `json:"target_directory_id,omitempty"`
 	UpdatedAt         time.Time  `json:"updated_at"`
 }

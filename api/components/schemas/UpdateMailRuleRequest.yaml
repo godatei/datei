@@ -8,7 +8,6 @@ required:
   - enabled
   - folder
   - maxAgeDays
-  - action
 properties:
   accountId:
     type: string
@@ -38,6 +37,7 @@ properties:
   action:
     type: string
     enum: [mark_as_read]
+    description: Omit for no action once attachments are consumed
   targetDirectoryId:
     type: string
     format: uuid

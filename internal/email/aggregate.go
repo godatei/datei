@@ -173,7 +173,7 @@ type MailRule struct {
 	FilterSubject     *string
 	MaxAgeDays        int
 	AttachmentPattern *string
-	Action            Action
+	Action            *Action
 	TargetDirectoryID *uuid.UUID
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
@@ -201,7 +201,7 @@ type RuleSpec struct {
 	FilterSubject     *string
 	MaxAgeDays        int
 	AttachmentPattern *string
-	Action            Action
+	Action            *Action
 	TargetDirectoryID *uuid.UUID
 }
 
@@ -215,7 +215,7 @@ func (s RuleSpec) validate() error {
 	if s.MaxAgeDays < 1 {
 		return errors.New("max age days must be positive")
 	}
-	if !s.Action.valid() {
+	if s.Action != nil && !s.Action.valid() {
 		return errors.New("invalid action")
 	}
 	return nil

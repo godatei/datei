@@ -313,7 +313,7 @@ CREATE TABLE public.mail_rule_projection (
     filter_subject text,
     max_age_days integer NOT NULL,
     attachment_pattern text,
-    action public.mail_action NOT NULL,
+    action public.mail_action,
     target_directory_id uuid,
     created_at timestamp with time zone NOT NULL,
     updated_at timestamp with time zone NOT NULL,

@@ -60,7 +60,7 @@ func updateProjectionForMailRuleCreated(ctx context.Context, q *db.Queries, even
 		FilterSubject:     event.FilterSubject,
 		MaxAgeDays:        int32(event.MaxAgeDays),
 		AttachmentPattern: event.AttachmentPattern,
-		Action:            db.MailAction(event.Action),
+		Action:            dbMailAction(event.Action),
 		TargetDirectoryID: event.TargetDirectoryID,
 		CreatedAt:         event.CreatedAt,
 		UpdatedAt:         event.CreatedAt,
@@ -81,7 +81,7 @@ func updateProjectionForMailRuleUpdated(ctx context.Context, q *db.Queries, even
 		FilterSubject:     event.FilterSubject,
 		MaxAgeDays:        int32(event.MaxAgeDays),
 		AttachmentPattern: event.AttachmentPattern,
-		Action:            db.MailAction(event.Action),
+		Action:            dbMailAction(event.Action),
 		TargetDirectoryID: event.TargetDirectoryID,
 		UpdatedAt:         event.UpdatedAt,
 		ID:                event.ID,
@@ -89,6 +89,16 @@ func updateProjectionForMailRuleUpdated(ctx context.Context, q *db.Queries, even
 		return fmt.Errorf("failed to update mail_rule_projection: %w", err)
 	}
 	return nil
+}
+
+// dbMailAction converts a domain action into the nullable projection enum; a nil
+// action (no action) maps to a NULL column.
+func dbMailAction(a *Action) *db.MailAction {
+	if a == nil {
+		return nil
+	}
+	v := db.MailAction(*a)
+	return &v
 }
 
 func updateProjectionForMailRuleDeleted(ctx context.Context, q *db.Queries, event *MailRuleDeletedEvent) error {

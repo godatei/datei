@@ -13,6 +13,16 @@ type mailServer struct {
 	svc *email.Service
 }
 
+// toEmailAction converts an optional generated request action enum into the
+// domain action. A nil pointer (action omitted) means "no action".
+func toEmailAction[T ~string](a *T) *email.Action {
+	if a == nil {
+		return nil
+	}
+	v := email.Action(*a)
+	return &v
+}
+
 // ListMailAccounts implements [StrictServerInterface].
 func (s *mailServer) ListMailAccounts(
 	ctx context.Context, request ListMailAccountsRequestObject,
@@ -162,7 +172,7 @@ func (s *mailServer) CreateMailRule(
 		FilterSubject:     request.Body.FilterSubject,
 		MaxAgeDays:        request.Body.MaxAgeDays,
 		AttachmentPattern: request.Body.AttachmentPattern,
-		Action:            email.Action(request.Body.Action),
+		Action:            toEmailAction(request.Body.Action),
 		TargetDirectoryID: request.Body.TargetDirectoryId,
 	})
 	if err != nil {
@@ -211,7 +221,7 @@ func (s *mailServer) UpdateMailRule(
 		FilterSubject:     request.Body.FilterSubject,
 		MaxAgeDays:        request.Body.MaxAgeDays,
 		AttachmentPattern: request.Body.AttachmentPattern,
-		Action:            email.Action(request.Body.Action),
+		Action:            toEmailAction(request.Body.Action),
 		TargetDirectoryID: request.Body.TargetDirectoryId,
 	})
 	if err != nil {

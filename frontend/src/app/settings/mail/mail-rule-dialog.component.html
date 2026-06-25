@@ -60,6 +60,22 @@
         <mat-hint>Comma-separated globs, e.g. *.pdf,*.docx. Empty matches all.</mat-hint>
       </mat-form-field>
 
+      <mat-form-field appearance="outline">
+        <mat-label>Action</mat-label>
+        <mat-select [formField]="ruleForm.action">
+          <mat-option [value]="''">Nothing</mat-option>
+          <mat-option value="mark_as_read">Mark as read</mat-option>
+        </mat-select>
+        <mat-hint>
+          @if (ruleForm.action().value() === '') {
+            No action means every poll rescans the whole date range, which can be slower on large
+            mailboxes. "Mark as read" lets the poller skip handled mail.
+          } @else {
+            Mail is marked as read once its attachments are imported.
+          }
+        </mat-hint>
+      </mat-form-field>
+
       <div class="flex items-center gap-2 mb-2">
         <span class="mat-font-body-md grow">
           Target directory: <strong>{{ targetDirectoryLabel() }}</strong>

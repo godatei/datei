@@ -78,7 +78,8 @@ CREATE TABLE mail_rule_projection (
   max_age_days INT NOT NULL,
   -- Comma-separated filename globs (e.g. "*.pdf,*.docx"); empty means all attachments.
   attachment_pattern TEXT,
-  action mail_action NOT NULL,
+  -- Action performed once a mail's attachments are consumed; NULL means no action.
+  action mail_action,
   -- Target directory for ingested attachments; NULL means the owner's root.
   target_directory_id UUID REFERENCES file_projection(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL,

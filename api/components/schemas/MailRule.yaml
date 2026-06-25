@@ -7,7 +7,6 @@ required:
   - enabled
   - folder
   - maxAgeDays
-  - action
   - createdAt
   - updatedAt
 properties:
@@ -42,7 +41,7 @@ properties:
   action:
     type: string
     enum: [mark_as_read]
-    description: Action performed on a mail once its attachments have been consumed
+    description: Action performed on a mail once its attachments have been consumed; omitted means no action
   targetDirectoryId:
     type: string
     format: uuid

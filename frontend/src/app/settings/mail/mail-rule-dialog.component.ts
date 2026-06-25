@@ -30,6 +30,7 @@ interface MailRuleFormModel {
   filterSubject: string;
   maxAgeDays: number;
   attachmentPattern: string;
+  action: '' | 'mark_as_read';
 }
 
 @Component({
@@ -86,6 +87,7 @@ export class MailRuleDialogComponent implements OnInit {
     filterSubject: this.data.rule?.filterSubject ?? '',
     maxAgeDays: this.data.rule?.maxAgeDays ?? 30,
     attachmentPattern: this.data.rule?.attachmentPattern ?? '',
+    action: this.data.rule?.action ?? '',
   });
 
   protected readonly ruleForm = form(
@@ -110,7 +112,7 @@ export class MailRuleDialogComponent implements OnInit {
             enabled: m.enabled,
             folder: m.folder.trim(),
             maxAgeDays: m.maxAgeDays,
-            action: 'mark_as_read' as const,
+            ...(m.action === 'mark_as_read' ? { action: 'mark_as_read' as const } : {}),
             ...optional('filterFrom', m.filterFrom),
             ...optional('filterSubject', m.filterSubject),
             ...optional('attachmentPattern', m.attachmentPattern),
