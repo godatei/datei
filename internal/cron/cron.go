@@ -29,10 +29,16 @@ func New(ctx context.Context) (*Scheduler, error) {
 
 // Register schedules task to run on the given crontab (5-field cron syntax).
 // name identifies the job in logs and registration errors.
+//
+// Jobs run in singleton mode: if a run is still in progress when the next tick
+// fires, that tick is skipped rather than started concurrently. This prevents a
+// long-running job (e.g. the email poller) from overlapping itself, which could
+// otherwise let two runs process the same work before either records it.
 func (s *Scheduler) Register(name, crontab string, task func(context.Context)) error {
 	if _, err := s.scheduler.NewJob(
 		gocron.CronJob(crontab, false),
 		gocron.NewTask(task, s.ctx),
+		gocron.WithSingletonMode(gocron.LimitModeReschedule),
 	); err != nil {
 		return fmt.Errorf("schedule job %q: %w", name, err)
 	}
