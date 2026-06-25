@@ -7,6 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { Api } from '~/api/api';
 import { createMailRule, getFilePath, updateMailRule } from '~/api/functions';
+import type { FilePathItem } from '~/api/models/file-path-item';
 import type { MailAccount } from '~/api/models/mail-account';
 import type { MailRule } from '~/api/models/mail-rule';
 import { retryOnConflict } from '~/util/retry-on-conflict';
@@ -63,11 +64,14 @@ export class MailRuleDialogComponent implements OnInit {
     this.data.rule?.targetDirectoryId ? 'Selected directory' : 'My files',
   );
 
+  protected readonly initialPath = signal<FilePathItem[]>([]);
+
   public async ngOnInit(): Promise<void> {
     const directoryId = this.data.rule?.targetDirectoryId;
     if (!directoryId) return;
     try {
       const path = await this.api.invoke(getFilePath, { id: directoryId });
+      this.initialPath.set(path);
       const name = path[path.length - 1]?.name;
       if (name) this.targetDirectoryLabel.set(name);
     } catch (e) {
@@ -75,7 +79,11 @@ export class MailRuleDialogComponent implements OnInit {
     }
   }
   protected readonly pickerOpen = signal(false);
-  protected readonly pendingSelection = signal<DirectorySelection | undefined>(undefined);
+  protected readonly pendingSelection = signal<DirectorySelection | undefined>(
+    this.data.rule?.targetDirectoryId
+      ? { id: this.data.rule.targetDirectoryId, name: 'Selected directory' }
+      : undefined,
+  );
 
   protected readonly model = signal<MailRuleFormModel>({
     accountId: this.data.rule?.accountId ?? this.data.accounts[0]?.id ?? '',

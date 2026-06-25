@@ -87,7 +87,10 @@
 
       @if (pickerOpen()) {
         <div class="mat-bg-surface-container-low mat-corner-md mat-border-subtle p-3">
-          <app-directory-picker (currentChange)="pendingSelection.set($event)" />
+          <app-directory-picker
+            [initialPath]="initialPath()"
+            (currentChange)="pendingSelection.set($event)"
+          />
           <div class="flex justify-end mt-2">
             <button mat-flat-button type="button" (click)="confirmDirectory()">
               Select "{{ pendingSelection()?.name ?? 'My files' }}"
