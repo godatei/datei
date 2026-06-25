@@ -148,7 +148,7 @@
         [dropTargetEnabled]="row.isDirectory"
         [appSelectionItem]="row"
         (dblclick)="onRowDblClick(row)"
-        class="select-none transition-colors"
+        class="select-none"
         [class.opacity-50]="drag.isDragging() && selection.selectedIds().has(row.id)"
         [class.pointer-events-none]="drag.isDragging() && selection.selectedIds().has(row.id)"
         [class.cursor-pointer]="!drag.isDragging()"

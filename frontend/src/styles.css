@@ -89,6 +89,11 @@ nav[aria-label='Breadcrumb'] .mat-mdc-button {
   color: var(--mat-sys-on-surface);
 }
 
+/* Row background (hover/selection) changes apply instantly — no color fade. */
+.mat-mdc-row {
+  transition: none;
+}
+
 .mat-mdc-row:hover {
   background: var(--mat-sys-surface-container-low);
 }
