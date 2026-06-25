@@ -13,13 +13,13 @@ export interface UpdateMailRuleRequest {
    * Comma-separated filename globs (e.g. "*.pdf,*.docx"); empty means all attachments
    */
   attachmentPattern?: string;
-  enabled?: boolean;
+  enabled: boolean;
   filterFrom?: string;
   filterSubject?: string;
-  folder?: string;
+  folder: string;
   maxAgeDays: number;
   name: string;
-  order?: number;
+  order: number;
 
   /**
    * Directory the attachments are stored in; omit for the account owner's root

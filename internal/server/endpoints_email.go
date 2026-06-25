@@ -204,9 +204,9 @@ func (s *mailServer) UpdateMailRule(
 	}
 	result, err := s.svc.UpdateRule(ctx, request.RuleId, request.Body.AccountId, email.RuleInput{
 		Name:              request.Body.Name,
-		Order:             request.Body.Order,
-		Enabled:           request.Body.Enabled,
-		Folder:            request.Body.Folder,
+		Order:             &request.Body.Order,
+		Enabled:           &request.Body.Enabled,
+		Folder:            &request.Body.Folder,
 		FilterFrom:        request.Body.FilterFrom,
 		FilterSubject:     request.Body.FilterSubject,
 		MaxAgeDays:        request.Body.MaxAgeDays,

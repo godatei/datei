@@ -785,13 +785,13 @@ type UpdateMailRuleRequest struct {
 
 	// AttachmentPattern Comma-separated filename globs (e.g. "*.pdf,*.docx"); empty means all attachments
 	AttachmentPattern *string `json:"attachmentPattern,omitempty"`
-	Enabled           *bool   `json:"enabled,omitempty"`
+	Enabled           bool    `json:"enabled"`
 	FilterFrom        *string `json:"filterFrom,omitempty"`
 	FilterSubject     *string `json:"filterSubject,omitempty"`
-	Folder            *string `json:"folder,omitempty"`
+	Folder            string  `json:"folder"`
 	MaxAgeDays        int     `json:"maxAgeDays"`
 	Name              string  `json:"name"`
-	Order             *int    `json:"order,omitempty"`
+	Order             int     `json:"order"`
 
 	// TargetDirectoryId Directory the attachments are stored in; omit for the account owner's root
 	TargetDirectoryId *openapi_types.UUID `json:"targetDirectoryId,omitempty"`

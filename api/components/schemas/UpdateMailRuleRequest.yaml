@@ -1,6 +1,12 @@
 type: object
+# Update is a full replacement (PUT). order, enabled, and folder are required so
+# that omitting them returns 400 instead of silently resetting the rule to the
+# create-time defaults (0, true, INBOX).
 required:
   - name
+  - order
+  - enabled
+  - folder
   - maxAgeDays
   - action
 properties:
@@ -14,13 +20,11 @@ properties:
     maxLength: 255
   order:
     type: integer
-    default: 0
   enabled:
     type: boolean
-    default: true
   folder:
     type: string
-    default: INBOX
+    minLength: 1
   filterFrom:
     type: string
   filterSubject:
