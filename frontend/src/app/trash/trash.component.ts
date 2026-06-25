@@ -101,6 +101,19 @@ export class TrashComponent {
       if (sort) this.dataSource.sort = sort;
     });
 
+    // Navigating into a folder drops the trashedAt/originPath columns. Clear any
+    // active sort on a now-hidden column so rows aren't left ordered by an
+    // invisible column with no header indicator.
+    effect(() => {
+      const columns = this.displayedColumns();
+      const sort = this.sort();
+      if (sort && sort.active && !columns.includes(sort.active)) {
+        sort.active = '';
+        sort.direction = '';
+        sort.sortChange.emit({ active: '', direction: '' });
+      }
+    });
+
     effect(() => {
       this.dataSource.data = this.trashResource.value()?.items ?? [];
       this.selection().clear();
