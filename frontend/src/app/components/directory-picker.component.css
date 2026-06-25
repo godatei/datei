@@ -5,6 +5,8 @@
 }
 
 .breadcrumb {
+  @apply flex items-center flex-nowrap overflow-x-auto pb-1 mb-1 border-b;
+
   scrollbar-width: none;
   border-bottom-color: var(--mat-sys-outline-variant);
 }
