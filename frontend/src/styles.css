@@ -83,8 +83,9 @@
 }
 
 /* Breadcrumb trails read as a heading rather than small, primary-colored
-   button text. */
-nav[aria-label='Breadcrumb'] .mat-mdc-button {
+   button text. The `nav` qualifier keeps specificity above Material's default
+   text-button (primary) label color. */
+nav.breadcrumb-nav .mat-mdc-button {
   font: var(--mat-sys-title-large);
   color: var(--mat-sys-on-surface);
 }
@@ -94,7 +95,10 @@ nav[aria-label='Breadcrumb'] .mat-mdc-button {
   transition: none;
 }
 
-.mat-mdc-row:hover {
+/* Hover background applies only to plain rows. Selected and drag drop-target
+   rows keep their own highlight, which a bare `.mat-mdc-row:hover` would
+   otherwise out-specify (class+pseudo beats the single-class state rules). */
+.mat-mdc-row:hover:not(.selection-item-selected):not(.drop-target-active) {
   background: var(--mat-sys-surface-container-low);
 }
 

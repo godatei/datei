@@ -3,7 +3,10 @@
   [appSelection]="dataSource.data"
   #selection="appSelection"
 >
-  <nav aria-label="Breadcrumb" class="flex items-center gap-1 flex-wrap mb-2 mat-font-label-lg">
+  <nav
+    aria-label="Breadcrumb"
+    class="breadcrumb-nav flex items-center gap-1 flex-wrap mb-2 mat-font-label-lg"
+  >
     <button mat-button (click)="navigateTo(null)">Trash</button>
     @for (item of pathResource.value(); track item.id; let last = $last) {
       <mat-icon aria-hidden="true" class="mat-text-on-surface-variant">chevron_right</mat-icon>
