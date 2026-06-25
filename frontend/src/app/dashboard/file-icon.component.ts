@@ -20,15 +20,15 @@ import {
     }
   `,
   styles: `
-    :host {
-      /* Smaller than the default 24px icon to suit the compact files table. */
-      --datei-file-icon-size: 1.25rem;
-    }
+    @reference 'tailwindcss';
+
     mat-icon {
-      width: var(--datei-file-icon-size);
-      height: var(--datei-file-icon-size);
-      font-size: var(--datei-file-icon-size);
-      line-height: var(--datei-file-icon-size);
+      /* Smaller than the default 24px for the compact files table. size-5 covers
+         width/height (used by SVG icons); font-size/line-height size the ligature
+         fallback used for folders and unknown file types. */
+      @apply size-5;
+      font-size: 1.25rem;
+      line-height: 1.25rem;
     }
   `,
   imports: [MatIconModule],

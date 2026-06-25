@@ -49,6 +49,13 @@
 
 /* You can add global styles to this file, and also import other style files */
 
+/* Full-screen wrapper for unauthenticated pages: centers the auth card on the
+   app's base surface. */
+.auth-page {
+  @apply flex justify-center items-center min-h-screen p-4;
+  background-color: var(--mat-sys-surface);
+}
+
 .auth-card {
   --mat-card-content-padding: 2rem 2rem 1.5rem;
   --mat-card-elevated-container-color: var(--mat-sys-surface-container-lowest);
@@ -82,7 +89,13 @@
   min-height: 2.25rem;
 }
 
-/* Breadcrumb trails read as a heading rather than small, primary-colored
+/* Breadcrumb trail: a wrapping inline row of nav buttons. */
+nav.breadcrumb-nav {
+  @apply flex items-center gap-1 flex-wrap;
+  font: var(--mat-sys-label-large);
+}
+
+/* Breadcrumb buttons read as a heading rather than small, primary-colored
    button text. The `nav` qualifier keeps specificity above Material's default
    text-button (primary) label color. */
 nav.breadcrumb-nav .mat-mdc-button {
@@ -147,7 +160,10 @@ mat-list.m3-baseline-list {
 
   mat-list-item {
     border-radius: var(--mat-sys-corner-extra-small);
-    background-color: var(--datei-shell-background);
+    /* List rows sit on the content card as subtly raised tiles. Bound to the
+       surface tone directly rather than the nav-shell token, which only
+       coincidentally shared this color. */
+    background-color: var(--mat-sys-surface-container-low);
     /* Match single-line rows (e.g. emails) to the two-line row height used by
        the tokens list, so both lists share the same vertical padding. */
     --mat-list-list-item-one-line-container-height: var(

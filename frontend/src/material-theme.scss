@@ -4,7 +4,10 @@
 // Learn more about theming and how to use it for your application's
 // custom components at https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
-@use 'sass:map';
+
+// App-specific style partials live in ./styles/ and are pulled in here so the
+// top-level theme file stays focused on the Material theme setup.
+@use './styles/file-icons';
 
 @include mat.system-classes();
 
@@ -33,8 +36,10 @@ html {
   --datei-container-background: var(--mat-sys-surface-container-lowest);
 
   // The app shell: navigation rail, top bar and the surface behind the content
-  // card.
-  --datei-shell-background: var(--mat-sys-surface-container-low);
+  // card. Kept a step darker than the content card (surface-container-lowest) so
+  // the shell reads as a distinct, slightly recessed frame, especially where a
+  // subnav sits on it.
+  --datei-shell-background: var(--mat-sys-surface-container);
 
   // Table theming via Material's overrides system. Tables share the content
   // card's surface so they read as one continuous surface; the header/row text
@@ -79,58 +84,4 @@ body {
       filled-label-text-color: var(--mat-sys-on-error),
     )
   );
-}
-
-// File-type icon accent colors, sourced from Material's M3 palettes at a vivid
-// mid tone (50) to keep the saturated look the table used before while staying
-// on the design system. Categories whose original hue has no M3 palette are
-// snapped to the closest unused hue so each type stays visually distinct:
-//   indigo -> azure, amber -> yellow.
-// Greys have no hue palette, so they use Material's neutral system tokens.
-$file-icon-tone: 50;
-
-.file-icon-color-pdf {
-  color: map.get(mat.$red-palette, $file-icon-tone);
-}
-
-.file-icon-color-csv,
-.file-icon-color-excel {
-  color: map.get(mat.$green-palette, $file-icon-tone);
-}
-
-.file-icon-color-word {
-  color: map.get(mat.$blue-palette, $file-icon-tone);
-}
-
-.file-icon-color-ppt {
-  color: map.get(mat.$orange-palette, $file-icon-tone);
-}
-
-// Pink maps to M3's rose hue, purple to violet.
-.file-icon-color-image {
-  color: map.get(mat.$rose-palette, $file-icon-tone);
-}
-
-.file-icon-color-audio {
-  color: map.get(mat.$violet-palette, $file-icon-tone);
-}
-
-// Closest unused hues (no indigo/amber palette in M3).
-.file-icon-color-video {
-  color: map.get(mat.$azure-palette, $file-icon-tone); // indigo -> azure
-}
-
-.file-icon-color-zip,
-.file-icon-color-rar {
-  color: map.get(mat.$yellow-palette, $file-icon-tone); // amber -> yellow
-}
-
-// No grey hue palette; use Material neutral system tokens.
-.file-icon-color-folder {
-  color: var(--mat-sys-outline);
-}
-
-.file-icon-color-text,
-.file-icon-color-other {
-  color: var(--mat-sys-on-surface-variant);
 }
