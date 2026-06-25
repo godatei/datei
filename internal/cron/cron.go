@@ -1,6 +1,6 @@
-// Package cron provides a small wrapper around gocron for running named jobs
-// on a cron schedule. Callers build a Scheduler, Register one or more jobs,
-// then Start it; Shutdown stops the scheduler and waits for in-flight runs.
+// Package cron provides a small wrapper around gocron for running jobs on a
+// cron schedule. Callers build a Scheduler, Register one or more jobs, then
+// Start it; Shutdown stops the scheduler and waits for in-flight runs.
 package cron
 
 import (
@@ -28,7 +28,7 @@ func New(ctx context.Context) (*Scheduler, error) {
 }
 
 // Register schedules task to run on the given crontab (5-field cron syntax).
-// name identifies the job in logs and registration errors.
+// name identifies the job in registration errors.
 //
 // Jobs run in singleton mode: if a run is still in progress when the next tick
 // fires, that tick is skipped rather than started concurrently. This prevents a
