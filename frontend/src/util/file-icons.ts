@@ -44,23 +44,6 @@ const CATEGORY_ICON: Record<FileCategory, string | null> = {
   other: null,
 };
 
-/** Accent color per category — no Material token exists for file-type accents. */
-const CATEGORY_COLOR: Record<FileCategory, string> = {
-  folder: '#9aa0a6', // muted, a touch lighter than the row text
-  image: '#ec4899', // pink
-  audio: '#9333ea', // purple
-  video: '#6366f1', // indigo
-  pdf: '#ef4444', // red
-  csv: '#16a34a', // green
-  word: '#2563eb', // blue
-  excel: '#16a34a', // green
-  ppt: '#ea580c', // orange
-  zip: '#d97706', // amber
-  rar: '#d97706', // amber
-  text: '#64748b', // slate
-  other: '#64748b', // slate
-};
-
 function categorize(file: File): FileCategory {
   if (file.isDirectory) return 'folder';
   const mime = file.mimeType?.toLowerCase().trim();
@@ -89,9 +72,13 @@ export function lsiconForFile(file: File): string | null {
   return CATEGORY_ICON[categorize(file)];
 }
 
-/** Accent color for a file's icon. */
-export function fileIconColor(file: File): string {
-  return CATEGORY_COLOR[categorize(file)];
+/**
+ * CSS class that sets the icon's accent color. The classes live in
+ * `material-theme.scss` and are sourced from Material palettes where a matching
+ * hue exists (see that file for the per-category mapping).
+ */
+export function fileIconColorClass(file: File): string {
+  return `file-icon-color-${categorize(file)}`;
 }
 
 /** Registers the file-type lsicon SVGs with Angular Material's icon registry. */

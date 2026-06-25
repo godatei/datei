@@ -5,7 +5,7 @@ import {
   FILE_ICON_FALLBACK,
   FOLDER_ICON,
   LSICON_NAMESPACE,
-  fileIconColor,
+  fileIconColorClass,
   lsiconForFile,
 } from '~/util/file-icons';
 
@@ -14,9 +14,9 @@ import {
   host: { class: 'flex items-center justify-center' },
   template: `
     @if (svgIcon(); as icon) {
-      <mat-icon [svgIcon]="icon" [style.color]="color()" />
+      <mat-icon [svgIcon]="icon" [class]="colorClass()" />
     } @else {
-      <mat-icon [style.color]="color()">{{ fallbackIcon() }}</mat-icon>
+      <mat-icon [class]="colorClass()">{{ fallbackIcon() }}</mat-icon>
     }
   `,
   styles: `
@@ -45,5 +45,5 @@ export class FileIconComponent {
     this.file().isDirectory ? FOLDER_ICON : FILE_ICON_FALLBACK,
   );
 
-  protected readonly color = computed(() => fileIconColor(this.file()));
+  protected readonly colorClass = computed(() => fileIconColorClass(this.file()));
 }
