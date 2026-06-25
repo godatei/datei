@@ -1,7 +1,3 @@
-.mat-mdc-row {
-  height: var(--datei-table-row-height);
-}
-
 /* Rows highlighted as drop targets while dragging. The shared header/hover/
    selection backgrounds live in styles.css. */
 tr.drop-target-active {

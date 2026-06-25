@@ -26,7 +26,6 @@ import { snackSuccessDuration } from '~/frontend/constants';
 @Component({
   selector: 'app-trash',
   templateUrl: './trash.component.html',
-  styleUrls: ['./trash.component.css'],
   host: { class: 'flex flex-col grow min-h-0' },
   imports: [
     SmartDatePipe,

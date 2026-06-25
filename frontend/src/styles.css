@@ -54,17 +54,6 @@
   --mat-card-elevated-container-color: var(--mat-sys-surface-container-lowest);
 }
 
-/* Material tables: opaque sticky header plus row hover/selection backgrounds.
-   Material sets `background: inherit` on rows, which overrides Tailwind bg
-   utilities, so concrete values are set here. */
-.mat-mdc-table {
-  --mat-table-background-color: var(--datei-container-background);
-  --mat-table-row-item-label-text-color: var(--mat-sys-on-surface-variant);
-  --mat-table-header-headline-color: var(--mat-sys-on-surface-variant);
-  --mat-table-row-item-outline-color: var(--mat-sys-outline-variant);
-  background: var(--datei-container-background);
-}
-
 /* Tighter, Google-style line height in table cells. */
 .mat-mdc-cell,
 .mat-mdc-header-cell {

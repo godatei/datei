@@ -39,8 +39,20 @@ html {
   // sidebar): a step lighter than the shell, a step darker than the container.
   --datei-subnav-background: var(--mat-sys-surface);
 
-  // Compact row height shared by the file/trash tables (~40px).
-  --datei-table-row-height: 2.5rem;
+  // Table theming via Material's overrides system. Tables share the content
+  // card's surface so they read as one continuous surface; the header/row text
+  // use the muted on-surface-variant color, and rows are a compact ~40px tall.
+  // Material sets `background: inherit` on rows, so the background token here is
+  // what actually colors the table.
+  @include mat.table-overrides(
+    (
+      background-color: var(--datei-container-background),
+      header-headline-color: var(--mat-sys-on-surface-variant),
+      row-item-label-text-color: var(--mat-sys-on-surface-variant),
+      row-item-outline-color: var(--mat-sys-outline-variant),
+      row-item-container-height: 2.5rem,
+    )
+  );
 }
 
 body {

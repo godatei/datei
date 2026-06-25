@@ -27,7 +27,6 @@ export type LinkStatusFilter = 'active' | 'expired' | 'revoked';
 @Component({
   selector: 'app-links-list',
   templateUrl: './links-list.component.html',
-  styleUrls: ['./links-list.component.css'],
   host: { class: 'flex flex-col grow min-h-0' },
   imports: [
     DatePipe,
