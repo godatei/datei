@@ -442,7 +442,9 @@ func (s *Service) loadOwnedRuleProjection(
 }
 
 // validateTargetDirectory ensures the target, when set, is a directory owned by
-// the user.
+// the user that is not trashed. A trashed target would pass creation but later
+// make every ingestion fail (CreateFileForOwner rejects a trashed parent),
+// stalling the rule on indefinite retries.
 func (s *Service) validateTargetDirectory(ctx context.Context, ownerID uuid.UUID, dirID *uuid.UUID) error {
 	if dirID == nil {
 		return nil
@@ -457,6 +459,9 @@ func (s *Service) validateTargetDirectory(ctx context.Context, ownerID uuid.UUID
 	}
 	if !dir.IsDirectory {
 		return fmt.Errorf("%w: target is not a directory", apperrors.ErrInvalidInput)
+	}
+	if dir.TrashedAt != nil {
+		return fmt.Errorf("%w: target directory is trashed", apperrors.ErrInvalidInput)
 	}
 	return nil
 }
