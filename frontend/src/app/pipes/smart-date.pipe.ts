@@ -1,4 +1,3 @@
-import { formatDate } from '@angular/common';
 import { inject, LOCALE_ID, Pipe, PipeTransform } from '@angular/core';
 import { isThisYear, isToday } from 'date-fns';
 
@@ -10,10 +9,12 @@ export class SmartDatePipe implements PipeTransform {
     if (!value) return '';
     const date = typeof value === 'string' ? new Date(value) : value;
     if (Number.isNaN(date.getTime())) return '';
-    if (isToday(date)) return formatDate(date, 'shortTime', this.locale);
-    if (isThisYear(date))
-      // Intl.DateTimeFormat keeps the order locale-correct: "Aug 23" (en-US), "23. Aug." (de).
+    if (isToday(date)) {
+      return new Intl.DateTimeFormat(this.locale, { timeStyle: 'short' }).format(date);
+    }
+    if (isThisYear(date)) {
       return new Intl.DateTimeFormat(this.locale, { day: 'numeric', month: 'short' }).format(date);
-    return formatDate(date, 'mediumDate', this.locale);
+    }
+    return new Intl.DateTimeFormat(this.locale, { dateStyle: 'medium' }).format(date);
   }
 }
