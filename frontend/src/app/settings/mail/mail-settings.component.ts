@@ -22,6 +22,7 @@ import {
 } from '~/api/functions';
 import type { MailAccount } from '~/api/models/mail-account';
 import type { MailRule } from '~/api/models/mail-rule';
+import type { UpdateMailRuleRequest } from '~/api/models/update-mail-rule-request';
 import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
 import { retryOnConflict } from '~/util/retry-on-conflict';
 import {
@@ -172,7 +173,19 @@ export class MailSettingsComponent {
   }
 
   protected async toggleRule(rule: MailRule, enabled: boolean): Promise<void> {
-    const body = { ...rule, enabled };
+    const body: UpdateMailRuleRequest = {
+      accountId: rule.accountId,
+      name: rule.name,
+      order: rule.order,
+      enabled,
+      folder: rule.folder,
+      maxAgeDays: rule.maxAgeDays,
+      action: rule.action,
+      attachmentPattern: rule.attachmentPattern,
+      filterFrom: rule.filterFrom,
+      filterSubject: rule.filterSubject,
+      targetDirectoryId: rule.targetDirectoryId,
+    };
 
     try {
       await retryOnConflict(() => this.api.invoke(updateMailRule, { ruleId: rule.id, body }));
