@@ -1,7 +1,7 @@
 <h2 mat-dialog-title>{{ isEdit() ? 'Edit rule' : 'Add rule' }}</h2>
 <form [formRoot]="ruleForm" class="block w-full">
   <mat-dialog-content>
-    <div class="flex flex-col gap-2">
+    <div class="flex flex-col gap-3">
       <mat-form-field appearance="outline">
         <mat-label>Account</mat-label>
         <mat-select [formField]="ruleForm.accountId">
@@ -76,7 +76,7 @@
         </mat-hint>
       </mat-form-field>
 
-      <div class="flex items-center gap-2 mb-2">
+      <div class="flex items-center gap-2 my-2">
         <span class="mat-font-body-md grow">
           Target directory: <strong>{{ targetDirectoryLabel() }}</strong>
         </span>
