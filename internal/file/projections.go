@@ -25,6 +25,11 @@ func updateProjectionForFileCreated(ctx context.Context, q *db.Queries, event *F
 	// For now the creator gets the sole entry; access checks treat any entry as
 	// access (see GetFileProjectionForUser). The row is keyed by its natural
 	// (file_id, user_account_id), so this handler is deterministic on replay.
+	//
+	// Invariant: every file has exactly one owner. This insert runs in the same
+	// transaction as the file_projection insert above, so a committed file always
+	// has its owner row. The earliest permission row is treated as the owner once
+	// shared grants exist (see ListFileOwners), keeping ownership single-valued.
 	if err := q.InsertFilePermissionProjection(ctx, db.InsertFilePermissionProjectionParams{
 		FileID:        event.ID,
 		UserAccountID: event.CreatedBy,

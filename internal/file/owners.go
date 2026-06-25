@@ -31,7 +31,12 @@ func lookupOwners(
 // AttachOwners sets the required owner (id + name) on each file from the
 // permission table. Owner is non-nullable on the API model, so every code path
 // that returns api.File must call this.
-func AttachOwners(ctx context.Context, q *db.Queries, files []api.File) error {
+//
+// Every file has exactly one owner by construction: the owner permission row is
+// written in the same transaction as the file projection on FileCreated (see
+// updateProjectionForFileCreated). A file with no resolvable owner therefore
+// signals a broken invariant, so we fail loudly rather than emit a blank owner.
+func (s *Service) AttachOwners(ctx context.Context, files []api.File) error {
 	if len(files) == 0 {
 		return nil
 	}
@@ -39,26 +44,28 @@ func AttachOwners(ctx context.Context, q *db.Queries, files []api.File) error {
 	for i := range files {
 		ids[i] = files[i].Id
 	}
-	owners, err := lookupOwners(ctx, q, ids)
+	owners, err := lookupOwners(ctx, db.New(s.db), ids)
 	if err != nil {
 		return err
 	}
 	for i := range files {
-		if o, ok := owners[files[i].Id]; ok {
-			files[i].OwnerId = o.OwnerID
-			files[i].OwnerName = o.OwnerName
+		o, ok := owners[files[i].Id]
+		if !ok {
+			return fmt.Errorf("file %s has no owner", files[i].Id)
 		}
+		files[i].OwnerId = o.OwnerID
+		files[i].OwnerName = o.OwnerName
 	}
 	return nil
 }
 
 // AttachOwner sets the required owner on a single file response.
-func AttachOwner(ctx context.Context, q *db.Queries, f *api.File) error {
+func (s *Service) AttachOwner(ctx context.Context, f *api.File) error {
 	if f == nil {
 		return nil
 	}
 	files := []api.File{*f}
-	if err := AttachOwners(ctx, q, files); err != nil {
+	if err := s.AttachOwners(ctx, files); err != nil {
 		return err
 	}
 	*f = files[0]
@@ -66,7 +73,7 @@ func AttachOwner(ctx context.Context, q *db.Queries, f *api.File) error {
 }
 
 // AttachTrashedOwners sets the required owner on each trashed file response.
-func AttachTrashedOwners(ctx context.Context, q *db.Queries, files []api.TrashedFile) error {
+func (s *Service) AttachTrashedOwners(ctx context.Context, files []api.TrashedFile) error {
 	if len(files) == 0 {
 		return nil
 	}
@@ -74,15 +81,17 @@ func AttachTrashedOwners(ctx context.Context, q *db.Queries, files []api.Trashed
 	for i := range files {
 		ids[i] = files[i].Id
 	}
-	owners, err := lookupOwners(ctx, q, ids)
+	owners, err := lookupOwners(ctx, db.New(s.db), ids)
 	if err != nil {
 		return err
 	}
 	for i := range files {
-		if o, ok := owners[files[i].Id]; ok {
-			files[i].OwnerId = o.OwnerID
-			files[i].OwnerName = o.OwnerName
+		o, ok := owners[files[i].Id]
+		if !ok {
+			return fmt.Errorf("trashed file %s has no owner", files[i].Id)
 		}
+		files[i].OwnerId = o.OwnerID
+		files[i].OwnerName = o.OwnerName
 	}
 	return nil
 }

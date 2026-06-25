@@ -197,7 +197,7 @@ func (s *Service) ListFiles(ctx context.Context, input ListFilesInput) (*ListFil
 	}
 
 	items := MapProjectionSliceToAPI(projections)
-	if err := AttachOwners(ctx, queries, items); err != nil {
+	if err := s.AttachOwners(ctx, items); err != nil {
 		return nil, err
 	}
 
@@ -269,7 +269,7 @@ func (s *Service) CreateFile(ctx context.Context, input CreateFileInput) (*api.F
 	}
 
 	result := MapAggregateToAPI(agg)
-	if err := AttachOwner(ctx, db.New(s.db), result); err != nil {
+	if err := s.AttachOwner(ctx, result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -400,7 +400,7 @@ func (s *Service) UpdateFile(ctx context.Context, input UpdateFileInput) (*api.F
 	}
 
 	result := MapAggregateToAPI(agg)
-	if err := AttachOwner(ctx, db.New(s.db), result); err != nil {
+	if err := s.AttachOwner(ctx, result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -520,7 +520,7 @@ func (s *Service) FindFileByPath(ctx context.Context, segments []string) (*api.F
 		return nil, err
 	}
 	result := MapProjectionToAPI(&proj)
-	if err := AttachOwner(ctx, db.New(s.db), result); err != nil {
+	if err := s.AttachOwner(ctx, result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -551,7 +551,7 @@ func (s *Service) FindFileByName(ctx context.Context, parentID *uuid.UUID, name 
 		return nil, err
 	}
 	result := MapProjectionToAPI(&proj)
-	if err := AttachOwner(ctx, queries, result); err != nil {
+	if err := s.AttachOwner(ctx, result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -584,7 +584,7 @@ func (s *Service) ListFileChildren(ctx context.Context, parentID *uuid.UUID) ([]
 		return nil, err
 	}
 	items := MapProjectionSliceToAPI(projs)
-	if err := AttachOwners(ctx, queries, items); err != nil {
+	if err := s.AttachOwners(ctx, items); err != nil {
 		return nil, err
 	}
 	return items, nil
@@ -653,7 +653,7 @@ func (s *Service) ListTrash(ctx context.Context, input ListTrashInput) (*ListTra
 		}
 	}
 
-	if err := AttachTrashedOwners(ctx, queries, items); err != nil {
+	if err := s.AttachTrashedOwners(ctx, items); err != nil {
 		return nil, err
 	}
 
@@ -730,7 +730,7 @@ func (s *Service) ListTrashChildren(ctx context.Context, input ListTrashChildren
 	}
 
 	items := MapProjectionSliceToAPI(projections)
-	if err := AttachOwners(ctx, queries, items); err != nil {
+	if err := s.AttachOwners(ctx, items); err != nil {
 		return nil, err
 	}
 

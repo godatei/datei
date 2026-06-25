@@ -21,15 +21,18 @@ import (
 type Service struct {
 	db         *pgxpool.Pool
 	repository Repository
+	fileSvc    *file.Service
 }
 
 func NewService(
 	pool *pgxpool.Pool,
 	repository Repository,
+	fileSvc *file.Service,
 ) *Service {
 	return &Service{
 		db:         pool,
 		repository: repository,
+		fileSvc:    fileSvc,
 	}
 }
 
@@ -298,7 +301,7 @@ func (s *Service) aggregateToLinkDetail(ctx context.Context, agg *Aggregate) (*a
 	detail := MapAggregateToLinkDetail(
 		agg, files, int(counts.FileCount), int(counts.FolderCount), int(counts.OpenCount),
 	)
-	if err := file.AttachOwners(ctx, queries, detail.Files); err != nil {
+	if err := s.fileSvc.AttachOwners(ctx, detail.Files); err != nil {
 		return nil, err
 	}
 	return detail, nil

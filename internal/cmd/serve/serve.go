@@ -130,7 +130,7 @@ func run(ctx context.Context, options Options) error {
 
 	fileSvc := file.NewService(db, store, fileRepository, ocrClient)
 	userSvc := users.NewUserService(db, userRepository, m)
-	linkSvc := link.NewService(db, linkRepository)
+	linkSvc := link.NewService(db, linkRepository, fileSvc)
 	publicLinkSvc := link.NewPublicService(db, linkRepository, fileSvc)
 
 	srv := server.NewServer(fileSvc, userSvc, linkSvc, publicLinkSvc)
