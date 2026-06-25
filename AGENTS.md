@@ -316,6 +316,7 @@ Single variable icon font: Material Symbols Outlined, set as the global default 
 - Prefer Signal Forms (`@angular/forms/signals`) over Reactive Forms and Template-driven forms (experimental, introduced in Angular 21)
 - Do NOT use `ngClass`, use `class` bindings instead
 - Do NOT use `ngStyle`, use `style` bindings instead
+- Do NOT use inline `style="..."` attributes in templates — add a class (component stylesheet or a utility) instead
 - When using external templates/styles, use paths relative to the component TS file.
 - Do NOT create empty or placeholder-only component CSS/SCSS files.
 

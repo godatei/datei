@@ -35,10 +35,6 @@ html {
   // card.
   --datei-shell-background: var(--mat-sys-surface-container-low);
 
-  // Secondary navigation panels that sit on the content card (e.g. the settings
-  // sidebar): a step lighter than the shell, a step darker than the container.
-  --datei-subnav-background: var(--mat-sys-surface);
-
   // Table theming via Material's overrides system. Tables share the content
   // card's surface so they read as one continuous surface; the header/row text
   // use the muted on-surface-variant color, and rows are a compact ~40px tall.
