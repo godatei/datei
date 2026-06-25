@@ -43,6 +43,10 @@ func (p *Poller) RunAll(ctx context.Context) {
 	}
 	slog.DebugContext(ctx, "email poller: starting run", "accounts", len(accounts))
 	for i := range accounts {
+		if ctx.Err() != nil {
+			slog.DebugContext(ctx, "email poller: run cancelled", "error", ctx.Err())
+			return
+		}
 		account := accounts[i]
 		if err := p.pollAccount(ctx, &account); err != nil {
 			slog.ErrorContext(ctx, "email poller: account failed", "account_id", account.ID, "error", err)
@@ -77,12 +81,19 @@ func (p *Poller) pollAccount(ctx context.Context, account *db.MailAccountProject
 	if err != nil {
 		return err
 	}
+	// go-imap commands are not context-aware, so closing the connection is the
+	// only way to unblock a pending Wait when ctx is cancelled (e.g. shutdown).
+	stopWatch := context.AfterFunc(ctx, func() { _ = client.Close() })
+	defer stopWatch()
 	defer func() {
 		_ = client.Logout().Wait()
 		_ = client.Close()
 	}()
 
 	for i := range rules {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 		rule := rules[i]
 		if err := p.processRule(ctx, client, account, &rule); err != nil {
 			slog.ErrorContext(ctx, "email poller: rule failed",
@@ -125,6 +136,9 @@ func (p *Poller) processRule(
 	slog.DebugContext(ctx, "email poller: searched folder",
 		"account_id", account.ID, "rule_id", rule.ID, "folder", rule.Folder, "candidates", len(uids))
 	for _, uid := range uids {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 		if err := p.processMessage(ctx, client, account, rule, uidValidity, uid); err != nil {
 			slog.ErrorContext(ctx, "email poller: message failed",
 				"account_id", account.ID, "rule_id", rule.ID, "uid", uint32(uid), "error", err)
