@@ -196,13 +196,8 @@ func (s *Service) ListFiles(ctx context.Context, input ListFilesInput) (*ListFil
 		return nil, err
 	}
 
-	items := MapProjectionSliceToAPI(projections)
-	if err := s.AttachOwners(ctx, items); err != nil {
-		return nil, err
-	}
-
 	return &ListFilesOutput{
-		Items: items,
+		Items: MapProjectionSliceToAPI(projections),
 		Total: int(total),
 	}, nil
 }
@@ -268,11 +263,7 @@ func (s *Service) CreateFile(ctx context.Context, input CreateFileInput) (*api.F
 		s.startOCR(ctx, agg.ID, *agg.S3Key, *agg.Checksum, input.ContentType)
 	}
 
-	result := MapAggregateToAPI(agg)
-	if err := s.AttachOwner(ctx, result); err != nil {
-		return nil, err
-	}
-	return result, nil
+	return MapAggregateToAPI(agg), nil
 }
 
 // DownloadFileOutput contains the response for downloading a file
@@ -399,11 +390,7 @@ func (s *Service) UpdateFile(ctx context.Context, input UpdateFileInput) (*api.F
 		s.startOCR(ctx, agg.ID, *agg.S3Key, *agg.Checksum, input.ContentType)
 	}
 
-	result := MapAggregateToAPI(agg)
-	if err := s.AttachOwner(ctx, result); err != nil {
-		return nil, err
-	}
-	return result, nil
+	return MapAggregateToAPI(agg), nil
 }
 
 // GetThumbnailOutput contains the response for fetching a thumbnail.
@@ -519,11 +506,7 @@ func (s *Service) FindFileByPath(ctx context.Context, segments []string) (*api.F
 	} else if err != nil {
 		return nil, err
 	}
-	result := MapProjectionToAPI(&proj)
-	if err := s.AttachOwner(ctx, result); err != nil {
-		return nil, err
-	}
-	return result, nil
+	return MapProjectionToAPI(&proj), nil
 }
 
 // FindFileByName finds a non-trashed file by name within a parent (or at root).
@@ -550,11 +533,7 @@ func (s *Service) FindFileByName(ctx context.Context, parentID *uuid.UUID, name 
 	} else if err != nil {
 		return nil, err
 	}
-	result := MapProjectionToAPI(&proj)
-	if err := s.AttachOwner(ctx, result); err != nil {
-		return nil, err
-	}
-	return result, nil
+	return MapProjectionToAPI(&proj), nil
 }
 
 const maxDirChildren = 10_000
@@ -583,11 +562,7 @@ func (s *Service) ListFileChildren(ctx context.Context, parentID *uuid.UUID) ([]
 	if err != nil {
 		return nil, err
 	}
-	items := MapProjectionSliceToAPI(projs)
-	if err := s.AttachOwners(ctx, items); err != nil {
-		return nil, err
-	}
-	return items, nil
+	return MapProjectionSliceToAPI(projs), nil
 }
 
 // ListTrashInput contains parameters for listing trashed file records.
@@ -651,10 +626,6 @@ func (s *Service) ListTrash(ctx context.Context, input ListTrashInput) (*ListTra
 		if mapped := MapProjectionToTrashedFile(p, originPath); mapped != nil {
 			items = append(items, *mapped)
 		}
-	}
-
-	if err := s.AttachTrashedOwners(ctx, items); err != nil {
-		return nil, err
 	}
 
 	return &ListTrashOutput{Items: items, Total: int(total)}, nil
@@ -729,13 +700,8 @@ func (s *Service) ListTrashChildren(ctx context.Context, input ListTrashChildren
 		return nil, err
 	}
 
-	items := MapProjectionSliceToAPI(projections)
-	if err := s.AttachOwners(ctx, items); err != nil {
-		return nil, err
-	}
-
 	return &ListFilesOutput{
-		Items: items,
+		Items: MapProjectionSliceToAPI(projections),
 		Total: int(total),
 	}, nil
 }

@@ -15,8 +15,6 @@ const makeDir = (id: string): File => ({
   isDirectory: true,
   createdAt: '2024-01-01T00:00:00Z',
   updatedAt: '2024-01-01T00:00:00Z',
-  ownerId: 'owner-1',
-  ownerName: 'Owner One',
 });
 
 const makeFile = (id: string): File => ({
@@ -25,8 +23,6 @@ const makeFile = (id: string): File => ({
   isDirectory: false,
   createdAt: '2024-01-01T00:00:00Z',
   updatedAt: '2024-01-01T00:00:00Z',
-  ownerId: 'owner-1',
-  ownerName: 'Owner One',
 });
 
 const EMPTY_LIST = { items: [], total: 0 };

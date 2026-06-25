@@ -5,8 +5,6 @@ required:
   - isDirectory
   - createdAt
   - updatedAt
-  - ownerId
-  - ownerName
 properties:
   id:
     type: string
@@ -51,13 +49,6 @@ properties:
     format: uuid
     nullable: true
     description: User ID of creator
-  ownerId:
-    type: string
-    format: uuid
-    description: User ID of the file's owner (from the permission table)
-  ownerName:
-    type: string
-    description: Display name of the file's owner
   trashedAt:
     type: string
     format: date-time

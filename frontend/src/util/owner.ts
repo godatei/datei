@@ -1,6 +1,7 @@
-import { File } from '~/api/models';
-
-/** Display label for a file's owner: "me" for the current user, else their name. */
-export function ownerLabel(file: File, currentUserId: string | undefined): string {
-  return file.ownerId === currentUserId ? 'me' : file.ownerName;
+/**
+ * Display label for a file's owner. Ownership is single-user for now (every file
+ * you can see is your own), so the owner is always the current user.
+ */
+export function ownerLabel(): string {
+  return 'me';
 }

@@ -37,7 +37,6 @@ import { SmartDatePipe } from '~/frontend/pipes/smart-date.pipe';
 import { triggerDownload } from '~/util/download';
 import { isPreviewable } from '~/util/previewable';
 import { buildShareUrl } from '~/util/share-url';
-import { AuthService } from '~/frontend/services/auth.service';
 import { DragDropDirective, DropEvent } from './drag-drop.directive';
 import { DragPreviewDirective } from './drag-preview.directive';
 import { DragItemDirective } from './drag-row.directive';
@@ -81,8 +80,6 @@ export class DashboardComponent {
   private readonly clipboard = inject(Clipboard);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly auth = inject(AuthService);
-  private readonly currentUserId = computed(() => this.auth.getClaims()?.sub);
 
   private readonly refresh = signal(0);
   private readonly queryParams = toSignal(this.route.queryParamMap);
@@ -113,7 +110,7 @@ export class DashboardComponent {
         case 'name':
           return file.name?.toLowerCase() ?? '';
         case 'owner':
-          return ownerLabel(file, this.currentUserId()).toLowerCase();
+          return ownerLabel();
         case 'updatedAt':
           return new Date(file.updatedAt).getTime();
         case 'size':

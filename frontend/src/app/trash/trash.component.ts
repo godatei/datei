@@ -15,7 +15,6 @@ import { FileIconComponent } from '~/frontend/dashboard/file-icon.component';
 import { SelectionDirective } from '~/frontend/dashboard/selection.directive';
 import { SelectionItemDirective } from '~/frontend/dashboard/selection-item.directive';
 import { OwnerCellComponent } from '~/frontend/shared/owner-cell.component';
-import { AuthService } from '~/frontend/services/auth.service';
 import { ownerLabel } from '~/util/owner';
 import { RestoreDialogComponent } from './restore-dialog/restore-dialog.component';
 import { SmartDatePipe } from '~/frontend/pipes/smart-date.pipe';
@@ -48,8 +47,6 @@ export class TrashComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly snack = inject(MatSnackBar);
-  private readonly auth = inject(AuthService);
-  private readonly currentUserId = computed(() => this.auth.getClaims()?.sub);
 
   private readonly queryParams = toSignal(this.route.queryParamMap);
   protected readonly parentId = computed(() => this.queryParams()?.get('parentId') ?? null);
@@ -86,7 +83,7 @@ export class TrashComponent {
         case 'name':
           return file.name?.toLowerCase() ?? '';
         case 'owner':
-          return ownerLabel(file, this.currentUserId()).toLowerCase();
+          return ownerLabel();
         case 'trashedAt':
           return file.trashedAt ? new Date(file.trashedAt).getTime() : 0;
         case 'originPath':

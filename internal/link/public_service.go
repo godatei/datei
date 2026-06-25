@@ -125,15 +125,11 @@ func (s *PublicService) ListPublicLinkFiles(
 		if err != nil {
 			return nil, err
 		}
-		items := file.MapProjectionSliceToAPI(files)
-		if err := s.fileSvc.AttachOwners(ctx, items); err != nil {
-			return nil, err
-		}
 		return &ListPublicLinkFilesOutput{
 			Name:      row.Name,
 			OwnerName: row.OwnerName,
 			ExpiresAt: row.ExpiresAt,
-			Items:     items,
+			Items:     file.MapProjectionSliceToAPI(files),
 		}, nil
 	}
 
@@ -168,15 +164,11 @@ func (s *PublicService) ListPublicLinkFiles(
 	if err != nil {
 		return nil, err
 	}
-	items := file.MapProjectionSliceToAPI(children)
-	if err := s.fileSvc.AttachOwners(ctx, items); err != nil {
-		return nil, err
-	}
 	return &ListPublicLinkFilesOutput{
 		Name:      row.Name,
 		OwnerName: row.OwnerName,
 		ExpiresAt: row.ExpiresAt,
-		Items:     items,
+		Items:     file.MapProjectionSliceToAPI(children),
 	}, nil
 }
 

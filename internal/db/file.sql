@@ -169,15 +169,3 @@ ORDER BY depth DESC;
 INSERT INTO file_permission_projection
  (file_id, user_account_id, created_at)
  VALUES (@file_id, @user_account_id, @created_at);
-
--- name: ListFileOwners :many
--- Resolves the owner (id + display name) for each given file. Ownership lives in
--- file_permission_projection; the earliest entry per file is the owner (the
--- creator), which keeps the result single-valued even once shared grants exist.
--- user_account_id is a deterministic tie-breaker for entries sharing created_at.
-SELECT DISTINCT ON (p.file_id)
-  p.file_id, ua.id AS owner_id, ua.name AS owner_name
-FROM file_permission_projection p
-JOIN user_account_projection ua ON ua.id = p.user_account_id
-WHERE p.file_id = ANY(@file_ids::uuid[])
-ORDER BY p.file_id, p.created_at ASC, p.user_account_id ASC;
