@@ -34,6 +34,7 @@ export type { LoginConfigResponse } from './models/login-config-response';
 export type { LoginRequest } from './models/login-request';
 export type { LoginResponse } from './models/login-response';
 export type { MailAccount } from './models/mail-account';
+export type { MailAccountSecurity } from './models/mail-account-security';
 export type { MailRule } from './models/mail-rule';
 export type { MfaRecoveryCodesStatusResponse } from './models/mfa-recovery-codes-status-response';
 export type { PersonalAccessToken } from './models/personal-access-token';

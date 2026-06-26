@@ -26,9 +26,7 @@ properties:
     type: string
     description: IMAP login username
   security:
-    type: string
-    enum: [ssl, starttls, none]
-    description: Transport security used for the IMAP connection
+    $ref: './MailAccountSecurity.yaml'
   createdAt:
     type: string
     format: date-time

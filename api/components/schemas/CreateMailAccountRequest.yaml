@@ -27,5 +27,4 @@ properties:
     minLength: 1
     description: IMAP password; stored encrypted and never returned
   security:
-    type: string
-    enum: [ssl, starttls, none]
+    $ref: './MailAccountSecurity.yaml'

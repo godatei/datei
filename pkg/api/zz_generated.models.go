@@ -14,27 +14,6 @@ const (
 	PublicLinkBearerAuthenticationScopes publicLinkBearerAuthenticationContextKey = "publicLinkBearerAuthentication.Scopes"
 )
 
-// Defines values for CreateMailAccountRequestSecurity.
-const (
-	CreateMailAccountRequestSecurityNone     CreateMailAccountRequestSecurity = "none"
-	CreateMailAccountRequestSecuritySsl      CreateMailAccountRequestSecurity = "ssl"
-	CreateMailAccountRequestSecurityStarttls CreateMailAccountRequestSecurity = "starttls"
-)
-
-// Valid indicates whether the value is a known member of the CreateMailAccountRequestSecurity enum.
-func (e CreateMailAccountRequestSecurity) Valid() bool {
-	switch e {
-	case CreateMailAccountRequestSecurityNone:
-		return true
-	case CreateMailAccountRequestSecuritySsl:
-		return true
-	case CreateMailAccountRequestSecurityStarttls:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for CreateMailRuleRequestAction.
 const (
 	CreateMailRuleRequestActionMarkAsRead CreateMailRuleRequestAction = "mark_as_read"
@@ -52,19 +31,19 @@ func (e CreateMailRuleRequestAction) Valid() bool {
 
 // Defines values for MailAccountSecurity.
 const (
-	MailAccountSecurityNone     MailAccountSecurity = "none"
-	MailAccountSecuritySsl      MailAccountSecurity = "ssl"
-	MailAccountSecurityStarttls MailAccountSecurity = "starttls"
+	None     MailAccountSecurity = "none"
+	Ssl      MailAccountSecurity = "ssl"
+	Starttls MailAccountSecurity = "starttls"
 )
 
 // Valid indicates whether the value is a known member of the MailAccountSecurity enum.
 func (e MailAccountSecurity) Valid() bool {
 	switch e {
-	case MailAccountSecurityNone:
+	case None:
 		return true
-	case MailAccountSecuritySsl:
+	case Ssl:
 		return true
-	case MailAccountSecurityStarttls:
+	case Starttls:
 		return true
 	default:
 		return false
@@ -80,27 +59,6 @@ const (
 func (e MailRuleAction) Valid() bool {
 	switch e {
 	case MailRuleActionMarkAsRead:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for UpdateMailAccountRequestSecurity.
-const (
-	None     UpdateMailAccountRequestSecurity = "none"
-	Ssl      UpdateMailAccountRequestSecurity = "ssl"
-	Starttls UpdateMailAccountRequestSecurity = "starttls"
-)
-
-// Valid indicates whether the value is a known member of the UpdateMailAccountRequestSecurity enum.
-func (e UpdateMailAccountRequestSecurity) Valid() bool {
-	switch e {
-	case None:
-		return true
-	case Ssl:
-		return true
-	case Starttls:
 		return true
 	default:
 		return false
@@ -230,13 +188,12 @@ type CreateMailAccountRequest struct {
 	Name     string `json:"name"`
 
 	// Password IMAP password; stored encrypted and never returned
-	Password string                           `json:"password"`
-	Security CreateMailAccountRequestSecurity `json:"security"`
-	Username string                           `json:"username"`
-}
+	Password string `json:"password"`
 
-// CreateMailAccountRequestSecurity defines model for CreateMailAccountRequest.Security.
-type CreateMailAccountRequestSecurity string
+	// Security Transport security used for the IMAP connection
+	Security MailAccountSecurity `json:"security"`
+	Username string              `json:"username"`
+}
 
 // CreateMailRuleRequest defines model for CreateMailRuleRequest.
 type CreateMailRuleRequest struct {
@@ -771,13 +728,12 @@ type UpdateMailAccountRequest struct {
 	Name     string `json:"name"`
 
 	// Password New IMAP password; omit to keep the existing one
-	Password *string                          `json:"password,omitempty"`
-	Security UpdateMailAccountRequestSecurity `json:"security"`
-	Username string                           `json:"username"`
-}
+	Password *string `json:"password,omitempty"`
 
-// UpdateMailAccountRequestSecurity defines model for UpdateMailAccountRequest.Security.
-type UpdateMailAccountRequestSecurity string
+	// Security Transport security used for the IMAP connection
+	Security MailAccountSecurity `json:"security"`
+	Username string              `json:"username"`
+}
 
 // UpdateMailRuleRequest defines model for UpdateMailRuleRequest.
 type UpdateMailRuleRequest struct {

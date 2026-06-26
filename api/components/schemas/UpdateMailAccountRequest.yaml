@@ -25,5 +25,4 @@ properties:
     minLength: 1
     description: New IMAP password; omit to keep the existing one
   security:
-    type: string
-    enum: [ssl, starttls, none]
+    $ref: './MailAccountSecurity.yaml'
