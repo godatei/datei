@@ -94,6 +94,8 @@
               </span>
               <div matListItemMeta class="list-meta-flex">
                 <mat-slide-toggle
+                  class="mat-slide-toggle-compact"
+                  [hideIcon]="!rule.enabled"
                   [checked]="rule.enabled"
                   (change)="toggleRule(rule, $event.checked)"
                   [matTooltip]="rule.enabled ? 'Enabled' : 'Disabled'"
