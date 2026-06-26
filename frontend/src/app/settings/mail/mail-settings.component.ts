@@ -23,12 +23,13 @@ import {
 import type { MailAccount } from '~/api/models/mail-account';
 import type { MailRule } from '~/api/models/mail-rule';
 import type { UpdateMailRuleRequest } from '~/api/models/update-mail-rule-request';
-import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
-import { retryOnConflict } from '~/util/retry-on-conflict';
 import {
   ConfirmDialogComponent,
   ConfirmDialogData,
 } from '~/frontend/components/confirm-dialog.component';
+import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
+import { withPreviousValue } from '~/util/resource';
+import { retryOnConflict } from '~/util/retry-on-conflict';
 import { MailAccountDialogComponent, MailAccountDialogData } from './mail-account-dialog.component';
 import { MailRuleDialogComponent, MailRuleDialogData } from './mail-rule-dialog.component';
 
@@ -62,21 +63,27 @@ export class MailSettingsComponent {
   private readonly reloadKey = signal(0);
   protected readonly testingAccountId = signal<string | null>(null);
 
-  protected readonly accountsResource = resource({
-    params: () => this.reloadKey(),
-    loader: async () => (await this.api.invoke(listMailAccounts, { limit: 200 })).items,
-  });
+  protected readonly accountsResource = withPreviousValue(
+    resource({
+      params: () => this.reloadKey(),
+      loader: async () => (await this.api.invoke(listMailAccounts, { limit: 200 })).items,
+    }),
+  );
 
-  protected readonly rulesResource = resource({
-    params: () => this.reloadKey(),
-    loader: async () => (await this.api.invoke(listAllMailRules, { limit: 500 })).items,
-  });
+  protected readonly rulesResource = withPreviousValue(
+    resource({
+      params: () => this.reloadKey(),
+      loader: async () => (await this.api.invoke(listAllMailRules, { limit: 500 })).items,
+    }),
+  );
 
   protected readonly accounts = computed(() => this.accountsResource.value() ?? []);
   protected readonly rules = computed(() => this.rulesResource.value() ?? []);
 
   protected readonly loading = computed(
-    () => this.accountsResource.isLoading() || this.rulesResource.isLoading(),
+    () =>
+      (this.accountsResource.isLoading() && !this.accountsResource.hasValue()) ||
+      (this.rulesResource.isLoading() && !this.rulesResource.hasValue()),
   );
   protected readonly loadingError = computed(
     () => this.accountsResource.error() ?? this.rulesResource.error(),
