@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
-import { form, FormField, FormRoot, required } from '@angular/forms/signals';
+import { form, FormField, FormRoot, max, min, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -71,6 +71,11 @@ export class MailAccountDialogComponent {
       required(p.name);
       required(p.imapHost);
       required(p.username);
+      min(p.imapPort, 1);
+      max(p.imapPort, 65535);
+      if (!this.isEdit()) {
+        required(p.password);
+      }
     },
     {
       submission: {
@@ -78,15 +83,6 @@ export class MailAccountDialogComponent {
           this.errorMessage.set(null);
           const m = this.model();
           const password = m.password.trim();
-
-          if (!this.isEdit() && password === '') {
-            this.errorMessage.set('Password is required');
-            return;
-          }
-          if (m.imapPort < 1 || m.imapPort > 65535) {
-            this.errorMessage.set('Port must be between 1 and 65535');
-            return;
-          }
 
           try {
             const account = this.data?.account;

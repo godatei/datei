@@ -5,17 +5,32 @@
       <mat-form-field appearance="outline">
         <mat-label>Name</mat-label>
         <input matInput [formField]="accountForm.name" autocomplete="off" />
+        <mat-error>
+          @if (accountForm.name().errors().length > 0 && accountForm.name().touched()) {
+            Name is required
+          }
+        </mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>IMAP host</mat-label>
         <input matInput [formField]="accountForm.imapHost" autocomplete="off" />
+        <mat-error>
+          @if (accountForm.imapHost().errors().length > 0 && accountForm.imapHost().touched()) {
+            IMAP host is required
+          }
+        </mat-error>
       </mat-form-field>
 
       <div class="flex gap-2">
         <mat-form-field appearance="outline" class="grow">
           <mat-label>Port</mat-label>
           <input matInput type="number" [formField]="accountForm.imapPort" />
+          <mat-error>
+            @if (accountForm.imapPort().errors().length > 0 && accountForm.imapPort().touched()) {
+              Valid ports are 1 to 65535
+            }
+          </mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="grow">
@@ -34,6 +49,11 @@
       <mat-form-field appearance="outline">
         <mat-label>Username</mat-label>
         <input matInput [formField]="accountForm.username" autocomplete="off" />
+        <mat-error>
+          @if (accountForm.username().errors().length > 0 && accountForm.username().touched()) {
+            Username is required
+          }
+        </mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="outline">
@@ -42,6 +62,11 @@
         @if (isEdit()) {
           <mat-hint>Leave blank to keep the current password</mat-hint>
         }
+        <mat-error>
+          @if (accountForm.password().errors().length > 0 && accountForm.password().touched()) {
+            Password is required
+          }
+        </mat-error>
       </mat-form-field>
 
       @if (errorMessage()) {
@@ -53,6 +78,12 @@
     <button mat-button type="button" (click)="cancel()" [disabled]="accountForm().submitting()">
       Cancel
     </button>
-    <button mat-flat-button type="submit" [disabled]="accountForm().submitting()">Save</button>
+    <button
+      mat-flat-button
+      type="submit"
+      [disabled]="accountForm().invalid() || accountForm().submitting()"
+    >
+      Save
+    </button>
   </mat-dialog-actions>
 </form>
