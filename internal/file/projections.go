@@ -15,6 +15,8 @@ func updateProjectionForFileCreated(ctx context.Context, q *db.Queries, event *F
 		Name:        event.Name,
 		CreatedAt:   event.CreatedAt,
 		UpdatedAt:   event.CreatedAt,
+		CreatedBy:   &event.CreatedBy,
+		UpdatedBy:   &event.CreatedBy,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to insert file_projection: %w", err)
@@ -40,6 +42,7 @@ func updateProjectionForFileRenamed(ctx context.Context, q *db.Queries, event *F
 	err := q.UpdateFileProjectionName(ctx, db.UpdateFileProjectionNameParams{
 		Name:      event.NewName,
 		UpdatedAt: event.RenamedAt,
+		UpdatedBy: &event.RenamedBy,
 		ID:        event.ID,
 	})
 	if err != nil {
@@ -61,6 +64,7 @@ func updateProjectionForFileVersionUploaded(
 		MimeType:  &event.MimeType,
 		ContentMd: event.ContentMD,
 		UpdatedAt: event.UploadedAt,
+		UpdatedBy: &event.UploadedBy,
 		ID:        event.ID,
 	})
 	if err != nil {
@@ -74,6 +78,7 @@ func updateProjectionForFileMoved(ctx context.Context, q *db.Queries, event *Fil
 	err := q.UpdateFileProjectionParent(ctx, db.UpdateFileProjectionParentParams{
 		ParentID:  event.NewParentID,
 		UpdatedAt: event.MovedAt,
+		UpdatedBy: &event.MovedBy,
 		ID:        event.ID,
 	})
 	if err != nil {
@@ -86,7 +91,9 @@ func updateProjectionForFileMoved(ctx context.Context, q *db.Queries, event *Fil
 func updateProjectionForFileTrashed(ctx context.Context, q *db.Queries, event *FileTrashedEvent) error {
 	err := q.UpdateFileProjectionTrashed(ctx, db.UpdateFileProjectionTrashedParams{
 		TrashedAt: &event.TrashedAt,
+		TrashedBy: &event.TrashedBy,
 		UpdatedAt: event.TrashedAt,
+		UpdatedBy: &event.TrashedBy,
 		ID:        event.ID,
 	})
 	if err != nil {
@@ -99,6 +106,7 @@ func updateProjectionForFileTrashed(ctx context.Context, q *db.Queries, event *F
 func updateProjectionForFileRestored(ctx context.Context, q *db.Queries, event *FileRestoredEvent) error {
 	err := q.UpdateFileProjectionRestored(ctx, db.UpdateFileProjectionRestoredParams{
 		UpdatedAt: event.RestoredAt,
+		UpdatedBy: &event.RestoredBy,
 		ID:        event.ID,
 	})
 	if err != nil {
@@ -112,6 +120,7 @@ func updateProjectionForFileLinked(ctx context.Context, q *db.Queries, event *Fi
 	err := q.UpdateFileProjectionLinked(ctx, db.UpdateFileProjectionLinkedParams{
 		LinkedFileID: &event.LinkedFileID,
 		UpdatedAt:    event.LinkedAt,
+		UpdatedBy:    &event.LinkedBy,
 		ID:           event.ID,
 	})
 	if err != nil {
@@ -124,6 +133,7 @@ func updateProjectionForFileLinked(ctx context.Context, q *db.Queries, event *Fi
 func updateProjectionForFileUnlinked(ctx context.Context, q *db.Queries, event *FileUnlinkedEvent) error {
 	err := q.UpdateFileProjectionUnlinked(ctx, db.UpdateFileProjectionUnlinkedParams{
 		UpdatedAt: event.UnlinkedAt,
+		UpdatedBy: &event.UnlinkedBy,
 		ID:        event.ID,
 	})
 	if err != nil {
