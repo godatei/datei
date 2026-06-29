@@ -1,0 +1,12 @@
+@use '@angular/material' as mat;
+
+// The card's background reads `--mat-card-elevated-container-color`, so setting
+// that token (via the overrides mixin) reliably recolors the auth card without
+// the source-order fight a `mat-bg-*` utility class loses.
+.auth-card {
+  @include mat.card-overrides(
+    (
+      elevated-container-color: var(--mat-sys-surface-container-lowest),
+    )
+  );
+}

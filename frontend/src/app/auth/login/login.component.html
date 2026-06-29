@@ -1,115 +1,105 @@
-<div class="auth-page">
-  <mat-card class="auth-card w-full max-w-md">
-    <mat-card-content>
-      <div class="flex flex-col items-center mb-6 text-center">
-        <img ngSrc="datei-logo.svg" class="mb-3" alt="Datei" width="48" height="48" />
-        <h1 class="mat-font-title-lg">Sign in</h1>
-        <p class="mat-font-body-md mat-text-on-surface-variant mt-1">to continue to Datei</p>
-      </div>
+<app-auth-layout title="Sign in" description="to continue to Datei">
+  @if (errorMessage()) {
+    <div
+      class="mat-font-body-md mat-corner-sm mat-bg-error-container mat-text-on-error-container px-4 py-3 mb-4"
+    >
+      {{ errorMessage() }}
+    </div>
+  }
 
-      @if (errorMessage()) {
-        <div
-          class="mat-font-body-md mat-corner-sm mat-bg-error-container mat-text-on-error-container px-4 py-3 mb-4"
-        >
-          {{ errorMessage() }}
-        </div>
-      }
-
-      @if (!mfaRequired()) {
-        <form class="flex flex-col gap-3" [formRoot]="loginForm">
-          <mat-form-field class="w-full" appearance="outline">
-            <mat-label>Email</mat-label>
-            <input matInput [formField]="loginForm.email" type="email" autocomplete="email" />
-            <mat-error>
-              @let emailErrs = loginForm.email().errors();
-              @if (emailErrs.length > 0 && loginForm.email().touched()) {
-                @if (emailErrs[0].kind === 'required') {
-                  Email is required
-                } @else if (emailErrs[0].kind === 'email') {
-                  Enter a valid email address
-                }
-              }
-            </mat-error>
-          </mat-form-field>
-
-          <mat-form-field class="w-full" appearance="outline">
-            <mat-label>Password</mat-label>
-            <input
-              matInput
-              [formField]="loginForm.password"
-              type="password"
-              autocomplete="current-password"
-            />
-            <mat-error>
-              @let passwordErrs = loginForm.password().errors();
-              @if (
-                passwordErrs.length > 0 &&
-                passwordErrs[0].kind === 'required' &&
-                loginForm.password().touched()
-              ) {
-                Password is required
-              }
-            </mat-error>
-          </mat-form-field>
-
-          <button
-            class="w-full mt-2"
-            mat-flat-button
-            type="submit"
-            [disabled]="loginForm().submitting() || loginForm().invalid()"
-          >
-            @if (loginForm().submitting()) {
-              <mat-spinner diameter="20"></mat-spinner>
-            } @else {
-              Sign in
+  @if (!mfaRequired()) {
+    <form class="flex flex-col gap-3" [formRoot]="loginForm">
+      <mat-form-field class="w-full" appearance="outline">
+        <mat-label>Email</mat-label>
+        <input matInput [formField]="loginForm.email" type="email" autocomplete="email" />
+        <mat-error>
+          @let emailErrs = loginForm.email().errors();
+          @if (emailErrs.length > 0 && loginForm.email().touched()) {
+            @if (emailErrs[0].kind === 'required') {
+              Email is required
+            } @else if (emailErrs[0].kind === 'email') {
+              Enter a valid email address
             }
-          </button>
-        </form>
+          }
+        </mat-error>
+      </mat-form-field>
 
-        <div class="flex justify-center gap-6 mt-6">
-          <a
-            routerLink="/forgot"
-            class="mat-font-label-lg mat-text-primary no-underline hover:underline"
-            >Forgot password?</a
-          >
-          <a
-            routerLink="/register"
-            class="mat-font-label-lg mat-text-primary no-underline hover:underline"
-            >Create an account</a
-          >
-        </div>
-      } @else {
-        <form class="flex flex-col gap-3" [formRoot]="mfaForm">
-          <mat-form-field class="w-full" appearance="outline">
-            <mat-label>MFA Code</mat-label>
-            <input matInput [formField]="mfaForm.code" autocomplete="one-time-code" />
-            <mat-hint>Enter your 6-digit code or a recovery code</mat-hint>
-            <mat-error>
-              @let codeErrs = mfaForm.code().errors();
-              @if (codeErrs.length > 0 && mfaForm.code().touched()) {
-                @if (codeErrs[0].kind === 'required') {
-                  MFA code is required
-                } @else if (codeErrs[0].kind === 'minLength') {
-                  Code must be at least 6 characters
-                }
-              }
-            </mat-error>
-          </mat-form-field>
+      <mat-form-field class="w-full" appearance="outline">
+        <mat-label>Password</mat-label>
+        <input
+          matInput
+          [formField]="loginForm.password"
+          type="password"
+          autocomplete="current-password"
+        />
+        <mat-error>
+          @let passwordErrs = loginForm.password().errors();
+          @if (
+            passwordErrs.length > 0 &&
+            passwordErrs[0].kind === 'required' &&
+            loginForm.password().touched()
+          ) {
+            Password is required
+          }
+        </mat-error>
+      </mat-form-field>
 
-          <button
-            class="w-full mt-2"
-            mat-flat-button
-            type="submit"
-            [disabled]="mfaForm().submitting() || mfaForm().invalid()"
-          >
-            @if (mfaForm().submitting()) {
-              <mat-spinner diameter="20"></mat-spinner>
-            } @else {
-              Verify
+      <button
+        class="w-full mt-2"
+        mat-flat-button
+        type="submit"
+        [disabled]="loginForm().submitting() || loginForm().invalid()"
+      >
+        @if (loginForm().submitting()) {
+          <mat-spinner diameter="20"></mat-spinner>
+        } @else {
+          Sign in
+        }
+      </button>
+    </form>
+
+    <div class="flex justify-center gap-6 mt-6">
+      <a
+        routerLink="/forgot"
+        class="mat-font-label-lg mat-text-primary no-underline hover:underline"
+        >Forgot password?</a
+      >
+      <a
+        routerLink="/register"
+        class="mat-font-label-lg mat-text-primary no-underline hover:underline"
+        >Create an account</a
+      >
+    </div>
+  } @else {
+    <form class="flex flex-col gap-3" [formRoot]="mfaForm">
+      <mat-form-field class="w-full" appearance="outline">
+        <mat-label>MFA Code</mat-label>
+        <input matInput [formField]="mfaForm.code" autocomplete="one-time-code" />
+        <mat-hint>Enter your 6-digit code or a recovery code</mat-hint>
+        <mat-error>
+          @let codeErrs = mfaForm.code().errors();
+          @if (codeErrs.length > 0 && mfaForm.code().touched()) {
+            @if (codeErrs[0].kind === 'required') {
+              MFA code is required
+            } @else if (codeErrs[0].kind === 'minLength') {
+              Code must be at least 6 characters
             }
-          </button>
-        </form>
-      }
-    </mat-card-content>
-  </mat-card>
-</div>
+          }
+        </mat-error>
+      </mat-form-field>
+
+      <button
+        class="w-full mt-2"
+        mat-flat-button
+        type="submit"
+        [disabled]="mfaForm().submitting() || mfaForm().invalid()"
+      >
+        @if (mfaForm().submitting()) {
+          <mat-spinner diameter="20"></mat-spinner>
+        } @else {
+          Verify
+        }
+      </button>
+    </form>
+  }
+</app-auth-layout>
