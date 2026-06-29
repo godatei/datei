@@ -10,7 +10,7 @@
 
   /* Typography */
   --font-base:
-    var(--font-google-sans), Roboto, system-ui, -apple-system, 'Segoe UI',
+    var(--font-roboto-flex), Roboto, system-ui, -apple-system, 'Segoe UI',
     sans-serif;
   --md-ref-typeface-brand: var(--font-base);
   --md-ref-typeface-plain: var(--font-base);
@@ -187,7 +187,7 @@ article blockquote {
 
 article code {
   font-family:
-    var(--font-google-sans-code), ui-monospace, SFMono-Regular, Menlo, Consolas,
+    var(--font-roboto-mono), ui-monospace, SFMono-Regular, Menlo, Consolas,
     monospace;
   font-size: 0.875em;
 }

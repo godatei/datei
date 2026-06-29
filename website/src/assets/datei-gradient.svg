@@ -21,7 +21,7 @@
   </defs>
   <rect width="1200" height="675" fill="url(#datei-top)" />
   <rect width="1200" height="675" fill="url(#datei-bottom)" mask="url(#datei-vmask)" />
-  <g fill="#ffffff" filter="url(#datei-text-shadow)" font-family="'Google Sans', 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif">
+  <g fill="#ffffff" filter="url(#datei-text-shadow)" font-family="'Roboto Flex', 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif">
     <text x="90" y="312" font-size="62" font-weight="700">"Datei" is German for file.</text>
     <text x="90" y="388" font-size="31" font-weight="400">But also for document. And dataset.</text>
     <text x="90" y="432" font-size="31" font-weight="400">Basically anything you really don&#8217;t want to lose.</text>

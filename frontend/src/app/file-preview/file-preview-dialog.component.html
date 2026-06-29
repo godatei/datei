@@ -1,0 +1,60 @@
+<div class="lightbox__bar">
+  <span class="lightbox__title mat-font-title-lg" [title]="current().name ?? ''">{{
+    current().name
+  }}</span>
+  <div class="lightbox__actions">
+    <button
+      matIconButton
+      aria-label="Download"
+      [disabled]="loading() || error()"
+      (click)="download()"
+    >
+      <mat-icon>download</mat-icon>
+    </button>
+    <button matIconButton aria-label="Close preview" (click)="close()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+</div>
+
+@if (multiple) {
+  <button
+    matIconButton
+    class="lightbox__nav lightbox__nav--prev"
+    aria-label="Previous file"
+    [disabled]="!hasPrev()"
+    (click)="prev()"
+  >
+    <mat-icon>chevron_left</mat-icon>
+  </button>
+  <button
+    matIconButton
+    class="lightbox__nav lightbox__nav--next"
+    aria-label="Next file"
+    [disabled]="!hasNext()"
+    (click)="next()"
+  >
+    <mat-icon>chevron_right</mat-icon>
+  </button>
+}
+
+@if (loading()) {
+  <mat-spinner diameter="48" aria-label="Loading file" />
+} @else if (error()) {
+  <div class="lightbox__error">
+    <mat-icon>error_outline</mat-icon>
+    <p class="mat-font-body-lg">Couldn't load this file.</p>
+    <button matButton="filled" (click)="retry()">Retry</button>
+  </div>
+} @else if (kind() === 'pdf') {
+  <embed
+    [src]="pdfSrc()"
+    type="application/pdf"
+    class="lightbox__pdf"
+    [title]="current().name ?? ''"
+  />
+} @else {
+  <figure class="lightbox__figure">
+    <img [src]="imageSrc()" [alt]="current().name ?? ''" class="lightbox__img" />
+  </figure>
+}

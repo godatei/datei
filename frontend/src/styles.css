@@ -61,6 +61,21 @@ tr {
   overflow-x: hidden;
 }
 
+/* Lightbox image preview: strip the dialog surface chrome so the media floats
+   on a dimmed full-viewport backdrop. Both target CDK overlay elements that
+   live outside the dialog component, so they must be global. */
+.lightbox-panel .mat-mdc-dialog-surface {
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.lightbox-backdrop {
+  background: rgb(0 0 0 / 90%);
+}
+
 /* Compact variant of matIconButton for inline-with-text contexts.
    The touch target stays at the M3 default (48px) via the overlay element. */
 .mat-icon-button-compact {
