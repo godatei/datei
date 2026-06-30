@@ -18,8 +18,11 @@ import (
 	"github.com/godatei/datei/internal/authn"
 	"github.com/godatei/datei/internal/buildconfig"
 	"github.com/godatei/datei/internal/config"
+	"github.com/godatei/datei/internal/cron"
+	"github.com/godatei/datei/internal/crypto"
 	"github.com/godatei/datei/internal/db"
 	"github.com/godatei/datei/internal/db/migrations"
+	"github.com/godatei/datei/internal/email"
 	"github.com/godatei/datei/internal/file"
 	"github.com/godatei/datei/internal/frontend"
 	"github.com/godatei/datei/internal/link"
@@ -107,6 +110,11 @@ func run(ctx context.Context, options Options) error {
 	linkEventStore := link.NewEventStore(db)
 	linkRepository := link.NewRepository(db, linkEventStore)
 
+	mailAccountEventStore := email.NewAccountEventStore(db)
+	mailAccountRepository := email.NewAccountRepository(db, mailAccountEventStore)
+	mailRuleEventStore := email.NewRuleEventStore(db)
+	mailRuleRepository := email.NewRuleRepository(db, mailRuleEventStore)
+
 	// Create mailer
 	var m mailer.Mailer
 	mc := config.Mailer()
@@ -133,7 +141,26 @@ func run(ctx context.Context, options Options) error {
 	linkSvc := link.NewService(db, linkRepository)
 	publicLinkSvc := link.NewPublicService(db, linkRepository, fileSvc)
 
-	srv := server.NewServer(fileSvc, userSvc, linkSvc, publicLinkSvc)
+	encryptor, err := crypto.New(config.EncryptionKey())
+	if err != nil {
+		slog.Error("failed to create encryptor", "error", err)
+		return err
+	}
+
+	mailSvc := email.NewService(db, mailAccountRepository, mailRuleRepository, encryptor)
+	mailPoller := email.NewPoller(db, fileSvc, encryptor)
+
+	scheduler, err := cron.New(ctx)
+	if err != nil {
+		slog.Error("failed to create scheduler", "error", err)
+		return err
+	}
+	if err := scheduler.Register("email-poller", config.EmailPollSchedule(), mailPoller.RunAll); err != nil {
+		slog.Error("failed to register email poll job", "error", err)
+		return err
+	}
+
+	srv := server.NewServer(fileSvc, userSvc, linkSvc, publicLinkSvc, mailSvc)
 	strictHandler := server.NewStrictHandlerWithOptions(srv, nil, server.StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
 			slog.InfoContext(r.Context(), "request validation/decoding error",
@@ -212,10 +239,13 @@ func run(ctx context.Context, options Options) error {
 		defer cancel()
 		defer close(shutdownComplete)
 		slog.Warn("shutting down")
+		scheduler.Shutdown(ctx)
 		if err := httpServer.Shutdown(ctx); err != nil {
 			slog.Error("shutdown error", "error", err)
 		}
 	})
+
+	scheduler.Start()
 
 	go func() {
 		slog.Info("server is listening", "addr", config.ServerAddr(), "version", buildconfig.Version())

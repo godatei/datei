@@ -13,8 +13,11 @@ import { listPersonalAccessTokens, revokePersonalAccessToken } from '~/api/funct
 import type { PersonalAccessToken } from '~/api/models/personal-access-token';
 import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
 import { retryOnConflict } from '~/util/retry-on-conflict';
+import {
+  ConfirmDialogComponent,
+  ConfirmDialogData,
+} from '~/frontend/components/confirm-dialog.component';
 import { UserPatCreateDialogComponent } from '../user-pat-create-dialog/user-pat-create-dialog.component';
-import { UserPatRevokeDialogComponent } from '../user-pat-revoke-dialog/user-pat-revoke-dialog.component';
 
 @Component({
   selector: 'app-user-personal-access-tokens',
@@ -50,9 +53,16 @@ export class UserPersonalAccessTokensComponent {
   }
 
   protected async revokeToken(token: PersonalAccessToken): Promise<void> {
-    const dialogRef = this.dialog.open(UserPatRevokeDialogComponent, {
-      data: { label: this.displayLabel(token) },
-    });
+    const dialogRef = this.dialog.open<ConfirmDialogComponent, ConfirmDialogData, boolean>(
+      ConfirmDialogComponent,
+      {
+        data: {
+          title: 'Revoke access token?',
+          message: `Revoke token "${this.displayLabel(token)}"?`,
+          confirmLabel: 'Revoke',
+        },
+      },
+    );
     const confirmed = await firstValueFrom(dialogRef.afterClosed());
     if (!confirmed) return;
 

@@ -10,6 +10,10 @@ var (
 	// event stream advanced between load and save. Callers may retry.
 	ErrConcurrentUpdate = errors.New("concurrent update conflict")
 
+	// ErrConnectionTestFailed signals that an IMAP connection test failed; the
+	// wrapped detail describes why (bad host, auth failure, etc.).
+	ErrConnectionTestFailed = errors.New("connection test failed")
+
 	ErrIsDirectory          = errors.New("cannot download directory")
 	ErrNotFound             = errors.New("file not found")
 	ErrNoContent            = errors.New("file has no content")

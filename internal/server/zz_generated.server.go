@@ -132,6 +132,39 @@ type ServerInterface interface {
 	// Set an email as primary
 	// (PATCH /api/v1/settings/emails/{emailId}/primary)
 	SetPrimaryEmail(w http.ResponseWriter, r *http.Request, emailId openapi_types.UUID)
+	// List the authenticated user's mail accounts
+	// (GET /api/v1/settings/mail/accounts)
+	ListMailAccounts(w http.ResponseWriter, r *http.Request, params ListMailAccountsParams)
+	// Create a new mail account
+	// (POST /api/v1/settings/mail/accounts)
+	CreateMailAccount(w http.ResponseWriter, r *http.Request)
+	// Delete a mail account and its rules
+	// (DELETE /api/v1/settings/mail/accounts/{accountId})
+	DeleteMailAccount(w http.ResponseWriter, r *http.Request, accountId openapi_types.UUID)
+	// Get a mail account
+	// (GET /api/v1/settings/mail/accounts/{accountId})
+	GetMailAccount(w http.ResponseWriter, r *http.Request, accountId openapi_types.UUID)
+	// Update a mail account
+	// (PUT /api/v1/settings/mail/accounts/{accountId})
+	UpdateMailAccount(w http.ResponseWriter, r *http.Request, accountId openapi_types.UUID)
+	// Test the IMAP connection for a mail account
+	// (POST /api/v1/settings/mail/accounts/{accountId}/test)
+	TestMailAccount(w http.ResponseWriter, r *http.Request, accountId openapi_types.UUID)
+	// List all mail rules across the authenticated user's accounts
+	// (GET /api/v1/settings/mail/rules)
+	ListAllMailRules(w http.ResponseWriter, r *http.Request, params ListAllMailRulesParams)
+	// Create a new mail rule
+	// (POST /api/v1/settings/mail/rules)
+	CreateMailRule(w http.ResponseWriter, r *http.Request)
+	// Delete a mail rule
+	// (DELETE /api/v1/settings/mail/rules/{ruleId})
+	DeleteMailRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID)
+	// Get a mail rule
+	// (GET /api/v1/settings/mail/rules/{ruleId})
+	GetMailRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID)
+	// Update a mail rule
+	// (PUT /api/v1/settings/mail/rules/{ruleId})
+	UpdateMailRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID)
 	// Disable MFA
 	// (POST /api/v1/settings/mfa/disable)
 	DisableMFA(w http.ResponseWriter, r *http.Request)
@@ -396,6 +429,72 @@ func (_ Unimplemented) RemoveEmail(w http.ResponseWriter, r *http.Request, email
 // Set an email as primary
 // (PATCH /api/v1/settings/emails/{emailId}/primary)
 func (_ Unimplemented) SetPrimaryEmail(w http.ResponseWriter, r *http.Request, emailId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List the authenticated user's mail accounts
+// (GET /api/v1/settings/mail/accounts)
+func (_ Unimplemented) ListMailAccounts(w http.ResponseWriter, r *http.Request, params ListMailAccountsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Create a new mail account
+// (POST /api/v1/settings/mail/accounts)
+func (_ Unimplemented) CreateMailAccount(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete a mail account and its rules
+// (DELETE /api/v1/settings/mail/accounts/{accountId})
+func (_ Unimplemented) DeleteMailAccount(w http.ResponseWriter, r *http.Request, accountId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get a mail account
+// (GET /api/v1/settings/mail/accounts/{accountId})
+func (_ Unimplemented) GetMailAccount(w http.ResponseWriter, r *http.Request, accountId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update a mail account
+// (PUT /api/v1/settings/mail/accounts/{accountId})
+func (_ Unimplemented) UpdateMailAccount(w http.ResponseWriter, r *http.Request, accountId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Test the IMAP connection for a mail account
+// (POST /api/v1/settings/mail/accounts/{accountId}/test)
+func (_ Unimplemented) TestMailAccount(w http.ResponseWriter, r *http.Request, accountId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List all mail rules across the authenticated user's accounts
+// (GET /api/v1/settings/mail/rules)
+func (_ Unimplemented) ListAllMailRules(w http.ResponseWriter, r *http.Request, params ListAllMailRulesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Create a new mail rule
+// (POST /api/v1/settings/mail/rules)
+func (_ Unimplemented) CreateMailRule(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete a mail rule
+// (DELETE /api/v1/settings/mail/rules/{ruleId})
+func (_ Unimplemented) DeleteMailRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get a mail rule
+// (GET /api/v1/settings/mail/rules/{ruleId})
+func (_ Unimplemented) GetMailRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update a mail rule
+// (PUT /api/v1/settings/mail/rules/{ruleId})
+func (_ Unimplemented) UpdateMailRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1627,6 +1726,374 @@ func (siw *ServerInterfaceWrapper) SetPrimaryEmail(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// ListMailAccounts operation middleware
+func (siw *ServerInterfaceWrapper) ListMailAccounts(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListMailAccountsParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListMailAccounts(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateMailAccount operation middleware
+func (siw *ServerInterfaceWrapper) CreateMailAccount(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateMailAccount(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteMailAccount operation middleware
+func (siw *ServerInterfaceWrapper) DeleteMailAccount(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "accountId" -------------
+	var accountId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "accountId", chi.URLParam(r, "accountId"), &accountId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteMailAccount(w, r, accountId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetMailAccount operation middleware
+func (siw *ServerInterfaceWrapper) GetMailAccount(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "accountId" -------------
+	var accountId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "accountId", chi.URLParam(r, "accountId"), &accountId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMailAccount(w, r, accountId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateMailAccount operation middleware
+func (siw *ServerInterfaceWrapper) UpdateMailAccount(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "accountId" -------------
+	var accountId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "accountId", chi.URLParam(r, "accountId"), &accountId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateMailAccount(w, r, accountId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// TestMailAccount operation middleware
+func (siw *ServerInterfaceWrapper) TestMailAccount(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "accountId" -------------
+	var accountId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "accountId", chi.URLParam(r, "accountId"), &accountId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestMailAccount(w, r, accountId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListAllMailRules operation middleware
+func (siw *ServerInterfaceWrapper) ListAllMailRules(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListAllMailRulesParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListAllMailRules(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateMailRule operation middleware
+func (siw *ServerInterfaceWrapper) CreateMailRule(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateMailRule(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteMailRule operation middleware
+func (siw *ServerInterfaceWrapper) DeleteMailRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "ruleId" -------------
+	var ruleId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ruleId", chi.URLParam(r, "ruleId"), &ruleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ruleId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteMailRule(w, r, ruleId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetMailRule operation middleware
+func (siw *ServerInterfaceWrapper) GetMailRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "ruleId" -------------
+	var ruleId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ruleId", chi.URLParam(r, "ruleId"), &ruleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ruleId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMailRule(w, r, ruleId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateMailRule operation middleware
+func (siw *ServerInterfaceWrapper) UpdateMailRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "ruleId" -------------
+	var ruleId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ruleId", chi.URLParam(r, "ruleId"), &ruleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ruleId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerHttpAuthenticationScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateMailRule(w, r, ruleId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // DisableMFA operation middleware
 func (siw *ServerInterfaceWrapper) DisableMFA(w http.ResponseWriter, r *http.Request) {
 
@@ -2281,6 +2748,39 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Patch(options.BaseURL+"/api/v1/settings/emails/{emailId}/primary", wrapper.SetPrimaryEmail)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/settings/mail/accounts", wrapper.ListMailAccounts)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/settings/mail/accounts", wrapper.CreateMailAccount)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v1/settings/mail/accounts/{accountId}", wrapper.DeleteMailAccount)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/settings/mail/accounts/{accountId}", wrapper.GetMailAccount)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/api/v1/settings/mail/accounts/{accountId}", wrapper.UpdateMailAccount)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/settings/mail/accounts/{accountId}/test", wrapper.TestMailAccount)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/settings/mail/rules", wrapper.ListAllMailRules)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v1/settings/mail/rules", wrapper.CreateMailRule)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v1/settings/mail/rules/{ruleId}", wrapper.DeleteMailRule)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v1/settings/mail/rules/{ruleId}", wrapper.GetMailRule)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/api/v1/settings/mail/rules/{ruleId}", wrapper.UpdateMailRule)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v1/settings/mfa/disable", wrapper.DisableMFA)
@@ -3616,6 +4116,398 @@ func (response SetPrimaryEmail404Response) VisitSetPrimaryEmailResponse(w http.R
 	return nil
 }
 
+type ListMailAccountsRequestObject struct {
+	Params ListMailAccountsParams
+}
+
+type ListMailAccountsResponseObject interface {
+	VisitListMailAccountsResponse(w http.ResponseWriter) error
+}
+
+type ListMailAccounts200JSONResponse ListMailAccountsResponse
+
+func (response ListMailAccounts200JSONResponse) VisitListMailAccountsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateMailAccountRequestObject struct {
+	Body *CreateMailAccountJSONRequestBody
+}
+
+type CreateMailAccountResponseObject interface {
+	VisitCreateMailAccountResponse(w http.ResponseWriter) error
+}
+
+type CreateMailAccount201JSONResponse MailAccount
+
+func (response CreateMailAccount201JSONResponse) VisitCreateMailAccountResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateMailAccount400JSONResponse struct {
+	Message string `json:"message"`
+}
+
+func (response CreateMailAccount400JSONResponse) VisitCreateMailAccountResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateMailAccount409Response struct {
+}
+
+func (response CreateMailAccount409Response) VisitCreateMailAccountResponse(w http.ResponseWriter) error {
+	w.WriteHeader(409)
+	return nil
+}
+
+type DeleteMailAccountRequestObject struct {
+	AccountId openapi_types.UUID `json:"accountId"`
+}
+
+type DeleteMailAccountResponseObject interface {
+	VisitDeleteMailAccountResponse(w http.ResponseWriter) error
+}
+
+type DeleteMailAccount204Response struct {
+}
+
+func (response DeleteMailAccount204Response) VisitDeleteMailAccountResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteMailAccount404Response struct {
+}
+
+func (response DeleteMailAccount404Response) VisitDeleteMailAccountResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type DeleteMailAccount409Response struct {
+}
+
+func (response DeleteMailAccount409Response) VisitDeleteMailAccountResponse(w http.ResponseWriter) error {
+	w.WriteHeader(409)
+	return nil
+}
+
+type GetMailAccountRequestObject struct {
+	AccountId openapi_types.UUID `json:"accountId"`
+}
+
+type GetMailAccountResponseObject interface {
+	VisitGetMailAccountResponse(w http.ResponseWriter) error
+}
+
+type GetMailAccount200JSONResponse MailAccount
+
+func (response GetMailAccount200JSONResponse) VisitGetMailAccountResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetMailAccount404Response struct {
+}
+
+func (response GetMailAccount404Response) VisitGetMailAccountResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type UpdateMailAccountRequestObject struct {
+	AccountId openapi_types.UUID `json:"accountId"`
+	Body      *UpdateMailAccountJSONRequestBody
+}
+
+type UpdateMailAccountResponseObject interface {
+	VisitUpdateMailAccountResponse(w http.ResponseWriter) error
+}
+
+type UpdateMailAccount200JSONResponse MailAccount
+
+func (response UpdateMailAccount200JSONResponse) VisitUpdateMailAccountResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateMailAccount400JSONResponse struct {
+	Message string `json:"message"`
+}
+
+func (response UpdateMailAccount400JSONResponse) VisitUpdateMailAccountResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateMailAccount404Response struct {
+}
+
+func (response UpdateMailAccount404Response) VisitUpdateMailAccountResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type UpdateMailAccount409Response struct {
+}
+
+func (response UpdateMailAccount409Response) VisitUpdateMailAccountResponse(w http.ResponseWriter) error {
+	w.WriteHeader(409)
+	return nil
+}
+
+type TestMailAccountRequestObject struct {
+	AccountId openapi_types.UUID `json:"accountId"`
+}
+
+type TestMailAccountResponseObject interface {
+	VisitTestMailAccountResponse(w http.ResponseWriter) error
+}
+
+type TestMailAccount200JSONResponse TestMailAccountResponse
+
+func (response TestMailAccount200JSONResponse) VisitTestMailAccountResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TestMailAccount404Response struct {
+}
+
+func (response TestMailAccount404Response) VisitTestMailAccountResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ListAllMailRulesRequestObject struct {
+	Params ListAllMailRulesParams
+}
+
+type ListAllMailRulesResponseObject interface {
+	VisitListAllMailRulesResponse(w http.ResponseWriter) error
+}
+
+type ListAllMailRules200JSONResponse ListMailRulesResponse
+
+func (response ListAllMailRules200JSONResponse) VisitListAllMailRulesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateMailRuleRequestObject struct {
+	Body *CreateMailRuleJSONRequestBody
+}
+
+type CreateMailRuleResponseObject interface {
+	VisitCreateMailRuleResponse(w http.ResponseWriter) error
+}
+
+type CreateMailRule201JSONResponse MailRule
+
+func (response CreateMailRule201JSONResponse) VisitCreateMailRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateMailRule400Response struct {
+}
+
+func (response CreateMailRule400Response) VisitCreateMailRuleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type CreateMailRule404Response struct {
+}
+
+func (response CreateMailRule404Response) VisitCreateMailRuleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type CreateMailRule409Response struct {
+}
+
+func (response CreateMailRule409Response) VisitCreateMailRuleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(409)
+	return nil
+}
+
+type DeleteMailRuleRequestObject struct {
+	RuleId openapi_types.UUID `json:"ruleId"`
+}
+
+type DeleteMailRuleResponseObject interface {
+	VisitDeleteMailRuleResponse(w http.ResponseWriter) error
+}
+
+type DeleteMailRule204Response struct {
+}
+
+func (response DeleteMailRule204Response) VisitDeleteMailRuleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteMailRule404Response struct {
+}
+
+func (response DeleteMailRule404Response) VisitDeleteMailRuleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type DeleteMailRule409Response struct {
+}
+
+func (response DeleteMailRule409Response) VisitDeleteMailRuleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(409)
+	return nil
+}
+
+type GetMailRuleRequestObject struct {
+	RuleId openapi_types.UUID `json:"ruleId"`
+}
+
+type GetMailRuleResponseObject interface {
+	VisitGetMailRuleResponse(w http.ResponseWriter) error
+}
+
+type GetMailRule200JSONResponse MailRule
+
+func (response GetMailRule200JSONResponse) VisitGetMailRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetMailRule404Response struct {
+}
+
+func (response GetMailRule404Response) VisitGetMailRuleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type UpdateMailRuleRequestObject struct {
+	RuleId openapi_types.UUID `json:"ruleId"`
+	Body   *UpdateMailRuleJSONRequestBody
+}
+
+type UpdateMailRuleResponseObject interface {
+	VisitUpdateMailRuleResponse(w http.ResponseWriter) error
+}
+
+type UpdateMailRule200JSONResponse MailRule
+
+func (response UpdateMailRule200JSONResponse) VisitUpdateMailRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateMailRule400Response struct {
+}
+
+func (response UpdateMailRule400Response) VisitUpdateMailRuleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type UpdateMailRule404Response struct {
+}
+
+func (response UpdateMailRule404Response) VisitUpdateMailRuleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type UpdateMailRule409Response struct {
+}
+
+func (response UpdateMailRule409Response) VisitUpdateMailRuleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(409)
+	return nil
+}
+
 type DisableMFARequestObject struct {
 	Body *DisableMFAJSONRequestBody
 }
@@ -4187,6 +5079,39 @@ type StrictServerInterface interface {
 	// Set an email as primary
 	// (PATCH /api/v1/settings/emails/{emailId}/primary)
 	SetPrimaryEmail(ctx context.Context, request SetPrimaryEmailRequestObject) (SetPrimaryEmailResponseObject, error)
+	// List the authenticated user's mail accounts
+	// (GET /api/v1/settings/mail/accounts)
+	ListMailAccounts(ctx context.Context, request ListMailAccountsRequestObject) (ListMailAccountsResponseObject, error)
+	// Create a new mail account
+	// (POST /api/v1/settings/mail/accounts)
+	CreateMailAccount(ctx context.Context, request CreateMailAccountRequestObject) (CreateMailAccountResponseObject, error)
+	// Delete a mail account and its rules
+	// (DELETE /api/v1/settings/mail/accounts/{accountId})
+	DeleteMailAccount(ctx context.Context, request DeleteMailAccountRequestObject) (DeleteMailAccountResponseObject, error)
+	// Get a mail account
+	// (GET /api/v1/settings/mail/accounts/{accountId})
+	GetMailAccount(ctx context.Context, request GetMailAccountRequestObject) (GetMailAccountResponseObject, error)
+	// Update a mail account
+	// (PUT /api/v1/settings/mail/accounts/{accountId})
+	UpdateMailAccount(ctx context.Context, request UpdateMailAccountRequestObject) (UpdateMailAccountResponseObject, error)
+	// Test the IMAP connection for a mail account
+	// (POST /api/v1/settings/mail/accounts/{accountId}/test)
+	TestMailAccount(ctx context.Context, request TestMailAccountRequestObject) (TestMailAccountResponseObject, error)
+	// List all mail rules across the authenticated user's accounts
+	// (GET /api/v1/settings/mail/rules)
+	ListAllMailRules(ctx context.Context, request ListAllMailRulesRequestObject) (ListAllMailRulesResponseObject, error)
+	// Create a new mail rule
+	// (POST /api/v1/settings/mail/rules)
+	CreateMailRule(ctx context.Context, request CreateMailRuleRequestObject) (CreateMailRuleResponseObject, error)
+	// Delete a mail rule
+	// (DELETE /api/v1/settings/mail/rules/{ruleId})
+	DeleteMailRule(ctx context.Context, request DeleteMailRuleRequestObject) (DeleteMailRuleResponseObject, error)
+	// Get a mail rule
+	// (GET /api/v1/settings/mail/rules/{ruleId})
+	GetMailRule(ctx context.Context, request GetMailRuleRequestObject) (GetMailRuleResponseObject, error)
+	// Update a mail rule
+	// (PUT /api/v1/settings/mail/rules/{ruleId})
+	UpdateMailRule(ctx context.Context, request UpdateMailRuleRequestObject) (UpdateMailRuleResponseObject, error)
 	// Disable MFA
 	// (POST /api/v1/settings/mfa/disable)
 	DisableMFA(ctx context.Context, request DisableMFARequestObject) (DisableMFAResponseObject, error)
@@ -5278,6 +6203,316 @@ func (sh *strictHandler) SetPrimaryEmail(w http.ResponseWriter, r *http.Request,
 	}
 }
 
+// ListMailAccounts operation middleware
+func (sh *strictHandler) ListMailAccounts(w http.ResponseWriter, r *http.Request, params ListMailAccountsParams) {
+	var request ListMailAccountsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListMailAccounts(ctx, request.(ListMailAccountsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListMailAccounts")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListMailAccountsResponseObject); ok {
+		if err := validResponse.VisitListMailAccountsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateMailAccount operation middleware
+func (sh *strictHandler) CreateMailAccount(w http.ResponseWriter, r *http.Request) {
+	var request CreateMailAccountRequestObject
+
+	var body CreateMailAccountJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateMailAccount(ctx, request.(CreateMailAccountRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateMailAccount")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateMailAccountResponseObject); ok {
+		if err := validResponse.VisitCreateMailAccountResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteMailAccount operation middleware
+func (sh *strictHandler) DeleteMailAccount(w http.ResponseWriter, r *http.Request, accountId openapi_types.UUID) {
+	var request DeleteMailAccountRequestObject
+
+	request.AccountId = accountId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteMailAccount(ctx, request.(DeleteMailAccountRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteMailAccount")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteMailAccountResponseObject); ok {
+		if err := validResponse.VisitDeleteMailAccountResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetMailAccount operation middleware
+func (sh *strictHandler) GetMailAccount(w http.ResponseWriter, r *http.Request, accountId openapi_types.UUID) {
+	var request GetMailAccountRequestObject
+
+	request.AccountId = accountId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetMailAccount(ctx, request.(GetMailAccountRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetMailAccount")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetMailAccountResponseObject); ok {
+		if err := validResponse.VisitGetMailAccountResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateMailAccount operation middleware
+func (sh *strictHandler) UpdateMailAccount(w http.ResponseWriter, r *http.Request, accountId openapi_types.UUID) {
+	var request UpdateMailAccountRequestObject
+
+	request.AccountId = accountId
+
+	var body UpdateMailAccountJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateMailAccount(ctx, request.(UpdateMailAccountRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateMailAccount")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateMailAccountResponseObject); ok {
+		if err := validResponse.VisitUpdateMailAccountResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// TestMailAccount operation middleware
+func (sh *strictHandler) TestMailAccount(w http.ResponseWriter, r *http.Request, accountId openapi_types.UUID) {
+	var request TestMailAccountRequestObject
+
+	request.AccountId = accountId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TestMailAccount(ctx, request.(TestMailAccountRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestMailAccount")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TestMailAccountResponseObject); ok {
+		if err := validResponse.VisitTestMailAccountResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListAllMailRules operation middleware
+func (sh *strictHandler) ListAllMailRules(w http.ResponseWriter, r *http.Request, params ListAllMailRulesParams) {
+	var request ListAllMailRulesRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListAllMailRules(ctx, request.(ListAllMailRulesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListAllMailRules")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListAllMailRulesResponseObject); ok {
+		if err := validResponse.VisitListAllMailRulesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateMailRule operation middleware
+func (sh *strictHandler) CreateMailRule(w http.ResponseWriter, r *http.Request) {
+	var request CreateMailRuleRequestObject
+
+	var body CreateMailRuleJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateMailRule(ctx, request.(CreateMailRuleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateMailRule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateMailRuleResponseObject); ok {
+		if err := validResponse.VisitCreateMailRuleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteMailRule operation middleware
+func (sh *strictHandler) DeleteMailRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID) {
+	var request DeleteMailRuleRequestObject
+
+	request.RuleId = ruleId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteMailRule(ctx, request.(DeleteMailRuleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteMailRule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteMailRuleResponseObject); ok {
+		if err := validResponse.VisitDeleteMailRuleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetMailRule operation middleware
+func (sh *strictHandler) GetMailRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID) {
+	var request GetMailRuleRequestObject
+
+	request.RuleId = ruleId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetMailRule(ctx, request.(GetMailRuleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetMailRule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetMailRuleResponseObject); ok {
+		if err := validResponse.VisitGetMailRuleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateMailRule operation middleware
+func (sh *strictHandler) UpdateMailRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID) {
+	var request UpdateMailRuleRequestObject
+
+	request.RuleId = ruleId
+
+	var body UpdateMailRuleJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateMailRule(ctx, request.(UpdateMailRuleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateMailRule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateMailRuleResponseObject); ok {
+		if err := validResponse.VisitUpdateMailRuleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // DisableMFA operation middleware
 func (sh *strictHandler) DisableMFA(w http.ResponseWriter, r *http.Request) {
 	var request DisableMFARequestObject
@@ -5756,105 +6991,125 @@ func (sh *strictHandler) RestoreTrash(w http.ResponseWriter, r *http.Request, fi
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"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",
-	"AAD//w==",
+	"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",
+	"3mWdlgrb/mEnA7M5Kw2f2/Ycftb7+/8NAAD//w==",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

@@ -387,8 +387,8 @@ func (q *Queries) InsertFilePermissionProjection(ctx context.Context, arg Insert
 
 const insertFileProjection = `-- name: InsertFileProjection :exec
 INSERT INTO file_projection
- (id, parent_id, is_directory, name, created_at, updated_at)
- VALUES ($1, $2, $3, $4, $5, $6)
+ (id, parent_id, is_directory, name, created_at, updated_at, created_by, updated_by)
+ VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 `
 
 type InsertFileProjectionParams struct {
@@ -398,6 +398,8 @@ type InsertFileProjectionParams struct {
 	Name        string     `db:"name"`
 	CreatedAt   time.Time  `db:"created_at"`
 	UpdatedAt   time.Time  `db:"updated_at"`
+	CreatedBy   *uuid.UUID `db:"created_by"`
+	UpdatedBy   *uuid.UUID `db:"updated_by"`
 }
 
 func (q *Queries) InsertFileProjection(ctx context.Context, arg InsertFileProjectionParams) error {
@@ -408,6 +410,8 @@ func (q *Queries) InsertFileProjection(ctx context.Context, arg InsertFileProjec
 		arg.Name,
 		arg.CreatedAt,
 		arg.UpdatedAt,
+		arg.CreatedBy,
+		arg.UpdatedBy,
 	)
 	return err
 }
@@ -632,119 +636,148 @@ func (q *Queries) UpdateFileProjectionContentMD(ctx context.Context, arg UpdateF
 
 const updateFileProjectionLinked = `-- name: UpdateFileProjectionLinked :exec
 UPDATE file_projection
- SET linked_file_id = $1, updated_at = $2, updated_by = NULL
- WHERE id = $3
+ SET linked_file_id = $1, updated_at = $2, updated_by = $3
+ WHERE id = $4
 `
 
 type UpdateFileProjectionLinkedParams struct {
 	LinkedFileID *uuid.UUID `db:"linked_file_id"`
 	UpdatedAt    time.Time  `db:"updated_at"`
+	UpdatedBy    *uuid.UUID `db:"updated_by"`
 	ID           uuid.UUID  `db:"id"`
 }
 
 func (q *Queries) UpdateFileProjectionLinked(ctx context.Context, arg UpdateFileProjectionLinkedParams) error {
-	_, err := q.db.Exec(ctx, updateFileProjectionLinked, arg.LinkedFileID, arg.UpdatedAt, arg.ID)
+	_, err := q.db.Exec(ctx, updateFileProjectionLinked,
+		arg.LinkedFileID,
+		arg.UpdatedAt,
+		arg.UpdatedBy,
+		arg.ID,
+	)
 	return err
 }
 
 const updateFileProjectionName = `-- name: UpdateFileProjectionName :exec
 UPDATE file_projection
- SET name = $1, updated_at = $2, updated_by = NULL
- WHERE id = $3
+ SET name = $1, updated_at = $2, updated_by = $3
+ WHERE id = $4
 `
 
 type UpdateFileProjectionNameParams struct {
-	Name      string    `db:"name"`
-	UpdatedAt time.Time `db:"updated_at"`
-	ID        uuid.UUID `db:"id"`
+	Name      string     `db:"name"`
+	UpdatedAt time.Time  `db:"updated_at"`
+	UpdatedBy *uuid.UUID `db:"updated_by"`
+	ID        uuid.UUID  `db:"id"`
 }
 
 func (q *Queries) UpdateFileProjectionName(ctx context.Context, arg UpdateFileProjectionNameParams) error {
-	_, err := q.db.Exec(ctx, updateFileProjectionName, arg.Name, arg.UpdatedAt, arg.ID)
+	_, err := q.db.Exec(ctx, updateFileProjectionName,
+		arg.Name,
+		arg.UpdatedAt,
+		arg.UpdatedBy,
+		arg.ID,
+	)
 	return err
 }
 
 const updateFileProjectionParent = `-- name: UpdateFileProjectionParent :exec
 UPDATE file_projection
- SET parent_id = $1, updated_at = $2, updated_by = NULL
- WHERE id = $3
+ SET parent_id = $1, updated_at = $2, updated_by = $3
+ WHERE id = $4
 `
 
 type UpdateFileProjectionParentParams struct {
 	ParentID  *uuid.UUID `db:"parent_id"`
 	UpdatedAt time.Time  `db:"updated_at"`
+	UpdatedBy *uuid.UUID `db:"updated_by"`
 	ID        uuid.UUID  `db:"id"`
 }
 
 func (q *Queries) UpdateFileProjectionParent(ctx context.Context, arg UpdateFileProjectionParentParams) error {
-	_, err := q.db.Exec(ctx, updateFileProjectionParent, arg.ParentID, arg.UpdatedAt, arg.ID)
+	_, err := q.db.Exec(ctx, updateFileProjectionParent,
+		arg.ParentID,
+		arg.UpdatedAt,
+		arg.UpdatedBy,
+		arg.ID,
+	)
 	return err
 }
 
 const updateFileProjectionRestored = `-- name: UpdateFileProjectionRestored :exec
 UPDATE file_projection
- SET trashed_at = NULL, trashed_by = NULL, updated_at = $1, updated_by = NULL
- WHERE id = $2
+ SET trashed_at = NULL, trashed_by = NULL, updated_at = $1, updated_by = $2
+ WHERE id = $3
 `
 
 type UpdateFileProjectionRestoredParams struct {
-	UpdatedAt time.Time `db:"updated_at"`
-	ID        uuid.UUID `db:"id"`
+	UpdatedAt time.Time  `db:"updated_at"`
+	UpdatedBy *uuid.UUID `db:"updated_by"`
+	ID        uuid.UUID  `db:"id"`
 }
 
 func (q *Queries) UpdateFileProjectionRestored(ctx context.Context, arg UpdateFileProjectionRestoredParams) error {
-	_, err := q.db.Exec(ctx, updateFileProjectionRestored, arg.UpdatedAt, arg.ID)
+	_, err := q.db.Exec(ctx, updateFileProjectionRestored, arg.UpdatedAt, arg.UpdatedBy, arg.ID)
 	return err
 }
 
 const updateFileProjectionTrashed = `-- name: UpdateFileProjectionTrashed :exec
 UPDATE file_projection
- SET trashed_at = $1, trashed_by = NULL, updated_at = $2, updated_by = NULL
- WHERE id = $3
+ SET trashed_at = $1, trashed_by = $2, updated_at = $3, updated_by = $4
+ WHERE id = $5
 `
 
 type UpdateFileProjectionTrashedParams struct {
 	TrashedAt *time.Time `db:"trashed_at"`
+	TrashedBy *uuid.UUID `db:"trashed_by"`
 	UpdatedAt time.Time  `db:"updated_at"`
+	UpdatedBy *uuid.UUID `db:"updated_by"`
 	ID        uuid.UUID  `db:"id"`
 }
 
 func (q *Queries) UpdateFileProjectionTrashed(ctx context.Context, arg UpdateFileProjectionTrashedParams) error {
-	_, err := q.db.Exec(ctx, updateFileProjectionTrashed, arg.TrashedAt, arg.UpdatedAt, arg.ID)
+	_, err := q.db.Exec(ctx, updateFileProjectionTrashed,
+		arg.TrashedAt,
+		arg.TrashedBy,
+		arg.UpdatedAt,
+		arg.UpdatedBy,
+		arg.ID,
+	)
 	return err
 }
 
 const updateFileProjectionUnlinked = `-- name: UpdateFileProjectionUnlinked :exec
 UPDATE file_projection
- SET linked_file_id = NULL, updated_at = $1, updated_by = NULL
- WHERE id = $2
+ SET linked_file_id = NULL, updated_at = $1, updated_by = $2
+ WHERE id = $3
 `
 
 type UpdateFileProjectionUnlinkedParams struct {
-	UpdatedAt time.Time `db:"updated_at"`
-	ID        uuid.UUID `db:"id"`
+	UpdatedAt time.Time  `db:"updated_at"`
+	UpdatedBy *uuid.UUID `db:"updated_by"`
+	ID        uuid.UUID  `db:"id"`
 }
 
 func (q *Queries) UpdateFileProjectionUnlinked(ctx context.Context, arg UpdateFileProjectionUnlinkedParams) error {
-	_, err := q.db.Exec(ctx, updateFileProjectionUnlinked, arg.UpdatedAt, arg.ID)
+	_, err := q.db.Exec(ctx, updateFileProjectionUnlinked, arg.UpdatedAt, arg.UpdatedBy, arg.ID)
 	return err
 }
 
 const updateFileProjectionVersion = `-- name: UpdateFileProjectionVersion :exec
 UPDATE file_projection
  SET s3_key = $1, size = $2, checksum = $3, mime_type = $4,
-     content_md = $5, updated_at = $6, updated_by = NULL
- WHERE id = $7
+     content_md = $5, updated_at = $6, updated_by = $7
+ WHERE id = $8
 `
 
 type UpdateFileProjectionVersionParams struct {
-	S3Key     *string   `db:"s3_key"`
-	Size      *int64    `db:"size"`
-	Checksum  *string   `db:"checksum"`
-	MimeType  *string   `db:"mime_type"`
-	ContentMd *string   `db:"content_md"`
-	UpdatedAt time.Time `db:"updated_at"`
-	ID        uuid.UUID `db:"id"`
+	S3Key     *string    `db:"s3_key"`
+	Size      *int64     `db:"size"`
+	Checksum  *string    `db:"checksum"`
+	MimeType  *string    `db:"mime_type"`
+	ContentMd *string    `db:"content_md"`
+	UpdatedAt time.Time  `db:"updated_at"`
+	UpdatedBy *uuid.UUID `db:"updated_by"`
+	ID        uuid.UUID  `db:"id"`
 }
 
 func (q *Queries) UpdateFileProjectionVersion(ctx context.Context, arg UpdateFileProjectionVersionParams) error {
@@ -755,6 +788,7 @@ func (q *Queries) UpdateFileProjectionVersion(ctx context.Context, arg UpdateFil
 		arg.MimeType,
 		arg.ContentMd,
 		arg.UpdatedAt,
+		arg.UpdatedBy,
 		arg.ID,
 	)
 	return err

@@ -1,0 +1,30 @@
+type: object
+required:
+  - name
+  - imapHost
+  - imapPort
+  - username
+  - password
+  - security
+properties:
+  name:
+    type: string
+    minLength: 1
+    maxLength: 255
+  imapHost:
+    type: string
+    minLength: 1
+  imapPort:
+    type: integer
+    minimum: 1
+    maximum: 65535
+    default: 993
+  username:
+    type: string
+    minLength: 1
+  password:
+    type: string
+    minLength: 1
+    description: IMAP password; stored encrypted and never returned
+  security:
+    $ref: './MailAccountSecurity.yaml'

@@ -85,3 +85,22 @@ body {
     )
   );
 }
+
+// Compact slide toggle for inline-with-text contexts (e.g. list-item meta).
+// Scales the M3 defaults (52x32 track) down to a 40x24 track.
+.mat-slide-toggle-compact {
+  @include mat.slide-toggle-overrides(
+    (
+      track-height: 24px,
+      track-width: 40px,
+      state-layer-size: 30px,
+      with-icon-handle-size: 18px,
+      unselected-handle-size: 12px,
+      pressed-handle-size: 20px,
+      selected-icon-size: 12px,
+      selected-with-icon-handle-horizontal-margin: 0 19px,
+      selected-pressed-handle-horizontal-margin: 0 18px,
+      unselected-handle-horizontal-margin: 0 6px,
+    )
+  );
+}

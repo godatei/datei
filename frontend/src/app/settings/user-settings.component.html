@@ -22,6 +22,15 @@
           >
             Security
           </a>
+          <a
+            mat-list-item
+            routerLink="mail"
+            routerLinkActive
+            #mailRla="routerLinkActive"
+            [activated]="mailRla.isActive"
+          >
+            Mail
+          </a>
         </mat-nav-list>
       </nav>
     </div>

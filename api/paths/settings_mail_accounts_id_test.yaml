@@ -1,0 +1,21 @@
+parameters:
+  - name: accountId
+    in: path
+    required: true
+    schema:
+      type: string
+      format: uuid
+post:
+  operationId: TestMailAccount
+  summary: Test the IMAP connection for a mail account
+  security:
+    - bearerHttpAuthentication: []
+  responses:
+    '200':
+      description: Connection test result
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/TestMailAccountResponse.yaml'
+    '404':
+      description: Account not found

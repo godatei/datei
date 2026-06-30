@@ -58,24 +58,24 @@ SELECT COUNT(*) FROM file_projection f
 
 -- name: InsertFileProjection :exec
 INSERT INTO file_projection
- (id, parent_id, is_directory, name, created_at, updated_at)
- VALUES (@id, @parent_id, @is_directory, @name, @created_at, @updated_at);
+ (id, parent_id, is_directory, name, created_at, updated_at, created_by, updated_by)
+ VALUES (@id, @parent_id, @is_directory, @name, @created_at, @updated_at, @created_by, @updated_by);
 
 -- name: UpdateFileProjectionName :exec
 UPDATE file_projection
- SET name = $1, updated_at = $2, updated_by = NULL
- WHERE id = $3;
+ SET name = $1, updated_at = $2, updated_by = $3
+ WHERE id = $4;
 
 -- name: UpdateFileProjectionVersion :exec
 UPDATE file_projection
  SET s3_key = $1, size = $2, checksum = $3, mime_type = $4,
-     content_md = $5, updated_at = $6, updated_by = NULL
- WHERE id = $7;
+     content_md = $5, updated_at = $6, updated_by = $7
+ WHERE id = $8;
 
 -- name: UpdateFileProjectionParent :exec
 UPDATE file_projection
- SET parent_id = $1, updated_at = $2, updated_by = NULL
- WHERE id = $3;
+ SET parent_id = $1, updated_at = $2, updated_by = $3
+ WHERE id = $4;
 
 -- name: UpdateFileProjectionContentMD :exec
 UPDATE file_projection
@@ -84,23 +84,23 @@ UPDATE file_projection
 
 -- name: UpdateFileProjectionTrashed :exec
 UPDATE file_projection
- SET trashed_at = $1, trashed_by = NULL, updated_at = $2, updated_by = NULL
- WHERE id = $3;
+ SET trashed_at = $1, trashed_by = $2, updated_at = $3, updated_by = $4
+ WHERE id = $5;
 
 -- name: UpdateFileProjectionRestored :exec
 UPDATE file_projection
- SET trashed_at = NULL, trashed_by = NULL, updated_at = $1, updated_by = NULL
- WHERE id = $2;
+ SET trashed_at = NULL, trashed_by = NULL, updated_at = $1, updated_by = $2
+ WHERE id = $3;
 
 -- name: UpdateFileProjectionLinked :exec
 UPDATE file_projection
- SET linked_file_id = $1, updated_at = $2, updated_by = NULL
- WHERE id = $3;
+ SET linked_file_id = $1, updated_at = $2, updated_by = $3
+ WHERE id = $4;
 
 -- name: UpdateFileProjectionUnlinked :exec
 UPDATE file_projection
- SET linked_file_id = NULL, updated_at = $1, updated_by = NULL
- WHERE id = $2;
+ SET linked_file_id = NULL, updated_at = $1, updated_by = $2
+ WHERE id = $3;
 
 -- name: GetRootFileProjectionByName :one
 SELECT f.* FROM file_projection f

@@ -5,10 +5,96 @@
 package db
 
 import (
+	"database/sql/driver"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 )
+
+type MailAction string
+
+const (
+	MailActionMarkAsRead MailAction = "mark_as_read"
+)
+
+func (e *MailAction) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = MailAction(s)
+	case string:
+		*e = MailAction(s)
+	default:
+		return fmt.Errorf("unsupported scan type for MailAction: %T", src)
+	}
+	return nil
+}
+
+type NullMailAction struct {
+	MailAction MailAction
+	Valid      bool // Valid is true if MailAction is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullMailAction) Scan(value interface{}) error {
+	if value == nil {
+		ns.MailAction, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.MailAction.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullMailAction) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.MailAction), nil
+}
+
+type MailSecurity string
+
+const (
+	MailSecuritySsl      MailSecurity = "ssl"
+	MailSecurityStarttls MailSecurity = "starttls"
+	MailSecurityNone     MailSecurity = "none"
+)
+
+func (e *MailSecurity) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = MailSecurity(s)
+	case string:
+		*e = MailSecurity(s)
+	default:
+		return fmt.Errorf("unsupported scan type for MailSecurity: %T", src)
+	}
+	return nil
+}
+
+type NullMailSecurity struct {
+	MailSecurity MailSecurity
+	Valid        bool // Valid is true if MailSecurity is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullMailSecurity) Scan(value interface{}) error {
+	if value == nil {
+		ns.MailSecurity, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.MailSecurity.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullMailSecurity) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.MailSecurity), nil
+}
 
 type FileEvent struct {
 	ID            int64     `db:"id"`
@@ -71,6 +157,63 @@ type LinkProjection struct {
 	OpenCount int64      `db:"open_count"`
 	CreatedAt time.Time  `db:"created_at"`
 	UpdatedAt time.Time  `db:"updated_at"`
+}
+
+type MailAccountEvent struct {
+	ID            int64     `db:"id"`
+	StreamID      uuid.UUID `db:"stream_id"`
+	StreamVersion int32     `db:"stream_version"`
+	EventType     string    `db:"event_type"`
+	EventData     []byte    `db:"event_data"`
+	CreatedAt     time.Time `db:"created_at"`
+}
+
+type MailAccountProjection struct {
+	ID                uuid.UUID    `db:"id"`
+	OwnerID           uuid.UUID    `db:"owner_id"`
+	Name              string       `db:"name"`
+	ImapHost          string       `db:"imap_host"`
+	ImapPort          int32        `db:"imap_port"`
+	Username          string       `db:"username"`
+	PasswordEncrypted []byte       `db:"password_encrypted"`
+	Security          MailSecurity `db:"security"`
+	CreatedAt         time.Time    `db:"created_at"`
+	UpdatedAt         time.Time    `db:"updated_at"`
+}
+
+type MailProcessedMessage struct {
+	ID          int64     `db:"id"`
+	AccountID   uuid.UUID `db:"account_id"`
+	Folder      string    `db:"folder"`
+	UidValidity int64     `db:"uid_validity"`
+	ImapUid     int64     `db:"imap_uid"`
+	ProcessedAt time.Time `db:"processed_at"`
+}
+
+type MailRuleEvent struct {
+	ID            int64     `db:"id"`
+	StreamID      uuid.UUID `db:"stream_id"`
+	StreamVersion int32     `db:"stream_version"`
+	EventType     string    `db:"event_type"`
+	EventData     []byte    `db:"event_data"`
+	CreatedAt     time.Time `db:"created_at"`
+}
+
+type MailRuleProjection struct {
+	ID                uuid.UUID   `db:"id"`
+	AccountID         uuid.UUID   `db:"account_id"`
+	Name              string      `db:"name"`
+	SortOrder         int32       `db:"sort_order"`
+	Enabled           bool        `db:"enabled"`
+	Folder            string      `db:"folder"`
+	FilterFrom        *string     `db:"filter_from"`
+	FilterSubject     *string     `db:"filter_subject"`
+	MaxAgeDays        int32       `db:"max_age_days"`
+	AttachmentPattern *string     `db:"attachment_pattern"`
+	Action            *MailAction `db:"action"`
+	TargetDirectoryID *uuid.UUID  `db:"target_directory_id"`
+	CreatedAt         time.Time   `db:"created_at"`
+	UpdatedAt         time.Time   `db:"updated_at"`
 }
 
 type UserAccountAccessTokenProjection struct {

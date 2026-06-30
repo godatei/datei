@@ -1,0 +1,12 @@
+type: object
+required:
+  - items
+  - total
+properties:
+  items:
+    type: array
+    items:
+      $ref: './MailAccount.yaml'
+  total:
+    type: integer
+    description: Total number of accounts matching the query
