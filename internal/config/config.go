@@ -60,6 +60,10 @@ func NewConfig(path string) error {
 	v.SetDefault("mailer.smtp.password", "")
 	v.SetDefault("mailer.smtp.from", "noreply@datei.local")
 
+	v.SetDefault("email.poll_schedule", "*/5 * * * *")
+
+	v.SetDefault("encryption.key", "")
+
 	if path != "" {
 		v.SetConfigFile(path)
 	}
@@ -186,4 +190,27 @@ func Mailer() MailerConfig {
 			From:     v.GetString("mailer.smtp.from"),
 		},
 	}
+}
+
+// EmailPollSchedule returns the cron expression that drives the IMAP poller.
+func EmailPollSchedule() string {
+	return v.GetString("email.poll_schedule")
+}
+
+// EncryptionKey returns the key used to encrypt secrets at rest (e.g. IMAP
+// account passwords). The configured value is base64-decoded; in release builds
+// it must be set. Mirrors AuthJWTSecret.
+func EncryptionKey() []byte {
+	secret := v.GetString("encryption.key")
+	if secret == "" {
+		if buildconfig.IsRelease() {
+			panic("encryption.key must be configured in release builds")
+		}
+		return []byte("dev-encryption-key-32-bytes-long")
+	}
+	decoded, err := base64.StdEncoding.DecodeString(secret)
+	if err != nil {
+		return []byte(secret)
+	}
+	return decoded
 }

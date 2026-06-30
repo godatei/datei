@@ -1,0 +1,49 @@
+get:
+  operationId: ListAllMailRules
+  summary: List all mail rules across the authenticated user's accounts
+  security:
+    - bearerHttpAuthentication: []
+  parameters:
+    - name: limit
+      in: query
+      description: Maximum number of results
+      schema:
+        type: integer
+        default: 100
+    - name: offset
+      in: query
+      description: Number of results to skip
+      schema:
+        type: integer
+        default: 0
+  responses:
+    '200':
+      description: List of mail rules
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ListMailRulesResponse.yaml'
+post:
+  operationId: CreateMailRule
+  summary: Create a new mail rule
+  security:
+    - bearerHttpAuthentication: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/CreateMailRuleRequest.yaml'
+  responses:
+    '201':
+      description: Mail rule created
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/MailRule.yaml'
+    '400':
+      description: Invalid request
+    '404':
+      description: Account not found
+    '409':
+      description: Concurrent update conflict; retry the request

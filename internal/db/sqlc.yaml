@@ -9,6 +9,9 @@ sql:
       - 'user_account_event.sql'
       - 'user_account.sql'
       - 'user_account_access_token.sql'
+      - 'mail_account_event.sql'
+      - 'mail_rule_event.sql'
+      - 'email.sql'
     schema: 'zz_generated_schema.sql'
     gen:
       go:

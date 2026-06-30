@@ -210,14 +210,20 @@ type CreateFileInput struct {
 	ContentType string
 }
 
-// CreateFile creates a new file record with optional file upload
+// CreateFile creates a new file record with optional file upload, owned by the
+// authenticated user.
 func (s *Service) CreateFile(ctx context.Context, input CreateFileInput) (*api.File, error) {
-	userID := authn.RequireCurrentUser(ctx).ID
+	return s.CreateFileForOwner(ctx, authn.RequireCurrentUser(ctx).ID, input)
+}
 
+// CreateFileForOwner creates a new file record owned by ownerID. It takes the
+// owner explicitly so callers without an authenticated request context (e.g.
+// the email ingestion poller) can create files on a user's behalf.
+func (s *Service) CreateFileForOwner(ctx context.Context, ownerID uuid.UUID, input CreateFileInput) (*api.File, error) {
 	if input.ParentID != nil {
 		queries := db.New(s.db)
 		parent, err := queries.GetFileProjectionForUser(ctx, db.GetFileProjectionForUserParams{
-			UserID: userID,
+			UserID: ownerID,
 			ID:     *input.ParentID,
 		})
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -238,7 +244,7 @@ func (s *Service) CreateFile(ctx context.Context, input CreateFileInput) (*api.F
 	now := time.Now()
 
 	agg := &Aggregate{}
-	if err := agg.Create(id, input.ParentID, isDirectory, input.FileName, userID, now); err != nil {
+	if err := agg.Create(id, input.ParentID, isDirectory, input.FileName, ownerID, now); err != nil {
 		return nil, err
 	}
 
@@ -249,7 +255,7 @@ func (s *Service) CreateFile(ctx context.Context, input CreateFileInput) (*api.F
 		}
 
 		if err = agg.UploadVersion(
-			putResult.StorageKey, putResult.Size, putResult.Checksum, input.ContentType, nil, userID, now,
+			putResult.StorageKey, putResult.Size, putResult.Checksum, input.ContentType, nil, ownerID, now,
 		); err != nil {
 			return nil, err
 		}

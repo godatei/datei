@@ -14,6 +14,72 @@ const (
 	PublicLinkBearerAuthenticationScopes publicLinkBearerAuthenticationContextKey = "publicLinkBearerAuthentication.Scopes"
 )
 
+// Defines values for CreateMailRuleRequestAction.
+const (
+	CreateMailRuleRequestActionMarkAsRead CreateMailRuleRequestAction = "mark_as_read"
+)
+
+// Valid indicates whether the value is a known member of the CreateMailRuleRequestAction enum.
+func (e CreateMailRuleRequestAction) Valid() bool {
+	switch e {
+	case CreateMailRuleRequestActionMarkAsRead:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MailAccountSecurity.
+const (
+	None     MailAccountSecurity = "none"
+	Ssl      MailAccountSecurity = "ssl"
+	Starttls MailAccountSecurity = "starttls"
+)
+
+// Valid indicates whether the value is a known member of the MailAccountSecurity enum.
+func (e MailAccountSecurity) Valid() bool {
+	switch e {
+	case None:
+		return true
+	case Ssl:
+		return true
+	case Starttls:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MailRuleAction.
+const (
+	MailRuleActionMarkAsRead MailRuleAction = "mark_as_read"
+)
+
+// Valid indicates whether the value is a known member of the MailRuleAction enum.
+func (e MailRuleAction) Valid() bool {
+	switch e {
+	case MailRuleActionMarkAsRead:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UpdateMailRuleRequestAction.
+const (
+	MarkAsRead UpdateMailRuleRequestAction = "mark_as_read"
+)
+
+// Valid indicates whether the value is a known member of the UpdateMailRuleRequestAction enum.
+func (e UpdateMailRuleRequestAction) Valid() bool {
+	switch e {
+	case MarkAsRead:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListLinksParamsStatus.
 const (
 	Active  ListLinksParamsStatus = "active"
@@ -114,6 +180,45 @@ type CreateLinkRequest struct {
 	// Name Display name of the link (mandatory, may not be blank)
 	Name string `json:"name"`
 }
+
+// CreateMailAccountRequest defines model for CreateMailAccountRequest.
+type CreateMailAccountRequest struct {
+	ImapHost string `json:"imapHost"`
+	ImapPort int    `json:"imapPort"`
+	Name     string `json:"name"`
+
+	// Password IMAP password; stored encrypted and never returned
+	Password string `json:"password"`
+
+	// Security Transport security used for the IMAP connection
+	Security MailAccountSecurity `json:"security"`
+	Username string              `json:"username"`
+}
+
+// CreateMailRuleRequest defines model for CreateMailRuleRequest.
+type CreateMailRuleRequest struct {
+	// AccountId Account the rule belongs to
+	AccountId openapi_types.UUID `json:"accountId"`
+
+	// Action Omit for no action once attachments are consumed
+	Action *CreateMailRuleRequestAction `json:"action,omitempty"`
+
+	// AttachmentPattern Comma-separated filename globs (e.g. "*.pdf,*.docx"); empty means all attachments
+	AttachmentPattern *string `json:"attachmentPattern,omitempty"`
+	Enabled           *bool   `json:"enabled,omitempty"`
+	FilterFrom        *string `json:"filterFrom,omitempty"`
+	FilterSubject     *string `json:"filterSubject,omitempty"`
+	Folder            *string `json:"folder,omitempty"`
+	MaxAgeDays        int     `json:"maxAgeDays"`
+	Name              string  `json:"name"`
+	Order             *int    `json:"order,omitempty"`
+
+	// TargetDirectoryId Directory the attachments are stored in; omit for the account owner's root
+	TargetDirectoryId *openapi_types.UUID `json:"targetDirectoryId,omitempty"`
+}
+
+// CreateMailRuleRequestAction Omit for no action once attachments are consumed
+type CreateMailRuleRequestAction string
 
 // CreatePersonalAccessTokenRequest defines model for CreatePersonalAccessTokenRequest.
 type CreatePersonalAccessTokenRequest struct {
@@ -315,6 +420,22 @@ type ListLinksResponse struct {
 	Total int `json:"total"`
 }
 
+// ListMailAccountsResponse defines model for ListMailAccountsResponse.
+type ListMailAccountsResponse struct {
+	Items []MailAccount `json:"items"`
+
+	// Total Total number of accounts matching the query
+	Total int `json:"total"`
+}
+
+// ListMailRulesResponse defines model for ListMailRulesResponse.
+type ListMailRulesResponse struct {
+	Items []MailRule `json:"items"`
+
+	// Total Total number of rules matching the query
+	Total int `json:"total"`
+}
+
 // ListPersonalAccessTokensResponse defines model for ListPersonalAccessTokensResponse.
 type ListPersonalAccessTokensResponse struct {
 	Tokens []PersonalAccessToken `json:"tokens"`
@@ -367,6 +488,70 @@ type MFARecoveryCodesStatusResponse struct {
 	RemainingCodes int `json:"remainingCodes"`
 }
 
+// MailAccount defines model for MailAccount.
+type MailAccount struct {
+	CreatedAt time.Time `json:"createdAt"`
+
+	// Id Unique identifier
+	Id openapi_types.UUID `json:"id"`
+
+	// ImapHost IMAP server hostname
+	ImapHost string `json:"imapHost"`
+
+	// ImapPort IMAP server port
+	ImapPort int `json:"imapPort"`
+
+	// Name Human-readable account name
+	Name string `json:"name"`
+
+	// Security Transport security used for the IMAP connection
+	Security  MailAccountSecurity `json:"security"`
+	UpdatedAt time.Time           `json:"updatedAt"`
+
+	// Username IMAP login username
+	Username string `json:"username"`
+}
+
+// MailAccountSecurity Transport security used for the IMAP connection
+type MailAccountSecurity string
+
+// MailRule defines model for MailRule.
+type MailRule struct {
+	AccountId openapi_types.UUID `json:"accountId"`
+
+	// Action Action performed on a mail once its attachments have been consumed; omitted means no action
+	Action *MailRuleAction `json:"action,omitempty"`
+
+	// AttachmentPattern Comma-separated filename globs (e.g. "*.pdf,*.docx"); empty means all attachments
+	AttachmentPattern *string   `json:"attachmentPattern,omitempty"`
+	CreatedAt         time.Time `json:"createdAt"`
+	Enabled           bool      `json:"enabled"`
+
+	// FilterFrom Only process mails whose From address contains this value
+	FilterFrom *string `json:"filterFrom,omitempty"`
+
+	// FilterSubject Only process mails whose subject contains this value
+	FilterSubject *string `json:"filterSubject,omitempty"`
+
+	// Folder IMAP folder to scan (e.g. INBOX)
+	Folder string             `json:"folder"`
+	Id     openapi_types.UUID `json:"id"`
+
+	// MaxAgeDays Only process mails newer than this many days
+	MaxAgeDays int    `json:"maxAgeDays"`
+	Name       string `json:"name"`
+
+	// Order Rules are applied in ascending order
+	Order int `json:"order"`
+
+	// TargetDirectoryId Directory the attachments are stored in; omitted means the account owner's root
+	TargetDirectoryId *openapi_types.UUID `json:"targetDirectoryId,omitempty"`
+	UpdatedAt         time.Time           `json:"updatedAt"`
+}
+
+// MailRuleAction Action performed on a mail once its attachments have been consumed; omitted means no action
+type MailRuleAction string
+
 // PersonalAccessToken defines model for PersonalAccessToken.
 type PersonalAccessToken struct {
 	// CreatedAt Creation timestamp
@@ -414,6 +599,15 @@ type RestoreFileRequest struct {
 type SetupMFAResponse struct {
 	QrCodeUrl string `json:"qrCodeUrl"`
 	Secret    string `json:"secret"`
+}
+
+// TestMailAccountResponse defines model for TestMailAccountResponse.
+type TestMailAccountResponse struct {
+	// Message Error detail when the connection failed
+	Message *string `json:"message,omitempty"`
+
+	// Success Whether the IMAP connection and login succeeded
+	Success bool `json:"success"`
 }
 
 // TrashedFile defines model for TrashedFile.
@@ -527,6 +721,45 @@ type UpdateLinkRequest struct {
 	Name *string `json:"name,omitempty"`
 }
 
+// UpdateMailAccountRequest defines model for UpdateMailAccountRequest.
+type UpdateMailAccountRequest struct {
+	ImapHost string `json:"imapHost"`
+	ImapPort int    `json:"imapPort"`
+	Name     string `json:"name"`
+
+	// Password New IMAP password; omit to keep the existing one
+	Password *string `json:"password,omitempty"`
+
+	// Security Transport security used for the IMAP connection
+	Security MailAccountSecurity `json:"security"`
+	Username string              `json:"username"`
+}
+
+// UpdateMailRuleRequest defines model for UpdateMailRuleRequest.
+type UpdateMailRuleRequest struct {
+	// AccountId Move the rule to this account; omit to keep its current account
+	AccountId *openapi_types.UUID `json:"accountId,omitempty"`
+
+	// Action Omit for no action once attachments are consumed
+	Action *UpdateMailRuleRequestAction `json:"action,omitempty"`
+
+	// AttachmentPattern Comma-separated filename globs (e.g. "*.pdf,*.docx"); empty means all attachments
+	AttachmentPattern *string `json:"attachmentPattern,omitempty"`
+	Enabled           bool    `json:"enabled"`
+	FilterFrom        *string `json:"filterFrom,omitempty"`
+	FilterSubject     *string `json:"filterSubject,omitempty"`
+	Folder            string  `json:"folder"`
+	MaxAgeDays        int     `json:"maxAgeDays"`
+	Name              string  `json:"name"`
+	Order             int     `json:"order"`
+
+	// TargetDirectoryId Directory the attachments are stored in; omit for the account owner's root
+	TargetDirectoryId *openapi_types.UUID `json:"targetDirectoryId,omitempty"`
+}
+
+// UpdateMailRuleRequestAction Omit for no action once attachments are consumed
+type UpdateMailRuleRequestAction string
+
 // UpdateUserEmailRequest defines model for UpdateUserEmailRequest.
 type UpdateUserEmailRequest struct {
 	Email openapi_types.Email `json:"email"`
@@ -608,6 +841,24 @@ type ListPublicLinkFilesParams struct {
 	ParentId *openapi_types.UUID `form:"parentId,omitempty" json:"parentId,omitempty"`
 }
 
+// ListMailAccountsParams defines parameters for ListMailAccounts.
+type ListMailAccountsParams struct {
+	// Limit Maximum number of results
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of results to skip
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// ListAllMailRulesParams defines parameters for ListAllMailRules.
+type ListAllMailRulesParams struct {
+	// Limit Maximum number of results
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of results to skip
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
 // ListTrashParams defines parameters for ListTrash.
 type ListTrashParams struct {
 	// Limit Maximum number of results
@@ -670,6 +921,18 @@ type UnlockPublicLinkJSONRequestBody = UnlockPublicLinkRequest
 
 // AddEmailJSONRequestBody defines body for AddEmail for application/json ContentType.
 type AddEmailJSONRequestBody = AddEmailRequest
+
+// CreateMailAccountJSONRequestBody defines body for CreateMailAccount for application/json ContentType.
+type CreateMailAccountJSONRequestBody = CreateMailAccountRequest
+
+// UpdateMailAccountJSONRequestBody defines body for UpdateMailAccount for application/json ContentType.
+type UpdateMailAccountJSONRequestBody = UpdateMailAccountRequest
+
+// CreateMailRuleJSONRequestBody defines body for CreateMailRule for application/json ContentType.
+type CreateMailRuleJSONRequestBody = CreateMailRuleRequest
+
+// UpdateMailRuleJSONRequestBody defines body for UpdateMailRule for application/json ContentType.
+type UpdateMailRuleJSONRequestBody = UpdateMailRuleRequest
 
 // DisableMFAJSONRequestBody defines body for DisableMFA for application/json ContentType.
 type DisableMFAJSONRequestBody = DisableMFARequest

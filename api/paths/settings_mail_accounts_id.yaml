@@ -1,0 +1,66 @@
+parameters:
+  - name: accountId
+    in: path
+    required: true
+    schema:
+      type: string
+      format: uuid
+get:
+  operationId: GetMailAccount
+  summary: Get a mail account
+  security:
+    - bearerHttpAuthentication: []
+  responses:
+    '200':
+      description: Mail account
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/MailAccount.yaml'
+    '404':
+      description: Account not found
+put:
+  operationId: UpdateMailAccount
+  summary: Update a mail account
+  security:
+    - bearerHttpAuthentication: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/UpdateMailAccountRequest.yaml'
+  responses:
+    '200':
+      description: Mail account updated
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/MailAccount.yaml'
+    '400':
+      description: Invalid request or failed connection test
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+            required:
+              - message
+    '404':
+      description: Account not found
+    '409':
+      description: Concurrent update conflict; retry the request
+delete:
+  operationId: DeleteMailAccount
+  summary: Delete a mail account and its rules
+  security:
+    - bearerHttpAuthentication: []
+  responses:
+    '204':
+      description: Account deleted
+    '404':
+      description: Account not found
+    '409':
+      description: Concurrent update conflict; retry the request

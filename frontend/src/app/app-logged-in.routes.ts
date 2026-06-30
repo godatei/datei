@@ -5,6 +5,7 @@ import { DashboardComponent } from '~/frontend/dashboard/dashboard.component';
 import { adminGuard } from '~/frontend/guards/admin.guard';
 import { LinksListComponent } from '~/frontend/links/links-list/links-list.component';
 import { NavComponent } from '~/frontend/nav/nav.component';
+import { MailSettingsComponent } from '~/frontend/settings/mail/mail-settings.component';
 import { UserSettingsProfileComponent } from '~/frontend/settings/user-settings-profile.component';
 import { UserSettingsSecurityComponent } from '~/frontend/settings/user-settings-security.component';
 import { UserSettingsComponent } from '~/frontend/settings/user-settings.component';
@@ -24,6 +25,7 @@ export const routes: Routes = [
           { path: '', redirectTo: 'profile', pathMatch: 'full' },
           { path: 'profile', component: UserSettingsProfileComponent },
           { path: 'security', component: UserSettingsSecurityComponent },
+          { path: 'mail', component: MailSettingsComponent },
         ],
       },
       { path: 'links', component: LinksListComponent },

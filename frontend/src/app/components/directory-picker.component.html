@@ -1,0 +1,39 @@
+<nav class="breadcrumb" aria-label="Current location">
+  <button mat-button class="breadcrumb-btn" (click)="navigateUpTo()">
+    <mat-icon>home</mat-icon>
+    My files
+  </button>
+  @for (item of navItems(); track item.id; let last = $last) {
+    <mat-icon class="breadcrumb-sep shrink-0 mat-text-on-surface-variant">chevron_right</mat-icon>
+    @if (last) {
+      <span class="px-2 whitespace-nowrap font-medium mat-text-on-surface mat-font-label-lg">{{
+        item.name
+      }}</span>
+    } @else {
+      <button mat-button class="breadcrumb-btn" (click)="navigateUpTo(item.id)">
+        {{ item.name }}
+      </button>
+    }
+  }
+</nav>
+
+@if (contents.isLoading()) {
+  <mat-progress-bar mode="indeterminate" />
+} @else if (!contents.value()?.length) {
+  <div class="empty-state">
+    <mat-icon>folder_open</mat-icon>
+    <p class="m-0 mat-font-body-md">No subfolders here</p>
+  </div>
+} @else {
+  <mat-action-list>
+    @for (item of contents.value(); track item.id) {
+      <button mat-list-item (click)="navigateTo(item)">
+        <mat-icon matListItemIcon>folder</mat-icon>
+        <span matListItemTitle>{{ item.name }}</span>
+        <span matListItemMeta>
+          <mat-icon>chevron_right</mat-icon>
+        </span>
+      </button>
+    }
+  </mat-action-list>
+}

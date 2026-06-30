@@ -1,0 +1,44 @@
+type: object
+# Update is a full replacement (PUT). order, enabled, and folder are required so
+# that omitting them returns 400 instead of silently resetting the rule to the
+# create-time defaults (0, true, INBOX).
+required:
+  - name
+  - order
+  - enabled
+  - folder
+  - maxAgeDays
+properties:
+  accountId:
+    type: string
+    format: uuid
+    description: Move the rule to this account; omit to keep its current account
+  name:
+    type: string
+    minLength: 1
+    maxLength: 255
+  order:
+    type: integer
+  enabled:
+    type: boolean
+  folder:
+    type: string
+    minLength: 1
+  filterFrom:
+    type: string
+  filterSubject:
+    type: string
+  maxAgeDays:
+    type: integer
+    minimum: 1
+  attachmentPattern:
+    type: string
+    description: Comma-separated filename globs (e.g. "*.pdf,*.docx"); empty means all attachments
+  action:
+    type: string
+    enum: [mark_as_read]
+    description: Omit for no action once attachments are consumed
+  targetDirectoryId:
+    type: string
+    format: uuid
+    description: Directory the attachments are stored in; omit for the account owner's root
