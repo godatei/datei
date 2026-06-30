@@ -5,8 +5,8 @@
 @import '@fontsource-variable/material-symbols-outlined/full.css';
 
 /* Material Symbols (variable) is the single icon font for the app. The default
-   is the filled, regular-weight style; modifier classes switch to the outline
-   variation or drop to a lighter weight (subtle indicators). */
+   is the outlined (unfilled), regular-weight style; modifier classes switch to
+   the filled variation or drop to a lighter weight (subtle indicators). */
 .material-symbols-outlined {
   font-family: 'Material Symbols Outlined Variable';
   font-weight: normal;
@@ -23,15 +23,15 @@
   font-feature-settings: 'liga';
   -webkit-font-smoothing: antialiased;
   font-variation-settings:
-    'FILL' 1,
+    'FILL' 0,
     'wght' 400,
     'GRAD' 0,
     'opsz' 24;
 }
 
-.material-symbols-outlined.material-symbols-outline {
+.material-symbols-outlined.material-symbols-filled {
   font-variation-settings:
-    'FILL' 0,
+    'FILL' 1,
     'wght' 400,
     'GRAD' 0,
     'opsz' 24;

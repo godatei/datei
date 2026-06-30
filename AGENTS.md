@@ -281,7 +281,7 @@ This project uses Angular Material 21 with Material 3 theming. All UI must follo
 
 ### Icons
 
-Single variable icon font: Material Symbols Outlined, set as the global default font set in `app.config.ts`. Write `<mat-icon>delete</mat-icon>` (no per-icon `fontSet`). Icons are **filled by default**; modifier classes (in `styles.css`): `.material-symbols-outline` (outline variation, e.g. inactive nav items) and `.material-symbols-light` (subtle indicators). Do NOT reintroduce the removed static `@fontsource/material-icons*` packages.
+Single variable icon font: Material Symbols Outlined, set as the global default font set in `app.config.ts`. Write `<mat-icon>delete</mat-icon>` (no per-icon `fontSet`). Icons are **outlined (unfilled) by default**; modifier classes (in `styles.css`): `.material-symbols-filled` (filled variation, e.g. the active nav item) and `.material-symbols-light` (subtle indicators). Do NOT reintroduce the removed static `@fontsource/material-icons*` packages.
 
 ### Angular Best Practices
 
