@@ -7,6 +7,7 @@
 
 // App-specific style partials live in ./styles/ and are pulled in here so the
 // top-level theme file stays focused on the Material theme setup.
+@use './styles/material-symbols';
 @use './styles/file-icons';
 
 @include mat.system-classes();

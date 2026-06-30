@@ -4,46 +4,8 @@
    lighter `index`/`standard` slices are weight-only and can't fill. */
 @import '@fontsource-variable/material-symbols-outlined/full.css';
 
-/* Material Symbols (variable) is the single icon font for the app. The default
-   is the outlined (unfilled), regular-weight style; modifier classes switch to
-   the filled variation or drop to a lighter weight (subtle indicators). */
-.material-symbols-outlined {
-  font-family: 'Material Symbols Outlined Variable';
-  font-weight: normal;
-  font-style: normal;
-  font-size: 24px;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-block;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  -webkit-font-feature-settings: 'liga';
-  font-feature-settings: 'liga';
-  -webkit-font-smoothing: antialiased;
-  font-variation-settings:
-    'FILL' 0,
-    'wght' 400,
-    'GRAD' 0,
-    'opsz' 24;
-}
-
-.material-symbols-outlined.material-symbols-filled {
-  font-variation-settings:
-    'FILL' 1,
-    'wght' 400,
-    'GRAD' 0,
-    'opsz' 24;
-}
-
-.material-symbols-outlined.material-symbols-light {
-  font-variation-settings:
-    'FILL' 0,
-    'wght' 300,
-    'GRAD' 0,
-    'opsz' 24;
-}
+/* The Material Symbols icon classes (`.material-symbols`, modifiers) live in
+   `styles/_material-symbols.scss`, pulled in via `material-theme.scss`. */
 
 @import 'tailwindcss';
 

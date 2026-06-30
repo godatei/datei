@@ -27,7 +27,7 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([tokenInterceptor, publicLinkTokenInterceptor, errorInterceptor]),
     ),
     // Route every <mat-icon> through Material Symbols (variable) by default.
-    { provide: MAT_ICON_DEFAULT_OPTIONS, useValue: { fontSet: 'material-symbols-outlined' } },
+    { provide: MAT_ICON_DEFAULT_OPTIONS, useValue: { fontSet: 'material-symbols' } },
     // Register lsicon file-type SVGs so <mat-icon svgIcon="lsicon:..."> works.
     provideAppInitializer(() => registerFileLsicons(inject(MatIconRegistry), inject(DomSanitizer))),
   ],
