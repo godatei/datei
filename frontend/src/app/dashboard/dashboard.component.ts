@@ -1,5 +1,4 @@
 import { Clipboard } from '@angular/cdk/clipboard';
-import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, resource, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,6 +7,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -22,7 +22,7 @@ import {
   updateFile$FormData,
 } from '~/api/functions';
 import { File } from '~/api/models';
-import { ThumbnailIconComponent } from './thumbnail-icon.component';
+import { FileIconComponent } from './file-icon.component';
 import { FilePreviewService } from '~/frontend/file-preview/file-preview.service';
 import { NewFolderDialogComponent } from './new-folder-dialog.component';
 import { RenameFileDialogComponent, RenameFileDialogData } from './rename-file-dialog.component';
@@ -33,6 +33,7 @@ import {
 import { LinkPickerDialogComponent } from '~/frontend/links/link-picker-dialog/link-picker-dialog.component';
 import type { Link } from '~/api/models/link';
 import { BytesPipe } from '~/frontend/pipes/bytes.pipe';
+import { SmartDatePipe } from '~/frontend/pipes/smart-date.pipe';
 import { triggerDownload } from '~/util/download';
 import { isPreviewable } from '~/util/previewable';
 import { buildShareUrl } from '~/util/share-url';
@@ -43,6 +44,8 @@ import { DropTargetDirective } from './drop-target.directive';
 import { SelectionDirective } from './selection.directive';
 import { SelectionItemDirective } from './selection-item.directive';
 import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
+import { OwnerCellComponent } from '~/frontend/shared/owner-cell.component';
+import { ownerLabel } from '~/util/owner';
 
 @Component({
   selector: 'app-dashboard',
@@ -55,9 +58,11 @@ import { snackErrorDuration, snackSuccessDuration } from '~/frontend/constants';
     MatButtonModule,
     MatChipsModule,
     MatTableModule,
-    DatePipe,
+    MatSortModule,
+    SmartDatePipe,
     BytesPipe,
-    ThumbnailIconComponent,
+    FileIconComponent,
+    OwnerCellComponent,
     DragDropDirective,
     DragPreviewDirective,
     DragItemDirective,
@@ -94,19 +99,32 @@ export class DashboardComponent {
   });
 
   protected readonly dataSource = new MatTableDataSource<File>([]);
-  protected readonly displayedColumns = [
-    'icon',
-    'name',
-    'mimeType',
-    'size',
-    'createdAt',
-    'updatedAt',
-    'actions',
-  ];
+  protected readonly displayedColumns = ['name', 'owner', 'updatedAt', 'size', 'actions'];
   protected readonly selection = viewChild.required<SelectionDirective<File>>(SelectionDirective);
+  protected readonly sort = viewChild(MatSort);
   protected readonly uploading = signal(false);
 
   constructor() {
+    this.dataSource.sortingDataAccessor = (file, column) => {
+      switch (column) {
+        case 'name':
+          return file.name?.toLowerCase() ?? '';
+        case 'owner':
+          return ownerLabel();
+        case 'updatedAt':
+          return new Date(file.updatedAt).getTime();
+        case 'size':
+          return file.size ?? 0;
+        default:
+          return '';
+      }
+    };
+
+    effect(() => {
+      const sort = this.sort();
+      if (sort) this.dataSource.sort = sort;
+    });
+
     effect(() => {
       this.dataSource.data = this.listFilesResource.value()?.items ?? [];
       this.selection().clear();

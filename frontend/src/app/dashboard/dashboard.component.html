@@ -1,5 +1,5 @@
 <div
-  class="flex flex-col grow min-h-0 mx-5 mt-3"
+  class="flex flex-col grow min-h-0 mx-5 mt-5"
   appDragDrop
   #drag="appDragDrop"
   (dragStart)="onDrag($event)"
@@ -7,14 +7,13 @@
   [appSelection]="dataSource.data"
   #selection="appSelection"
 >
-  <nav aria-label="Breadcrumb" class="flex items-center gap-1 flex-wrap mb-2 mat-font-label-lg">
+  <nav aria-label="Breadcrumb" class="breadcrumb-nav mb-2">
     <button
       mat-button
       (click)="navigateTo(null)"
       [appDropTarget]="null"
       [dropTargetEnabled]="parentId() !== null"
     >
-      <mat-icon>home</mat-icon>
       My files
     </button>
     @for (item of pathResource.value(); track item.id; let last = $last) {
@@ -31,7 +30,7 @@
   </nav>
 
   <div
-    class="flex items-center gap-1 px-1 py-0.5 min-h-11 mat-corner-sm transition-all"
+    class="flex items-center gap-1 px-1 py-0.5 min-h-11 mat-corner-full transition-all"
     [class.mat-bg-secondary-container]="selection.isAnySelected()"
   >
     @if (selection.isAnySelected()) {
@@ -72,39 +71,30 @@
   </div>
 
   <div class="grow min-h-0 overflow-auto">
-    <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
-      <ng-container matColumnDef="icon">
-        <th mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let element" class="w-20">
-          <app-thumbnail-icon [file]="element" />
-        </td>
-      </ng-container>
-
+    <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8">
       <ng-container matColumnDef="name">
-        <th mat-header-cell *matHeaderCellDef>Name</th>
-        <td mat-cell *matCellDef="let element">
-          {{ element.name }}
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+        <td mat-cell *matCellDef="let element" class="primary-cell">
+          <div class="flex items-center gap-2">
+            <app-file-icon [file]="element" />
+            <span>{{ element.name }}</span>
+          </div>
         </td>
       </ng-container>
 
-      <ng-container matColumnDef="size">
-        <th mat-header-cell *matHeaderCellDef>Size</th>
-        <td mat-cell *matCellDef="let element">{{ element.size | bytes }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="createdAt">
-        <th mat-header-cell *matHeaderCellDef>Created At</th>
-        <td mat-cell *matCellDef="let element">{{ element.createdAt | date }}</td>
+      <ng-container matColumnDef="owner">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Owner</th>
+        <td mat-cell *matCellDef="let element"><app-owner-cell /></td>
       </ng-container>
 
       <ng-container matColumnDef="updatedAt">
-        <th mat-header-cell *matHeaderCellDef>Updated At</th>
-        <td mat-cell *matCellDef="let element">{{ element.updatedAt | date }}</td>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Modified</th>
+        <td mat-cell *matCellDef="let element">{{ element.updatedAt | smartDate }}</td>
       </ng-container>
 
-      <ng-container matColumnDef="mimeType">
-        <th mat-header-cell *matHeaderCellDef>Content Type</th>
-        <td mat-cell *matCellDef="let element">{{ element.mimeType }}</td>
+      <ng-container matColumnDef="size">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Size</th>
+        <td mat-cell *matCellDef="let element">{{ element.size | bytes }}</td>
       </ng-container>
 
       <ng-container matColumnDef="actions">
@@ -116,7 +106,7 @@
             (click)="$event.stopPropagation()"
             aria-label="More actions"
           >
-            <mat-icon>more_vert</mat-icon>
+            <mat-icon class="material-symbols-light">more_vert</mat-icon>
           </button>
           <mat-menu #rowMenu="matMenu">
             <button mat-menu-item (click)="openRenameDialog(element)">
@@ -158,7 +148,7 @@
         [dropTargetEnabled]="row.isDirectory"
         [appSelectionItem]="row"
         (dblclick)="onRowDblClick(row)"
-        class="select-none transition-colors"
+        class="select-none"
         [class.opacity-50]="drag.isDragging() && selection.selectedIds().has(row.id)"
         [class.pointer-events-none]="drag.isDragging() && selection.selectedIds().has(row.id)"
         [class.cursor-pointer]="!drag.isDragging()"

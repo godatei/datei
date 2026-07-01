@@ -1,57 +1,72 @@
-@import '@fontsource/roboto/300.css';
-@import '@fontsource/roboto/400.css';
-@import '@fontsource/roboto/500.css';
-@import '@fontsource/material-icons';
-@import '@fontsource/material-icons-outlined';
+@import '@fontsource-variable/roboto-flex';
+/* `full` slice is the only one that carries the FILL axis (it ships a second
+   filled master per glyph), which the active/selected states rely on. The
+   lighter `index`/`standard` slices are weight-only and can't fill. */
+@import '@fontsource-variable/material-symbols-outlined/full.css';
 
-.material-icons,
-.material-icons-outlined {
-  font-weight: normal;
-  font-style: normal;
-  font-size: 24px;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-block;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  -webkit-font-feature-settings: 'liga';
-  font-feature-settings: 'liga';
-  -webkit-font-smoothing: antialiased;
-}
-
-.material-icons {
-  font-family: 'Material Icons';
-}
-
-.material-icons-outlined {
-  font-family: 'Material Icons Outlined';
-}
+/* The Material Symbols icon classes (`.material-symbols`, modifiers) live in
+   `styles/_material-symbols.scss`, pulled in via `material-theme.scss`. */
 
 @import 'tailwindcss';
 
 /* You can add global styles to this file, and also import other style files */
 
-.auth-card {
-  --mat-card-content-padding: 2rem 2rem 1.5rem;
-}
-
-/* Material tables: opaque sticky header plus row hover/selection backgrounds.
-   Material sets `background: inherit` on rows, which overrides Tailwind bg
-   utilities, so concrete values are set here. */
+/* Tighter, Google-style line height in table cells. */
+.mat-mdc-cell,
 .mat-mdc-header-cell {
-  background: var(--mat-sys-surface);
+  line-height: 1.25;
 }
 
-tr {
-  &:hover {
-    background: var(--mat-sys-surface-container-low);
-  }
+.mat-mdc-header-cell {
+  background: var(--datei-container-background);
+}
 
-  &.selection-item-selected {
-    background: var(--mat-sys-secondary-container);
-  }
+/* The row's primary label (name column): full-strength color and heavier weight
+   against the lighter rest of the row. */
+.mat-mdc-cell.primary-cell {
+  font-weight: 500;
+  color: var(--mat-sys-on-surface);
+}
+
+/* Dropdown menus use the lightest surface (white). */
+.mat-mdc-menu-panel {
+  --mat-menu-container-color: var(--mat-sys-surface-container-lowest);
+  --mat-menu-item-label-text-line-height: 1.25rem;
+}
+
+/* Compact dropdown menu items (default is a roomy 48px). */
+.mat-mdc-menu-item {
+  min-height: 2.25rem;
+}
+
+/* Breadcrumb trail: a wrapping inline row of nav buttons. */
+nav.breadcrumb-nav {
+  @apply flex items-center gap-1 flex-wrap;
+  font: var(--mat-sys-label-large);
+}
+
+/* Breadcrumb buttons read as a heading rather than small, primary-colored
+   button text. The `nav` qualifier keeps specificity above Material's default
+   text-button (primary) label color. */
+nav.breadcrumb-nav .mat-mdc-button {
+  font: var(--mat-sys-title-large);
+  color: var(--mat-sys-on-surface);
+}
+
+/* Row background (hover/selection) changes apply instantly — no color fade. */
+.mat-mdc-row {
+  transition: none;
+}
+
+/* Hover background applies only to plain rows. Selected and drag drop-target
+   rows keep their own highlight, which a bare `.mat-mdc-row:hover` would
+   otherwise out-specify (class+pseudo beats the single-class state rules). */
+.mat-mdc-row:hover:not(.selection-item-selected):not(.drop-target-active) {
+  background: var(--mat-sys-surface-container-low);
+}
+
+tr.selection-item-selected {
+  background: var(--mat-sys-secondary-container);
 }
 
 /* The collapsed rail is exactly one icon-column wide and its header is pinned to
@@ -95,7 +110,16 @@ mat-list.m3-baseline-list {
 
   mat-list-item {
     border-radius: var(--mat-sys-corner-extra-small);
-    background-color: var(--mat-sys-surface-container-lowest);
+    /* List rows sit on the content card as subtly raised tiles. Bound to the
+       surface tone directly rather than the nav-shell token, which only
+       coincidentally shared this color. */
+    background-color: var(--mat-sys-surface-container-low);
+    /* Match single-line rows (e.g. emails) to the two-line row height used by
+       the tokens list, so both lists share the same vertical padding. */
+    --mat-list-list-item-one-line-container-height: var(
+      --mat-list-list-item-two-line-container-height,
+      64px
+    );
   }
 }
 
@@ -140,4 +164,30 @@ mat-list.m3-expressive-list {
       }
     }
   }
+}
+
+/* Overlay-style scrollbars: a thin rounded thumb floating over a transparent
+   track, so scroll regions don't reserve a permanent gutter. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: 9999px;
+  background-color: color-mix(in srgb, var(--mat-sys-on-surface) 25%, transparent);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--mat-sys-on-surface) 40%, transparent);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
 }

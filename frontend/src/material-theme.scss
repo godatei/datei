@@ -5,7 +5,16 @@
 // custom components at https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
 
+// App-specific style partials live in ./styles/ and are pulled in here so the
+// top-level theme file stays focused on the Material theme setup.
+@use './styles/material-symbols';
+@use './styles/file-icons';
+
 @include mat.system-classes();
+
+// Roboto Flex (variable) is Material 3 Expressive's recommended typeface. Fall
+// back to system Roboto, then a generic sans.
+$datei-font-family: ('Roboto Flex Variable', 'Roboto', 'Helvetica Neue', sans-serif);
 
 html {
   height: 100%;
@@ -15,8 +24,36 @@ html {
         primary: mat.$azure-palette,
         tertiary: mat.$blue-palette,
       ),
-      typography: Roboto,
+      typography: (
+        plain-family: $datei-font-family,
+        brand-family: $datei-font-family,
+      ),
       density: 0,
+    )
+  );
+
+  // Shared background for the main content card and the tables/headers that sit
+  // on it, so they all read as one continuous surface.
+  --datei-container-background: var(--mat-sys-surface-container-lowest);
+
+  // The app shell: navigation rail, top bar and the surface behind the content
+  // card. Kept a step darker than the content card (surface-container-lowest) so
+  // the shell reads as a distinct, slightly recessed frame, especially where a
+  // subnav sits on it.
+  --datei-shell-background: var(--mat-sys-surface-container);
+
+  // Table theming via Material's overrides system. Tables share the content
+  // card's surface so they read as one continuous surface; the header/row text
+  // use the muted on-surface-variant color, and rows are a compact ~40px tall.
+  // Material sets `background: inherit` on rows, so the background token here is
+  // what actually colors the table.
+  @include mat.table-overrides(
+    (
+      background-color: var(--datei-container-background),
+      header-headline-color: var(--mat-sys-on-surface-variant),
+      row-item-label-text-color: var(--mat-sys-on-surface-variant),
+      row-item-outline-color: var(--mat-sys-outline-variant),
+      row-item-container-height: 2.5rem,
     )
   );
 }
@@ -32,7 +69,7 @@ body {
   // variables at https://material.angular.dev/guide/system-variables
   // The global background is the grey navigation surface; only the routed
   // content card sets an explicit white (surface) background on top of it.
-  background-color: var(--mat-sys-surface-container);
+  background-color: var(--datei-shell-background);
   color: var(--mat-sys-on-surface);
   font: var(--mat-sys-body-medium);
 

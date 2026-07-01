@@ -43,11 +43,9 @@
             [matRippleCentered]="true"
             aria-hidden="true"
           ></span>
-          <mat-icon
-            aria-hidden="true"
-            [fontSet]="rla.isActive ? 'material-icons' : 'material-icons-outlined'"
-            >{{ item.icon }}</mat-icon
-          >
+          <mat-icon aria-hidden="true" [class.material-symbols-outlined]="!rla.isActive">{{
+            item.icon
+          }}</mat-icon>
           <span class="nav-rail-label">{{ item.label }}</span>
         </a>
       }

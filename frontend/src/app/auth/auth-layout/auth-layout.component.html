@@ -1,0 +1,14 @@
+<div class="flex justify-center items-center min-h-screen p-4 mat-bg-surface">
+  <mat-card class="auth-card">
+    <div class="p-12 pb-10">
+      <div class="flex flex-col items-center mb-6 text-center">
+        <img ngSrc="datei-logo.svg" class="mb-3" alt="Datei" width="48" height="48" priority />
+        <h1 class="mat-font-title-lg m-0">{{ title() }}</h1>
+        @if (description()) {
+          <p class="mat-font-body-md mat-text-on-surface-variant mt-1">{{ description() }}</p>
+        }
+      </div>
+      <ng-content />
+    </div>
+  </mat-card>
+</div>

@@ -1,43 +1,31 @@
-<div class="flex justify-center items-center min-h-screen p-4 mat-bg-surface-container-low">
-  <mat-card class="auth-card w-full max-w-md">
-    <mat-card-content>
-      <div class="flex flex-col items-center mb-6 text-center">
-        <mat-icon class="mb-3 mat-text-primary text-5xl w-12 h-12">cloud_upload</mat-icon>
-        <h1 class="mat-font-title-lg m-0">Set a new password</h1>
-        <p class="mat-font-body-md mat-text-on-surface-variant mt-1">
-          Choose a strong password for your account
-        </p>
-      </div>
+<app-auth-layout title="Set a new password" description="Choose a strong password for your account">
+  @if (errorMessage()) {
+    <div
+      class="mat-font-body-md mat-corner-sm mat-bg-error-container mat-text-on-error-container px-4 py-3 mb-4"
+    >
+      {{ errorMessage() }}
+    </div>
+  }
 
-      @if (errorMessage()) {
-        <div
-          class="mat-font-body-md mat-corner-sm mat-bg-error-container mat-text-on-error-container px-4 py-3 mb-4"
-        >
-          {{ errorMessage() }}
-        </div>
+  <form class="flex flex-col gap-3" [formRoot]="form">
+    <app-password-confirm
+      [password]="form.password"
+      [confirmPassword]="form.confirmPassword"
+      passwordLabel="New password"
+      confirmLabel="Confirm new password"
+    />
+
+    <button
+      class="w-full mt-2"
+      mat-flat-button
+      type="submit"
+      [disabled]="form().submitting() || form().invalid()"
+    >
+      @if (form().submitting()) {
+        <mat-spinner diameter="20"></mat-spinner>
+      } @else {
+        Reset password
       }
-
-      <form class="flex flex-col gap-3" [formRoot]="form">
-        <app-password-confirm
-          [password]="form.password"
-          [confirmPassword]="form.confirmPassword"
-          passwordLabel="New password"
-          confirmLabel="Confirm new password"
-        />
-
-        <button
-          class="w-full mt-2"
-          mat-flat-button
-          type="submit"
-          [disabled]="form().submitting() || form().invalid()"
-        >
-          @if (form().submitting()) {
-            <mat-spinner diameter="20"></mat-spinner>
-          } @else {
-            Reset password
-          }
-        </button>
-      </form>
-    </mat-card-content>
-  </mat-card>
-</div>
+    </button>
+  </form>
+</app-auth-layout>

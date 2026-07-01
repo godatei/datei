@@ -1,12 +1,7 @@
-<div class="flex flex-col grow min-h-0 mx-5 mt-3">
-  <nav aria-label="Breadcrumb" class="flex items-center gap-1 flex-wrap mb-2 mat-font-label-lg">
-    <button mat-button aria-current="page">
-      <mat-icon>link</mat-icon>
-      Public links
-    </button>
-  </nav>
+<div class="flex flex-col grow min-h-0 mx-5 mt-5">
+  <h1 class="flex items-center min-h-10 px-3 mb-2 mat-font-title-lg">Public links</h1>
 
-  <div class="flex items-center gap-1 px-1 py-0.5 min-h-11 mat-corner-sm">
+  <div class="flex items-center gap-1 px-1 py-0.5 min-h-11 mat-corner-full">
     <mat-chip-listbox
       [value]="selectedTab()"
       (change)="onFilterChange($event.value)"
@@ -19,21 +14,14 @@
   </div>
 
   <div class="grow min-h-0 overflow-auto">
-    <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
-      <ng-container matColumnDef="icon">
-        <th mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let _" class="w-20">
-          <mat-icon class="mat-text-on-surface-variant">link</mat-icon>
-        </td>
-      </ng-container>
-
+    <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8">
       <ng-container matColumnDef="name">
-        <th mat-header-cell *matHeaderCellDef>Name</th>
-        <td mat-cell *matCellDef="let link">{{ link.name }}</td>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+        <td mat-cell *matCellDef="let link" class="primary-cell">{{ link.name }}</td>
       </ng-container>
 
       <ng-container matColumnDef="contents">
-        <th mat-header-cell *matHeaderCellDef>Contents</th>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Contents</th>
         <td mat-cell *matCellDef="let link" i18n="@@linkContentsCounts">
           {link.folderCount, plural, =1 {one folder} other {{{ link.folderCount }} folders}},
           {link.fileCount, plural, =1 {one file} other {{{ link.fileCount }} files}}
@@ -41,19 +29,19 @@
       </ng-container>
 
       <ng-container matColumnDef="opens">
-        <th mat-header-cell *matHeaderCellDef>Opened</th>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Opened</th>
         <td mat-cell *matCellDef="let link" i18n="@@linkOpenedCount">
           {link.openCount, plural, =0 {never} =1 {1 time} other {{{ link.openCount }} times}}
         </td>
       </ng-container>
 
       <ng-container matColumnDef="createdAt">
-        <th mat-header-cell *matHeaderCellDef>Created</th>
-        <td mat-cell *matCellDef="let link">{{ link.createdAt | date }}</td>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Created</th>
+        <td mat-cell *matCellDef="let link">{{ link.createdAt | smartDate }}</td>
       </ng-container>
 
       <ng-container matColumnDef="expiresAt">
-        <th mat-header-cell *matHeaderCellDef>Expires</th>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Expires</th>
         <td mat-cell *matCellDef="let link">
           @if (link.expiresAt) {
             <span [matTooltip]="link.expiresAt | date: 'medium'">
@@ -115,7 +103,7 @@
         <th mat-header-cell *matHeaderCellDef></th>
         <td mat-cell *matCellDef="let link" class="w-12 text-right">
           <button matIconButton [matMenuTriggerFor]="rowMenu" aria-label="More actions">
-            <mat-icon>more_vert</mat-icon>
+            <mat-icon class="material-symbols-light">more_vert</mat-icon>
           </button>
           <mat-menu #rowMenu="matMenu">
             <a mat-menu-item [href]="shareUrl(link)" target="_blank" rel="noopener">

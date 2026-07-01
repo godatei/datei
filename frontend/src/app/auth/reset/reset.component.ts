@@ -1,13 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
 import { form, FormRoot } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '~/frontend/services/auth.service';
 import { SettingsService } from '~/frontend/services/settings.service';
+import { AuthLayoutComponent } from '../auth-layout/auth-layout.component';
 import {
   PasswordConfirmComponent,
   passwordConfirmSchema,
@@ -17,9 +16,8 @@ import {
   selector: 'app-reset',
   imports: [
     FormRoot,
-    MatCardModule,
+    AuthLayoutComponent,
     MatButtonModule,
-    MatIconModule,
     MatProgressSpinnerModule,
     PasswordConfirmComponent,
   ],

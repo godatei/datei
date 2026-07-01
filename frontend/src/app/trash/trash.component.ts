@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, resource, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -6,15 +5,19 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Api } from '~/api/api';
 import { getFilePath, listTrash, listTrashChildren } from '~/api/functions';
 import { File, TrashedFile } from '~/api/models';
-import { ThumbnailIconComponent } from '~/frontend/dashboard/thumbnail-icon.component';
+import { FileIconComponent } from '~/frontend/dashboard/file-icon.component';
 import { SelectionDirective } from '~/frontend/dashboard/selection.directive';
 import { SelectionItemDirective } from '~/frontend/dashboard/selection-item.directive';
+import { OwnerCellComponent } from '~/frontend/shared/owner-cell.component';
+import { ownerLabel } from '~/util/owner';
 import { RestoreDialogComponent } from './restore-dialog/restore-dialog.component';
+import { SmartDatePipe } from '~/frontend/pipes/smart-date.pipe';
 import { filter } from 'rxjs';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { snackSuccessDuration } from '~/frontend/constants';
@@ -24,13 +27,15 @@ import { snackSuccessDuration } from '~/frontend/constants';
   templateUrl: './trash.component.html',
   host: { class: 'flex flex-col grow min-h-0' },
   imports: [
-    DatePipe,
+    SmartDatePipe,
     MatButtonModule,
     MatChipsModule,
     MatIconModule,
     MatMenuModule,
     MatTableModule,
-    ThumbnailIconComponent,
+    MatSortModule,
+    FileIconComponent,
+    OwnerCellComponent,
     SelectionDirective,
     SelectionItemDirective,
     MatSnackBarModule,
@@ -64,14 +69,48 @@ export class TrashComponent {
 
   protected readonly displayedColumns = computed(() =>
     this.parentId()
-      ? ['icon', 'name', 'actions']
-      : ['icon', 'name', 'trashedAt', 'originPath', 'actions'],
+      ? ['name', 'owner', 'actions']
+      : ['name', 'owner', 'trashedAt', 'originPath', 'actions'],
   );
 
   protected readonly dataSource = new MatTableDataSource<File>([]);
   protected readonly selection = viewChild.required<SelectionDirective<File>>(SelectionDirective);
+  protected readonly sort = viewChild(MatSort);
 
   constructor() {
+    this.dataSource.sortingDataAccessor = (file, column) => {
+      switch (column) {
+        case 'name':
+          return file.name?.toLowerCase() ?? '';
+        case 'owner':
+          return ownerLabel();
+        case 'trashedAt':
+          return file.trashedAt ? new Date(file.trashedAt).getTime() : 0;
+        case 'originPath':
+          return this.formatOriginPath(file as TrashedFile).toLowerCase();
+        default:
+          return '';
+      }
+    };
+
+    effect(() => {
+      const sort = this.sort();
+      if (sort) this.dataSource.sort = sort;
+    });
+
+    // Navigating into a folder drops the trashedAt/originPath columns. Clear any
+    // active sort on a now-hidden column so rows aren't left ordered by an
+    // invisible column with no header indicator.
+    effect(() => {
+      const columns = this.displayedColumns();
+      const sort = this.sort();
+      if (sort && sort.active && !columns.includes(sort.active)) {
+        sort.active = '';
+        sort.direction = '';
+        sort.sortChange.emit({ active: '', direction: '' });
+      }
+    });
+
     effect(() => {
       this.dataSource.data = this.trashResource.value()?.items ?? [];
       this.selection().clear();

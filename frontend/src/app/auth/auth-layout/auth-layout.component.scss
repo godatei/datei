@@ -1,0 +1,12 @@
+@use '@angular/material' as mat;
+@reference 'tailwindcss';
+
+.auth-card {
+  @apply w-full max-w-md;
+
+  @include mat.card-overrides(
+    (
+      elevated-container-color: var(--mat-sys-surface-container-lowest),
+    )
+  );
+}

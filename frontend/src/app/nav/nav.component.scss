@@ -6,7 +6,7 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
 
 .nav-rail {
   @apply w-24;
-  background-color: var(--mat-sys-surface-container);
+  background-color: var(--datei-shell-background);
   transition: width $rail-motion;
 
   &.mat-drawer-side {
@@ -113,29 +113,29 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
 
 .nav-topbar {
   @apply sticky top-0 z-10 gap-2 h-auto py-3;
-  background-color: var(--mat-sys-surface-container);
+  background-color: var(--datei-shell-background);
   color: var(--mat-sys-on-surface);
 }
 
 .nav-brand {
-  @apply flex items-center gap-2;
+  @apply flex items-center gap-1;
 }
 
 .nav-brand-name {
-  font: var(--mat-sys-title-medium);
+  font: var(--mat-sys-title-large);
   color: var(--mat-sys-on-surface);
 }
 
 .nav-shell {
   @apply h-full;
-  background-color: var(--mat-sys-surface-container);
+  background-color: var(--datei-shell-background);
 }
 
 // The shell itself never scrolls: it's a fixed-height column (top bar + content
 // card). Scrolling lives inside each page so only its table body moves.
 .nav-shell .mat-drawer-content {
   @apply flex flex-col overflow-hidden;
-  background-color: var(--mat-sys-surface-container);
+  background-color: var(--datei-shell-background);
 }
 
 // Inset content card fills the remaining height. File-list pages manage their
@@ -145,7 +145,7 @@ $rail-motion: 250ms cubic-bezier(0.2, 0, 0, 1);
 // corner).
 .nav-content {
   @apply flex flex-col grow min-h-0 overflow-auto;
-  background-color: var(--mat-sys-surface);
+  background-color: var(--datei-container-background);
   border-top-left-radius: var(--mat-sys-corner-large);
 }
 
