@@ -63,7 +63,7 @@
     "eslint-plugin-prettier": "^5.5.5",
     "jsdom": "^29.0.0",
     "ng-openapi-gen": "^1.0.5",
-    "postcss": "^8.5.3",
+    "postcss": "^8.5.23",
     "prettier": "^3.8.1",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.61.0",
