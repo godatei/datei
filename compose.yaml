@@ -21,7 +21,7 @@ services:
   # IMAP/SMTP server for testing email receiving. GreenMail auto-creates an
   # account on first login, so any user/password works (e.g. test@datei.local).
   greenmail:
-    image: 'greenmail/standalone:2.1.6'
+    image: 'greenmail/standalone:2.1.13'
     environment:
       GREENMAIL_OPTS: '-Dgreenmail.setup.test.all -Dgreenmail.hostname=0.0.0.0 -Dgreenmail.auth.disabled -Dgreenmail.verbose'
     ports:
