@@ -20,6 +20,12 @@
       "matchFileNames": ["website/**"],
       "matchPackageNames": ["!pnpm"],
       "groupName": "website dependencies"
+    },
+    {
+      "description": "Automerge minor and patch releases of GitHub Actions",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true
     }
   ],
   "customManagers": [
