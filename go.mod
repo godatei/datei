@@ -15,7 +15,7 @@ require (
 	github.com/gen2brain/go-fitz v1.28.1
 	github.com/getkin/kin-openapi v0.140.0
 	github.com/glasskube/pkg/seekbuf v0.1.1
-	github.com/go-chi/chi/v5 v5.3.0
+	github.com/go-chi/chi/v5 v5.4.0
 	github.com/go-chi/httprate v0.15.0
 	github.com/go-co-op/gocron/v2 v2.21.2
 	github.com/golang-migrate/migrate/v4 v4.19.1
